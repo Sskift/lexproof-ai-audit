@@ -64,4 +64,4 @@
 - [x] Run `npm test`.
 - [x] Run `npm run build`.
 - [x] Start the local dev server and visually inspect the app.
-- [ ] Initialize Git, commit the project, create a GitHub repository, and push.
+- [x] Initialize Git, commit the project, create a GitHub repository, and push.

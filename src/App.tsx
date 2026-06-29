@@ -19,6 +19,7 @@ import { EvidenceLedger } from "./components/EvidenceLedger";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
 import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
+import { SecureReviewWorkspace } from "./components/SecureReviewWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
 import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
@@ -52,6 +53,7 @@ import {
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
+import { createModelConnectReceipt, type ModelConnectReceipt } from "./lib/modelConnect";
 import {
   applyAIEventReviewUpdate,
   buildModelIntakeSummary,
@@ -97,6 +99,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
+  const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
   const [aiEvents, setAIEvents] = useState<AIEventRecord[]>(() => loadStoredAIEvents());
   const [modelIntakeSummary, setModelIntakeSummary] = useState<ModelIntakeSummary | null>(null);
@@ -245,6 +248,11 @@ export default function App() {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
   };
 
+  const updateModelSettings = (settings: ModelSettings) => {
+    setModelSettings(settings);
+    setModelConnectReceipt(null);
+  };
+
   const loadSample = (projectName: string) => {
     const profile = sampleProfiles.find((item) => item.projectName === projectName);
     if (!profile) {
@@ -253,6 +261,7 @@ export default function App() {
     setProject(projectFromAuditProfile(profile));
     setShowValidation(false);
     setSavedAt("");
+    setModelConnectReceipt(null);
     setActiveTab("wizard");
   };
 
@@ -260,6 +269,7 @@ export default function App() {
     setProject(createBlankProject());
     setShowValidation(false);
     setSavedAt("");
+    setModelConnectReceipt(null);
     setActiveTab("wizard");
   };
 
@@ -369,6 +379,12 @@ export default function App() {
       return;
     }
 
+    if (modelSettings.provider !== "mock" && modelConnectReceipt?.status !== "ready") {
+      setAIReviewStatus("error");
+      setAIReviewError("Validate Model Connect before running a session model.");
+      return;
+    }
+
     setAIReviewStatus("running");
     try {
       const provider =
@@ -388,6 +404,27 @@ export default function App() {
     } catch (error) {
       setAIReviewStatus("error");
       setAIReviewError(error instanceof Error ? error.message : "Model review failed.");
+    }
+  };
+
+  const handleValidateModelConnect = () => {
+    const receipt = createModelConnectReceipt({
+      settings: modelSettings,
+      settingsValidation: modelSettingsValidation,
+      redactionStatus: createRedactionReport(project.evidenceItems).status
+    });
+    setModelConnectReceipt(receipt);
+
+    if (receipt.status === "ready") {
+      setModelIntakeProfile((current) => ({
+        ...current,
+        providerName: receipt.providerLabel,
+        modelName: receipt.model || current.modelName,
+        endpointType: modelSettings.provider,
+        useCase: current.useCase || "Evidence extraction and draft counsel questions",
+        dataClasses: current.dataClasses.length > 0 ? current.dataClasses : ["evidence summaries", "policy metadata"],
+        humanReviewOwner: current.humanReviewOwner || "Compliance"
+      }));
     }
   };
 
@@ -454,6 +491,16 @@ export default function App() {
         />
 
         <section className="main-stage">
+          <SecureReviewWorkspace
+            projectReady={validation.valid}
+            evidenceCount={project.evidenceItems.length}
+            auditRiskLevel={audit.riskLevel}
+            modelConnectReceipt={modelConnectReceipt}
+            unresolvedAIEvents={modelIntakeSummary?.unresolvedEventCount ?? currentAIEvents.length}
+            manifestHash={manifest?.bundleHash}
+            onNavigate={setActiveTab}
+          />
+
           <nav className="tabs" aria-label="Workbench tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -483,7 +530,9 @@ export default function App() {
               modelIntakeSummary={modelIntakeSummary}
               status={aiReviewStatus}
               error={aiReviewError}
-              onSettingsChange={setModelSettings}
+              modelConnectReceipt={modelConnectReceipt}
+              onSettingsChange={updateModelSettings}
+              onValidateModelConnect={handleValidateModelConnect}
               onRunReview={handleRunAIReview}
             />
           ) : null}

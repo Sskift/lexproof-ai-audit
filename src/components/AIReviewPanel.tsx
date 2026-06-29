@@ -1,10 +1,11 @@
-import { Bot, ClipboardCheck, Download, Fingerprint, ShieldAlert, Sparkles } from "lucide-react";
+import { Bot, ClipboardCheck, Download, Fingerprint, PlugZap, ShieldAlert, Sparkles } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { ModelSettingsPanel } from "./ModelSettingsPanel";
 import { createMissingEvidenceChecklist, createRedactionReport, type AIReviewResult } from "../lib/aiReview";
 import type { AuditResult } from "../lib/auditEngine";
 import { createModelAccessWorkflow } from "../lib/modelAccessWorkflow";
 import { createModelConnectionReadiness } from "../lib/modelConnectionReadiness";
+import type { ModelConnectReceipt } from "../lib/modelConnect";
 import type { ModelIntakeSummary } from "../lib/modelIntake";
 import { downloadModelReviewRunJson, type ModelReviewRun } from "../lib/modelReviewLedger";
 import type { ModelSettings, ModelSettingsValidation } from "../lib/modelProvider";
@@ -18,9 +19,11 @@ type AIReviewPanelProps = {
   result: AIReviewResult | null;
   reviewRuns: ModelReviewRun[];
   modelIntakeSummary: ModelIntakeSummary | null;
+  modelConnectReceipt: ModelConnectReceipt | null;
   status: "idle" | "running" | "complete" | "error";
   error: string;
   onSettingsChange: (settings: ModelSettings) => void;
+  onValidateModelConnect: () => void;
   onRunReview: () => void;
 };
 
@@ -32,9 +35,11 @@ export function AIReviewPanel({
   result,
   reviewRuns,
   modelIntakeSummary,
+  modelConnectReceipt,
   status,
   error,
   onSettingsChange,
+  onValidateModelConnect,
   onRunReview
 }: AIReviewPanelProps) {
   const checklist = createMissingEvidenceChecklist(audit, project.evidenceItems);
@@ -63,6 +68,46 @@ export function AIReviewPanel({
       </div>
 
       <ModelSettingsPanel settings={settings} validation={settingsValidation} onChange={onSettingsChange} />
+
+      <section className={`review-section model-connect ${modelConnectReceipt?.status ?? "needs-input"}`}>
+        <div className="split-title compact-title">
+          <div>
+            <PlugZap size={17} aria-hidden="true" />
+            <h3>Model Connect</h3>
+          </div>
+          <button type="button" className="secondary" onClick={onValidateModelConnect}>
+            <PlugZap size={16} aria-hidden="true" />
+            Validate Model Connect
+          </button>
+        </div>
+        <p className="section-note">
+          Connect a mock reviewer or a session-only OpenAI-compatible endpoint for audit-prep model runs. Not legal advice.
+        </p>
+        {modelConnectReceipt ? (
+          <div className="model-connect-receipt">
+            <div>
+              <strong>Model Connect receipt</strong>
+              <span>{connectHeadline(modelConnectReceipt)}</span>
+            </div>
+            <div className="run-facts">
+              <RunFact label="Provider" value={modelConnectReceipt.providerLabel} />
+              <RunFact label="Model" value={modelConnectReceipt.model || "not configured"} />
+              <RunFact label="Endpoint" value={modelConnectReceipt.endpointHost || "not configured"} />
+              <RunFact label="Mode" value={modelConnectReceipt.mode} />
+            </div>
+            <small>{modelConnectReceipt.notLegalAdviceBoundary}</small>
+            {modelConnectReceipt.blockers.length > 0 ? (
+              <ul className="validation-list">
+                {modelConnectReceipt.blockers.map((blocker) => (
+                  <li key={blocker}>{blocker}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : (
+          <p className="empty-state">No model connection receipt yet. Validate before running a session model.</p>
+        )}
+      </section>
 
       <section className={`review-section model-access-workflow ${modelAccessWorkflow.overallStatus}`}>
         <div className="split-title compact-title">
@@ -250,6 +295,18 @@ function statusLabel(status: string): string {
     return "Needs review";
   }
   return "Clean";
+}
+
+function connectHeadline(receipt: ModelConnectReceipt): string {
+  if (receipt.status === "blocked") {
+    return "Model Connect is blocked until configuration and redaction checks pass.";
+  }
+
+  if (receipt.provider === "openai-compatible") {
+    return "OpenAI-compatible model configured for this session.";
+  }
+
+  return "Mock local reviewer configured.";
 }
 
 function ReviewList({ title, items }: { title: string; items: string[] }) {

@@ -220,9 +220,70 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText(/Review status for AI event 1/i), { target: { value: "reviewed" } });
     fireEvent.change(screen.getByLabelText(/Reviewer for AI event 1/i), { target: { value: "Outside counsel" } });
 
-    expect(await screen.findByText(/ready/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
+  });
+
+  it("runs the Secure Review Workspace model-connect flow with a user OpenAI-compatible model", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                extractedFacts: ["Session model reviewed evidence summaries"],
+                missingEvidence: ["Human approval memo"],
+                draftQuestions: ["Which counsel reviewer approved the model output?"],
+                suggestedRemediation: ["Attach human review notes before external reliance."]
+              })
+            }
+          }
+        ]
+      })
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      expect(screen.getByRole("heading", { name: /Secure Review Workspace/i })).toBeInTheDocument();
+      expect(screen.getByText(/Not legal advice. Secure review workspace records are audit preparation materials only./i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+      fireEvent.change(screen.getByLabelText(/^Provider$/i), { target: { value: "openai-compatible" } });
+      fireEvent.change(screen.getByLabelText(/Model name/i), { target: { value: "gpt-audit-review" } });
+      fireEvent.change(screen.getByLabelText(/Base URL/i), { target: { value: "https://models.example.test/v1" } });
+      fireEvent.change(screen.getByLabelText(/API key/i), { target: { value: "sk-session-only" } });
+
+      fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+      expect(await screen.findByText(/Model Connect receipt/i)).toBeInTheDocument();
+      expect(screen.getByText(/OpenAI-compatible model configured for this session/i)).toBeInTheDocument();
+      expect(screen.getByText(/Not legal advice. Model Connect validates audit-prep routing only./i)).toBeInTheDocument();
+      expect(screen.queryByText(/sk-session-only/i)).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
+
+      expect(await screen.findByText(/Session model reviewed evidence summaries/i)).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://models.example.test/v1/chat/completions",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ Authorization: "Bearer sk-session-only" })
+        })
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /Model Intake/i }));
+
+      expect(await screen.findByText(/AI Review run/i)).toBeInTheDocument();
+      expect(screen.getByDisplayValue("OpenAI-compatible session model")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("gpt-audit-review")).toBeInTheDocument();
+      expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("registers a model connection profile and AI event intake record with a hash", async () => {

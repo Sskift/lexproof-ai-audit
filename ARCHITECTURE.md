@@ -297,7 +297,7 @@ Components are intentionally presentational and interaction-focused:
 - `AuditWizard` displays the step-by-step audit review.
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
-- `ModelIntakePanel` edits model connection profile metadata, AI event records, event hashes, and human-review readiness.
+- `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, and human-review readiness.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -333,6 +333,7 @@ Domain tests live next to the audit engine and cover:
 - model connection profile validation
 - AI event hashing and model intake summaries
 - AI Review run conversion into Model Intake events
+- AI event reviewer and review-status editing
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export

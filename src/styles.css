@@ -685,6 +685,12 @@ textarea {
   line-height: 1.45;
 }
 
+.event-review-controls {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.5fr) minmax(220px, 1fr);
+  gap: 10px;
+}
+
 .run-card button {
   justify-self: start;
 }
@@ -1874,6 +1880,7 @@ textarea {
   .jurisdiction-pack-grid,
   .review-status-grid,
   .receipt-grid,
+  .event-review-controls,
   .template-grid {
     grid-template-columns: 1fr;
   }

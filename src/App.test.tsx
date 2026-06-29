@@ -207,6 +207,13 @@ describe("App", () => {
     expect(screen.getByText(/payload SHA-256/i)).toBeInTheDocument();
     expect(screen.getByText(/response SHA-256/i)).toBeInTheDocument();
     expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Review status for AI event 1/i), { target: { value: "reviewed" } });
+    fireEvent.change(screen.getByLabelText(/Reviewer for AI event 1/i), { target: { value: "Outside counsel" } });
+
+    expect(await screen.findByText(/ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
   });
 
   it("registers a model connection profile and AI event intake record with a hash", async () => {

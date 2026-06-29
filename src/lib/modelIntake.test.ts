@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyAIEventReviewUpdate,
   buildModelIntakeSummary,
   createAIReviewEventFromRun,
   exportModelIntakeJson,
@@ -68,6 +69,28 @@ describe("hashAIEventRecord", () => {
     expect(firstHash).toMatch(/^[a-f0-9]{64}$/);
     expect(repeatHash).toBe(firstHash);
     expect(changedHash).not.toBe(firstHash);
+  });
+});
+
+describe("applyAIEventReviewUpdate", () => {
+  it("updates reviewer, review status, and timestamp without changing the source event record", () => {
+    const updated = applyAIEventReviewUpdate(
+      event,
+      {
+        humanReviewer: "Outside counsel",
+        reviewStatus: "reviewed"
+      },
+      "2026-06-29T10:00:00.000Z"
+    );
+
+    expect(updated).toMatchObject({
+      id: event.id,
+      humanReviewer: "Outside counsel",
+      reviewStatus: "reviewed",
+      updatedAt: "2026-06-29T10:00:00.000Z"
+    });
+    expect(event.reviewStatus).toBe("needs-review");
+    expect(event.updatedAt).toBeUndefined();
   });
 });
 

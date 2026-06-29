@@ -89,6 +89,19 @@ export async function hashAIEventRecord(event: AIEventRecord): Promise<string> {
   return sha256Hex(stableStringify(event));
 }
 
+export function applyAIEventReviewUpdate(
+  event: AIEventRecord,
+  updates: Partial<Pick<AIEventRecord, "humanReviewer" | "reviewStatus">>,
+  updatedAt = new Date().toISOString()
+): AIEventRecord {
+  return {
+    ...event,
+    ...updates,
+    humanReviewer: updates.humanReviewer?.trim() ?? event.humanReviewer,
+    updatedAt
+  };
+}
+
 export function createAIReviewEventFromRun(
   run: ModelReviewRun,
   result: AIReviewResult,

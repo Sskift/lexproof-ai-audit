@@ -47,6 +47,7 @@ import {
   type ModelSettings
 } from "./lib/modelProvider";
 import {
+  applyAIEventReviewUpdate,
   buildModelIntakeSummary,
   createAIReviewEventFromRun,
   type AIEventRecord,
@@ -372,6 +373,10 @@ export default function App() {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
 
+  const updateAIEvent = (id: string, updates: Partial<Pick<AIEventRecord, "humanReviewer" | "reviewStatus">>) => {
+    setAIEvents((current) => current.map((event) => (event.id === id ? applyAIEventReviewUpdate(event, updates) : event)));
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -446,6 +451,7 @@ export default function App() {
               events={currentAIEvents}
               onProfileChange={setModelIntakeProfile}
               onAddEvent={addAIEvent}
+              onUpdateEvent={updateAIEvent}
             />
           ) : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}

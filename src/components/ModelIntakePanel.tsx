@@ -18,6 +18,7 @@ type ModelIntakePanelProps = {
   events: AIEventRecord[];
   onProfileChange: (profile: ModelConnectionProfile) => void;
   onAddEvent: (event: AIEventRecord) => void;
+  onUpdateEvent: (id: string, updates: Partial<Pick<AIEventRecord, "humanReviewer" | "reviewStatus">>) => void;
 };
 
 type EventFormState = {
@@ -38,7 +39,14 @@ const blankEventForm: EventFormState = {
   reviewStatus: "needs-review"
 };
 
-export function ModelIntakePanel({ projectId, profile, events, onProfileChange, onAddEvent }: ModelIntakePanelProps) {
+export function ModelIntakePanel({
+  projectId,
+  profile,
+  events,
+  onProfileChange,
+  onAddEvent,
+  onUpdateEvent
+}: ModelIntakePanelProps) {
   const [eventForm, setEventForm] = useState<EventFormState>(blankEventForm);
   const [summary, setSummary] = useState<ModelIntakeSummary | null>(null);
   const validation = validateModelConnectionProfile(profile);
@@ -306,7 +314,7 @@ export function ModelIntakePanel({ projectId, profile, events, onProfileChange, 
         </div>
         <div className="run-ledger">
           {events.length === 0 ? <p className="empty-state">No AI event records registered for this project.</p> : null}
-          {events.map((event) => (
+          {events.map((event, index) => (
             <article key={event.id} className="run-card">
               <header>
                 <div>
@@ -317,6 +325,35 @@ export function ModelIntakePanel({ projectId, profile, events, onProfileChange, 
               </header>
               <p>{event.outputSummary || "No model output summary recorded."}</p>
               <p className="model-event-input">Input: {event.inputSummary || "No input summary recorded."}</p>
+              <div className="event-review-controls">
+                <div>
+                  <label className="field-label" htmlFor={`ai-event-${event.id}-status`}>
+                    Review status for AI event {index + 1}
+                  </label>
+                  <select
+                    id={`ai-event-${event.id}-status`}
+                    value={event.reviewStatus}
+                    onChange={(changeEvent) =>
+                      onUpdateEvent(event.id, { reviewStatus: changeEvent.target.value as AIEventReviewStatus })
+                    }
+                  >
+                    <option value="needs-review">needs-review</option>
+                    <option value="reviewed">reviewed</option>
+                    <option value="rejected">rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label" htmlFor={`ai-event-${event.id}-reviewer`}>
+                    Reviewer for AI event {index + 1}
+                  </label>
+                  <input
+                    id={`ai-event-${event.id}-reviewer`}
+                    value={event.humanReviewer}
+                    onChange={(changeEvent) => onUpdateEvent(event.id, { humanReviewer: changeEvent.target.value })}
+                    placeholder={profile.humanReviewOwner || "Compliance"}
+                  />
+                </div>
+              </div>
               <div className="run-facts">
                 <RunFact label="Human reviewer" value={event.humanReviewer || "Unassigned"} />
                 <RunFact label="Event SHA-256" value={eventHashes.get(event.id) ?? "Calculating"} />

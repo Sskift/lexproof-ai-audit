@@ -160,7 +160,7 @@ The product is especially meaningful where legal/compliance work is high-context
 2. Founder enters product facts and adds synthetic-safe evidence summaries or browser-side local file hashes.
 3. Compliance registers model purpose and human-review ownership in Model Intake.
 4. AI Review extracts structured facts, highlights missing evidence, and automatically creates a needs-review Model Intake event from the run receipt.
-5. Model Intake tracks AI event summaries, review status, and event hashes for material model outputs.
+5. Model Intake tracks AI event summaries, reviewer assignments, review status, and event hashes for material model outputs.
 6. Risk Audit produces deterministic flags, remediation owners, and missing evidence request actions.
 7. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
 8. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
@@ -189,6 +189,7 @@ Rules:
 - Do not register models as final legal decision-makers.
 - Record material AI outputs as human-review event records before external reliance.
 - Automatically create a needs-review Model Intake event after each AI Review run.
+- Let reviewers mark AI events as reviewed or rejected before external reliance.
 - Include Model Intake readiness and AI event hashes in Counsel Pack handoff materials.
 - Show a review payload before model call.
 - Mark all model output as AI-assisted draft.
@@ -200,7 +201,7 @@ Rules:
 ### Phase 1: Submission-Ready MVP
 
 - Current workspace features.
-- Model Intake profile and AI event hash ledger.
+- Model Intake profile and editable AI event hash ledger.
 - AI Review with mock/OpenAI-compatible provider.
 - Redaction Gate before model calls.
 - AI Review Run Ledger with payload/response hash receipts.

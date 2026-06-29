@@ -33,12 +33,18 @@ Key evidence:
 - Testing Library
 - Lucide React icons
 
+## Project Docs
+
+- [WORKFLOW.md](WORKFLOW.md): direct-to-main development and push workflow.
+- [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, data flow, and extension points.
+- [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.
+- [docs/research.md](docs/research.md): hackathon selection and audit research notes.
+
 ## Run Locally
 
 ```bash
 npm install
-npm test
-npm run build
+npm run verify
 npm run dev
 ```
 

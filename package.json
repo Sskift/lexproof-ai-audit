@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "verify": "npm test && npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",

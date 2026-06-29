@@ -480,6 +480,7 @@ export default function App() {
               settingsValidation={modelSettingsValidation}
               result={aiReview}
               reviewRuns={currentReviewRuns}
+              modelIntakeSummary={modelIntakeSummary}
               status={aiReviewStatus}
               error={aiReviewError}
               onSettingsChange={setModelSettings}

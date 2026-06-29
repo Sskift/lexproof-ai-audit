@@ -27,6 +27,7 @@ lexproof-ai-audit/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
+      modelAccessWorkflow.ts # Model setup, run, and human-review workflow status
       modelConnectionReadiness.ts # Model configuration and redaction readiness summary
       modelIntake.ts         # Model connection profile validation and AI event hashes
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
@@ -72,6 +73,7 @@ sampleProfiles or blank project
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
   -> createRedactionReport(project.evidenceItems)
   -> createModelConnectionReadiness(modelSettings, settingsValidation, redactionReport)
+  -> createModelAccessWorkflow(model settings, readiness, Model Intake summary, run count)
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
   -> create local ModelReviewRun with payload and response hashes
@@ -241,6 +243,16 @@ Owns model connection readiness messaging:
 
 Readiness is an audit-prep gate only. It does not test a live endpoint, store credentials, or certify model quality.
 
+### `src/lib/modelAccessWorkflow.ts`
+
+Owns the user-facing model connection route:
+
+- `createModelAccessWorkflow()` combines Model Intake readiness, provider settings validation, Model Connection Readiness, and run count.
+- It returns setup/run/human-review steps for registering Model Intake, configuring a provider, passing Redaction Gate, running AI Review, and reviewing/exporting AI events.
+- It surfaces live OpenAI-compatible settings errors and unresolved AI event review requirements before external reliance.
+
+The workflow is audit preparation guidance only. It does not make legal conclusions, verify endpoint quality, store credentials, or replace human review.
+
 ### `src/lib/modelReviewLedger.ts`
 
 Owns model-run audit receipts:
@@ -323,7 +335,7 @@ Components are intentionally presentational and interaction-focused:
 
 - `ProjectWorkspace` edits project facts and loads synthetic samples.
 - `AuditWizard` displays the step-by-step audit review.
-- `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
+- `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
@@ -358,6 +370,7 @@ Domain tests live next to the audit engine and cover:
 - missing evidence checklist generation
 - missing evidence request generation for Evidence Ledger
 - mock and OpenAI-compatible model provider behavior
+- model access workflow status and blockers
 - model connection readiness and redaction blocker gating
 - model connection profile validation
 - AI event hashing and model intake summaries
@@ -394,6 +407,7 @@ UI tests cover:
 - long evidence record editing with visible field labels
 - manifest bundle hash visibility
 - AI Review mock workflow
+- Model Access Workflow visibility in AI Review
 - Model Intake profile and AI event workflow
 - Redaction Gate visibility
 - AI Review Run Ledger visibility

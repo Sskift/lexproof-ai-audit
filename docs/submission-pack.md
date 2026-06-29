@@ -24,9 +24,11 @@ The Risk Audit uses deterministic project facts, not model output, to explain wh
 
 ### Controlled Model Access
 
-The Model Intake tab registers provider/model purpose, allowed data classes, human-review owner, and editable hashed AI event records without storing credentials. It also exports a standalone Model Intake JSON audit trail with profile metadata, readiness status, and event hashes. The AI Review tab supports a mock reviewer for demos and an OpenAI-compatible provider for BYOM/BYOK workflows. Model Connection Readiness tells users whether the mock reviewer is ready, live settings are incomplete, or Redaction Gate blockers prevent a run. The Redaction Gate previews evidence summaries before model calls, the AI Review Run Ledger records local payload and response hashes without storing API keys, and each completed AI Review run automatically creates a needs-review Model Intake event that can be marked reviewed or rejected.
+The Model Intake tab registers provider/model purpose, allowed data classes, human-review owner, and editable hashed AI event records without storing credentials. It also exports a standalone Model Intake JSON audit trail with profile metadata, readiness status, and event hashes. The AI Review tab supports a mock reviewer for demos and an OpenAI-compatible provider for BYOM/BYOK workflows. Model Access Workflow shows setup, provider, Redaction Gate, run, and human-review/export status. Model Connection Readiness tells users whether the mock reviewer is ready, live settings are incomplete, or Redaction Gate blockers prevent a run. The Redaction Gate previews evidence summaries before model calls, the AI Review Run Ledger records local payload and response hashes without storing API keys, and each completed AI Review run automatically creates a needs-review Model Intake event that can be marked reviewed or rejected.
 
 ![AI Review Model Connection Readiness](assets/screenshots/ai-review-connection-readiness.png)
+
+![AI Review Model Access Workflow](assets/screenshots/model-access-workflow.png)
 
 ![Model Intake JSON export](assets/screenshots/model-intake-json-export.png)
 
@@ -48,7 +50,7 @@ The Evidence Ledger records local evidence creation, template application, edits
 
 1. Load the `YieldPassport` synthetic sample.
 2. Open **Model Intake** and show model purpose, allowed data classes, human-review owner, AI event hash records, and Model Intake JSON download.
-3. Open **AI Review**, inspect Model Connection Readiness and the Redaction Gate, run the mock reviewer, and show the Run Ledger plus the automatic editable Model Intake event.
+3. Open **AI Review**, inspect Model Access Workflow, Model Connection Readiness, and the Redaction Gate, run the mock reviewer, and show the Run Ledger plus the automatic editable Model Intake event.
 4. Open **Risk Audit** and point to source-linked trigger facts.
 5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, show the Evidence Audit Trail JSON export, and show the manifest bundle hash.
 6. Open **Counsel Pack** and show the Model Intake Summary, AI event hashes, Markdown download, Manifest JSON, and simulated anchor receipt.

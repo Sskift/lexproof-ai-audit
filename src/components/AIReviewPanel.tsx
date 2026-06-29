@@ -3,7 +3,9 @@ import { SectionHeader } from "./AuditWizard";
 import { ModelSettingsPanel } from "./ModelSettingsPanel";
 import { createMissingEvidenceChecklist, createRedactionReport, type AIReviewResult } from "../lib/aiReview";
 import type { AuditResult } from "../lib/auditEngine";
+import { createModelAccessWorkflow } from "../lib/modelAccessWorkflow";
 import { createModelConnectionReadiness } from "../lib/modelConnectionReadiness";
+import type { ModelIntakeSummary } from "../lib/modelIntake";
 import { downloadModelReviewRunJson, type ModelReviewRun } from "../lib/modelReviewLedger";
 import type { ModelSettings, ModelSettingsValidation } from "../lib/modelProvider";
 import type { ProjectProfile } from "../lib/projectModel";
@@ -15,6 +17,7 @@ type AIReviewPanelProps = {
   settingsValidation: ModelSettingsValidation;
   result: AIReviewResult | null;
   reviewRuns: ModelReviewRun[];
+  modelIntakeSummary: ModelIntakeSummary | null;
   status: "idle" | "running" | "complete" | "error";
   error: string;
   onSettingsChange: (settings: ModelSettings) => void;
@@ -28,6 +31,7 @@ export function AIReviewPanel({
   settingsValidation,
   result,
   reviewRuns,
+  modelIntakeSummary,
   status,
   error,
   onSettingsChange,
@@ -37,6 +41,13 @@ export function AIReviewPanel({
   const redactionReport = createRedactionReport(project.evidenceItems);
   const redactionBlocked = redactionReport.status === "blocked";
   const modelConnectionReadiness = createModelConnectionReadiness(settings, settingsValidation, redactionReport);
+  const modelAccessWorkflow = createModelAccessWorkflow({
+    settings,
+    settingsValidation,
+    connectionReadiness: modelConnectionReadiness,
+    modelIntakeSummary,
+    runCount: reviewRuns.length
+  });
 
   return (
     <section className="panel stage-panel">
@@ -52,6 +63,39 @@ export function AIReviewPanel({
       </div>
 
       <ModelSettingsPanel settings={settings} validation={settingsValidation} onChange={onSettingsChange} />
+
+      <section className={`review-section model-access-workflow ${modelAccessWorkflow.overallStatus}`}>
+        <div className="split-title compact-title">
+          <div>
+            <ClipboardCheck size={17} aria-hidden="true" />
+            <h3>Model Access Workflow</h3>
+          </div>
+          <span className={`workflow-status ${modelAccessWorkflow.overallStatus}`}>{modelAccessWorkflow.overallStatus}</span>
+        </div>
+        <div className="workflow-mode">
+          <strong>{modelAccessWorkflow.currentMode}</strong>
+          <span>{modelAccessWorkflow.notLegalAdviceBoundary}</span>
+        </div>
+        {modelAccessWorkflow.blockers.length > 0 ? (
+          <ul className="validation-list">
+            {modelAccessWorkflow.blockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="workflow-steps">
+          {modelAccessWorkflow.steps.map((step, index) => (
+            <article key={step.title} className={`workflow-step ${step.status}`}>
+              <span>{index + 1}</span>
+              <div>
+                <strong>{step.title}</strong>
+                <small>{step.status}</small>
+                <p>{step.detail}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className={`review-section connection-readiness ${modelConnectionReadiness.status}`}>
         <div className="panel-title compact-title">

@@ -189,8 +189,11 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
 
-    expect(screen.getByText(/Redaction Gate/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Redaction Gate/i })).toBeInTheDocument();
     expect(screen.getByText(/Review model payload/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Model Access Workflow/i })).toBeInTheDocument();
+    expect(screen.getByText(/Demo mock reviewer/i)).toBeInTheDocument();
+    expect(screen.getByText(/Run AI Review to create draft audit-prep output/i)).toBeInTheDocument();
     expect(screen.getByText(/Model Connection Readiness/i)).toBeInTheDocument();
     expect(screen.getByText(/Mock local reviewer ready/i)).toBeInTheDocument();
     expect(screen.getByText(/Needs review/i)).toBeInTheDocument();

@@ -476,6 +476,144 @@ textarea {
   grid-column: 1 / -1;
 }
 
+.model-access-workflow.ready-to-run,
+.model-access-workflow.complete {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.model-access-workflow.needs-human-review {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.model-access-workflow.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.workflow-status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 8px;
+  color: #102a43;
+  background: #e7edf8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.workflow-status.ready-to-run,
+.workflow-status.complete {
+  color: #176b52;
+  background: #dcefe5;
+}
+
+.workflow-status.needs-human-review {
+  color: #7a3f15;
+  background: #f6e1c1;
+}
+
+.workflow-status.blocked {
+  color: #9f241a;
+  background: #f3d1cd;
+}
+
+.workflow-mode {
+  display: grid;
+  grid-template-columns: minmax(150px, 240px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.workflow-mode strong,
+.workflow-mode span {
+  display: block;
+}
+
+.workflow-mode strong {
+  color: #102a43;
+  font-weight: 900;
+}
+
+.workflow-mode span {
+  color: #445361;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.workflow-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.workflow-step > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e7edf8;
+  color: #263d73;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.workflow-step.complete {
+  border-color: #b8d8c8;
+}
+
+.workflow-step.active {
+  border-color: #9cc9c5;
+  background: #f7fcf9;
+}
+
+.workflow-step.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.workflow-step strong,
+.workflow-step small,
+.workflow-step p {
+  display: block;
+}
+
+.workflow-step strong {
+  color: #172431;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.workflow-step small {
+  margin: 4px 0 5px;
+  color: #657382;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.workflow-step p {
+  margin-bottom: 0;
+  color: #445361;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 .review-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1994,6 +2132,8 @@ textarea {
   .review-status-grid,
   .receipt-grid,
   .event-review-controls,
+  .workflow-mode,
+  .workflow-steps,
   .template-grid {
     grid-template-columns: 1fr;
   }
@@ -2058,6 +2198,10 @@ textarea {
 
   .question-editor-grid button {
     justify-self: start;
+  }
+
+  .workflow-step {
+    grid-template-columns: 26px minmax(0, 1fr);
   }
 
   .tabs button {

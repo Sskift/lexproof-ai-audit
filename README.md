@@ -32,7 +32,7 @@ Key evidence:
 - Custom Project Workspace for creating a local audit project from zero or loading synthetic samples.
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
 - Model Intake for registering provider/model purpose, allowed data classes, human-review owner, editable hashed AI event review records, and downloadable Model Intake JSON.
-- AI Review with mock and OpenAI-compatible model settings, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
+- AI Review with mock and OpenAI-compatible model settings, Model Access Workflow, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
@@ -54,7 +54,9 @@ Risk Audit explains deterministic trigger facts and links source context for cou
 
 ![Risk Audit with source-linked issue cards](docs/assets/screenshots/risk-audit-source-links.jpg)
 
-AI Review keeps model output as draft audit preparation and records local run receipts with payload and response hashes.
+AI Review keeps model output as draft audit preparation, shows a Model Access Workflow for setup/run/human-review status, and records local run receipts with payload and response hashes.
+
+![AI Review Model Access Workflow](docs/assets/screenshots/model-access-workflow.png)
 
 ![AI Review Model Connection Readiness](docs/assets/screenshots/ai-review-connection-readiness.png)
 
@@ -80,7 +82,7 @@ LexProof uses a controlled BYOM/BYOK model workflow:
 2. Record AI event intake entries for model outputs that need audit tracking. AI Review runs also create a Model Intake event automatically. Each event receives a deterministic SHA-256 hash, reviewer, and editable review status.
 3. Open **AI Review** and use the built-in mock reviewer for demos, or choose the OpenAI-compatible provider.
 4. Enter a base URL, model name, and API key. In this first-stage SPA, the API key is kept in browser state and is not persisted to `localStorage`.
-5. Check **Model Connection Readiness**. It shows whether the mock reviewer is ready, whether live OpenAI-compatible settings are incomplete, or whether the Redaction Gate blocks the run.
+5. Check **Model Access Workflow** and **Model Connection Readiness**. The workflow shows Model Intake, provider setup, Redaction Gate, model run, and human-review/export status. Readiness shows whether the mock reviewer is ready, whether live OpenAI-compatible settings are incomplete, or whether the Redaction Gate blocks the run.
 6. Review the **Redaction Gate** payload summary before running the model.
 7. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
 8. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt. The same run is also recorded in **Model Intake** as a needs-review AI event.
@@ -94,7 +96,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
-5. Open **AI Review** to inspect Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
+5. Open **AI Review** to inspect Model Access Workflow, Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.
 7. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 8. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.

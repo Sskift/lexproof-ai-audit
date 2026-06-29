@@ -49,7 +49,7 @@ Implemented:
 - Custom Project Workspace with localStorage persistence.
 - Audit Wizard for project facts and handoff readiness.
 - Model Intake with provider/model purpose, endpoint type, allowed data classes, human-review owner, readiness checklist, and hashed AI event records.
-- AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
+- AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, Model Access Workflow, evidence preview redaction, and missing evidence checklist.
 - Model Connection Readiness in AI Review that combines session model settings with Redaction Gate blockers before a run.
 - Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
@@ -177,6 +177,7 @@ The platform lets users connect models only through a controlled workflow.
 Recommended architecture:
 
 - `src/lib/modelProvider.ts` keeps provider config, OpenAI-compatible request construction, and deterministic mock provider behavior.
+- `src/lib/modelAccessWorkflow.ts` turns Model Intake, provider settings, Redaction Gate readiness, run receipts, and human-review state into a visible setup/run/export workflow.
 - `src/lib/modelConnectionReadiness.ts` summarizes mock/live configuration status and Redaction Gate blockers without testing or storing credentials.
 - `src/lib/modelIntake.ts` validates model purpose, blocked data classes, human-review owner, AI Review run-to-event conversion, AI event hashes, and downloadable Model Intake JSON.
 - `src/lib/modelReviewLedger.ts` creates local model-run receipts with payload and response SHA-256 hashes and JSON export without credentials.
@@ -195,6 +196,7 @@ Rules:
 - Let reviewers mark AI events as reviewed or rejected before external reliance.
 - Include Model Intake readiness and AI event hashes in Counsel Pack handoff materials, and let teams download a standalone Model Intake JSON audit trail.
 - Show a review payload before model call.
+- Show the model access workflow before model call so users know whether they still need Model Intake, provider settings, redaction cleanup, a model run, or human review.
 - Show model connection readiness before model call.
 - Mark all model output as AI-assisted draft.
 - Keep deterministic audit scoring separate from model response.
@@ -207,6 +209,7 @@ Rules:
 - Current workspace features.
 - Model Intake profile, editable AI event hash ledger, and standalone Model Intake JSON export.
 - AI Review with mock/OpenAI-compatible provider.
+- Model Access Workflow for setup, run, human-review, and export status.
 - Model Connection Readiness for mock, live OpenAI-compatible settings, and Redaction Gate blockers.
 - Redaction Gate before model calls.
 - AI Review Run Ledger with payload/response hash receipts.

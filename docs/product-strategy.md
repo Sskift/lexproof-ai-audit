@@ -49,9 +49,12 @@ Implemented:
 - Custom Project Workspace with localStorage persistence.
 - Audit Wizard for project facts and handoff readiness.
 - AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
+- Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
+- Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`.
 - Editable Evidence Ledger with owner, status, source, and content fields.
 - Evidence Manifest with per-item hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
+- Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
 - Counsel Pack Markdown generation and download in `src/lib/counselPack.ts`.
 - Source references, remediation queue, and non-advice copy.
 - Tests for core hashing, validation, counsel-pack content, download helper, and UI workflow.
@@ -102,7 +105,7 @@ The expected mature product is a review operating system for legal/compliance re
 ### Must-Have Before Final Hackathon Submission
 
 - Screenshot-backed README section.
-- Better demo script and screenshots in docs.
+- Screenshot-backed docs section.
 - Clear pitch section: problem, users, workflow, why now, why BLI.
 - Evidence templates for at least three high-value scenarios:
   - tokenized yield / RWA issuance
@@ -115,9 +118,7 @@ The expected mature product is a review operating system for legal/compliance re
 - Source-linked issue cards with “why this flag triggered.”
 - Missing evidence checklist per risk flag.
 - AI-generated but user-editable counsel questions.
-- Redaction gate before model calls.
-- Simulated chain anchor receipt that clearly says “not a real on-chain write.”
-- Jurisdiction pack architecture, starting with US / EU / UK as checklists rather than legal conclusions.
+- Deeper jurisdiction pack architecture beyond first-stage US / EU / UK checklist prompts.
 
 ### Production-Grade Later
 
@@ -197,18 +198,21 @@ Rules:
 
 - Current workspace features.
 - AI Review with mock/OpenAI-compatible provider.
+- Redaction Gate before model calls.
 - Manifest JSON export.
+- Simulated anchor receipt export.
+- First-stage US/EU/UK jurisdiction checklist.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.
 
 ### Phase 2: Credible Professional Prototype
 
-- Jurisdiction checklists.
 - Missing evidence workflows.
 - Counsel review statuses.
 - PDF export.
 - File hashing and metadata extraction.
-- Redaction gate before model calls.
+- User-editable AI counsel questions.
+- Deeper jurisdiction packs with policy controls and local-counsel routing.
 
 ### Phase 3: Real Compliance Workspace
 

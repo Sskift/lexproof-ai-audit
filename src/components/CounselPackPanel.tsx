@@ -1,5 +1,11 @@
-import { CheckCircle2, Download, FileText } from "lucide-react";
+import { useState } from "react";
+import { Anchor, CheckCircle2, Download, FileText } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
+import {
+  createSimulatedAnchorReceipt,
+  downloadAnchorReceiptJson,
+  type SimulatedAnchorReceipt
+} from "../lib/anchorReceipt";
 import { downloadMarkdownFile } from "../lib/counselPack";
 import type { SubmissionFit } from "../lib/auditEngine";
 import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
@@ -12,6 +18,15 @@ type CounselPackPanelProps = {
 };
 
 export function CounselPackPanel({ projectName, fit, manifest, markdown }: CounselPackPanelProps) {
+  const [receipt, setReceipt] = useState<SimulatedAnchorReceipt | null>(null);
+
+  const createReceipt = () => {
+    if (!manifest) {
+      return;
+    }
+    setReceipt(createSimulatedAnchorReceipt(manifest, "ethereum-sepolia"));
+  };
+
   return (
     <section className="panel stage-panel">
       <SectionHeader
@@ -48,11 +63,49 @@ export function CounselPackPanel({ projectName, fit, manifest, markdown }: Couns
             <Download size={16} aria-hidden="true" />
             Download Manifest JSON
           </button>
+          <button type="button" className="secondary" disabled={!manifest} onClick={createReceipt}>
+            <Anchor size={16} aria-hidden="true" />
+            {!manifest ? "Calculating Anchor Receipt" : receipt ? "Refresh Receipt" : "Create Simulated Anchor Receipt"}
+          </button>
         </div>
       </div>
 
+      {receipt ? (
+        <section className="anchor-receipt">
+          <div className="panel-title compact-title">
+            <Anchor size={17} aria-hidden="true" />
+            <h3>Simulated Anchor Receipt</h3>
+          </div>
+          <div className="receipt-grid">
+            <ReceiptFact label="Mode" value={receipt.mode} />
+            <ReceiptFact label="Status" value={receipt.status} />
+            <ReceiptFact label="Network" value={receipt.network} />
+            <ReceiptFact label="Receipt ID" value={receipt.receiptId} />
+            <ReceiptFact label="Bundle hash" value={receipt.bundleHash} wide />
+          </div>
+          <p>{receipt.disclaimer}</p>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => downloadAnchorReceiptJson(`${slug(projectName)}-anchor-receipt.json`, receipt)}
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Receipt JSON
+          </button>
+        </section>
+      ) : null}
+
       <pre className="memo">{markdown}</pre>
     </section>
+  );
+}
+
+function ReceiptFact({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return (
+    <div className={wide ? "wide" : ""}>
+      <span>{label}</span>
+      <code>{value}</code>
+    </div>
   );
 }
 

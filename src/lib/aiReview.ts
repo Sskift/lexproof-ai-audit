@@ -40,6 +40,28 @@ export type AIReviewPayload = {
   missingEvidenceChecklist: MissingEvidenceItem[];
 };
 
+export type RedactionFinding = {
+  evidenceLabel: string;
+  category: "private-key-like value" | "secret phrase reference" | "raw KYC reference" | "personal-data reference";
+  severity: "block" | "warn";
+  matchCount: number;
+  message: string;
+};
+
+export type RedactionReport = {
+  status: "clean" | "needs-review" | "blocked";
+  boundary: "Not legal advice. Inspect evidence summaries before sending them to any model.";
+  findings: RedactionFinding[];
+  evidencePreview: Array<{
+    label: string;
+    kind: string;
+    status: string;
+    owner: string;
+    contentPreview: string;
+    redactionCount: number;
+  }>;
+};
+
 export type AIReviewResult = {
   extractedFacts: string[];
   missingEvidence: string[];
@@ -191,6 +213,29 @@ export function buildAIReviewPayload(project: ProjectProfile, audit: AuditResult
   };
 }
 
+export function createRedactionReport(evidenceItems: EvidenceItem[]): RedactionReport {
+  const findings = evidenceItems.flatMap((item) => createRedactionFindings(item));
+  const hasBlocker = findings.some((finding) => finding.severity === "block");
+  const hasWarning = findings.some((finding) => finding.severity === "warn");
+
+  return {
+    status: hasBlocker ? "blocked" : hasWarning ? "needs-review" : "clean",
+    boundary: "Not legal advice. Inspect evidence summaries before sending them to any model.",
+    findings,
+    evidencePreview: evidenceItems.map((item) => {
+      const contentPreview = createEvidencePreview(item.content);
+      return {
+        label: item.label,
+        kind: item.kind,
+        status: item.status ?? "draft",
+        owner: item.owner ?? "Founder",
+        contentPreview,
+        redactionCount: countRedactions(contentPreview)
+      };
+    })
+  };
+}
+
 export async function runAIReview(
   project: ProjectProfile,
   audit: AuditResult,
@@ -225,10 +270,56 @@ function createEvidencePreview(content: string): string {
   return redactSensitiveContent(content).slice(0, 280);
 }
 
-function redactSensitiveContent(content: string): string {
+export function redactSensitiveContent(content: string): string {
   return content
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
+    .replace(/\b(raw\s+kyc|passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]")
     .replace(/\b(seed phrase|mnemonic|private key)\b/gi, "[redacted-secret]");
+}
+
+function createRedactionFindings(item: EvidenceItem): RedactionFinding[] {
+  const findings: RedactionFinding[] = [];
+
+  addFinding(findings, item, /0x[a-fA-F0-9]{64}/g, "private-key-like value", "block", "Private-key-like material must be removed before model review.");
+  addFinding(findings, item, /\b(seed phrase|mnemonic|private key)\b/gi, "secret phrase reference", "block", "Secret phrase references must be removed before model review.");
+  addFinding(findings, item, /\b(raw\s+kyc|kyc)\b/gi, "raw KYC reference", "warn", "KYC references need human review and should not expose raw files to a model.");
+  addFinding(
+    findings,
+    item,
+    /\b(passport\s+number|social security number|ssn|personal data)\b/gi,
+    "personal-data reference",
+    "warn",
+    "Personal-data references need redaction or confirmation before model review."
+  );
+
+  return findings;
+}
+
+function addFinding(
+  findings: RedactionFinding[],
+  item: EvidenceItem,
+  pattern: RegExp,
+  category: RedactionFinding["category"],
+  severity: RedactionFinding["severity"],
+  message: string
+): void {
+  const context = `${item.label} ${item.kind} ${item.content}`;
+  const matches = context.match(pattern);
+  if (!matches?.length) {
+    return;
+  }
+
+  findings.push({
+    evidenceLabel: item.label,
+    category,
+    severity,
+    matchCount: matches.length,
+    message
+  });
+}
+
+function countRedactions(content: string): number {
+  return (content.match(/\[redacted-[^\]]+\]/g) ?? []).length;
 }
 
 function isRequirementCovered(requirement: EvidenceRequirement, evidenceItems: EvidenceItem[]): boolean {

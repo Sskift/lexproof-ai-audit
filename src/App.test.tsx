@@ -15,6 +15,7 @@ describe("App", () => {
     expect(screen.getAllByText(/BLI Legal Tech Hackathon 2/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Risk Audit/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/AI Review/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Jurisdiction Checklist/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Evidence Ledger/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Counsel Pack/i).length).toBeGreaterThan(0);
 
@@ -58,11 +59,27 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+
+    expect(screen.getByText(/Redaction Gate/i)).toBeInTheDocument();
+    expect(screen.getByText(/Review model payload/i)).toBeInTheDocument();
+    expect(screen.getByText(/Needs review/i)).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
 
     expect(await screen.findByText(/AI-assisted draft/i)).toBeInTheDocument();
     expect(screen.getByText(/Missing Evidence Checklist/i)).toBeInTheDocument();
     expect(screen.getByText(/Signer control policy/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows jurisdiction-specific audit preparation checklist items", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Jurisdiction Checklist/i }));
+
+    expect(screen.getByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    expect(screen.getByText(/US offering and asset classification review/i)).toBeInTheDocument();
+    expect(screen.getByText(/EU crypto-asset disclosure readiness review/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 
@@ -72,5 +89,16 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
 
     expect(await screen.findByRole("button", { name: /Download Manifest JSON/i })).toBeInTheDocument();
+  });
+
+  it("creates a simulated anchor receipt from the Counsel Pack without real chain write claims", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Create Simulated Anchor Receipt/i }));
+
+    expect(await screen.findByText(/Simulated Anchor Receipt/i)).toBeInTheDocument();
+    expect(screen.getByText(/not a real on-chain write/i)).toBeInTheDocument();
+    expect(screen.getByText(/not-submitted/i)).toBeInTheDocument();
   });
 });

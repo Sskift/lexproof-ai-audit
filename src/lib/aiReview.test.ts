@@ -3,6 +3,7 @@ import { analyzeAuditProfile } from "./auditEngine";
 import {
   buildAIReviewPayload,
   createMissingEvidenceChecklist,
+  createRedactionReport,
   parseAIReviewJson,
   runAIReview,
   type AIReviewResult
@@ -68,6 +69,43 @@ describe("buildAIReviewPayload", () => {
     expect(payload.evidenceSummaries[1].contentPreview).toContain("[redacted-private-key]");
     expect(payload.evidenceSummaries[1].contentPreview).not.toContain("0xaaaaaaaa");
     expect(payload.instructions).toContain("Return JSON only");
+  });
+});
+
+describe("createRedactionReport", () => {
+  it("blocks model calls when evidence includes private-key-like material and removes it from previews", () => {
+    const report = createRedactionReport(project.evidenceItems);
+
+    expect(report.status).toBe("blocked");
+    expect(report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          evidenceLabel: "Sensitive draft",
+          category: "private-key-like value",
+          severity: "block"
+        })
+      ])
+    );
+    expect(report.evidencePreview.find((item) => item.label === "Sensitive draft")?.contentPreview).toContain(
+      "[redacted-private-key]"
+    );
+    expect(JSON.stringify(report)).not.toContain("0xaaaaaaaa");
+  });
+
+  it("marks KYC and personal-data references for review before sending evidence to a model", () => {
+    const report = createRedactionReport([
+      {
+        label: "KYC export",
+        kind: "CSV",
+        content: "Raw KYC packet with passport number and investor personal data",
+        status: "draft",
+        owner: "Compliance"
+      }
+    ]);
+
+    expect(report.status).toBe("needs-review");
+    expect(report.findings.map((item) => item.category)).toEqual(expect.arrayContaining(["raw KYC reference"]));
+    expect(report.boundary).toContain("Not legal advice");
   });
 });
 

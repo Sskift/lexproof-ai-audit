@@ -1,13 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BookOpen, Bot, ClipboardList, DatabaseZap, FileText, Github, Link2, Scale, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  BookOpen,
+  Bot,
+  ClipboardList,
+  DatabaseZap,
+  FileText,
+  Github,
+  Globe2,
+  Link2,
+  Scale,
+  ShieldCheck
+} from "lucide-react";
 import { AIReviewPanel } from "./components/AIReviewPanel";
 import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
+import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
-import { runAIReview, type AIReviewResult } from "./lib/aiReview";
+import { createRedactionReport, runAIReview, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import {
@@ -18,7 +31,7 @@ import {
 } from "./lib/modelProvider";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 
-type TabId = "wizard" | "ai" | "risk" | "evidence" | "counsel" | "sources";
+type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
 const STORAGE_KEY = "lexproof.currentProject.v1";
 const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
@@ -26,6 +39,7 @@ const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
+  { id: "jurisdiction", label: "Jurisdiction Checklist", icon: Globe2 },
   { id: "risk", label: "Risk Audit", icon: ShieldCheck },
   { id: "evidence", label: "Evidence Ledger", icon: DatabaseZap },
   { id: "counsel", label: "Counsel Pack", icon: FileText },
@@ -152,6 +166,13 @@ export default function App() {
 
   const handleRunAIReview = async () => {
     setAIReviewError("");
+    const redactionReport = createRedactionReport(project.evidenceItems);
+    if (redactionReport.status === "blocked") {
+      setAIReviewStatus("error");
+      setAIReviewError("Redaction Gate blocked this model call. Remove secrets or raw private-key material before running review.");
+      return;
+    }
+
     if (!modelSettingsValidation.valid) {
       setAIReviewStatus("error");
       setAIReviewError(modelSettingsValidation.errors.join(" "));
@@ -237,6 +258,7 @@ export default function App() {
               onRunReview={handleRunAIReview}
             />
           ) : null}
+          {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
           {activeTab === "risk" ? <RiskAuditPanel audit={audit} /> : null}
           {activeTab === "evidence" ? (
             <EvidenceLedger

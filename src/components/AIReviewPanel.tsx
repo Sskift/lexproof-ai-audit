@@ -1,7 +1,7 @@
-import { Bot, ClipboardCheck, Sparkles } from "lucide-react";
+import { Bot, ClipboardCheck, ShieldAlert, Sparkles } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { ModelSettingsPanel } from "./ModelSettingsPanel";
-import { createMissingEvidenceChecklist, type AIReviewResult } from "../lib/aiReview";
+import { createMissingEvidenceChecklist, createRedactionReport, type AIReviewResult } from "../lib/aiReview";
 import type { AuditResult } from "../lib/auditEngine";
 import type { ModelSettings, ModelSettingsValidation } from "../lib/modelProvider";
 import type { ProjectProfile } from "../lib/projectModel";
@@ -30,6 +30,8 @@ export function AIReviewPanel({
   onRunReview
 }: AIReviewPanelProps) {
   const checklist = createMissingEvidenceChecklist(audit, project.evidenceItems);
+  const redactionReport = createRedactionReport(project.evidenceItems);
+  const redactionBlocked = redactionReport.status === "blocked";
 
   return (
     <section className="panel stage-panel">
@@ -46,11 +48,50 @@ export function AIReviewPanel({
 
       <ModelSettingsPanel settings={settings} validation={settingsValidation} onChange={onSettingsChange} />
 
+      <section className={`review-section redaction-gate ${redactionReport.status}`}>
+        <div className="panel-title compact-title">
+          <ShieldAlert size={17} aria-hidden="true" />
+          <h3>Redaction Gate</h3>
+        </div>
+        <div className="redaction-summary">
+          <div>
+            <span>Review model payload</span>
+            <strong>{statusLabel(redactionReport.status)}</strong>
+          </div>
+          <p>{redactionReport.boundary}</p>
+        </div>
+        <div className="redaction-preview-grid">
+          {redactionReport.evidencePreview.length === 0 ? (
+            <p className="empty-state">No evidence summaries will be sent to the model.</p>
+          ) : null}
+          {redactionReport.evidencePreview.map((item) => (
+            <article key={`${item.label}-${item.kind}`} className="redaction-preview">
+              <strong>{item.label}</strong>
+              <small>
+                {item.kind} · {item.status} · {item.owner} · redactions {item.redactionCount}
+              </small>
+              <p>{item.contentPreview || "No evidence content preview."}</p>
+            </article>
+          ))}
+        </div>
+        {redactionReport.findings.length > 0 ? (
+          <ul className="redaction-findings">
+            {redactionReport.findings.map((finding) => (
+              <li key={`${finding.evidenceLabel}-${finding.category}`}>
+                <strong>{finding.severity === "block" ? "Block" : "Review"}:</strong> {finding.evidenceLabel} ·{" "}
+                {finding.category} · {finding.message}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
       <div className="review-actions">
-        <button type="button" disabled={status === "running"} onClick={onRunReview}>
+        <button type="button" disabled={status === "running" || redactionBlocked} onClick={onRunReview}>
           <Sparkles size={16} aria-hidden="true" />
           {status === "running" ? "Running AI Review" : "Run AI Review"}
         </button>
+        {redactionBlocked ? <span className="error-text">Redaction Gate blocked this model call.</span> : null}
         {error ? <span className="error-text">{error}</span> : null}
       </div>
 
@@ -89,6 +130,16 @@ export function AIReviewPanel({
       ) : null}
     </section>
   );
+}
+
+function statusLabel(status: string): string {
+  if (status === "blocked") {
+    return "Blocked";
+  }
+  if (status === "needs-review") {
+    return "Needs review";
+  }
+  return "Clean";
 }
 
 function ReviewList({ title, items }: { title: string; items: string[] }) {

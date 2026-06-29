@@ -20,24 +20,40 @@ Key evidence:
 - Custom Project Workspace for creating a local audit project from zero or loading synthetic samples.
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
 - AI Review with mock and OpenAI-compatible model settings for audit-prep extraction, draft questions, and missing evidence suggestions.
+- Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
+- Jurisdiction Checklist for US, EU, and UK audit-prep prompts without legal conclusions.
 - Weighted legal/compliance risk audit with explicit flags and owner assignments.
 - Editable Evidence Ledger with evidence status, owner, source notes, item hashes, and manifest bundle hash.
 - Evidence Manifest generator with deterministic SHA-256 item hashes, bundle hash, and JSON download.
+- Simulated Anchor Receipt for the manifest bundle hash. It is explicitly not a real on-chain write.
 - Counsel Pack Markdown download with non-advice disclaimer, project facts, risk posture, manifest hash, source pack, and remediation queue.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
-- Responsive React workbench with tabs for Audit Wizard, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+- Responsive React workbench with tabs for Audit Wizard, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+
+## How Users Connect Models
+
+LexProof uses a controlled BYOM/BYOK model workflow:
+
+1. Open **AI Review**.
+2. Use the built-in mock reviewer for demos, or choose the OpenAI-compatible provider.
+3. Enter a base URL, model name, and API key. In this first-stage SPA, the API key is kept in browser state and is not persisted to `localStorage`.
+4. Review the **Redaction Gate** payload summary before running the model.
+5. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
+
+Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review.
 
 ## First-Stage Workflow
 
 1. Open the app and click **New project**, or load one of the synthetic sample profiles.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
-4. Open **AI Review** to run the mock reviewer or configure an OpenAI-compatible model. AI output is draft audit preparation, not legal advice.
-5. Open **Risk Audit** to see current risk level, weighted flags, and remediation owners.
-6. Add or edit records in **Evidence Ledger**. The manifest updates with per-item hashes and a bundle SHA-256.
-7. Open **Counsel Pack** and download the Markdown audit-prep packet or manifest JSON for counsel/compliance review.
+4. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice.
+5. Open **Jurisdiction Checklist** to see US/EU/UK preparation prompts for counsel review.
+6. Open **Risk Audit** to see current risk level, weighted flags, and remediation owners.
+7. Add or edit records in **Evidence Ledger**. The manifest updates with per-item hashes and a bundle SHA-256.
+8. Open **Counsel Pack** and download the Markdown audit-prep packet, manifest JSON, or a simulated anchor receipt JSON for counsel/compliance review.
 
-Workspace data is stored locally in browser `localStorage`. The MVP does not upload evidence by default, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted.
+Workspace data is stored locally in browser `localStorage`. The MVP does not upload evidence by default, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 
@@ -69,9 +85,10 @@ The dev server defaults to `http://127.0.0.1:5173`.
 ## Submission Assets
 
 - Public GitHub repository: this repo
-- Demo video: record the app flow through the five tabs
+- Demo video: record the app flow through project creation, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, and Counsel Pack
 - DoraHacks BUIDL submission: use the generated Counsel Pack and README summary
 - Source pack: see [docs/research.md](docs/research.md)
+- Demo script: see [docs/demo-script.md](docs/demo-script.md)
 
 ## Sources
 

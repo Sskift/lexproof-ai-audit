@@ -52,6 +52,7 @@ Workspace data is stored locally in browser `localStorage`. The MVP does not upl
 - [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, data flow, and extension points.
 - [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.
 - [docs/research.md](docs/research.md): hackathon selection and audit research notes.
+- [docs/product-strategy.md](docs/product-strategy.md): competition fit, product outlook, gaps, and roadmap.
 
 ## Run Locally
 

@@ -25,6 +25,7 @@ lexproof-ai-audit/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
+      modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
       projectModel.ts        # Project/evidence types and validation
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
@@ -54,6 +55,7 @@ sampleProfiles or blank project
   -> createRedactionReport(project.evidenceItems)
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
+  -> create local ModelReviewRun with payload and response hashes
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
   -> buildMarkdownCounselPack(project, audit, manifest)
@@ -134,6 +136,16 @@ Owns model connection boundaries:
 
 API keys are not persisted by the app.
 
+### `src/lib/modelReviewLedger.ts`
+
+Owns model-run audit receipts:
+
+- `runAIReviewWithLedger()` runs a provider, parses the AI review result, and creates a local run receipt.
+- `createModelReviewRun()` records provider label, model name, redaction status, payload hash, response hash, risk flag count, and evidence summary count.
+- `exportModelReviewRunJson()` and `downloadModelReviewRunJson()` export the receipt without raw credentials.
+
+Run receipts support audit preparation and reproducibility. They are not legal conclusions, proof of model correctness, or a substitute for human review.
+
 ### `src/lib/evidenceManifest.ts`
 
 Owns deterministic manifest behavior:
@@ -191,6 +203,7 @@ Components are intentionally presentational and interaction-focused:
 - `AuditWizard` displays the step-by-step audit review.
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
+- AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts and evidence status.
 - `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records.
 - `CounselPackPanel` previews and downloads Markdown output, manifest JSON, and simulated anchor receipt JSON.
@@ -216,6 +229,8 @@ Domain tests live next to the audit engine and cover:
 - AI review payload redaction
 - missing evidence checklist generation
 - mock and OpenAI-compatible model provider behavior
+- model review run payload and response hashing
+- model review run JSON export
 - counsel pack Markdown content
 - Markdown browser download behavior
 - redaction report warnings and blockers
@@ -235,6 +250,7 @@ UI tests cover:
 - manifest bundle hash visibility
 - AI Review mock workflow
 - Redaction Gate visibility
+- AI Review Run Ledger visibility
 - Jurisdiction Checklist tab
 - source-linked Risk Audit trigger explanations
 - evidence template application

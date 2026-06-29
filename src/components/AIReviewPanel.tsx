@@ -1,8 +1,9 @@
-import { Bot, ClipboardCheck, ShieldAlert, Sparkles } from "lucide-react";
+import { Bot, ClipboardCheck, Download, Fingerprint, ShieldAlert, Sparkles } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { ModelSettingsPanel } from "./ModelSettingsPanel";
 import { createMissingEvidenceChecklist, createRedactionReport, type AIReviewResult } from "../lib/aiReview";
 import type { AuditResult } from "../lib/auditEngine";
+import { downloadModelReviewRunJson, type ModelReviewRun } from "../lib/modelReviewLedger";
 import type { ModelSettings, ModelSettingsValidation } from "../lib/modelProvider";
 import type { ProjectProfile } from "../lib/projectModel";
 
@@ -12,6 +13,7 @@ type AIReviewPanelProps = {
   settings: ModelSettings;
   settingsValidation: ModelSettingsValidation;
   result: AIReviewResult | null;
+  reviewRuns: ModelReviewRun[];
   status: "idle" | "running" | "complete" | "error";
   error: string;
   onSettingsChange: (settings: ModelSettings) => void;
@@ -24,6 +26,7 @@ export function AIReviewPanel({
   settings,
   settingsValidation,
   result,
+  reviewRuns,
   status,
   error,
   onSettingsChange,
@@ -128,6 +131,44 @@ export function AIReviewPanel({
           </div>
         </section>
       ) : null}
+
+      <section className="review-section">
+        <div className="panel-title compact-title">
+          <Fingerprint size={17} aria-hidden="true" />
+          <h3>AI Review Run Ledger</h3>
+        </div>
+        <p className="section-note">
+          Local model-run receipts record payload and response hashes for audit preparation. They do not store API keys or raw
+          model credentials.
+        </p>
+        <div className="run-ledger">
+          {reviewRuns.length === 0 ? <p className="empty-state">No model review runs recorded for this project.</p> : null}
+          {reviewRuns.map((run) => (
+            <article key={run.runId} className="run-card">
+              <header>
+                <div>
+                  <strong>{run.providerLabel}</strong>
+                  <span>{run.model}</span>
+                </div>
+                <span className={`redaction-pill ${run.redactionStatus}`}>{statusLabel(run.redactionStatus)}</span>
+              </header>
+              <div className="run-facts">
+                <RunFact label="Payload SHA-256" value={run.payloadHash} />
+                <RunFact label="Response SHA-256" value={run.responseHash} />
+                <RunFact label="Risk flags" value={String(run.riskFlagCount)} />
+                <RunFact label="Evidence summaries" value={String(run.evidenceSummaryCount)} />
+              </div>
+              <small>
+                {run.generatedAt} · {run.boundary}
+              </small>
+              <button type="button" className="secondary" onClick={() => downloadModelReviewRunJson(`${run.runId}.json`, run)}>
+                <Download size={16} aria-hidden="true" />
+                Download Run JSON
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
@@ -153,5 +194,14 @@ function ReviewList({ title, items }: { title: string; items: string[] }) {
         ))}
       </ul>
     </article>
+  );
+}
+
+function RunFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <code>{value}</code>
+    </div>
   );
 }

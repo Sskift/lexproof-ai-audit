@@ -21,6 +21,7 @@ Key evidence:
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
 - AI Review with mock and OpenAI-compatible model settings for audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
+- AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Jurisdiction Checklist for US, EU, and UK audit-prep prompts without legal conclusions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, and “why this flag triggered” issue cards.
 - Editable Evidence Ledger with evidence status, owner, source notes, item hashes, and manifest bundle hash.
@@ -40,6 +41,7 @@ LexProof uses a controlled BYOM/BYOK model workflow:
 3. Enter a base URL, model name, and API key. In this first-stage SPA, the API key is kept in browser state and is not persisted to `localStorage`.
 4. Review the **Redaction Gate** payload summary before running the model.
 5. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
+6. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt.
 
 Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review.
 
@@ -48,13 +50,13 @@ Model output is draft audit preparation only. It does not change deterministic r
 1. Open the app and click **New project**, or load one of the synthetic sample profiles.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
-4. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice.
+4. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt.
 5. Open **Jurisdiction Checklist** to see US/EU/UK preparation prompts for counsel review.
 6. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, and remediation owners.
 7. Add or edit records in **Evidence Ledger**, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
 8. Open **Counsel Pack** and download the Markdown audit-prep packet, manifest JSON, or a simulated anchor receipt JSON for counsel/compliance review.
 
-Workspace data is stored locally in browser `localStorage`. The MVP does not upload evidence by default, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. The MVP does not upload evidence by default, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model run ledger entries store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 

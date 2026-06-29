@@ -6,6 +6,8 @@ import App from "./App";
 describe("App", () => {
   beforeEach(() => {
     window.localStorage?.removeItem?.("lexproof.currentProject.v1");
+    window.localStorage?.removeItem?.("lexproof.modelSettings.v1");
+    window.localStorage?.removeItem?.("lexproof.modelReviewRuns.v1");
   });
 
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
@@ -75,6 +77,10 @@ describe("App", () => {
     expect(await screen.findByText(/AI-assisted draft/i)).toBeInTheDocument();
     expect(screen.getByText(/Missing Evidence Checklist/i)).toBeInTheDocument();
     expect(screen.getByText(/Signer control policy/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI Review Run Ledger/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Payload SHA-256/i)).toBeInTheDocument();
+    expect(screen.getByText(/Response SHA-256/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Mock local reviewer/i).length).toBeGreaterThan(1);
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 

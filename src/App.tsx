@@ -20,10 +20,11 @@ import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPa
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
-import { createRedactionReport, runAIReview, type AIReviewResult } from "./lib/aiReview";
+import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
+import { runAIReviewWithLedger, type ModelReviewRun } from "./lib/modelReviewLedger";
 import {
   createMockModelProvider,
   createOpenAICompatibleModelProvider,
@@ -37,6 +38,7 @@ type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" 
 
 const STORAGE_KEY = "lexproof.currentProject.v1";
 const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
+const MODEL_REVIEW_RUNS_KEY = "lexproof.modelReviewRuns.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
@@ -56,6 +58,7 @@ export default function App() {
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [aiReview, setAIReview] = useState<AIReviewResult | null>(null);
+  const [aiReviewRuns, setAIReviewRuns] = useState<ModelReviewRun[]>(() => loadStoredModelReviewRuns());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
 
@@ -68,6 +71,10 @@ export default function App() {
   );
   const validation = useMemo(() => validateProjectProfile(project), [project]);
   const modelSettingsValidation = useMemo(() => validateModelSettings(modelSettings), [modelSettings]);
+  const currentReviewRuns = useMemo(
+    () => aiReviewRuns.filter((run) => run.projectId === project.id).slice(0, 5),
+    [aiReviewRuns, project.id]
+  );
   const markdown = useMemo(
     () =>
       manifest
@@ -99,6 +106,10 @@ export default function App() {
     const { apiKey: _apiKey, ...nonSecretSettings } = modelSettings;
     safeStorage()?.setItem(MODEL_SETTINGS_KEY, JSON.stringify(nonSecretSettings));
   }, [modelSettings]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(MODEL_REVIEW_RUNS_KEY, JSON.stringify(aiReviewRuns.slice(0, 20)));
+  }, [aiReviewRuns]);
 
   const updateProject = (nextProject: ProjectProfile) => {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
@@ -206,8 +217,12 @@ export default function App() {
     try {
       const provider =
         modelSettings.provider === "mock" ? createMockModelProvider() : createOpenAICompatibleModelProvider(modelSettings);
-      const nextReview = await runAIReview(project, audit, project.evidenceItems, provider);
-      setAIReview(nextReview);
+      const { result, run } = await runAIReviewWithLedger(project, audit, project.evidenceItems, provider, {
+        model: modelSettings.model,
+        redactionStatus: redactionReport.status
+      });
+      setAIReview(result);
+      setAIReviewRuns((current) => [run, ...current].slice(0, 20));
       setAIReviewStatus("complete");
     } catch (error) {
       setAIReviewStatus("error");
@@ -275,6 +290,7 @@ export default function App() {
               settings={modelSettings}
               settingsValidation={modelSettingsValidation}
               result={aiReview}
+              reviewRuns={currentReviewRuns}
               status={aiReviewStatus}
               error={aiReviewError}
               onSettingsChange={setModelSettings}
@@ -485,6 +501,20 @@ function loadStoredModelSettings(): ModelSettings {
   }
 
   return fallback;
+}
+
+function loadStoredModelReviewRuns(): ModelReviewRun[] {
+  const raw = safeStorage()?.getItem(MODEL_REVIEW_RUNS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as ModelReviewRun[];
+    return Array.isArray(parsed) ? parsed.filter((run) => run.runVersion === "lexproof-ai-review-run-v1") : [];
+  } catch {
+    return [];
+  }
 }
 
 function safeStorage(): Storage | null {

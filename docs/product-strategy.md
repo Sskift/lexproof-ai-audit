@@ -50,6 +50,7 @@ Implemented:
 - Audit Wizard for project facts and handoff readiness.
 - AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
 - Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
+- AI Review Run Ledger with local payload/response hash receipts for completed model calls.
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Editable Evidence Ledger with owner, status, source, content fields, and scenario evidence templates.
@@ -77,6 +78,7 @@ The expected mature product is a review operating system for legal/compliance re
    - User can connect OpenAI-compatible or enterprise model providers.
    - AI can extract facts, summarize evidence, detect missing documents, draft issue rationales, and suggest remediation tasks.
    - Model output is always marked as draft and requires human review.
+   - Each completed model run should record provider/model metadata, payload hash, response hash, redaction status, and run time.
    - Raw KYC, private keys, and personal data are blocked or redacted before model calls.
 
 3. **Deterministic Audit Engine**
@@ -169,6 +171,10 @@ Recommended architecture:
   - provider config type
   - OpenAI-compatible request adapter
   - mock provider for tests and demos
+- `src/lib/modelReviewLedger.ts`
+  - local model-run receipts
+  - payload and response SHA-256 hashes
+  - JSON export without credentials
 - `src/lib/aiReview.ts`
   - build prompt payload from project and evidence summaries
   - parse structured JSON output
@@ -187,6 +193,7 @@ Rules:
 - Show a review payload before model call.
 - Mark all model output as AI-assisted draft.
 - Keep deterministic audit scoring separate from model response.
+- Store model-run receipts as hashes and metadata, not raw API keys.
 
 ## Product Roadmap
 
@@ -195,6 +202,7 @@ Rules:
 - Current workspace features.
 - AI Review with mock/OpenAI-compatible provider.
 - Redaction Gate before model calls.
+- AI Review Run Ledger with payload/response hash receipts.
 - Manifest JSON export.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.

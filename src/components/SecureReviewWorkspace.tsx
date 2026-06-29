@@ -7,9 +7,9 @@ type SecureReviewWorkspaceProps = {
   evidenceCount: number;
   auditRiskLevel: AuditResult["riskLevel"];
   modelConnectReceipt: ModelConnectReceipt | null;
-  unresolvedAIEvents: number;
+  humanReviewOpenCount: number;
   manifestHash?: string;
-  onNavigate: (target: "wizard" | "ai" | "model" | "evidence" | "counsel") => void;
+  onNavigate: (target: "wizard" | "ai" | "model" | "review" | "evidence" | "counsel") => void;
 };
 
 export function SecureReviewWorkspace({
@@ -17,13 +17,13 @@ export function SecureReviewWorkspace({
   evidenceCount,
   auditRiskLevel,
   modelConnectReceipt,
-  unresolvedAIEvents,
+  humanReviewOpenCount,
   manifestHash,
   onNavigate
 }: SecureReviewWorkspaceProps) {
   const modelReady = modelConnectReceipt?.status === "ready";
   const manifestReady = Boolean(manifestHash);
-  const reviewReady = unresolvedAIEvents === 0;
+  const reviewReady = humanReviewOpenCount === 0;
 
   return (
     <section className="secure-workspace-panel" aria-label="Secure Review Workspace">
@@ -68,9 +68,9 @@ export function SecureReviewWorkspace({
           icon={UserCheck}
           title="Human Review"
           status={reviewReady ? "ready" : "needs-review"}
-          detail={reviewReady ? "No unresolved AI event reviews." : `${unresolvedAIEvents} AI event reviews need human attention.`}
-          actionLabel="Review AI events"
-          onAction={() => onNavigate("model")}
+          detail={reviewReady ? "No open review decisions." : `${humanReviewOpenCount} review decisions need human attention.`}
+          actionLabel="Open queue"
+          onAction={() => onNavigate("review")}
         />
         <WorkflowStep
           icon={FileText}

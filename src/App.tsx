@@ -10,12 +10,14 @@ import {
   Globe2,
   Link2,
   Scale,
-  ShieldCheck
+  ShieldCheck,
+  UserCheck
 } from "lucide-react";
 import { AIReviewPanel } from "./components/AIReviewPanel";
 import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
+import { HumanReviewPanel } from "./components/HumanReviewPanel";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
 import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
@@ -45,6 +47,16 @@ import {
 } from "./lib/evidenceAuditTrail";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
+import {
+  createHumanReviewDecision,
+  createHumanReviewQueue,
+  humanReviewStatusToAIEventStatus,
+  humanReviewStatusToCounselReviewStatus,
+  humanReviewStatusToEvidenceStatus,
+  type HumanReviewDecision,
+  type HumanReviewDecisionUpdate,
+  type HumanReviewQueueItem
+} from "./lib/humanReviewWorkflow";
 import { createEvidenceRequestFromRequirement } from "./lib/missingEvidenceWorkflow";
 import { runAIReviewWithLedger, type ModelReviewRun } from "./lib/modelReviewLedger";
 import {
@@ -70,7 +82,7 @@ import {
   type RiskEvidenceRequirement
 } from "./lib/riskEvidence";
 
-type TabId = "wizard" | "ai" | "model" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
+type TabId = "wizard" | "ai" | "model" | "review" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
 const STORAGE_KEY = "lexproof.currentProject.v1";
 const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
@@ -80,11 +92,13 @@ const MODEL_INTAKE_EVENTS_KEY = "lexproof.modelIntakeEvents.v1";
 const COUNSEL_QUESTIONS_KEY = "lexproof.counselQuestions.v1";
 const COUNSEL_REVIEWS_KEY = "lexproof.counselReviews.v1";
 const EVIDENCE_AUDIT_TRAIL_KEY = "lexproof.evidenceAuditTrail.v1";
+const HUMAN_REVIEW_DECISIONS_KEY = "lexproof.humanReviewDecisions.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
   { id: "model", label: "Model Intake", icon: Bot },
+  { id: "review", label: "Human Review", icon: UserCheck },
   { id: "jurisdiction", label: "Jurisdiction Checklist", icon: Globe2 },
   { id: "risk", label: "Risk Audit", icon: ShieldCheck },
   { id: "evidence", label: "Evidence Ledger", icon: DatabaseZap },
@@ -108,6 +122,7 @@ export default function App() {
   const [counselQuestions, setCounselQuestions] = useState<CounselQuestion[]>(() => loadStoredCounselQuestions());
   const [counselReviews, setCounselReviews] = useState<CounselReviewItem[]>(() => loadStoredCounselReviews());
   const [evidenceAuditEvents, setEvidenceAuditEvents] = useState<EvidenceAuditEvent[]>(() => loadStoredEvidenceAuditEvents());
+  const [humanReviewDecisions, setHumanReviewDecisions] = useState<HumanReviewDecision[]>(() => loadStoredHumanReviewDecisions());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
 
@@ -137,6 +152,21 @@ export default function App() {
   const currentEvidenceAuditEvents = useMemo(
     () => evidenceAuditEvents.filter((event) => event.projectId === project.id),
     [evidenceAuditEvents, project.id]
+  );
+  const currentHumanReviewDecisions = useMemo(
+    () => humanReviewDecisions.filter((decision) => decision.projectId === project.id),
+    [humanReviewDecisions, project.id]
+  );
+  const humanReviewQueue = useMemo(
+    () =>
+      createHumanReviewQueue({
+        projectId: project.id,
+        counselReviews: currentCounselReviews,
+        evidenceItems: project.evidenceItems,
+        aiEvents: currentAIEvents,
+        decisions: currentHumanReviewDecisions
+      }),
+    [currentAIEvents, currentCounselReviews, currentHumanReviewDecisions, project.evidenceItems, project.id]
   );
   const markdown = useMemo(
     () => {
@@ -243,6 +273,10 @@ export default function App() {
   useEffect(() => {
     safeStorage()?.setItem(EVIDENCE_AUDIT_TRAIL_KEY, JSON.stringify(evidenceAuditEvents.slice(0, 120)));
   }, [evidenceAuditEvents]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(HUMAN_REVIEW_DECISIONS_KEY, JSON.stringify(humanReviewDecisions.slice(0, 120)));
+  }, [humanReviewDecisions]);
 
   const updateProject = (nextProject: ProjectProfile) => {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
@@ -456,6 +490,35 @@ export default function App() {
     setAIEvents((current) => current.map((event) => (event.id === id ? applyAIEventReviewUpdate(event, updates) : event)));
   };
 
+  const saveHumanReviewDecision = (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => {
+    const decision = createHumanReviewDecision(item, update);
+    setHumanReviewDecisions((current) => [decision, ...current.filter((record) => record.id !== decision.id)].slice(0, 120));
+
+    if (item.targetType === "ai-event") {
+      updateAIEvent(item.targetId, {
+        reviewStatus: humanReviewStatusToAIEventStatus(decision.status),
+        humanReviewer: decision.reviewer
+      });
+      return;
+    }
+
+    if (item.targetType === "risk-flag") {
+      updateCounselReview(item.sourceId, {
+        status: humanReviewStatusToCounselReviewStatus(decision.status),
+        reviewer: decision.reviewer,
+        reviewerNote: decision.decisionNote
+      });
+      return;
+    }
+
+    const evidenceIndex = project.evidenceItems.findIndex((evidenceItem, index) => (evidenceItem.id ?? `evidence-${index + 1}`) === item.targetId);
+    if (evidenceIndex >= 0) {
+      updateEvidence(evidenceIndex, {
+        status: humanReviewStatusToEvidenceStatus(decision.status)
+      });
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -496,7 +559,7 @@ export default function App() {
             evidenceCount={project.evidenceItems.length}
             auditRiskLevel={audit.riskLevel}
             modelConnectReceipt={modelConnectReceipt}
-            unresolvedAIEvents={modelIntakeSummary?.unresolvedEventCount ?? currentAIEvents.length}
+            humanReviewOpenCount={humanReviewQueue.summary.openCount + humanReviewQueue.summary.blockedCount}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />
@@ -546,6 +609,7 @@ export default function App() {
               onUpdateEvent={updateAIEvent}
             />
           ) : null}
+          {activeTab === "review" ? <HumanReviewPanel queue={humanReviewQueue} onSaveDecision={saveHumanReviewDecision} /> : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
           {activeTab === "risk" ? (
             <RiskAuditPanel
@@ -939,6 +1003,26 @@ function loadStoredEvidenceAuditEvents(): EvidenceAuditEvent[] {
     const parsed = JSON.parse(raw) as EvidenceAuditEvent[];
     return Array.isArray(parsed)
       ? parsed.filter((event) => event.eventVersion === "lexproof-evidence-audit-event-v1" && typeof event.projectId === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadStoredHumanReviewDecisions(): HumanReviewDecision[] {
+  const raw = safeStorage()?.getItem(HUMAN_REVIEW_DECISIONS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as HumanReviewDecision[];
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (decision) =>
+            decision.decisionVersion === "lexproof-human-review-decision-v1" &&
+            decision.notLegalAdviceBoundary === "Not legal advice. Human review decisions track audit preparation workflow status only."
+        )
       : [];
   } catch {
     return [];

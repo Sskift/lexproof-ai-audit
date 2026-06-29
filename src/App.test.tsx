@@ -13,6 +13,7 @@ describe("App", () => {
     window.localStorage?.removeItem?.("lexproof.counselQuestions.v1");
     window.localStorage?.removeItem?.("lexproof.counselReviews.v1");
     window.localStorage?.removeItem?.("lexproof.evidenceAuditTrail.v1");
+    window.localStorage?.removeItem?.("lexproof.humanReviewDecisions.v1");
   });
 
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
@@ -196,7 +197,7 @@ describe("App", () => {
     expect(screen.getByText(/Run AI Review to create draft audit-prep output/i)).toBeInTheDocument();
     expect(screen.getByText(/Model Connection Readiness/i)).toBeInTheDocument();
     expect(screen.getByText(/Mock local reviewer ready/i)).toBeInTheDocument();
-    expect(screen.getByText(/Needs review/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Needs review/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
 
@@ -221,6 +222,38 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText(/Reviewer for AI event 1/i), { target: { value: "Outside counsel" } });
 
     expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
+  });
+
+  it("routes AI review output through the Human Review workflow before Model Intake reliance", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
+
+    expect(await screen.findByText(/Payload SHA-256/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+
+    expect(await screen.findByRole("heading", { name: /^Human Review$/i })).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Human review decisions track audit preparation workflow status only./i)).toBeInTheDocument();
+    expect(screen.getByText(/AI Review run/i)).toBeInTheDocument();
+    expect(screen.getByText(/draft counsel questions/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status for AI Review run/i), { target: { value: "reviewed" } });
+    fireEvent.change(screen.getByLabelText(/Reviewer for AI Review run/i), { target: { value: "Outside counsel" } });
+    fireEvent.change(screen.getByLabelText(/Decision note for AI Review run/i), {
+      target: { value: "Reviewed AI output for audit-prep handoff." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save decision for AI Review run/i }));
+
+    expect(await screen.findByText(/Human review decision saved for AI Review run/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reviewed items/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Model Intake/i }));
+
+    expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Review status for AI event 1/i)).toHaveValue("reviewed");
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
   });
 

@@ -600,6 +600,92 @@ textarea {
   line-height: 1.45;
 }
 
+.human-review-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.human-review-summary div {
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 12px;
+}
+
+.human-review-summary span,
+.human-review-summary strong {
+  display: block;
+}
+
+.human-review-summary span {
+  color: #53616f;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.human-review-summary strong {
+  color: #172431;
+  font-size: 1.35rem;
+  margin-top: 4px;
+}
+
+.human-review-queue {
+  display: grid;
+  gap: 12px;
+}
+
+.human-review-card {
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.human-review-card.reviewed {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.human-review-card.needs-more-evidence,
+.human-review-card.in-review {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.human-review-card.rejected {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.human-review-card header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.human-review-card header strong,
+.human-review-card header small {
+  display: block;
+}
+
+.human-review-card header small {
+  color: #53616f;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+.human-review-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.7fr) minmax(180px, 1fr) minmax(240px, 1.3fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
 .compact-title {
   margin-bottom: 12px;
 }
@@ -2301,6 +2387,9 @@ textarea {
   .workflow-steps,
   .secure-flow-grid,
   .model-connect-receipt > div:first-child,
+  .human-review-summary,
+  .human-review-card header,
+  .human-review-grid,
   .template-grid {
     grid-template-columns: 1fr;
   }

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { BadgeCheck, DatabaseZap, FileUp, LockKeyhole, Trash2 } from "lucide-react";
+import { BadgeCheck, DatabaseZap, Download, FileUp, History, LockKeyhole, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
+import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
@@ -8,6 +9,7 @@ import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/project
 
 type EvidenceLedgerProps = {
   evidenceItems: EvidenceItem[];
+  evidenceAuditEvents: EvidenceAuditEvent[];
   manifest: EvidenceManifest | null;
   evidenceTemplates: EvidenceTemplate[];
   recommendedTemplateIds: string[];
@@ -31,6 +33,7 @@ const blankEvidence: EvidenceItem = {
 
 export function EvidenceLedger({
   evidenceItems,
+  evidenceAuditEvents,
   manifest,
   evidenceTemplates,
   recommendedTemplateIds,
@@ -81,6 +84,38 @@ export function EvidenceLedger({
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
       </div>
+
+      <section className="evidence-audit-trail">
+        <div className="split-title compact-title">
+          <div>
+            <History size={17} aria-hidden="true" />
+            <h3>Evidence Audit Trail</h3>
+          </div>
+          <button
+            type="button"
+            className="secondary"
+            disabled={evidenceAuditEvents.length === 0}
+            onClick={() => downloadEvidenceAuditTrailJson("evidence-audit-trail.json", evidenceAuditEvents)}
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Evidence Trail JSON
+          </button>
+        </div>
+        <div className="evidence-trail-list">
+          {evidenceAuditEvents.length === 0 ? <p className="empty-state">No evidence change events recorded yet.</p> : null}
+          {evidenceAuditEvents.slice(0, 5).map((event) => (
+            <article key={event.id} className={`evidence-trail-event ${event.action}`}>
+              <strong>{event.summary}</strong>
+              <span>
+                {event.actor} · {event.createdAt}
+              </span>
+              <small>
+                {event.changedFields.join(", ")} · {event.notLegalAdviceBoundary}
+              </small>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="template-section">
         <div className="panel-title compact-title">

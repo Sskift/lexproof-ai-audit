@@ -36,6 +36,12 @@ import {
   sortCounselQuestionsForReview,
   type CounselQuestion
 } from "./lib/counselQuestions";
+import {
+  createEvidenceCreatedEvent,
+  createEvidenceRemovedEvent,
+  createEvidenceUpdateEvent,
+  type EvidenceAuditEvent
+} from "./lib/evidenceAuditTrail";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import { createEvidenceRequestFromRequirement } from "./lib/missingEvidenceWorkflow";
@@ -71,6 +77,7 @@ const MODEL_INTAKE_PROFILE_KEY = "lexproof.modelIntakeProfile.v1";
 const MODEL_INTAKE_EVENTS_KEY = "lexproof.modelIntakeEvents.v1";
 const COUNSEL_QUESTIONS_KEY = "lexproof.counselQuestions.v1";
 const COUNSEL_REVIEWS_KEY = "lexproof.counselReviews.v1";
+const EVIDENCE_AUDIT_TRAIL_KEY = "lexproof.evidenceAuditTrail.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
@@ -97,6 +104,7 @@ export default function App() {
   const [aiReviewRuns, setAIReviewRuns] = useState<ModelReviewRun[]>(() => loadStoredModelReviewRuns());
   const [counselQuestions, setCounselQuestions] = useState<CounselQuestion[]>(() => loadStoredCounselQuestions());
   const [counselReviews, setCounselReviews] = useState<CounselReviewItem[]>(() => loadStoredCounselReviews());
+  const [evidenceAuditEvents, setEvidenceAuditEvents] = useState<EvidenceAuditEvent[]>(() => loadStoredEvidenceAuditEvents());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
 
@@ -122,6 +130,10 @@ export default function App() {
   const currentCounselReviews = useMemo(
     () => counselReviews.filter((review) => review.projectId === project.id),
     [counselReviews, project.id]
+  );
+  const currentEvidenceAuditEvents = useMemo(
+    () => evidenceAuditEvents.filter((event) => event.projectId === project.id),
+    [evidenceAuditEvents, project.id]
   );
   const markdown = useMemo(
     () => {
@@ -225,6 +237,10 @@ export default function App() {
     safeStorage()?.setItem(COUNSEL_REVIEWS_KEY, JSON.stringify(counselReviews.slice(0, 80)));
   }, [counselReviews]);
 
+  useEffect(() => {
+    safeStorage()?.setItem(EVIDENCE_AUDIT_TRAIL_KEY, JSON.stringify(evidenceAuditEvents.slice(0, 120)));
+  }, [evidenceAuditEvents]);
+
   const updateProject = (nextProject: ProjectProfile) => {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
   };
@@ -258,26 +274,32 @@ export default function App() {
 
   const addEvidence = (item: EvidenceItem) => {
     const now = new Date().toISOString();
+    const nextItem = {
+      ...item,
+      id: createLocalId("evidence"),
+      kind: item.kind.trim() || "Note",
+      label: item.label.trim(),
+      content: item.content.trim(),
+      addedAt: now,
+      updatedAt: now
+    };
+
     setProject((current) => ({
       ...current,
-      evidenceItems: [
-        ...current.evidenceItems,
-        {
-          ...item,
-          id: createLocalId("evidence"),
-          kind: item.kind.trim() || "Note",
-          label: item.label.trim(),
-          content: item.content.trim(),
-          addedAt: now,
-          updatedAt: now
-        }
-      ],
+      evidenceItems: [...current.evidenceItems, nextItem],
       updatedAt: now
     }));
+    setEvidenceAuditEvents((current) => [
+      createEvidenceCreatedEvent(project.id, nextItem, nextItem.owner ?? "Founder", now),
+      ...current
+    ].slice(0, 120));
   };
 
   const updateEvidence = (index: number, updates: Partial<EvidenceItem>) => {
     const now = new Date().toISOString();
+    const previous = project.evidenceItems[index];
+    const next = previous ? { ...previous, ...updates, updatedAt: now } : null;
+
     setProject((current) => ({
       ...current,
       evidenceItems: current.evidenceItems.map((item, itemIndex) =>
@@ -285,6 +307,13 @@ export default function App() {
       ),
       updatedAt: now
     }));
+
+    if (previous && next) {
+      const event = createEvidenceUpdateEvent(project.id, previous, next, next.owner ?? previous.owner ?? "Founder", now);
+      if (event) {
+        setEvidenceAuditEvents((current) => [event, ...current].slice(0, 120));
+      }
+    }
   };
 
   const applyEvidenceTemplate = (templateId: string) => {
@@ -301,15 +330,28 @@ export default function App() {
       evidenceItems: [...current.evidenceItems, ...items],
       updatedAt: now
     }));
+    setEvidenceAuditEvents((current) => [
+      ...items.map((item) => createEvidenceCreatedEvent(project.id, item, "System", now, "template-applied")),
+      ...current
+    ].slice(0, 120));
   };
 
   const removeEvidence = (index: number) => {
     const now = new Date().toISOString();
+    const removed = project.evidenceItems[index];
+
     setProject((current) => ({
       ...current,
       evidenceItems: current.evidenceItems.filter((_, itemIndex) => itemIndex !== index),
       updatedAt: now
     }));
+
+    if (removed) {
+      setEvidenceAuditEvents((current) => [
+        createEvidenceRemovedEvent(project.id, removed, removed.owner ?? "Founder", now),
+        ...current
+      ].slice(0, 120));
+    }
   };
 
   const handleRunAIReview = async () => {
@@ -465,6 +507,7 @@ export default function App() {
           {activeTab === "evidence" ? (
             <EvidenceLedger
               evidenceItems={project.evidenceItems}
+              evidenceAuditEvents={currentEvidenceAuditEvents}
               manifest={manifest}
               evidenceTemplates={evidenceTemplates}
               recommendedTemplateIds={recommendedEvidenceTemplateIds}
@@ -830,6 +873,22 @@ function loadStoredCounselReviews(): CounselReviewItem[] {
     const parsed = JSON.parse(raw) as CounselReviewItem[];
     return Array.isArray(parsed)
       ? parsed.filter((review) => review.notLegalAdviceBoundary === "Not legal advice. Counsel review status is audit preparation workflow only.")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadStoredEvidenceAuditEvents(): EvidenceAuditEvent[] {
+  const raw = safeStorage()?.getItem(EVIDENCE_AUDIT_TRAIL_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as EvidenceAuditEvent[];
+    return Array.isArray(parsed)
+      ? parsed.filter((event) => event.eventVersion === "lexproof-evidence-audit-event-v1" && typeof event.projectId === "string")
       : [];
   } catch {
     return [];

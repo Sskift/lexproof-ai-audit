@@ -8,7 +8,7 @@ This document is the screenshot-backed submission narrative for BLI Legal Tech H
 
 **Users:** founders, compliance leads, protocol engineers, and counsel preparing RWA pilots, tokenized private-credit products, DAO governance actions, custody workflows, protocol launches, or AI legal/compliance tools for review.
 
-**Workflow:** a user creates a project, reviews facts in the Audit Wizard, registers model purpose and AI event records in Model Intake, runs deterministic risk triage, optionally uses AI for draft extraction and questions, applies evidence templates, generates a deterministic manifest, and exports a counsel pack.
+**Workflow:** a user creates a project, reviews facts in the Audit Wizard, registers model purpose and AI event records in Model Intake, runs deterministic risk triage, optionally uses AI for draft extraction and questions, applies evidence templates, checks the local Evidence Audit Trail, generates a deterministic manifest, and exports a counsel pack.
 
 **Why now:** AI-generated compliance work, tokenized assets, cross-border launches, and custody workflows are converging. Teams need a repeatable review handoff with source lineage and evidence integrity rather than a generic chatbot answer.
 
@@ -38,13 +38,19 @@ The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with
 
 ![Counsel Pack export surface](assets/screenshots/counsel-pack-exports.jpg)
 
+### Evidence Change Trail
+
+The Evidence Ledger records local evidence creation, template application, edits, and removals as audit-prep metadata. The trail is downloadable as JSON and remains separate from signed approvals or real chain anchoring.
+
+![Evidence Audit Trail](assets/screenshots/evidence-audit-trail.png)
+
 ## Demo Path
 
 1. Load the `YieldPassport` synthetic sample.
 2. Open **Model Intake** and show model purpose, allowed data classes, human-review owner, AI event hash records, and Model Intake JSON download.
 3. Open **AI Review**, inspect Model Connection Readiness and the Redaction Gate, run the mock reviewer, and show the Run Ledger plus the automatic editable Model Intake event.
 4. Open **Risk Audit** and point to source-linked trigger facts.
-5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, and show the manifest bundle hash.
+5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, show the Evidence Audit Trail JSON export, and show the manifest bundle hash.
 6. Open **Counsel Pack** and show the Model Intake Summary, AI event hashes, Markdown download, Manifest JSON, and simulated anchor receipt.
 
 ## Boundaries

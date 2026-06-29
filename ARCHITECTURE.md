@@ -35,6 +35,7 @@ lexproof-ai-audit/
       counselReview.ts       # Counsel/compliance review status queue helpers
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
+      evidenceAuditTrail.ts  # Local evidence change events and JSON export
       missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
@@ -63,6 +64,7 @@ sampleProfiles or blank project
   -> createRiskEvidenceCoverage(audit, project.evidenceItems)
   -> createEvidenceRequestFromRequirement(requirement) for missing Risk Audit evidence
   -> createEvidenceItemFromFile(file) for browser-side local file metadata evidence
+  -> createEvidenceAuditEvent(...) for local ledger create/update/remove metadata
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
   -> recommendEvidenceTemplates(project)
@@ -188,6 +190,17 @@ Owns local file evidence intake behavior:
 
 The module does not upload files and does not store raw file bytes or raw document content. The resulting ledger item is metadata-only audit preparation material.
 
+### `src/lib/evidenceAuditTrail.ts`
+
+Owns local evidence event behavior:
+
+- `createEvidenceCreatedEvent(projectId, evidence, actor)` records local evidence creation and template application.
+- `createEvidenceUpdateEvent(projectId, previous, next, actor)` records only material evidence field changes and returns `null` when no material field changed.
+- `createEvidenceRemovedEvent(projectId, evidence, actor)` records local evidence removal metadata.
+- `exportEvidenceAuditTrailJson(events)` and `downloadEvidenceAuditTrailJson(filename, events)` export the trail as local JSON.
+
+Evidence audit trail events are audit-prep metadata only. They are not signed approvals, legal conclusions, external timestamps, uploaded documents, or real chain writes.
+
 ### `src/lib/jurisdictionChecklist.ts`
 
 Owns jurisdiction checklist generation:
@@ -298,6 +311,7 @@ Owns UI state and composition:
 - current `ProjectProfile`
 - localStorage read/write for valid projects
 - editable counsel questions and counsel review statuses
+- local evidence audit trail events
 - active tab
 - async evidence manifest state
 
@@ -317,7 +331,7 @@ Components are intentionally presentational and interaction-focused:
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
-- `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
+- `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, and exposes recent local evidence audit trail events plus JSON export.
 - `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
 
 ### `src/styles.css`
@@ -362,6 +376,7 @@ Domain tests live next to the audit engine and cover:
 - simulated anchor receipt export
 - evidence template recommendation and instantiation
 - local file SHA-256 hashing and metadata-only evidence creation
+- evidence audit trail create/update/remove events and JSON export
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 
@@ -387,6 +402,7 @@ UI tests cover:
 - Jurisdiction Checklist tab with policy controls and local-counsel routing
 - source-linked Risk Audit trigger explanations
 - evidence template application
+- Evidence Audit Trail visibility and JSON download action
 - manifest JSON download action
 - Counsel Pack Print / Save PDF action
 - simulated anchor receipt creation

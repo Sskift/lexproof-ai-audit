@@ -62,6 +62,7 @@ Implemented:
 - Missing evidence request workflow that turns Risk Audit requirements into `requested` Evidence Ledger items without treating them as verified evidence.
 - Editable Evidence Ledger with owner, status, source, content fields, scenario evidence templates, and browser-side local file metadata hashing.
 - Evidence Ledger polish for long evidence rows, visible edit labels, mobile-friendly field stacking, and wrapped SHA/source text.
+- Evidence Audit Trail for local evidence creation, template application, edits, removals, and JSON export.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest with per-item hashes, local file metadata hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
@@ -72,7 +73,7 @@ Implemented:
 
 Current limitation:
 
-The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, model intake metadata, first-stage jurisdiction policy controls, local review statuses, and browser-side local file hashing, but it does not yet provide accounts, collaboration, secure backend evidence storage, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
+The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, model intake metadata, first-stage jurisdiction policy controls, local review statuses, browser-side local file hashing, and a local evidence audit trail, but it does not yet provide accounts, collaboration, secure backend evidence storage, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
 
 ## Expected End State
 
@@ -165,7 +166,7 @@ The product is especially meaningful where legal/compliance work is high-context
 6. Risk Audit produces deterministic flags, remediation owners, and missing evidence request actions.
 7. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
 8. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
-9. Engineering hashes evidence and creates a manifest.
+9. Engineering hashes evidence, checks the local Evidence Audit Trail, and creates a manifest.
 10. Compliance exports a Counsel Pack with Model Intake summary, AI event hashes, manifest hash, and counsel review status for a review meeting or investor diligence.
 11. Optional anchor records a manifest hash after legal/privacy review.
 
@@ -221,6 +222,7 @@ Rules:
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
 - Per-risk evidence workflow coverage in Risk Audit.
 - Missing evidence request workflow from Risk Audit into Evidence Ledger.
+- Evidence Audit Trail for local ledger changes and JSON export.
 - Long evidence row and mobile editing polish.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.

@@ -12,6 +12,7 @@ describe("App", () => {
     window.localStorage?.removeItem?.("lexproof.modelIntakeEvents.v1");
     window.localStorage?.removeItem?.("lexproof.counselQuestions.v1");
     window.localStorage?.removeItem?.("lexproof.counselReviews.v1");
+    window.localStorage?.removeItem?.("lexproof.evidenceAuditTrail.v1");
   });
 
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
@@ -55,7 +56,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Apply tokenized yield \/ RWA template/i }));
-    expect(await screen.findByText(/RWA disclosure assumptions memo/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/RWA disclosure assumptions memo/i)).length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Launch memo" } });
     fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
@@ -66,6 +67,9 @@ describe("App", () => {
 
     expect(await screen.findByText("Launch memo")).toBeInTheDocument();
     expect(screen.getByText(/Manifest bundle SHA-256/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Evidence Audit Trail/i })).toBeInTheDocument();
+    expect(screen.getByText(/created Launch memo/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Download Evidence Trail JSON/i })).toBeInTheDocument();
   });
 
   it("keeps long evidence records editable with visible mobile-friendly field labels", async () => {

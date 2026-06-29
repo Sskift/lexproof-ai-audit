@@ -26,11 +26,11 @@ The product is not an AI judge, a law firm, a KYC provider, or a real chain-writ
 7. Show the **AI Review Run Ledger** with provider/model metadata, redaction status, payload SHA-256, response SHA-256, and downloadable run JSON, then open **Model Intake** to assign a reviewer, mark the run reviewed, show the event SHA-256, and download Model Intake JSON.
 8. Open **Jurisdiction Checklist** and show preparation prompts, jurisdiction packs, and local-counsel routing as audit-prep aids, not legal conclusions.
 9. Open **Risk Audit** and show deterministic flags, source links, “why this flag triggered,” score, and remediation queue.
-10. Open **Evidence Ledger**, apply the tokenized yield/RWA template, add one synthetic evidence item, and show the manifest bundle SHA-256 update.
+10. Open **Evidence Ledger**, apply the tokenized yield/RWA template, add one synthetic evidence item, show the local Evidence Audit Trail and JSON export, and show the manifest bundle SHA-256 update.
 11. Open **Counsel Pack**, show the Model Intake Summary and AI event hashes, download Markdown, download Manifest JSON, and create the **Simulated Anchor Receipt**.
 
 ## 3. Closing Message
 
-LexProof's trust layer is not the model. The trust layer is the structured workspace, deterministic audit engine, source-linked issue explanations, evidence templates, editable evidence ledger, model intake JSON, model intake event hashes, model-run hash receipts, manifest hash, redaction gate, and human counsel handoff.
+LexProof's trust layer is not the model. The trust layer is the structured workspace, deterministic audit engine, source-linked issue explanations, evidence templates, editable evidence ledger, evidence audit trail JSON, model intake JSON, model intake event hashes, model-run hash receipts, manifest hash, redaction gate, and human counsel handoff.
 
 Every output remains audit preparation material. Not legal advice.

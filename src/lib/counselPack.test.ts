@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { buildMarkdownCounselPack, downloadMarkdownFile } from "./counselPack";
 import { createEvidenceManifest } from "./evidenceManifest";
+import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
 
 const project: ProjectProfile = {
@@ -32,11 +33,25 @@ describe("buildMarkdownCounselPack", () => {
   it("includes non-advice boundary, risk level, manifest hash, and remediation queue", async () => {
     const audit = analyzeAuditProfile(project);
     const manifest = await createEvidenceManifest(project, audit, project.evidenceItems);
-    const markdown = buildMarkdownCounselPack(project, audit, manifest);
+    const questions: CounselQuestion[] = [
+      {
+        id: "question-project-custody",
+        projectId: project.id,
+        question: "Who can approve wallet operations before launch?",
+        relatedFlagId: "custody",
+        priority: "P0",
+        status: "open",
+        source: "risk-rule",
+        notLegalAdviceBoundary: "Not legal advice. Counsel questions are audit preparation prompts only."
+      }
+    ];
+    const markdown = buildMarkdownCounselPack(project, audit, manifest, questions);
 
     expect(markdown).toContain("Not legal advice");
     expect(markdown).toContain(`Risk level: ${audit.riskLevel}`);
     expect(markdown).toContain(manifest.bundleHash);
+    expect(markdown).toContain("## Counsel Questions");
+    expect(markdown).toContain("- P0 open [custody] Who can approve wallet operations before launch?");
     expect(markdown).toContain("## Remediation Queue");
     expect(markdown).toContain(audit.remediation[0].action);
   });

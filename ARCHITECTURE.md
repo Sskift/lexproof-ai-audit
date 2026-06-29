@@ -15,6 +15,7 @@ lexproof-ai-audit/
       AuditWizard.tsx        # Step-by-step project review surface
       AIReviewPanel.tsx      # Controlled model-assisted audit preparation
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
+      CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # US/EU/UK audit-prep checklist surface
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
       CounselPackPanel.tsx   # Markdown, manifest, and simulated receipt export
@@ -27,6 +28,7 @@ lexproof-ai-audit/
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
       projectModel.ts        # Project/evidence types and validation
+      counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
@@ -58,6 +60,8 @@ sampleProfiles or blank project
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
   -> create local ModelReviewRun with payload and response hashes
+  -> merge AI draft questions into editable CounselQuestion queue
+  -> createDefaultCounselQuestions(project, audit)
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
   -> buildMarkdownCounselPack(project, audit, manifest)
@@ -88,6 +92,17 @@ Owns first-stage workspace types and validation:
 - `validateProjectProfile()` returns explicit errors for missing project facts.
 
 This module does not store data and does not accept raw KYC or private data handling.
+
+### `src/lib/counselQuestions.ts`
+
+Owns counsel question queue behavior:
+
+- `createDefaultCounselQuestions(project, audit)` creates deterministic risk-rule prompts from current audit flags.
+- `createQuestionsFromAIReview(project, review)` converts AI draft questions into editable local prompts.
+- `mergeCounselQuestionQueues()` preserves user edits while de-duplicating AI, manual, and rule-generated questions.
+- `sortCounselQuestionsForReview()` puts AI review drafts, risk-rule prompts, and manual questions into a stable review order.
+
+Questions are audit preparation prompts only. They do not create legal conclusions and remain editable by the user before export.
 
 ### `src/lib/aiReview.ts`
 
@@ -215,6 +230,7 @@ Components are intentionally presentational and interaction-focused:
 - `AuditWizard` displays the step-by-step audit review.
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
+- `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts and evidence status.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
@@ -234,6 +250,7 @@ Domain tests live next to the audit engine and cover:
 - stable evidence hashing
 - hash changes when evidence changes
 - counsel memo content
+- counsel question generation and queue merging
 - hackathon submission fit
 - project validation errors
 - manifest item and bundle hashing
@@ -267,6 +284,7 @@ UI tests cover:
 - AI Review mock workflow
 - Redaction Gate visibility
 - AI Review Run Ledger visibility
+- editable counsel questions in Counsel Pack
 - Jurisdiction Checklist tab
 - source-linked Risk Audit trigger explanations
 - evidence template application

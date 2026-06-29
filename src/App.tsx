@@ -22,6 +22,14 @@ import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
 import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
+import {
+  createDefaultCounselQuestions,
+  createManualCounselQuestion,
+  createQuestionsFromAIReview,
+  mergeCounselQuestionQueues,
+  sortCounselQuestionsForReview,
+  type CounselQuestion
+} from "./lib/counselQuestions";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import { runAIReviewWithLedger, type ModelReviewRun } from "./lib/modelReviewLedger";
@@ -40,6 +48,7 @@ type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" 
 const STORAGE_KEY = "lexproof.currentProject.v1";
 const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
 const MODEL_REVIEW_RUNS_KEY = "lexproof.modelReviewRuns.v1";
+const COUNSEL_QUESTIONS_KEY = "lexproof.counselQuestions.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
@@ -60,6 +69,7 @@ export default function App() {
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [aiReview, setAIReview] = useState<AIReviewResult | null>(null);
   const [aiReviewRuns, setAIReviewRuns] = useState<ModelReviewRun[]>(() => loadStoredModelReviewRuns());
+  const [counselQuestions, setCounselQuestions] = useState<CounselQuestion[]>(() => loadStoredCounselQuestions());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
 
@@ -76,12 +86,16 @@ export default function App() {
     () => aiReviewRuns.filter((run) => run.projectId === project.id).slice(0, 5),
     [aiReviewRuns, project.id]
   );
+  const currentCounselQuestions = useMemo(
+    () => sortCounselQuestionsForReview(counselQuestions.filter((question) => question.projectId === project.id)),
+    [counselQuestions, project.id]
+  );
   const markdown = useMemo(
     () =>
       manifest
-        ? buildMarkdownCounselPack(project, audit, manifest)
+        ? buildMarkdownCounselPack(project, audit, manifest, currentCounselQuestions)
         : "Evidence manifest is calculating. Not legal advice; counsel pack output is audit preparation material.",
-    [audit, manifest, project]
+    [audit, currentCounselQuestions, manifest, project]
   );
 
   useEffect(() => {
@@ -111,6 +125,14 @@ export default function App() {
   useEffect(() => {
     safeStorage()?.setItem(MODEL_REVIEW_RUNS_KEY, JSON.stringify(aiReviewRuns.slice(0, 20)));
   }, [aiReviewRuns]);
+
+  useEffect(() => {
+    setCounselQuestions((current) => mergeQuestionsForProject(current, project.id, createDefaultCounselQuestions(project, audit)));
+  }, [audit, project]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(COUNSEL_QUESTIONS_KEY, JSON.stringify(counselQuestions.slice(0, 80)));
+  }, [counselQuestions]);
 
   const updateProject = (nextProject: ProjectProfile) => {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
@@ -223,12 +245,27 @@ export default function App() {
         redactionStatus: redactionReport.status
       });
       setAIReview(result);
+      setCounselQuestions((current) => mergeQuestionsForProject(current, project.id, createQuestionsFromAIReview(project, result), true));
       setAIReviewRuns((current) => [run, ...current].slice(0, 20));
       setAIReviewStatus("complete");
     } catch (error) {
       setAIReviewStatus("error");
       setAIReviewError(error instanceof Error ? error.message : "Model review failed.");
     }
+  };
+
+  const addCounselQuestion = () => {
+    setCounselQuestions((current) => [...current, createManualCounselQuestion(project)]);
+  };
+
+  const updateCounselQuestion = (id: string, updates: Partial<CounselQuestion>) => {
+    setCounselQuestions((current) =>
+      current.map((question) => (question.id === id ? { ...question, ...updates } : question))
+    );
+  };
+
+  const removeCounselQuestion = (id: string) => {
+    setCounselQuestions((current) => current.filter((question) => question.id !== id));
   };
 
   return (
@@ -313,7 +350,16 @@ export default function App() {
             />
           ) : null}
           {activeTab === "counsel" ? (
-            <CounselPackPanel projectName={project.projectName} fit={fit} manifest={manifest} markdown={markdown} />
+            <CounselPackPanel
+              projectName={project.projectName}
+              fit={fit}
+              manifest={manifest}
+              markdown={markdown}
+              counselQuestions={currentCounselQuestions}
+              onAddQuestion={addCounselQuestion}
+              onUpdateQuestion={updateCounselQuestion}
+              onRemoveQuestion={removeCounselQuestion}
+            />
           ) : null}
           {activeTab === "sources" ? <SourcesPanel audit={audit} /> : null}
         </section>
@@ -556,6 +602,36 @@ function loadStoredModelReviewRuns(): ModelReviewRun[] {
   } catch {
     return [];
   }
+}
+
+function loadStoredCounselQuestions(): CounselQuestion[] {
+  const raw = safeStorage()?.getItem(COUNSEL_QUESTIONS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as CounselQuestion[];
+    return Array.isArray(parsed)
+      ? parsed.filter((question) => question.notLegalAdviceBoundary === "Not legal advice. Counsel questions are audit preparation prompts only.")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function mergeQuestionsForProject(
+  current: CounselQuestion[],
+  projectId: string,
+  incoming: CounselQuestion[],
+  preferIncoming = false
+): CounselQuestion[] {
+  const otherProjects = current.filter((question) => question.projectId !== projectId);
+  const projectQuestions = current.filter((question) => question.projectId === projectId);
+  const merged = preferIncoming
+    ? mergeCounselQuestionQueues(incoming, projectQuestions)
+    : mergeCounselQuestionQueues(projectQuestions, incoming);
+  return [...otherProjects, ...merged];
 }
 
 function safeStorage(): Storage | null {

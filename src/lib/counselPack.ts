@@ -1,16 +1,21 @@
 import type { AuditResult } from "./auditEngine";
+import type { CounselQuestion } from "./counselQuestions";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
 
 export function buildMarkdownCounselPack(
   project: ProjectProfile,
   audit: AuditResult,
-  manifest: EvidenceManifest
+  manifest: EvidenceManifest,
+  counselQuestions: CounselQuestion[] = []
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${flag.title}: ${flag.rationale}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${item.owner}: ${item.action}`).join("\n");
   const evidence = manifest.items
     .map((item) => `- ${item.sequence}. ${item.label} (${item.kind}, ${item.status}) — ${item.contentHash}`)
+    .join("\n");
+  const questions = counselQuestions
+    .map((item) => `- ${item.priority} ${item.status} [${item.relatedFlagId ?? item.source}] ${item.question}`)
     .join("\n");
   const sources = audit.sourcePack.map((source) => `- ${source.title}: ${source.url}`).join("\n");
 
@@ -37,6 +42,9 @@ export function buildMarkdownCounselPack(
     "",
     "## Risk Flags",
     flags || "- No material flags detected in the current facts.",
+    "",
+    "## Counsel Questions",
+    questions || "- No counsel questions have been added yet.",
     "",
     "## Remediation Queue",
     remediation,

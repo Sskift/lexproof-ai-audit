@@ -6,7 +6,9 @@ import {
   downloadAnchorReceiptJson,
   type SimulatedAnchorReceipt
 } from "../lib/anchorReceipt";
+import { CounselQuestionsPanel } from "./CounselQuestionsPanel";
 import { downloadMarkdownFile } from "../lib/counselPack";
+import type { CounselQuestion } from "../lib/counselQuestions";
 import type { SubmissionFit } from "../lib/auditEngine";
 import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
 
@@ -15,9 +17,22 @@ type CounselPackPanelProps = {
   fit: SubmissionFit;
   manifest: EvidenceManifest | null;
   markdown: string;
+  counselQuestions: CounselQuestion[];
+  onAddQuestion: () => void;
+  onUpdateQuestion: (id: string, updates: Partial<CounselQuestion>) => void;
+  onRemoveQuestion: (id: string) => void;
 };
 
-export function CounselPackPanel({ projectName, fit, manifest, markdown }: CounselPackPanelProps) {
+export function CounselPackPanel({
+  projectName,
+  fit,
+  manifest,
+  markdown,
+  counselQuestions,
+  onAddQuestion,
+  onUpdateQuestion,
+  onRemoveQuestion
+}: CounselPackPanelProps) {
   const [receipt, setReceipt] = useState<SimulatedAnchorReceipt | null>(null);
 
   const createReceipt = () => {
@@ -43,6 +58,13 @@ export function CounselPackPanel({ projectName, fit, manifest, markdown }: Couns
           </span>
         ))}
       </div>
+
+      <CounselQuestionsPanel
+        questions={counselQuestions}
+        onAddQuestion={onAddQuestion}
+        onUpdateQuestion={onUpdateQuestion}
+        onRemoveQuestion={onRemoveQuestion}
+      />
 
       <div className="counsel-actions">
         <div>

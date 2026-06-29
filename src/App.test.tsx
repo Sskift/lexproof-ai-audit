@@ -150,6 +150,28 @@ describe("App", () => {
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 
+  it("adds AI draft counsel questions to an editable Counsel Pack queue", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
+
+    expect(await screen.findByText(/Which artifacts can be shared with counsel/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    expect(screen.getByRole("heading", { name: /Counsel Questions/i })).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/Which artifacts can be shared with counsel/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Question 01 text/i), {
+      target: { value: "Edited counsel question about AI evidence sharing?" }
+    });
+    fireEvent.change(screen.getByLabelText(/Question 01 status/i), { target: { value: "answered" } });
+
+    expect(screen.getByDisplayValue("Edited counsel question about AI evidence sharing?")).toBeInTheDocument();
+    expect(await screen.findByText(/P1 answered \[ai-review\] Edited counsel question about AI evidence sharing\?/i)).toBeInTheDocument();
+  });
+
   it("shows jurisdiction-specific audit preparation checklist items", () => {
     render(<App />);
 

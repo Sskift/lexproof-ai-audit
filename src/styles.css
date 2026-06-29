@@ -444,6 +444,23 @@ textarea {
   font-size: 1rem;
 }
 
+.split-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.split-title > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.split-title button {
+  flex: 0 0 auto;
+}
+
 .settings-grid,
 .ai-output-grid,
 .checklist-grid {
@@ -1359,6 +1376,81 @@ textarea {
   justify-content: flex-start;
 }
 
+.counsel-questions {
+  background: #fbfdfe;
+}
+
+.question-list {
+  display: grid;
+  gap: 12px;
+}
+
+.question-editor {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.question-editor.ai-review {
+  border-color: #c7d8ef;
+  background: #f6f9fd;
+}
+
+.question-editor.risk-rule {
+  border-color: #d7c797;
+  background: #fffdf3;
+}
+
+.question-editor-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.question-editor-header span {
+  color: #176b87;
+  font-weight: 900;
+}
+
+.question-editor-header strong,
+.question-editor-header small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.question-editor-header strong {
+  color: #172431;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+}
+
+.question-editor-header small {
+  color: #657382;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.question-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 100px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.question-text-field textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.question-editor > small {
+  color: #657382;
+  font-size: 0.76rem;
+}
+
 .anchor-receipt {
   margin-bottom: 14px;
   padding: 14px;
@@ -1512,6 +1604,20 @@ textarea {
   }
 
   .inline-actions button {
+    justify-self: start;
+  }
+
+  .split-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .question-editor-grid {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .question-editor-grid button {
     justify-self: start;
   }
 

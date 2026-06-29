@@ -51,6 +51,7 @@ Implemented:
 - AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
 - Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
+- Editable Counsel Questions queue that merges deterministic risk-rule prompts, AI draft questions, and manual user edits into Counsel Pack exports.
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Per-risk evidence workflow coverage in Risk Audit, backed by deterministic evidence requirements in `src/lib/riskEvidence.ts`.
@@ -114,7 +115,6 @@ No remaining must-have gaps are identified for the current Phase 1 submission-re
 
 ### Strong Differentiators
 
-- AI-generated but user-editable counsel questions.
 - Deeper jurisdiction pack architecture beyond first-stage US / EU / UK checklist prompts.
 
 ### Production-Grade Later
@@ -202,6 +202,7 @@ Rules:
 - AI Review with mock/OpenAI-compatible provider.
 - Redaction Gate before model calls.
 - AI Review Run Ledger with payload/response hash receipts.
+- Editable AI/rule-generated counsel questions in Counsel Pack.
 - Manifest JSON export.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.

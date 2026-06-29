@@ -3,6 +3,7 @@ import { SectionHeader } from "./AuditWizard";
 import { ModelSettingsPanel } from "./ModelSettingsPanel";
 import { createMissingEvidenceChecklist, createRedactionReport, type AIReviewResult } from "../lib/aiReview";
 import type { AuditResult } from "../lib/auditEngine";
+import { createModelConnectionReadiness } from "../lib/modelConnectionReadiness";
 import { downloadModelReviewRunJson, type ModelReviewRun } from "../lib/modelReviewLedger";
 import type { ModelSettings, ModelSettingsValidation } from "../lib/modelProvider";
 import type { ProjectProfile } from "../lib/projectModel";
@@ -35,6 +36,7 @@ export function AIReviewPanel({
   const checklist = createMissingEvidenceChecklist(audit, project.evidenceItems);
   const redactionReport = createRedactionReport(project.evidenceItems);
   const redactionBlocked = redactionReport.status === "blocked";
+  const modelConnectionReadiness = createModelConnectionReadiness(settings, settingsValidation, redactionReport);
 
   return (
     <section className="panel stage-panel">
@@ -50,6 +52,29 @@ export function AIReviewPanel({
       </div>
 
       <ModelSettingsPanel settings={settings} validation={settingsValidation} onChange={onSettingsChange} />
+
+      <section className={`review-section connection-readiness ${modelConnectionReadiness.status}`}>
+        <div className="panel-title compact-title">
+          <Bot size={17} aria-hidden="true" />
+          <h3>Model Connection Readiness</h3>
+        </div>
+        <div className="connection-readiness-summary">
+          <strong>{modelConnectionReadiness.headline}</strong>
+          <span>{modelConnectionReadiness.detail}</span>
+        </div>
+        {modelConnectionReadiness.blockers.length > 0 ? (
+          <ul className="validation-list">
+            {modelConnectionReadiness.blockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        ) : null}
+        <ul className="model-checklist compact-checklist">
+          {modelConnectionReadiness.checklist.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
 
       <section className={`review-section redaction-gate ${redactionReport.status}`}>
         <div className="panel-title compact-title">

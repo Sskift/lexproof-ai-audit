@@ -187,6 +187,8 @@ describe("App", () => {
 
     expect(screen.getByText(/Redaction Gate/i)).toBeInTheDocument();
     expect(screen.getByText(/Review model payload/i)).toBeInTheDocument();
+    expect(screen.getByText(/Model Connection Readiness/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mock local reviewer ready/i)).toBeInTheDocument();
     expect(screen.getByText(/Needs review/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));

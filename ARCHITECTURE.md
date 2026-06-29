@@ -27,6 +27,7 @@ lexproof-ai-audit/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
+      modelConnectionReadiness.ts # Model configuration and redaction readiness summary
       modelIntake.ts         # Model connection profile validation and AI event hashes
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
       projectModel.ts        # Project/evidence types and validation
@@ -68,6 +69,7 @@ sampleProfiles or blank project
   -> validateModelConnectionProfile(modelIntakeProfile)
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
   -> createRedactionReport(project.evidenceItems)
+  -> createModelConnectionReadiness(modelSettings, settingsValidation, redactionReport)
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
   -> create local ModelReviewRun with payload and response hashes
@@ -215,6 +217,17 @@ Owns model connection boundaries:
 
 API keys are not persisted by the app.
 
+### `src/lib/modelConnectionReadiness.ts`
+
+Owns model connection readiness messaging:
+
+- `createModelConnectionReadiness()` combines model settings validation with Redaction Gate status.
+- Mock provider readiness is explicit and requires no API key.
+- OpenAI-compatible provider readiness distinguishes incomplete session settings from a configured live provider.
+- Redaction blockers override provider readiness so private-key-like or secret material cannot be sent to a model.
+
+Readiness is an audit-prep gate only. It does not test a live endpoint, store credentials, or certify model quality.
+
 ### `src/lib/modelReviewLedger.ts`
 
 Owns model-run audit receipts:
@@ -331,6 +344,7 @@ Domain tests live next to the audit engine and cover:
 - missing evidence checklist generation
 - missing evidence request generation for Evidence Ledger
 - mock and OpenAI-compatible model provider behavior
+- model connection readiness and redaction blocker gating
 - model connection profile validation
 - AI event hashing and model intake summaries
 - Model Intake JSON browser download behavior

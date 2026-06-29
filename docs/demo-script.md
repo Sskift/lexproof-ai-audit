@@ -13,10 +13,11 @@ The product is not an AI judge, a law firm, a KYC provider, or a real chain-writ
 1. Start on **Project Workspace** and load `YieldPassport`.
 2. Open **Audit Wizard** and show the handoff boundary: project facts, AI/data/chain boundaries, and review gate.
 3. Open **Model Intake** and show provider/model purpose, allowed data classes, human-review owner, readiness checklist, AI event hash records, and the standalone Model Intake JSON download.
-4. Open **AI Review** and show **Model Settings**:
+4. Open **AI Review** and show **Model Settings** plus **Model Connection Readiness**:
    - mock provider for demo
    - OpenAI-compatible provider for user-supplied endpoint/model/API key
    - API key is local browser state and not persisted
+   - readiness distinguishes mock-ready, incomplete live settings, and Redaction Gate blockers
 5. Show the **Redaction Gate**:
    - evidence summaries are previewed before model calls
    - KYC/personal-data references are marked for review

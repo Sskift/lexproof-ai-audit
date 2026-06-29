@@ -93,6 +93,8 @@ Week 2 design-spike artifacts:
 
 - `docs/phase-2-backend-design-spike.md` records the backend stack decision, API route table, persistence-model scope, security boundaries, and health endpoint decision.
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
+- `server/app.ts` adds the first Fastify route: `GET /api/health`.
+- `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
 
 ## Recommended Backend Architecture
 
@@ -239,8 +241,8 @@ The Phase 2 near-term slice is accepted when:
 
 ## Implementation Order After This Slice
 
-1. Review and approve the backend stack.
-2. Add a backend package skeleton only after API contracts are accepted.
-3. Implement evidence upload metadata and server-side hashing first.
-4. Move model calls behind the gateway after evidence and redaction boundaries are stable.
-5. Add human review APIs before server-side Counsel Pack exports.
+1. Review and approve the backend stack. Completed for the professional prototype: Node.js + TypeScript + Fastify + SQLite + Prisma.
+2. Add a backend package skeleton only after API contracts are accepted. Started with `server/app.ts`, `server/index.ts`, `GET /api/health`, and `npm run start:api`.
+3. Implement evidence upload metadata and server-side hashing first. Started with `server/evidenceVaultService.ts`; persistence and multipart routing are still intentionally deferred.
+4. Move model calls behind the gateway after evidence and redaction boundaries are stable. Next implementation step.
+5. Add human review APIs before server-side Counsel Pack exports. Follows Model Gateway route implementation.

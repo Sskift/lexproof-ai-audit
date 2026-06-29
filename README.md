@@ -135,6 +135,15 @@ npm run dev
 
 The dev server defaults to `http://127.0.0.1:5173`.
 
+The Phase 2 API skeleton can be built and started separately:
+
+```bash
+npm run build:server
+npm run start:api
+```
+
+The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health` plus server-side evidence metadata hashing utilities. It does not persist files, store model credentials, process KYC, or write to a blockchain.
+
 ## Submission Assets
 
 - Public GitHub repository: this repo

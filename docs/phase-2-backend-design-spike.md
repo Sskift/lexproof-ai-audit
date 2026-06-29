@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-29
 
-This spike completes the Week 2 design slice from the Secure Review Workspace plan. It keeps the current React + TypeScript + Vite MVP stable and does not introduce real file storage, credential persistence, OCR, KYC processing, legal advice, or real chain writes.
+This spike completes the Week 2 design slice from the Secure Review Workspace plan and starts the first backend implementation step. It keeps the current React + TypeScript + Vite MVP stable and does not introduce real file persistence, credential persistence, OCR, KYC processing, legal advice, or real chain writes.
 
 ## Stack Decision
 
@@ -47,7 +47,7 @@ It defines route metadata for:
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
-Every route is currently marked `implemented: false`. This is intentional: the contract is ready for review, but no server has been added yet.
+Every domain route is currently marked `implemented: false`. This is intentional: the route contracts are ready for review, but workspace, model, review, export, and audit-log persistence are not implemented yet. The only implemented backend route is the no-op health endpoint.
 
 ## Persistence Contract Source
 
@@ -85,11 +85,35 @@ Allowed model output remains draft audit preparation only. Deterministic risk sc
 
 The first backend implementation should accept multipart upload streams or external-reference metadata. Raw file bytes should not be embedded in JSON API bodies or Counsel Pack exports.
 
-## Health Endpoint Decision
+## Health Endpoint
 
-No backend health endpoint is added in this slice.
+The first backend route is implemented in `server/app.ts`:
 
-Reason: the repository is still a single Vite SPA package. Adding a no-op Fastify server before package layout and runtime scripts are accepted would add dependencies without making the product safer or more usable. The health endpoint should be the first backend route after a `server/` package layout, runtime script, Prisma location, and development storage path are reviewed.
+- `GET /api/health`
+
+It reports service status, Phase 2 backend version, contract-only capability states, evidence vault metadata-hashing readiness, and the non-advice boundary. It does not expose persistence, credentials, model execution, KYC, or chain-write behavior.
+
+Run after build:
+
+```bash
+npm run build:server
+npm run start:api
+```
+
+The API listens on `127.0.0.1:8787` by default.
+
+## Evidence Metadata Hashing
+
+The first backend evidence service is implemented in `server/evidenceVaultService.ts`.
+
+It:
+
+- accepts upload bytes in process memory
+- computes server-side SHA-256
+- returns metadata-only `EvidenceVaultRecord` values
+- blocks raw KYC or personal-data markers
+- does not persist files
+- does not return raw document content in JSON
 
 ## Tests
 
@@ -100,4 +124,10 @@ Reason: the repository is still a single Vite SPA package. Adding a no-op Fastif
 - evidence upload boundary blockers
 - Prisma schema draft contains the five allowed models and avoids KYC/legal-decision/chain-transaction models
 
-These tests make the backend design spike reviewable without claiming production backend behavior.
+`server/app.test.ts` and `server/evidenceVaultService.test.ts` cover:
+
+- the Fastify health endpoint
+- server-side SHA-256 evidence metadata hashing
+- raw KYC/personal-data blocking before evidence vault record creation
+
+These tests make the backend design spike and first backend seam reviewable without claiming production backend behavior.

@@ -6,6 +6,10 @@ LexProof AuditOS is a Vite React single-page application. The app is intentional
 
 ```text
 lexproof-ai-audit/
+  server/
+    app.ts                   # Fastify app and Phase 2 health endpoint
+    index.ts                 # API process entry point
+    evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
   src/
     App.tsx                  # React workbench shell, persistence, and tab composition
     styles.css               # Responsive UI styling
@@ -382,9 +386,9 @@ Owns global and component-level styling. The UI should remain dense, functional,
 
 Phase 1 is intentionally local-first. React state, browser `localStorage`, pure TypeScript rules, browser-side hashing, mock/OpenAI-compatible model settings, Markdown download, browser Print / Save PDF, Model Intake JSON, Evidence Audit Trail JSON, and simulated anchor receipts all run in the browser. This is sufficient for the hackathon MVP and keeps the non-advice boundary visible.
 
-Phase 2 should introduce a small backend boundary without replacing the current workbench. The recommended professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
+Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. No Fastify health endpoint is added yet because the repository is still a single Vite SPA package; the health endpoint should be the first backend route after a `server/` package layout and runtime scripts are accepted.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The first backend route is `GET /api/health` in `server/app.ts`; domain routes remain contract-only until persistence and API review are complete.
 
 ### Model Gateway Responsibilities
 
@@ -405,6 +409,8 @@ The gateway must keep model output as draft audit preparation. It must not chang
 - feed the Evidence Manifest with stable server-side evidence versions
 
 The Phase 2 draft must not store raw KYC or personal data. Secure document parsing and OCR should be added only after privacy and retention boundaries are documented.
+
+`server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, and blocks raw KYC/personal-data markers. It does not persist files or expose raw document content through JSON.
 
 ### Human Review Workflow Responsibilities
 
@@ -429,6 +435,7 @@ These capabilities remain simulated or local in the current codebase:
 
 - API keys for live model calls are browser-session only and are not persisted.
 - Evidence files are hashed locally or represented by metadata; raw file upload/storage is not implemented.
+- The Phase 2 server computes evidence hashes in memory for metadata records, but does not persist uploaded files.
 - Evidence Audit Trail is local browser metadata, not a signed external log.
 - Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
 - Manifest anchoring creates a simulated receipt and does not submit a transaction.
@@ -476,6 +483,7 @@ Domain tests live next to the audit engine and cover:
 - evidence audit trail create/update/remove events and JSON export
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
+- Phase 2 Fastify health endpoint and server-side evidence metadata hashing
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 

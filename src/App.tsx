@@ -1,35 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  BadgeCheck,
-  BookOpen,
-  CheckCircle2,
-  ClipboardList,
-  DatabaseZap,
-  FileText,
-  Github,
-  Gavel,
-  Layers3,
-  Link2,
-  LockKeyhole,
-  Scale,
-  ShieldCheck
-} from "lucide-react";
+import { AlertTriangle, BookOpen, ClipboardList, DatabaseZap, FileText, Github, Link2, Scale, ShieldCheck } from "lucide-react";
+import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
+import { CounselPackPanel } from "./components/CounselPackPanel";
+import { EvidenceLedger } from "./components/EvidenceLedger";
+import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
-import {
-  analyzeAuditProfile,
-  buildCounselMemo,
-  createEvidenceHash,
-  createSubmissionFit,
-  type AuditFlag,
-  type AuditProfile,
-  type RemediationItem
-} from "./lib/auditEngine";
+import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
+import { buildMarkdownCounselPack } from "./lib/counselPack";
+import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
+import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 
-type TabId = "intake" | "risk" | "evidence" | "counsel" | "sources";
+type TabId = "wizard" | "risk" | "evidence" | "counsel" | "sources";
+
+const STORAGE_KEY = "lexproof.currentProject.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
-  { id: "intake", label: "Intake", icon: ClipboardList },
+  { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "risk", label: "Risk Audit", icon: ShieldCheck },
   { id: "evidence", label: "Evidence Ledger", icon: DatabaseZap },
   { id: "counsel", label: "Counsel Pack", icon: FileText },
@@ -37,41 +23,112 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
 ];
 
 export default function App() {
-  const [selectedName, setSelectedName] = useState(sampleProfiles[0].projectName);
-  const [activeTab, setActiveTab] = useState<TabId>("risk");
-  const [customNote, setCustomNote] = useState("Add launch facts, token terms, jurisdiction notes, and missing approvals here.");
-  const [evidenceHash, setEvidenceHash] = useState("calculating");
+  const [project, setProject] = useState<ProjectProfile>(() => loadStoredProject() ?? projectFromAuditProfile(sampleProfiles[0]));
+  const [activeTab, setActiveTab] = useState<TabId>("wizard");
+  const [showValidation, setShowValidation] = useState(false);
+  const [savedAt, setSavedAt] = useState("");
+  const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
 
-  const profile = useMemo(
-    () => sampleProfiles.find((item) => item.projectName === selectedName) ?? sampleProfiles[0],
-    [selectedName]
-  );
-  const enrichedProfile = useMemo<AuditProfile>(
-    () => ({
-      ...profile,
-      evidenceItems: [
-        ...profile.evidenceItems,
-        { label: "Operator note", kind: "Internal note", content: customNote }
-      ]
-    }),
-    [customNote, profile]
-  );
-  const audit = useMemo(() => analyzeAuditProfile(enrichedProfile), [enrichedProfile]);
+  const audit = useMemo(() => analyzeAuditProfile(project), [project]);
   const fit = useMemo(() => createSubmissionFit(), []);
-  const memo = useMemo(() => buildCounselMemo(enrichedProfile, audit, evidenceHash), [audit, enrichedProfile, evidenceHash]);
+  const validation = useMemo(() => validateProjectProfile(project), [project]);
+  const markdown = useMemo(
+    () =>
+      manifest
+        ? buildMarkdownCounselPack(project, audit, manifest)
+        : "Evidence manifest is calculating. Not legal advice; counsel pack output is audit preparation material.",
+    [audit, manifest, project]
+  );
 
   useEffect(() => {
     let live = true;
-    setEvidenceHash("calculating");
-    createEvidenceHash(enrichedProfile.evidenceItems).then((hash) => {
+    setManifest(null);
+    createEvidenceManifest(project, audit, project.evidenceItems).then((nextManifest) => {
       if (live) {
-        setEvidenceHash(hash);
+        setManifest(nextManifest);
       }
     });
     return () => {
       live = false;
     };
-  }, [enrichedProfile]);
+  }, [audit, project]);
+
+  useEffect(() => {
+    if (validation.valid) {
+      safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(project));
+    }
+  }, [project, validation.valid]);
+
+  const updateProject = (nextProject: ProjectProfile) => {
+    setProject({ ...nextProject, updatedAt: new Date().toISOString() });
+  };
+
+  const loadSample = (projectName: string) => {
+    const profile = sampleProfiles.find((item) => item.projectName === projectName);
+    if (!profile) {
+      return;
+    }
+    setProject(projectFromAuditProfile(profile));
+    setShowValidation(false);
+    setSavedAt("");
+    setActiveTab("wizard");
+  };
+
+  const newProject = () => {
+    setProject(createBlankProject());
+    setShowValidation(false);
+    setSavedAt("");
+    setActiveTab("wizard");
+  };
+
+  const saveWorkspace = () => {
+    setShowValidation(true);
+    if (!validation.valid) {
+      return;
+    }
+    safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(project));
+    setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+  };
+
+  const addEvidence = (item: EvidenceItem) => {
+    const now = new Date().toISOString();
+    setProject((current) => ({
+      ...current,
+      evidenceItems: [
+        ...current.evidenceItems,
+        {
+          ...item,
+          id: createLocalId("evidence"),
+          kind: item.kind.trim() || "Note",
+          label: item.label.trim(),
+          content: item.content.trim(),
+          addedAt: now,
+          updatedAt: now
+        }
+      ],
+      updatedAt: now
+    }));
+  };
+
+  const updateEvidence = (index: number, updates: Partial<EvidenceItem>) => {
+    const now = new Date().toISOString();
+    setProject((current) => ({
+      ...current,
+      evidenceItems: current.evidenceItems.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...updates, updatedAt: now } : item
+      ),
+      updatedAt: now
+    }));
+  };
+
+  const removeEvidence = (index: number) => {
+    const now = new Date().toISOString();
+    setProject((current) => ({
+      ...current,
+      evidenceItems: current.evidenceItems.filter((_, itemIndex) => itemIndex !== index),
+      updatedAt: now
+    }));
+  };
 
   return (
     <div className="app-shell">
@@ -80,7 +137,8 @@ export default function App() {
           <p className="eyebrow">BLI Legal Tech Hackathon 2 MVP</p>
           <h1>LexProof AuditOS</h1>
           <p className="lead">
-            A structured legal and compliance audit workspace for Web3 teams preparing counsel-ready evidence packs.
+            A local-first audit workspace that turns Web3 launch facts into review-ready risk triage, evidence manifests, and
+            counsel pack exports. Not legal advice.
           </p>
         </div>
         <div className="target-card" aria-label="Hackathon target">
@@ -93,49 +151,18 @@ export default function App() {
       </header>
 
       <main className="workspace">
-        <aside className="left-rail" aria-label="Project intake">
-          <section className="panel">
-            <div className="panel-title">
-              <Gavel size={18} aria-hidden="true" />
-              <h2>Audit Profile</h2>
-            </div>
-            <label className="field-label" htmlFor="profile-select">
-              Scenario
-            </label>
-            <select id="profile-select" value={selectedName} onChange={(event) => setSelectedName(event.target.value)}>
-              {sampleProfiles.map((item) => (
-                <option key={item.projectName} value={item.projectName}>
-                  {item.projectName}
-                </option>
-              ))}
-            </select>
-
-            <div className="profile-facts">
-              <Fact label="Entity" value={profile.entityType} />
-              <Fact label="Users" value={profile.userType} />
-              <Fact label="Custody" value={profile.custodyModel} />
-              <Fact label="Stage" value={profile.operatingStage} />
-            </div>
-          </section>
-
-          <section className="panel">
-            <div className="panel-title">
-              <Layers3 size={18} aria-hidden="true" />
-              <h2>Hackathon Fit</h2>
-            </div>
-            <div className="fit-grid">
-              <Metric label="Prize/Effort" value={fit.scorecard.prizeToEffort} />
-              <Metric label="Deadline" value={fit.scorecard.deadlineRoom} />
-              <Metric label="Scope" value={fit.scorecard.scopeFit} />
-              <Metric label="Risk" value={fit.scorecard.implementationRisk} />
-            </div>
-            <div className="tag-cloud">
-              {fit.themeCoverage.map((theme) => (
-                <span key={theme}>{theme}</span>
-              ))}
-            </div>
-          </section>
-        </aside>
+        <ProjectWorkspace
+          project={project}
+          sampleProfiles={sampleProfiles}
+          fit={fit}
+          validation={validation}
+          showValidation={showValidation}
+          savedAt={savedAt}
+          onProjectChange={updateProject}
+          onLoadSample={loadSample}
+          onNewProject={newProject}
+          onSave={saveWorkspace}
+        />
 
         <section className="main-stage">
           <nav className="tabs" aria-label="Workbench tabs">
@@ -155,174 +182,82 @@ export default function App() {
             })}
           </nav>
 
-          {activeTab === "intake" && (
-            <section className="panel stage-panel">
-              <SectionHeader
-                icon={ClipboardList}
-                title="Intake"
-                subtitle="Capture facts that counsel and compliance need before a blockchain product is described externally."
-              />
-              <div className="intake-grid">
-                <Fact label="Jurisdictions" value={profile.jurisdictions.join(", ")} />
-                <Fact label="Asset Model" value={profile.assetModel} />
-                <Fact label="Data Sensitivity" value={profile.dataSensitivity} />
-                <Fact label="AI Usage" value={profile.aiUsage} />
-                <Fact label="Blockchain Use" value={profile.blockchainUse} />
-              </div>
-              <label className="field-label" htmlFor="operator-note">
-                Operator note added to evidence hash
-              </label>
-              <textarea id="operator-note" value={customNote} onChange={(event) => setCustomNote(event.target.value)} />
-            </section>
-          )}
-
-          {activeTab === "risk" && (
-            <section className="panel stage-panel">
-              <SectionHeader
-                icon={ShieldCheck}
-                title="Risk Audit"
-                subtitle="Weighted triage for legal, compliance, AI, RegTech, and blockchain review."
-              />
-              <div className="risk-summary">
-                <div className={`score-ring ${audit.riskLevel}`}>
-                  <strong>{audit.score}</strong>
-                  <span>{audit.riskLevel}</span>
-                </div>
-                <div className="summary-copy">
-                  <h3>{riskCopy(audit.riskLevel)}</h3>
-                  <p>
-                    The engine converts project facts into counsel-ready flags, owner assignments, and evidence tasks. It does
-                    not make legal conclusions.
-                  </p>
-                </div>
-              </div>
-              <div className="flag-grid">
-                {audit.flags.map((flag) => (
-                  <FlagCard key={flag.id} flag={flag} />
-                ))}
-              </div>
-              <h3 className="subhead">Remediation Queue</h3>
-              <div className="task-list">
-                {audit.remediation.map((item) => (
-                  <RemediationRow key={`${item.owner}-${item.action}`} item={item} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {activeTab === "evidence" && (
-            <section className="panel stage-panel">
-              <SectionHeader
-                icon={DatabaseZap}
-                title="Evidence Ledger"
-                subtitle="Every memo, policy, and operator note is normalized into a tamper-evident hash for review handoff."
-              />
-              <div className="hash-banner">
-                <LockKeyhole size={20} aria-hidden="true" />
-                <div>
-                  <span>Evidence bundle SHA-256</span>
-                  <code>{evidenceHash}</code>
-                </div>
-              </div>
-              <div className="ledger-list">
-                {enrichedProfile.evidenceItems.map((item, index) => (
-                  <article key={`${item.label}-${index}`} className="ledger-item">
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div>
-                      <h3>{item.label}</h3>
-                      <p>{item.kind}</p>
-                    </div>
-                    <BadgeCheck size={18} aria-label="Included in hash" />
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {activeTab === "counsel" && (
-            <section className="panel stage-panel">
-              <SectionHeader
-                icon={FileText}
-                title="Counsel Pack"
-                subtitle="Copy-ready Markdown brief with non-advice disclaimer, facts, flags, owners, and sources."
-              />
-              <div className="submission-strip">
-                {fit.requiredAssets.map((asset) => (
-                  <span key={asset}>
-                    <CheckCircle2 size={15} aria-hidden="true" />
-                    {asset}
-                  </span>
-                ))}
-              </div>
-              <pre className="memo">{memo}</pre>
-            </section>
-          )}
-
-          {activeTab === "sources" && (
-            <section className="panel stage-panel">
-              <SectionHeader
-                icon={BookOpen}
-                title="Sources"
-                subtitle="Research pack used to pick the hackathon and shape this MVP."
-              />
-              <div className="source-grid">
-                {audit.sourcePack.map((source) => (
-                  <a key={source.url} className="source-card" href={source.url} target="_blank" rel="noreferrer">
-                    <Link2 size={18} aria-hidden="true" />
-                    <strong>{source.title}</strong>
-                    <span>{source.relevance}</span>
-                  </a>
-                ))}
-              </div>
-              <div className="repo-callout">
-                <Github size={20} aria-hidden="true" />
-                <p>
-                  Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.
-                </p>
-              </div>
-            </section>
-          )}
+          {activeTab === "wizard" ? <AuditWizard project={project} audit={audit} /> : null}
+          {activeTab === "risk" ? <RiskAuditPanel audit={audit} /> : null}
+          {activeTab === "evidence" ? (
+            <EvidenceLedger
+              evidenceItems={project.evidenceItems}
+              manifest={manifest}
+              onAddEvidence={addEvidence}
+              onUpdateEvidence={updateEvidence}
+              onRemoveEvidence={removeEvidence}
+            />
+          ) : null}
+          {activeTab === "counsel" ? (
+            <CounselPackPanel projectName={project.projectName} fit={fit} manifest={manifest} markdown={markdown} />
+          ) : null}
+          {activeTab === "sources" ? <SourcesPanel audit={audit} /> : null}
         </section>
       </main>
     </div>
   );
 }
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  subtitle
-}: {
-  icon: typeof ClipboardList;
-  title: string;
-  subtitle: string;
-}) {
+function RiskAuditPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile> }) {
   return (
-    <div className="section-header">
-      <Icon size={22} aria-hidden="true" />
-      <div>
-        <h2>{title}</h2>
-        <p>{subtitle}</p>
+    <section className="panel stage-panel">
+      <SectionHeader
+        icon={ShieldCheck}
+        title="Risk Audit"
+        subtitle="Weighted triage for legal, compliance, AI, RegTech, and blockchain review."
+      />
+      <div className="risk-summary">
+        <div className={`score-ring ${audit.riskLevel}`}>
+          <strong>{audit.score}</strong>
+          <span>{audit.riskLevel}</span>
+        </div>
+        <div className="summary-copy">
+          <h3>{riskCopy(audit.riskLevel)}</h3>
+          <p>
+            The engine converts project facts into counsel-ready flags, owner assignments, and evidence tasks. It does not make
+            legal conclusions.
+          </p>
+        </div>
       </div>
-    </div>
+      <div className="flag-grid">
+        {audit.flags.length === 0 ? <p className="empty-state">No material flags detected in the current facts.</p> : null}
+        {audit.flags.map((flag) => (
+          <FlagCard key={flag.id} flag={flag} />
+        ))}
+      </div>
+      <h3 className="subhead">Remediation Queue</h3>
+      <div className="task-list">
+        {audit.remediation.map((item) => (
+          <RemediationRow key={`${item.owner}-${item.action}`} item={item} />
+        ))}
+      </div>
+    </section>
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function SourcesPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile> }) {
   return (
-    <div className="fact">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="metric">
-      <strong>{value}/10</strong>
-      <span>{label}</span>
-    </div>
+    <section className="panel stage-panel">
+      <SectionHeader icon={BookOpen} title="Sources" subtitle="Research pack used to pick the hackathon and shape this MVP." />
+      <div className="source-grid">
+        {audit.sourcePack.map((source) => (
+          <a key={source.url} className="source-card" href={source.url} target="_blank" rel="noreferrer">
+            <Link2 size={18} aria-hidden="true" />
+            <strong>{source.title}</strong>
+            <span>{source.relevance}</span>
+          </a>
+        ))}
+      </div>
+      <div className="repo-callout">
+        <Github size={20} aria-hidden="true" />
+        <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
+      </div>
+    </section>
   );
 }
 
@@ -350,15 +285,78 @@ function RemediationRow({ item }: { item: RemediationItem }) {
   );
 }
 
-function riskCopy(level: string): string {
-  if (level === "critical") {
-    return "Counsel-first launch gate required";
+function projectFromAuditProfile(profile: AuditProfile): ProjectProfile {
+  const now = new Date().toISOString();
+  return {
+    ...profile,
+    id: `sample-${slug(profile.projectName)}`,
+    evidenceItems: profile.evidenceItems.map((item, index) => ({
+      ...item,
+      id: item.id ?? `sample-${slug(profile.projectName)}-${index + 1}`,
+      status: item.status ?? "received",
+      owner: item.owner ?? "Founder",
+      addedAt: item.addedAt ?? now,
+      updatedAt: item.updatedAt ?? now
+    })),
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function createBlankProject(): ProjectProfile {
+  const now = new Date().toISOString();
+  return {
+    id: createLocalId("project"),
+    projectName: "",
+    entityType: "",
+    jurisdictions: [],
+    assetModel: "",
+    userType: "",
+    custodyModel: "",
+    dataSensitivity: "",
+    aiUsage: "",
+    blockchainUse: "",
+    operatingStage: "",
+    evidenceItems: [],
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function loadStoredProject(): ProjectProfile | null {
+  const raw = safeStorage()?.getItem(STORAGE_KEY);
+  if (!raw) {
+    return null;
   }
-  if (level === "high") {
-    return "Material review before public claims";
+
+  try {
+    const parsed = JSON.parse(raw) as ProjectProfile;
+    if (parsed && typeof parsed.id === "string" && Array.isArray(parsed.evidenceItems)) {
+      return parsed;
+    }
+  } catch {
+    return null;
   }
-  if (level === "moderate") {
-    return "Document assumptions before pilots";
+
+  return null;
+}
+
+function safeStorage(): Storage | null {
+  if (typeof window === "undefined" || !window.localStorage || typeof window.localStorage.getItem !== "function") {
+    return null;
   }
-  return "Low-risk education or documentation flow";
+  return window.localStorage;
+}
+
+function createLocalId(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function slug(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "project"
+  );
 }

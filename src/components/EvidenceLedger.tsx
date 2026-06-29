@@ -1,0 +1,209 @@
+import { useState } from "react";
+import { BadgeCheck, DatabaseZap, LockKeyhole, Trash2 } from "lucide-react";
+import { SectionHeader } from "./AuditWizard";
+import type { EvidenceManifest } from "../lib/evidenceManifest";
+import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
+
+type EvidenceLedgerProps = {
+  evidenceItems: EvidenceItem[];
+  manifest: EvidenceManifest | null;
+  onAddEvidence: (item: EvidenceItem) => void;
+  onUpdateEvidence: (index: number, updates: Partial<EvidenceItem>) => void;
+  onRemoveEvidence: (index: number) => void;
+};
+
+const statuses: EvidenceStatus[] = ["draft", "requested", "received", "verified"];
+const owners: EvidenceOwner[] = ["Founder", "Counsel", "Compliance", "Engineering", "Product"];
+
+const blankEvidence: EvidenceItem = {
+  label: "",
+  kind: "Markdown",
+  content: "",
+  source: "",
+  status: "draft",
+  owner: "Founder"
+};
+
+export function EvidenceLedger({
+  evidenceItems,
+  manifest,
+  onAddEvidence,
+  onUpdateEvidence,
+  onRemoveEvidence
+}: EvidenceLedgerProps) {
+  const [draft, setDraft] = useState<EvidenceItem>(blankEvidence);
+
+  const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
+
+  const addEvidence = () => {
+    if (!canAdd) {
+      return;
+    }
+    onAddEvidence(draft);
+    setDraft(blankEvidence);
+  };
+
+  return (
+    <section className="panel stage-panel">
+      <SectionHeader
+        icon={DatabaseZap}
+        title="Evidence Ledger"
+        subtitle="Maintain a local, editable evidence queue and produce a deterministic manifest hash for review handoff."
+      />
+
+      <div className="hash-banner">
+        <LockKeyhole size={20} aria-hidden="true" />
+        <div>
+          <span>Manifest bundle SHA-256</span>
+          <small>Evidence bundle SHA-256</small>
+          <code>{manifest?.bundleHash ?? "calculating"}</code>
+        </div>
+      </div>
+
+      <div className="ledger-form">
+        <div>
+          <label className="field-label" htmlFor="evidence-label">
+            Evidence label
+          </label>
+          <input
+            id="evidence-label"
+            value={draft.label}
+            onChange={(event) => setDraft({ ...draft, label: event.target.value })}
+            placeholder="Launch memo"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor="evidence-kind">
+            Evidence kind
+          </label>
+          <input
+            id="evidence-kind"
+            value={draft.kind}
+            onChange={(event) => setDraft({ ...draft, kind: event.target.value })}
+            placeholder="Markdown, PDF, policy, JSON"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor="evidence-source">
+            Source reference
+          </label>
+          <input
+            id="evidence-source"
+            value={draft.source ?? ""}
+            onChange={(event) => setDraft({ ...draft, source: event.target.value })}
+            placeholder="Synthetic policy, counsel draft, runbook"
+          />
+        </div>
+        <div>
+          <label className="field-label" htmlFor="evidence-status">
+            Evidence status
+          </label>
+          <select
+            id="evidence-status"
+            value={draft.status ?? "draft"}
+            onChange={(event) => setDraft({ ...draft, status: event.target.value as EvidenceStatus })}
+          >
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="field-label" htmlFor="evidence-owner">
+            Evidence owner
+          </label>
+          <select
+            id="evidence-owner"
+            value={draft.owner ?? "Founder"}
+            onChange={(event) => setDraft({ ...draft, owner: event.target.value as EvidenceOwner })}
+          >
+            {owners.map((owner) => (
+              <option key={owner} value={owner}>
+                {owner}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="full-width">
+          <label className="field-label" htmlFor="evidence-content">
+            Evidence content
+          </label>
+          <textarea
+            id="evidence-content"
+            value={draft.content}
+            onChange={(event) => setDraft({ ...draft, content: event.target.value })}
+            placeholder="Summarize the artifact. Do not paste raw KYC, private keys, or personal data."
+          />
+        </div>
+        <button type="button" disabled={!canAdd} onClick={addEvidence}>
+          Add evidence item
+        </button>
+      </div>
+
+      <div className="ledger-list editable">
+        {evidenceItems.length === 0 ? <p className="empty-state">No evidence items yet.</p> : null}
+        {evidenceItems.map((item, index) => (
+          <article key={item.id ?? `${item.label}-${index}`} className="ledger-editor">
+            <div className="ledger-editor-header">
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{item.label || "Untitled evidence"}</strong>
+              <BadgeCheck size={18} aria-label="Included in manifest" />
+            </div>
+            <div className="ledger-editor-grid">
+              <input
+                aria-label={`Label for evidence ${index + 1}`}
+                value={item.label}
+                onChange={(event) => onUpdateEvidence(index, { label: event.target.value })}
+              />
+              <input
+                aria-label={`Kind for evidence ${index + 1}`}
+                value={item.kind}
+                onChange={(event) => onUpdateEvidence(index, { kind: event.target.value })}
+              />
+              <select
+                aria-label={`Status for evidence ${index + 1}`}
+                value={item.status ?? "draft"}
+                onChange={(event) => onUpdateEvidence(index, { status: event.target.value as EvidenceStatus })}
+              >
+                {statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label={`Owner for evidence ${index + 1}`}
+                value={item.owner ?? "Founder"}
+                onChange={(event) => onUpdateEvidence(index, { owner: event.target.value as EvidenceOwner })}
+              >
+                {owners.map((owner) => (
+                  <option key={owner} value={owner}>
+                    {owner}
+                  </option>
+                ))}
+              </select>
+              <input
+                aria-label={`Source for evidence ${index + 1}`}
+                value={item.source ?? ""}
+                onChange={(event) => onUpdateEvidence(index, { source: event.target.value })}
+              />
+              <textarea
+                aria-label={`Content for evidence ${index + 1}`}
+                value={item.content}
+                onChange={(event) => onUpdateEvidence(index, { content: event.target.value })}
+              />
+            </div>
+            <div className="inline-actions">
+              <code>{manifest?.items[index]?.contentHash ?? "calculating"}</code>
+              <button type="button" className="danger" onClick={() => onRemoveEvidence(index)} aria-label={`Remove ${item.label}`}>
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}

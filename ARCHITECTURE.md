@@ -7,13 +7,21 @@ LexProof AuditOS is a Vite React single-page application. The app is intentional
 ```text
 lexproof-ai-audit/
   src/
-    App.tsx                  # React workbench shell and tab views
+    App.tsx                  # React workbench shell, persistence, and tab composition
     styles.css               # Responsive UI styling
     main.tsx                 # React entry point
+    components/
+      ProjectWorkspace.tsx   # Editable project profile and sample loading
+      AuditWizard.tsx        # Step-by-step project review surface
+      EvidenceLedger.tsx     # Editable evidence queue and manifest display
+      CounselPackPanel.tsx   # Markdown counsel pack preview and download
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
     lib/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
+      projectModel.ts        # Project/evidence types and validation
+      evidenceManifest.ts    # Deterministic item and bundle hashes
+      counselPack.ts         # Markdown pack and browser download helper
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
@@ -26,16 +34,16 @@ lexproof-ai-audit/
 ## Data Flow
 
 ```text
-sampleProfiles
-  -> selected profile in App state
-  -> operator note appended as evidence
-  -> analyzeAuditProfile()
-  -> createEvidenceHash()
-  -> buildCounselMemo()
-  -> tabbed UI surfaces
+sampleProfiles or blank project
+  -> ProjectProfile in App state
+  -> localStorage persistence when valid
+  -> analyzeAuditProfile(project)
+  -> createEvidenceManifest(project, audit, evidenceItems)
+  -> buildMarkdownCounselPack(project, audit, manifest)
+  -> tabbed UI surfaces and Markdown download
 ```
 
-The UI does not own legal scoring rules. It renders output from `auditEngine.ts`.
+The UI does not own legal scoring, hashing, validation, or export rules. It renders output from `src/lib` modules and owns only browser interaction state.
 
 ## Core Modules
 
@@ -49,6 +57,33 @@ Owns the domain behavior:
 - `createSubmissionFit()` describes how the MVP maps to BLI Legal Tech Hackathon 2.
 
 Keep this file deterministic and side-effect-light. New scoring rules should be covered by tests before they are used by the UI.
+
+### `src/lib/projectModel.ts`
+
+Owns first-stage workspace types and validation:
+
+- `ProjectProfile` is the editable audit project model.
+- `EvidenceItem` includes optional local ID, source, status, owner, and timestamps.
+- `validateProjectProfile()` returns explicit errors for missing project facts.
+
+This module does not store data and does not accept raw KYC or private data handling.
+
+### `src/lib/evidenceManifest.ts`
+
+Owns deterministic manifest behavior:
+
+- `hashEvidenceItem(item)` hashes normalized evidence content and material metadata.
+- `createEvidenceManifest(project, audit, evidenceItems)` returns item hashes, risk context, and a bundle SHA-256.
+- `exportManifestJson(manifest)` produces readable JSON for future export surfaces.
+
+The first-stage manifest is local and simulated. It is not a real chain write or proof of external existence.
+
+### `src/lib/counselPack.ts`
+
+Owns export behavior:
+
+- `buildMarkdownCounselPack(project, audit, manifest)` generates audit preparation Markdown with the non-advice boundary.
+- `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 
 ### `src/data/sampleProfiles.ts`
 
@@ -64,12 +99,21 @@ Do not put scoring logic in this file.
 
 Owns UI state and composition:
 
-- selected scenario
+- current `ProjectProfile`
+- localStorage read/write for valid projects
 - active tab
-- operator note
-- async evidence hash state
+- async evidence manifest state
 
-The component calls the audit engine and renders five surfaces: Intake, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+The component calls library modules and renders five surfaces: Audit Wizard, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+
+### `src/components/*`
+
+Components are intentionally presentational and interaction-focused:
+
+- `ProjectWorkspace` edits project facts and loads synthetic samples.
+- `AuditWizard` displays the step-by-step audit review.
+- `EvidenceLedger` adds, edits, and removes local evidence records.
+- `CounselPackPanel` previews and downloads Markdown output.
 
 ### `src/styles.css`
 
@@ -85,23 +129,30 @@ Domain tests live next to the audit engine and cover:
 - hash changes when evidence changes
 - counsel memo content
 - hackathon submission fit
+- project validation errors
+- manifest item and bundle hashing
+- manifest JSON export
+- counsel pack Markdown content
+- Markdown browser download behavior
 
 UI tests cover:
 
 - the main workbench shell
 - BLI hackathon targeting
 - required tabs
-- Evidence Ledger tab interaction
-- evidence hash visibility
+- custom project creation
+- Risk Audit updates from the new project profile
+- Evidence Ledger item creation
+- manifest bundle hash visibility
 
 ## Extension Points
 
 Good next additions:
 
-- export Counsel Pack as Markdown
 - import custom JSON profiles
 - add richer jurisdiction checklists
 - add source citation controls per flag
 - add optional on-chain anchoring only after privacy and wallet boundaries are documented
+- add manifest JSON download once users can review exactly what leaves the browser
 
 Avoid adding real legal conclusions, real wallet signing, or third-party data upload until the non-advice and data-handling boundaries are explicit.

@@ -1,6 +1,6 @@
 # LexProof AuditOS
 
-LexProof AuditOS is a legal and compliance audit MVP for **BLI Legal Tech Hackathon 2** on DoraHacks. It helps Web3 teams turn messy launch facts into a counsel-ready audit package with risk flags, remediation owners, evidence hashing, source references, and a copy-ready Markdown memo.
+LexProof AuditOS is a legal and compliance audit MVP for **BLI Legal Tech Hackathon 2** on DoraHacks. It helps Web3 teams turn messy launch facts into a counsel-ready audit workspace with risk flags, remediation owners, editable evidence records, deterministic manifest hashes, source references, and downloadable Markdown counsel packs.
 
 This project is not legal advice. It is an audit preparation workflow for lawyers, compliance teams, and builders.
 
@@ -17,12 +17,25 @@ Key evidence:
 
 ## MVP Features
 
-- Scenario-based intake for tokenized finance, DAO governance, and legal education projects.
+- Custom Project Workspace for creating a local audit project from zero or loading synthetic samples.
+- Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
 - Weighted legal/compliance risk audit with explicit flags and owner assignments.
-- Evidence ledger with deterministic SHA-256 hash over all attached facts and notes.
-- Counsel Pack generator with non-advice disclaimer, project facts, risk posture, source pack, and remediation queue.
+- Editable Evidence Ledger with evidence status, owner, source notes, item hashes, and manifest bundle hash.
+- Evidence Manifest generator with deterministic SHA-256 item hashes and bundle hash.
+- Counsel Pack Markdown download with non-advice disclaimer, project facts, risk posture, manifest hash, source pack, and remediation queue.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
-- Responsive React interface with tabs for Intake, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+- Responsive React workbench with tabs for Audit Wizard, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+
+## First-Stage Workflow
+
+1. Open the app and click **New project**, or load one of the synthetic sample profiles.
+2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
+3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
+4. Open **Risk Audit** to see current risk level, weighted flags, and remediation owners.
+5. Add or edit records in **Evidence Ledger**. The manifest updates with per-item hashes and a bundle SHA-256.
+6. Open **Counsel Pack** and download the Markdown audit-prep packet for counsel/compliance review.
+
+Workspace data is stored locally in browser `localStorage`. The MVP does not upload evidence, perform real KYC, or write to a blockchain.
 
 ## Tech Stack
 

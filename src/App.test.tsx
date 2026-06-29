@@ -1,9 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
 
 describe("App", () => {
+  beforeEach(() => {
+    window.localStorage?.removeItem?.("lexproof.currentProject.v1");
+  });
+
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
     render(<App />);
 
@@ -16,5 +20,36 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
 
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
+  });
+
+  it("creates a custom project, updates the risk audit, and displays editable evidence in the ledger", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Audit Desk Zero" } });
+    fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Delaware C-corp issuer" } });
+    fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States" } });
+    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized yield note" } });
+    fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Retail users" } });
+    fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+    fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "No raw KYC; policy metadata only" } });
+    fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "AI flags missing approvals" } });
+    fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "Simulated evidence anchor" } });
+    fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Planned public launch" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save workspace/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+    expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Launch memo" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: "Token terms, user eligibility, custody assumptions, and approval status" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await screen.findByText("Launch memo")).toBeInTheDocument();
+    expect(screen.getByText(/Manifest bundle SHA-256/i)).toBeInTheDocument();
   });
 });

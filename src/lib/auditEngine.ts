@@ -1,24 +1,10 @@
+import type { AuditInputProfile, EvidenceItem } from "./projectModel";
+
 export type RiskLevel = "low" | "moderate" | "high" | "critical";
 
-export type EvidenceItem = {
-  label: string;
-  kind: string;
-  content: string;
-};
+export type { EvidenceItem } from "./projectModel";
 
-export type AuditProfile = {
-  projectName: string;
-  entityType: string;
-  jurisdictions: string[];
-  assetModel: string;
-  userType: string;
-  custodyModel: string;
-  dataSensitivity: string;
-  aiUsage: string;
-  blockchainUse: string;
-  operatingStage: string;
-  evidenceItems: EvidenceItem[];
-};
+export type AuditProfile = AuditInputProfile;
 
 export type AuditFlag = {
   id: string;

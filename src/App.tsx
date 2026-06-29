@@ -620,6 +620,7 @@ export default function App() {
           ) : null}
           {activeTab === "evidence" ? (
             <EvidenceLedger
+              projectId={project.id}
               evidenceItems={project.evidenceItems}
               evidenceAuditEvents={currentEvidenceAuditEvents}
               manifest={manifest}

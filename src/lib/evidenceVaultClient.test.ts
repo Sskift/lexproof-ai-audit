@@ -1,0 +1,128 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  createEvidenceVaultSnapshot,
+  syncEvidenceLedgerToVault,
+  type EvidenceVaultManifestResponse,
+  type EvidenceVaultRecordResponse
+} from "./evidenceVaultClient";
+import type { EvidenceItem } from "./projectModel";
+
+const evidenceItem: EvidenceItem = {
+  id: "launch-approval",
+  label: "Launch approval memo",
+  kind: "Markdown",
+  source: "risk evidence requirement: governance-approval",
+  status: "verified",
+  owner: "Compliance",
+  content: "Confidential board approval text that must stay local."
+};
+
+describe("evidence vault client", () => {
+  it("builds metadata-only vault snapshots without raw evidence content", async () => {
+    const snapshot = await createEvidenceVaultSnapshot(evidenceItem);
+    const changedSnapshot = await createEvidenceVaultSnapshot({
+      ...evidenceItem,
+      content: "Changed confidential board approval text that must stay local."
+    });
+    const serialized = JSON.stringify(snapshot);
+
+    expect(snapshot.snapshotVersion).toBe("lexproof-evidence-vault-snapshot-v1");
+    expect(snapshot.localContentHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(changedSnapshot.localContentHash).not.toBe(snapshot.localContentHash);
+    expect(snapshot.notLegalAdviceBoundary).toContain("Not legal advice");
+    expect(serialized).not.toContain("Confidential board approval text");
+  });
+
+  it("syncs ledger evidence to the backend vault and fetches the vault manifest", async () => {
+    const uploadedForms: FormData[] = [];
+    const manifest: EvidenceVaultManifestResponse = {
+      manifestVersion: "lexproof-evidence-vault-manifest-v1",
+      workspaceId: "workspace-vault",
+      generatedAt: "2026-06-30T00:00:00.000Z",
+      itemCount: 1,
+      items: [],
+      bundleHash: "a".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+    };
+    const vaultRecord: EvidenceVaultRecordResponse = {
+      recordVersion: "lexproof-evidence-vault-record-v1",
+      id: "evidence-vault-1",
+      workspaceId: "workspace-vault",
+      filename: "launch-approval-memo.metadata.json",
+      mimeType: "application/json",
+      byteSize: 512,
+      fileHash: "b".repeat(64),
+      storageMode: "server-vault",
+      status: "submitted",
+      owner: "Compliance",
+      sourceNote: "Metadata-only sync",
+      version: 1,
+      linkedRiskFlagIds: ["governance-approval"],
+      containsRawKycOrPersonalData: false,
+      createdAt: "2026-06-30T00:00:00.000Z",
+      updatedAt: "2026-06-30T00:00:00.000Z"
+    };
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        uploadedForms.push(init.body as FormData);
+        return jsonResponse(vaultRecord, 201);
+      }
+
+      if (path.endsWith("/evidence-vault-1") && init?.method === "PATCH") {
+        return jsonResponse({ ...vaultRecord, status: "verified", version: 2 }, 200);
+      }
+
+      if (path.endsWith("/evidence-manifest")) {
+        return jsonResponse(manifest, 200);
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+
+    const result = await syncEvidenceLedgerToVault({
+      workspaceId: "workspace-vault",
+      evidenceItems: [evidenceItem],
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher
+    });
+
+    expect(fetcher).toHaveBeenCalledWith("https://api.lexproof.test/api/workspaces/workspace-vault/evidence", expect.any(Object));
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://api.lexproof.test/api/workspaces/workspace-vault/evidence/evidence-vault-1",
+      expect.objectContaining({ method: "PATCH" })
+    );
+    expect(fetcher).toHaveBeenCalledWith("https://api.lexproof.test/api/workspaces/workspace-vault/evidence-manifest", { method: "GET" });
+    expect(result.records[0]).toEqual(expect.objectContaining({ status: "verified" }));
+    expect(result.manifest.bundleHash).toBe("a".repeat(64));
+    expect(result.notLegalAdviceBoundary).toContain("Not legal advice");
+
+    const uploadedFile = uploadedForms[0].get("file") as Blob;
+    const uploadedPayload = await readBlobText(uploadedFile);
+    expect(uploadedPayload).toContain("localContentHash");
+    expect(uploadedPayload).toContain("governance-approval");
+    expect(uploadedPayload).not.toContain("Confidential board approval text");
+    expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
+  });
+});
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => payload
+  } as Response;
+}
+
+function readBlobText(blob: Blob): Promise<string> {
+  if (typeof blob.text === "function") {
+    return blob.text();
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("Unable to read blob.")));
+    reader.readAsText(blob);
+  });
+}

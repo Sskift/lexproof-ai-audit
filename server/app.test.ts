@@ -24,6 +24,25 @@ describe("Phase 2 backend app", () => {
     await server.close();
   });
 
+  it("supports local workbench CORS for Phase 2 API calls", async () => {
+    const server = buildServer();
+
+    const response = await server.inject({
+      method: "OPTIONS",
+      url: "/api/workspaces/workspace-1/evidence",
+      headers: {
+        origin: "http://127.0.0.1:5173"
+      }
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(response.headers["access-control-allow-origin"]).toBe("http://127.0.0.1:5173");
+    expect(response.headers["access-control-allow-methods"]).toBe("GET,POST,PATCH,OPTIONS");
+    expect(response.headers["access-control-allow-headers"]).toContain("Content-Type");
+
+    await server.close();
+  });
+
   it("lists model gateway adapters without accepting credentials or enabling external providers", async () => {
     const server = buildServer();
 

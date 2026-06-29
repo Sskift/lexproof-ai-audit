@@ -22,9 +22,18 @@ export function buildServer(options: BuildServerOptions = {}) {
   const repository = options.repository ?? createMemoryReviewWorkspaceRepository();
   server.register(multipart);
 
+  server.addHook("onRequest", async (request, reply) => {
+    reply.header("Access-Control-Allow-Origin", request.headers.origin ?? "*");
+    reply.header("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
+    reply.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    reply.header("Vary", "Origin");
+  });
+
   server.addHook("onClose", async () => {
     await repository.close();
   });
+
+  server.options("/api/*", async (_request, reply) => reply.status(204).send());
 
   server.get("/api/health", async () => ({
     status: "ok",

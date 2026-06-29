@@ -119,6 +119,92 @@ describe("App", () => {
     expect(screen.queryByDisplayValue(/Confidential launch memo body/i)).not.toBeInTheDocument();
   });
 
+  it("syncs Evidence Ledger metadata to the backend Evidence Vault and displays the vault manifest hash", async () => {
+    const uploadedForms: FormData[] = [];
+    const vaultRecord = {
+      recordVersion: "lexproof-evidence-vault-record-v1",
+      id: "evidence-vault-ui",
+      workspaceId: "workspace-ui",
+      filename: "vault-approval-memo.metadata.json",
+      mimeType: "application/json",
+      byteSize: 512,
+      fileHash: "b".repeat(64),
+      storageMode: "server-vault",
+      status: "submitted",
+      owner: "Compliance",
+      sourceNote: "Metadata-only sync",
+      version: 1,
+      linkedRiskFlagIds: ["governance-approval"],
+      containsRawKycOrPersonalData: false,
+      createdAt: "2026-06-30T00:00:00.000Z",
+      updatedAt: "2026-06-30T00:00:00.000Z"
+    };
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        uploadedForms.push(init.body as FormData);
+        return appJsonResponse(vaultRecord, 201);
+      }
+
+      if (path.endsWith("/evidence/evidence-vault-ui") && init?.method === "PATCH") {
+        return appJsonResponse({ ...vaultRecord, status: "verified", version: 2 }, 200);
+      }
+
+      if (path.endsWith("/evidence-manifest") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            manifestVersion: "lexproof-evidence-vault-manifest-v1",
+            workspaceId: "workspace-ui",
+            generatedAt: "2026-06-30T00:00:00.000Z",
+            itemCount: 1,
+            items: [],
+            bundleHash: "a".repeat(64),
+            notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+          },
+          200
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Vault approval memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: "risk evidence requirement: governance-approval" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "verified" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: { value: "Raw board approval facts stay local and are represented by hash only." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      expect(await screen.findByText("Vault approval memo")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /Evidence Vault Sync/i })).toBeInTheDocument();
+      expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Sync Evidence Vault/i }));
+
+      expect(await screen.findByText(/Evidence Vault synced 1 records/i)).toBeInTheDocument();
+      expect(screen.getByText("a".repeat(64))).toBeInTheDocument();
+      expect(screen.getByText(/vault-approval-memo.metadata.json/i)).toBeInTheDocument();
+      expect(screen.getByText(/verified · Compliance · v2/i)).toBeInTheDocument();
+
+      const uploadedFile = uploadedForms[0].get("file") as Blob;
+      const uploadedPayload = await readAppBlobText(uploadedFile);
+      expect(uploadedPayload).toContain("localContentHash");
+      expect(uploadedPayload).toContain("governance-approval");
+      expect(uploadedPayload).not.toContain("Raw board approval facts stay local");
+      expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("shows per-risk evidence workflow coverage and updates it from ledger evidence", async () => {
     render(<App />);
 
@@ -492,3 +578,24 @@ describe("App", () => {
     expect(screen.getByText(/not-submitted/i)).toBeInTheDocument();
   });
 });
+
+function appJsonResponse(payload: unknown, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => payload
+  } as Response;
+}
+
+function readAppBlobText(blob: Blob): Promise<string> {
+  if (typeof blob.text === "function") {
+    return blob.text();
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("Unable to read blob.")));
+    reader.readAsText(blob);
+  });
+}

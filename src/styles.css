@@ -1749,6 +1749,143 @@ textarea {
   padding: 9px 12px;
 }
 
+.evidence-vault-sync {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.evidence-vault-sync.synced {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.evidence-vault-sync.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.vault-mode {
+  border-radius: 999px;
+  background: #e7edf8;
+  color: #263d73;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.vault-sync-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 132px 150px minmax(240px, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.vault-api-field,
+.vault-metric,
+.vault-hash {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vault-metric,
+.vault-hash {
+  display: grid;
+  align-content: center;
+}
+
+.vault-metric span,
+.vault-metric strong,
+.vault-hash span,
+.vault-hash code {
+  display: block;
+}
+
+.vault-metric span,
+.vault-hash span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.vault-metric strong {
+  color: #172431;
+  font-size: 1.35rem;
+}
+
+.vault-hash code {
+  overflow-wrap: anywhere;
+  color: #102a43;
+  font-size: 0.8rem;
+}
+
+.vault-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vault-record-list {
+  display: grid;
+  gap: 8px;
+}
+
+.vault-record {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-left: 4px solid #7aa7b4;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vault-record.verified {
+  border-left-color: #5f9c77;
+}
+
+.vault-record.requested,
+.vault-record.under-review {
+  border-left-color: #b57a3a;
+}
+
+.vault-record.rejected {
+  border-left-color: #b85c54;
+}
+
+.vault-record strong,
+.vault-record span,
+.vault-record code {
+  display: block;
+}
+
+.vault-record strong {
+  color: #172431;
+  overflow-wrap: anywhere;
+}
+
+.vault-record span {
+  color: #53616f;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.vault-record code {
+  overflow-wrap: anywhere;
+  color: #41505e;
+  font-size: 0.78rem;
+}
+
 .ledger-item {
   grid-template-columns: 48px minmax(0, 1fr) 28px;
   padding: 12px;
@@ -2390,7 +2527,8 @@ textarea {
   .human-review-summary,
   .human-review-card header,
   .human-review-grid,
-  .template-grid {
+  .template-grid,
+  .vault-sync-grid {
     grid-template-columns: 1fr;
   }
 

@@ -1,13 +1,20 @@
 import { useState } from "react";
-import { BadgeCheck, DatabaseZap, Download, FileUp, History, LockKeyhole, Trash2 } from "lucide-react";
+import { BadgeCheck, CloudUpload, DatabaseZap, Download, FileUp, History, LockKeyhole, RefreshCcw, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
+import {
+  fetchEvidenceVaultManifest,
+  syncEvidenceLedgerToVault,
+  type EvidenceVaultManifestResponse,
+  type EvidenceVaultRecordResponse
+} from "../lib/evidenceVaultClient";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
 
 type EvidenceLedgerProps = {
+  projectId: string;
   evidenceItems: EvidenceItem[];
   evidenceAuditEvents: EvidenceAuditEvent[];
   manifest: EvidenceManifest | null;
@@ -32,6 +39,7 @@ const blankEvidence: EvidenceItem = {
 };
 
 export function EvidenceLedger({
+  projectId,
   evidenceItems,
   evidenceAuditEvents,
   manifest,
@@ -44,8 +52,14 @@ export function EvidenceLedger({
 }: EvidenceLedgerProps) {
   const [draft, setDraft] = useState<EvidenceItem>(blankEvidence);
   const [fileImportState, setFileImportState] = useState("");
+  const [vaultApiBaseUrl, setVaultApiBaseUrl] = useState("");
+  const [vaultStatus, setVaultStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [vaultError, setVaultError] = useState("");
+  const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
+  const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
 
   const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
+  const canSyncVault = evidenceItems.length > 0 && projectId.trim().length > 0 && vaultStatus !== "syncing";
 
   const addEvidence = () => {
     if (!canAdd) {
@@ -66,6 +80,51 @@ export function EvidenceLedger({
     });
     onAddEvidence(item);
     setFileImportState(`Added ${file.name} as local file metadata`);
+  };
+
+  const syncVault = async () => {
+    if (!canSyncVault) {
+      return;
+    }
+
+    setVaultStatus("syncing");
+    setVaultError("");
+
+    try {
+      const result = await syncEvidenceLedgerToVault({
+        workspaceId: projectId,
+        evidenceItems,
+        apiBaseUrl: vaultApiBaseUrl
+      });
+
+      setVaultRecords(result.records);
+      setVaultManifest(result.manifest);
+      setVaultStatus("synced");
+    } catch (error) {
+      setVaultStatus("error");
+      setVaultError(error instanceof Error ? error.message : "Evidence Vault sync failed.");
+    }
+  };
+
+  const refreshVaultManifest = async () => {
+    if (!projectId.trim() || vaultStatus === "syncing") {
+      return;
+    }
+
+    setVaultStatus("syncing");
+    setVaultError("");
+
+    try {
+      const nextManifest = await fetchEvidenceVaultManifest({
+        workspaceId: projectId,
+        apiBaseUrl: vaultApiBaseUrl
+      });
+      setVaultManifest(nextManifest);
+      setVaultStatus("synced");
+    } catch (error) {
+      setVaultStatus("error");
+      setVaultError(error instanceof Error ? error.message : "Evidence Vault manifest refresh failed.");
+    }
   };
 
   return (
@@ -164,6 +223,69 @@ export function EvidenceLedger({
           />
         </label>
         {fileImportState ? <p className="save-state">{fileImportState}</p> : null}
+      </section>
+
+      <section className={`evidence-vault-sync ${vaultStatus}`}>
+        <div className="split-title compact-title">
+          <div>
+            <CloudUpload size={17} aria-hidden="true" />
+            <h3>Evidence Vault Sync</h3>
+          </div>
+          <span className="vault-mode">metadata only</span>
+        </div>
+        <p className="section-note">
+          Sync ledger entries to the Phase 2 backend as metadata-only snapshot files, then fetch the server Evidence Vault
+          manifest. Not legal advice; vault records are audit preparation workflow metadata.
+        </p>
+        <div className="vault-sync-grid">
+          <div className="vault-api-field">
+            <label className="field-label" htmlFor="evidence-vault-api-base">
+              Evidence Vault API base URL
+            </label>
+            <input
+              id="evidence-vault-api-base"
+              value={vaultApiBaseUrl}
+              onChange={(event) => setVaultApiBaseUrl(event.target.value)}
+              placeholder="/api on same host, or http://127.0.0.1:8787"
+            />
+          </div>
+          <VaultMetric label="Local ledger items" value={String(evidenceItems.length)} />
+          <VaultMetric label="Synced vault records" value={String(vaultRecords.length)} />
+          <div className="vault-hash">
+            <span>Vault bundle SHA-256</span>
+            <code>{vaultManifest?.bundleHash ?? "not synced"}</code>
+          </div>
+        </div>
+        <div className="vault-actions">
+          <button type="button" disabled={!canSyncVault} onClick={() => void syncVault()}>
+            <CloudUpload size={16} aria-hidden="true" />
+            Sync Evidence Vault
+          </button>
+          <button type="button" className="secondary" disabled={!projectId.trim() || vaultStatus === "syncing"} onClick={() => void refreshVaultManifest()}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            Refresh Vault Manifest
+          </button>
+        </div>
+        {vaultStatus === "syncing" ? <p className="save-state">Syncing metadata-only evidence snapshots to the vault...</p> : null}
+        {vaultStatus === "synced" && vaultManifest ? (
+          <p className="save-state">
+            Evidence Vault synced {vaultRecords.length} records. Manifest contains {vaultManifest.itemCount} items.
+          </p>
+        ) : null}
+        {vaultError ? <p className="error-text">{vaultError}</p> : null}
+        {vaultRecords.length > 0 ? (
+          <div className="vault-record-list">
+            {vaultRecords.slice(0, 3).map((record) => (
+              <article key={record.id} className={`vault-record ${record.status}`}>
+                <strong>{record.filename}</strong>
+                <span>
+                  {record.status} · {record.owner} · v{record.version}
+                </span>
+                <code>{record.fileHash}</code>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <div className="ledger-form">
@@ -350,5 +472,14 @@ export function EvidenceLedger({
         ))}
       </div>
     </section>
+  );
+}
+
+function VaultMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="vault-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }

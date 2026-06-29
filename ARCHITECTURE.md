@@ -77,7 +77,7 @@ sampleProfiles or blank project
   -> merge edits into editable CounselReviewItem queue
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
-  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews)
+  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake)
   -> buildPrintableCounselPackHtml(title, markdown)
   -> tabbed UI surfaces, Markdown download, and browser Print / Save PDF
 ```
@@ -260,7 +260,7 @@ The receipt status is `not-submitted` and the mode is `simulated`. It is not a r
 
 Owns export behavior:
 
-- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews)` generates audit preparation Markdown with the non-advice boundary, editable counsel questions, review statuses, and evidence manifest context.
+- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake)` generates audit preparation Markdown with the non-advice boundary, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
@@ -302,7 +302,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
-- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
+- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -330,6 +330,7 @@ Domain tests live next to the audit engine and cover:
 - mock and OpenAI-compatible model provider behavior
 - model connection profile validation
 - AI event hashing and model intake summaries
+- counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export
 - counsel pack Markdown content

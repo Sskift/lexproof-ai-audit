@@ -10,6 +10,7 @@ import type { CounselReviewItem } from "./counselReview";
 import { createEvidenceManifest } from "./evidenceManifest";
 import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
+import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile } from "./modelIntake";
 
 const project: ProjectProfile = {
   id: "project-counsel",
@@ -81,6 +82,50 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("Need signer control policy before review can close.");
     expect(markdown).toContain("## Remediation Queue");
     expect(markdown).toContain(audit.remediation[0].action);
+  });
+
+  it("includes model intake profile, AI event review status, and event hashes when provided", async () => {
+    const audit = analyzeAuditProfile(project);
+    const manifest = await createEvidenceManifest(project, audit, project.evidenceItems);
+    const profile: ModelConnectionProfile = {
+      providerName: "OpenAI-compatible gateway",
+      modelName: "gpt-audit-review",
+      endpointType: "openai-compatible",
+      useCase: "Evidence extraction and draft counsel questions",
+      decisionRole: "human-review-support",
+      dataClasses: ["evidence summaries", "policy metadata"],
+      humanReviewOwner: "Compliance"
+    };
+    const events: AIEventRecord[] = [
+      {
+        id: "event-counsel-1",
+        projectId: project.id,
+        eventType: "Evidence review",
+        inputSummary: "Review token terms and custody summary",
+        outputSummary: "Drafted missing evidence question for wallet authority",
+        modelAction: "Generated draft audit-prep questions",
+        humanReviewer: "Compliance",
+        reviewStatus: "needs-review",
+        createdAt: "2026-06-29T08:30:00.000Z"
+      }
+    ];
+    const summary = await buildModelIntakeSummary(profile, events);
+    const markdown = buildMarkdownCounselPack(project, audit, manifest, [], [], {
+      profile,
+      events,
+      summary
+    });
+
+    expect(markdown).toContain("## Model Intake Summary");
+    expect(markdown).toContain("- Provider: OpenAI-compatible gateway");
+    expect(markdown).toContain("- Model: gpt-audit-review");
+    expect(markdown).toContain("- Use case: Evidence extraction and draft counsel questions");
+    expect(markdown).toContain("- Human review owner: Compliance");
+    expect(markdown).toContain("- Readiness: needs-review");
+    expect(markdown).toContain("Event SHA-256");
+    expect(markdown).toContain(summary.eventHashes[0].hash);
+    expect(markdown).toContain("- needs-review Evidence review: Drafted missing evidence question for wallet authority");
+    expect(markdown).toContain("Not legal advice");
   });
 });
 

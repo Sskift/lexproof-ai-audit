@@ -46,7 +46,7 @@ import {
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
-import type { AIEventRecord, ModelConnectionProfile } from "./lib/modelIntake";
+import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile, type ModelIntakeSummary } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
@@ -85,6 +85,7 @@ export default function App() {
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
   const [aiEvents, setAIEvents] = useState<AIEventRecord[]>(() => loadStoredAIEvents());
+  const [modelIntakeSummary, setModelIntakeSummary] = useState<ModelIntakeSummary | null>(null);
   const [aiReview, setAIReview] = useState<AIReviewResult | null>(null);
   const [aiReviewRuns, setAIReviewRuns] = useState<ModelReviewRun[]>(() => loadStoredModelReviewRuns());
   const [counselQuestions, setCounselQuestions] = useState<CounselQuestion[]>(() => loadStoredCounselQuestions());
@@ -116,11 +117,38 @@ export default function App() {
     [counselReviews, project.id]
   );
   const markdown = useMemo(
-    () =>
-      manifest
-        ? buildMarkdownCounselPack(project, audit, manifest, currentCounselQuestions, currentCounselReviews)
-        : "Evidence manifest is calculating. Not legal advice; counsel pack output is audit preparation material.",
-    [audit, currentCounselQuestions, currentCounselReviews, manifest, project]
+    () => {
+      if (!manifest) {
+        return "Evidence manifest is calculating. Not legal advice; counsel pack output is audit preparation material.";
+      }
+
+      const modelIntakeExport = modelIntakeSummary
+        ? {
+            profile: modelIntakeProfile,
+            events: currentAIEvents,
+            summary: modelIntakeSummary
+          }
+        : undefined;
+
+      return buildMarkdownCounselPack(
+        project,
+        audit,
+        manifest,
+        currentCounselQuestions,
+        currentCounselReviews,
+        modelIntakeExport
+      );
+    },
+    [
+      audit,
+      currentAIEvents,
+      currentCounselQuestions,
+      currentCounselReviews,
+      manifest,
+      modelIntakeProfile,
+      modelIntakeSummary,
+      project
+    ]
   );
 
   useEffect(() => {
@@ -135,6 +163,19 @@ export default function App() {
       live = false;
     };
   }, [audit, project]);
+
+  useEffect(() => {
+    let live = true;
+    setModelIntakeSummary(null);
+    buildModelIntakeSummary(modelIntakeProfile, currentAIEvents).then((nextSummary) => {
+      if (live) {
+        setModelIntakeSummary(nextSummary);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [currentAIEvents, modelIntakeProfile]);
 
   useEffect(() => {
     if (validation.valid) {

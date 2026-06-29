@@ -58,7 +58,7 @@ AI Review keeps model output as draft audit preparation and records local run re
 
 ![AI Review Run Ledger with payload and response hashes](docs/assets/screenshots/ai-review-run-ledger.jpg)
 
-Counsel Pack exports Markdown, browser Print / Save PDF output, manifest JSON, and a simulated anchor receipt without claiming a real chain write.
+Counsel Pack exports Markdown, browser Print / Save PDF output, Model Intake summary, AI event hashes, manifest JSON, and a simulated anchor receipt without claiming a real chain write.
 
 ![Counsel Pack export surface](docs/assets/screenshots/counsel-pack-exports.jpg)
 
@@ -73,6 +73,7 @@ LexProof uses a controlled BYOM/BYOK model workflow:
 5. Review the **Redaction Gate** payload summary before running the model.
 6. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
 7. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt.
+8. Open **Counsel Pack** to export the Model Intake Summary, readiness status, human-review owner, and AI event hashes with the review packet.
 
 Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review. Model Intake records are local audit-prep metadata, not final adjudication.
 
@@ -86,7 +87,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 6. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 7. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
 8. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
-9. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
+9. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet with Model Intake summary and AI event hashes, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
 
 Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The MVP does not upload evidence, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model Intake and model-run ledger entries store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 

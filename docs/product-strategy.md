@@ -165,7 +165,7 @@ The product is especially meaningful where legal/compliance work is high-context
 7. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
 8. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
 9. Engineering hashes evidence and creates a manifest.
-10. Compliance exports a Counsel Pack for review meeting or investor diligence.
+10. Compliance exports a Counsel Pack with Model Intake summary, AI event hashes, manifest hash, and counsel review status for a review meeting or investor diligence.
 11. Optional anchor records a manifest hash after legal/privacy review.
 
 ## AI Model Access Plan
@@ -188,6 +188,7 @@ Rules:
 - Do not send raw KYC, private keys, or personal data.
 - Do not register models as final legal decision-makers.
 - Record material AI outputs as human-review event records before external reliance.
+- Include Model Intake readiness and AI event hashes in Counsel Pack handoff materials.
 - Show a review payload before model call.
 - Mark all model output as AI-assisted draft.
 - Keep deterministic audit scoring separate from model response.
@@ -204,6 +205,7 @@ Rules:
 - AI Review Run Ledger with payload/response hash receipts.
 - Editable AI/rule-generated counsel questions in Counsel Pack.
 - Editable counsel review statuses in Counsel Pack.
+- Model Intake summary and AI event hashes in Counsel Pack exports.
 - Manifest JSON export.
 - Browser Print / Save PDF export for Counsel Pack.
 - Simulated anchor receipt export.

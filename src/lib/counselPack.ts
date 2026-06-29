@@ -2,14 +2,22 @@ import type { AuditResult } from "./auditEngine";
 import type { CounselReviewItem } from "./counselReview";
 import type { CounselQuestion } from "./counselQuestions";
 import type { EvidenceManifest } from "./evidenceManifest";
+import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
+
+export type CounselPackModelIntake = {
+  profile: ModelConnectionProfile;
+  events: AIEventRecord[];
+  summary: ModelIntakeSummary;
+};
 
 export function buildMarkdownCounselPack(
   project: ProjectProfile,
   audit: AuditResult,
   manifest: EvidenceManifest,
   counselQuestions: CounselQuestion[] = [],
-  counselReviews: CounselReviewItem[] = []
+  counselReviews: CounselReviewItem[] = [],
+  modelIntake?: CounselPackModelIntake
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${flag.title}: ${flag.rationale}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${item.owner}: ${item.action}`).join("\n");
@@ -20,6 +28,7 @@ export function buildMarkdownCounselPack(
     .map((item) => `- ${item.priority} ${item.status} [${item.relatedFlagId ?? item.source}] ${item.question}`)
     .join("\n");
   const reviews = counselReviews.map(formatReviewItem).join("\n");
+  const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const sources = audit.sourcePack.map((source) => `- ${source.title}: ${source.url}`).join("\n");
 
   return [
@@ -52,6 +61,7 @@ export function buildMarkdownCounselPack(
     "## Counsel Review Status",
     reviews || "- No counsel review statuses have been generated yet.",
     "",
+    ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
     remediation,
     "",
@@ -63,6 +73,43 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatModelIntakeSection({ profile, events, summary }: CounselPackModelIntake): string {
+  const eventHashes = new Map(summary.eventHashes.map((item) => [item.eventId, item.hash]));
+  const eventLines = events
+    .map((event) => {
+      const eventHash = eventHashes.get(event.id) ?? "pending";
+      const reviewer = event.humanReviewer.trim() || "unassigned";
+      return `- ${event.reviewStatus} ${event.eventType}: ${event.outputSummary || "No output summary recorded."} (reviewer: ${reviewer}; Event SHA-256: ${eventHash})`;
+    })
+    .join("\n");
+  const blockers = summary.blockers.map((blocker) => `- ${blocker}`).join("\n");
+  const checklist = summary.handoffChecklist.map((item) => `- ${item}`).join("\n");
+
+  return [
+    `- Provider: ${profile.providerName}`,
+    `- Model: ${profile.modelName}`,
+    `- Endpoint type: ${profile.endpointType}`,
+    `- Use case: ${profile.useCase}`,
+    `- Decision role: ${profile.decisionRole}`,
+    `- Allowed data classes: ${profile.dataClasses.join(", ") || "none recorded"}`,
+    `- Human review owner: ${profile.humanReviewOwner}`,
+    `- Readiness: ${summary.readiness}`,
+    `- AI event count: ${summary.eventCount}`,
+    `- Unresolved AI events: ${summary.unresolvedEventCount}`,
+    "",
+    "### Model Intake Handoff Checklist",
+    checklist || "- No handoff checklist items generated.",
+    "",
+    "### Model Intake Blockers",
+    blockers || "- No blockers recorded.",
+    "",
+    "### AI Event Records",
+    eventLines || "- No AI event records have been added yet.",
+    "",
+    summary.notLegalAdviceBoundary
   ].join("\n");
 }
 

@@ -30,7 +30,7 @@ The Model Intake tab registers provider/model purpose, allowed data classes, hum
 
 ### Counsel Handoff
 
-The Counsel Pack exports a Markdown audit-prep packet, Evidence Manifest JSON, and a simulated anchor receipt. The manifest bundle hash is local and deterministic; the anchor receipt is explicitly not a real on-chain write.
+The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with AI event hashes, Evidence Manifest JSON, and a simulated anchor receipt. The manifest bundle hash is local and deterministic; the anchor receipt is explicitly not a real on-chain write.
 
 ![Counsel Pack export surface](assets/screenshots/counsel-pack-exports.jpg)
 
@@ -41,7 +41,7 @@ The Counsel Pack exports a Markdown audit-prep packet, Evidence Manifest JSON, a
 3. Open **AI Review**, inspect the Redaction Gate, run the mock reviewer, and show the Run Ledger.
 4. Open **Risk Audit** and point to source-linked trigger facts.
 5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, and show the manifest bundle hash.
-6. Open **Counsel Pack** and download Markdown, Manifest JSON, and the simulated anchor receipt.
+6. Open **Counsel Pack** and show the Model Intake Summary, AI event hashes, Markdown download, Manifest JSON, and simulated anchor receipt.
 
 ## Boundaries
 

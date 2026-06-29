@@ -235,6 +235,12 @@ describe("App", () => {
     expect(await screen.findByText(/Resolve AI event review items before external reliance/i)).toBeInTheDocument();
     expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    expect(await screen.findByText(/## Model Intake Summary/i)).toBeInTheDocument();
+    expect(screen.getByText(/Provider: OpenAI-compatible gateway/i)).toBeInTheDocument();
+    expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
   });
 
   it("adds AI draft counsel questions to an editable Counsel Pack queue", async () => {

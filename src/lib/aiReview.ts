@@ -1,15 +1,11 @@
 import type { AuditResult } from "./auditEngine";
 import type { ModelProvider } from "./modelProvider";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
+import { createMissingEvidenceChecklist } from "./riskEvidence";
+import type { MissingEvidenceItem } from "./riskEvidence";
 
-export type MissingEvidenceItem = {
-  id: string;
-  title: string;
-  reason: string;
-  priority: "P0" | "P1" | "P2";
-  relatedFlagId: string;
-  status: "missing" | "covered";
-};
+export { createMissingEvidenceChecklist };
+export type { MissingEvidenceItem };
 
 export type AIReviewPayload = {
   boundary: string;
@@ -69,117 +65,6 @@ export type AIReviewResult = {
   suggestedRemediation: string[];
   modelBoundary: "AI-assisted draft for audit preparation only. Not legal advice.";
 };
-
-type EvidenceRequirement = {
-  id: string;
-  title: string;
-  reason: string;
-  priority: "P0" | "P1" | "P2";
-  relatedFlagId: string;
-  keywords: string[];
-};
-
-const REQUIREMENTS_BY_FLAG: Record<string, EvidenceRequirement[]> = {
-  "asset-yield": [
-    {
-      id: "asset-classification",
-      title: "Asset classification memo",
-      reason: "Yield, private-credit, tokenized, or investment-like facts need counsel classification before external claims.",
-      priority: "P0",
-      relatedFlagId: "asset-yield",
-      keywords: ["asset classification", "token terms", "yield terms", "offering"]
-    },
-    {
-      id: "disclosure-assumptions",
-      title: "Disclosure and exemption assumptions",
-      reason: "Counsel needs the assumptions behind offering, eligibility, and disclosure language.",
-      priority: "P0",
-      relatedFlagId: "asset-yield",
-      keywords: ["disclosure", "exemption", "eligibility", "redemption"]
-    }
-  ],
-  custody: [
-    {
-      id: "signer-control",
-      title: "Signer control policy",
-      reason: "Wallet control and withdrawal authority need explicit signer, approval, and emergency boundaries.",
-      priority: "P0",
-      relatedFlagId: "custody",
-      keywords: ["signer", "withdrawal", "wallet control", "multisig"]
-    },
-    {
-      id: "incident-response",
-      title: "Custody incident response runbook",
-      reason: "Operational custody risk requires escalation and incident response evidence.",
-      priority: "P1",
-      relatedFlagId: "custody",
-      keywords: ["incident", "pause", "emergency", "response"]
-    }
-  ],
-  retail: [
-    {
-      id: "user-eligibility",
-      title: "User eligibility and marketing review",
-      reason: "Retail or public-user exposure needs support for suitability, marketing, and user-screening assumptions.",
-      priority: "P1",
-      relatedFlagId: "retail",
-      keywords: ["eligibility", "marketing", "retail", "suitability"]
-    }
-  ],
-  "sensitive-data": [
-    {
-      id: "data-redaction",
-      title: "Data handling and redaction policy",
-      reason: "KYC, sanctions, investor status, and wallet history should be separated from exportable audit records.",
-      priority: "P1",
-      relatedFlagId: "sensitive-data",
-      keywords: ["redaction", "data handling", "access control", "kyc"]
-    }
-  ],
-  "public-launch": [
-    {
-      id: "launch-approval",
-      title: "Launch approval checklist",
-      reason: "Public launch timing compresses review windows and should have explicit signoff gates.",
-      priority: "P1",
-      relatedFlagId: "public-launch",
-      keywords: ["launch approval", "signoff", "approval", "go-live"]
-    }
-  ],
-  "ai-workflow": [
-    {
-      id: "human-review",
-      title: "Human review policy for AI output",
-      reason: "AI-generated legal or compliance workflow needs source lineage and human approval.",
-      priority: "P1",
-      relatedFlagId: "ai-workflow",
-      keywords: ["human review", "approval", "source lineage", "ai policy"]
-    }
-  ],
-  "evidence-anchor": [
-    {
-      id: "anchor-procedure",
-      title: "Evidence hash and anchor procedure",
-      reason: "Hashing and anchoring should document what is hashed, what is public, and what remains private.",
-      priority: "P2",
-      relatedFlagId: "evidence-anchor",
-      keywords: ["hash", "anchor", "manifest", "receipt"]
-    }
-  ]
-};
-
-export function createMissingEvidenceChecklist(audit: AuditResult, evidenceItems: EvidenceItem[]): MissingEvidenceItem[] {
-  return audit.flags.flatMap((flag) =>
-    (REQUIREMENTS_BY_FLAG[flag.id] ?? []).map((requirement) => ({
-      id: requirement.id,
-      title: requirement.title,
-      reason: requirement.reason,
-      priority: requirement.priority,
-      relatedFlagId: requirement.relatedFlagId,
-      status: isRequirementCovered(requirement, evidenceItems) ? "covered" : "missing"
-    }))
-  );
-}
 
 export function buildAIReviewPayload(project: ProjectProfile, audit: AuditResult, evidenceItems: EvidenceItem[]): AIReviewPayload {
   return {
@@ -320,14 +205,6 @@ function addFinding(
 
 function countRedactions(content: string): number {
   return (content.match(/\[redacted-[^\]]+\]/g) ?? []).length;
-}
-
-function isRequirementCovered(requirement: EvidenceRequirement, evidenceItems: EvidenceItem[]): boolean {
-  const evidenceText = evidenceItems
-    .map((item) => `${item.label} ${item.kind} ${item.source ?? ""} ${item.content}`)
-    .join(" ")
-    .toLowerCase();
-  return requirement.keywords.some((keyword) => evidenceText.includes(keyword));
 }
 
 function parseJsonObject(content: string): Record<string, unknown> {

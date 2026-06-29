@@ -53,6 +53,7 @@ Implemented:
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
+- Per-risk evidence workflow coverage in Risk Audit, backed by deterministic evidence requirements in `src/lib/riskEvidence.ts`.
 - Editable Evidence Ledger with owner, status, source, content fields, and scenario evidence templates.
 - Evidence Ledger polish for long evidence rows, visible edit labels, mobile-friendly field stacking, and wrapped SHA/source text.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
@@ -113,7 +114,6 @@ No remaining must-have gaps are identified for the current Phase 1 submission-re
 
 ### Strong Differentiators
 
-- Missing evidence checklist per risk flag.
 - AI-generated but user-editable counsel questions.
 - Deeper jurisdiction pack architecture beyond first-stage US / EU / UK checklist prompts.
 
@@ -207,6 +207,7 @@ Rules:
 - First-stage US/EU/UK jurisdiction checklist.
 - Source-linked Risk Audit issue cards.
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
+- Per-risk evidence workflow coverage in Risk Audit.
 - Long evidence row and mobile editing polish.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.

@@ -802,7 +802,7 @@ textarea {
   padding: 14px;
 }
 
-.flag-card div {
+.flag-meta {
   display: flex;
   justify-content: space-between;
   color: #7a3f15;
@@ -844,6 +844,101 @@ textarea {
   padding-left: 18px;
   color: #445361;
   line-height: 1.45;
+}
+
+.risk-evidence-block {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.risk-evidence-block.partial {
+  border-color: #d7c797;
+  background: #fffdf3;
+}
+
+.risk-evidence-block.complete {
+  border-color: #b8d8c8;
+  background: #f2faf5;
+}
+
+.risk-evidence-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.risk-evidence-header strong {
+  color: #102a43;
+  font-size: 0.82rem;
+}
+
+.risk-evidence-header span {
+  border-radius: 999px;
+  background: #eef5f6;
+  color: #176b87;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.risk-evidence-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risk-evidence-list li {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+}
+
+.risk-evidence-list li > div {
+  min-width: 0;
+}
+
+.risk-evidence-list strong,
+.risk-evidence-list p,
+.risk-evidence-list small {
+  display: block;
+}
+
+.risk-evidence-list strong {
+  color: #172431;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.risk-evidence-list p {
+  margin: 3px 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.risk-evidence-list small {
+  color: #657382;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.risk-evidence-list li.covered small {
+  color: #176b52;
+  font-weight: 800;
+}
+
+.risk-evidence-list li.in-progress small {
+  color: #8a5b12;
+  font-weight: 800;
 }
 
 .flag-source-links {

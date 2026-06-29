@@ -91,6 +91,44 @@ describe("App", () => {
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("verified");
   });
 
+  it("shows per-risk evidence workflow coverage and updates it from ledger evidence", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Coverage Desk" } });
+    fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
+    fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States" } });
+    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
+    fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Accredited investors" } });
+    fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+    fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "Policy metadata only" } });
+    fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "No model decisions" } });
+    fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "No chain writes" } });
+    fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Private beta" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(await screen.findAllByText(/Evidence workflow/i)).not.toHaveLength(0);
+    expect(screen.getByText("Signer control policy")).toBeInTheDocument();
+    expect(screen.getAllByText(/0\/2 covered/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Signer control note" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: "Synthetic signer control policy" } });
+    fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "received" } });
+    fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: "Multisig signer approval matrix for wallet control and withdrawal authority." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(await screen.findByText(/1\/2 covered/i)).toBeInTheDocument();
+    expect(screen.getByText(/covered by Signer control note/i)).toBeInTheDocument();
+  });
+
   it("runs AI Review with mock model settings and exposes missing evidence", async () => {
     render(<App />);
 

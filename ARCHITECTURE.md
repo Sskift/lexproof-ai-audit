@@ -29,6 +29,7 @@ lexproof-ai-audit/
       projectModel.ts        # Project/evidence types and validation
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
+      riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
       anchorReceipt.ts       # Local simulated manifest anchor receipt
       jurisdictionChecklist.ts # Jurisdiction checklist generation
@@ -50,6 +51,7 @@ sampleProfiles or blank project
   -> localStorage persistence when valid
   -> analyzeAuditProfile(project)
   -> createRiskIssueCards(project, audit)
+  -> createRiskEvidenceCoverage(audit, project.evidenceItems)
   -> createJurisdictionChecklist(project, audit)
   -> recommendEvidenceTemplates(project)
   -> createRedactionReport(project.evidenceItems)
@@ -106,6 +108,16 @@ Owns user-facing issue explanation:
 - `createRiskIssueCards(project, audit)` maps deterministic flags to trigger facts such as asset model, custody model, data sensitivity, or AI usage.
 - Each issue card links back to source references from the audit source pack.
 - The output explains why a flag triggered for audit preparation. It does not create legal conclusions.
+
+### `src/lib/riskEvidence.ts`
+
+Owns per-risk evidence workflow behavior:
+
+- `createRiskEvidenceCoverage(audit, evidenceItems)` maps deterministic risk flags to evidence requirements, coverage counts, and matched evidence labels.
+- Requirement status distinguishes `missing`, `in-progress`, and `covered` evidence. Draft/requested evidence can show progress, but only received/verified evidence counts as covered.
+- `createMissingEvidenceChecklist(audit, evidenceItems)` preserves the AI Review checklist contract while using the same requirement library.
+
+Coverage is audit preparation status only. It does not determine legal compliance or replace counsel review.
 
 ### `src/lib/evidenceTemplates.ts`
 
@@ -205,6 +217,7 @@ Components are intentionally presentational and interaction-focused:
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts and evidence status.
+- `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
 - `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
 - `CounselPackPanel` previews and downloads Markdown output, manifest JSON, and simulated anchor receipt JSON.
 
@@ -238,6 +251,7 @@ Domain tests live next to the audit engine and cover:
 - simulated anchor receipt export
 - evidence template recommendation and instantiation
 - source-linked risk issue card generation
+- per-risk evidence workflow coverage
 
 UI tests cover:
 
@@ -246,6 +260,7 @@ UI tests cover:
 - required tabs
 - custom project creation
 - Risk Audit updates from the new project profile
+- per-risk evidence workflow coverage updates from ledger evidence
 - Evidence Ledger item creation
 - long evidence record editing with visible field labels
 - manifest bundle hash visibility

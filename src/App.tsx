@@ -33,6 +33,7 @@ import {
 } from "./lib/modelProvider";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
+import { createRiskEvidenceCoverage, type RiskEvidenceCoverage } from "./lib/riskEvidence";
 
 type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
@@ -323,6 +324,9 @@ export default function App() {
 
 function RiskAuditPanel({ project, audit }: { project: ProjectProfile; audit: ReturnType<typeof analyzeAuditProfile> }) {
   const issueCards = createRiskIssueCards(project, audit);
+  const evidenceCoverageByFlag = new Map(
+    createRiskEvidenceCoverage(audit, project.evidenceItems).map((coverage) => [coverage.flagId, coverage])
+  );
 
   return (
     <section className="panel stage-panel">
@@ -347,7 +351,7 @@ function RiskAuditPanel({ project, audit }: { project: ProjectProfile; audit: Re
       <div className="flag-grid">
         {audit.flags.length === 0 ? <p className="empty-state">No material flags detected in the current facts.</p> : null}
         {issueCards.map((card) => (
-          <FlagCard key={card.flagId} card={card} />
+          <FlagCard key={card.flagId} card={card} evidenceCoverage={evidenceCoverageByFlag.get(card.flagId)} />
         ))}
       </div>
       <h3 className="subhead">Remediation Queue</h3>
@@ -381,10 +385,10 @@ function SourcesPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile>
   );
 }
 
-function FlagCard({ card }: { card: RiskIssueCard }) {
+function FlagCard({ card, evidenceCoverage }: { card: RiskIssueCard; evidenceCoverage?: RiskEvidenceCoverage }) {
   return (
     <article className={`flag-card ${card.severity}`}>
-      <div>
+      <div className="flag-meta">
         <AlertTriangle size={18} aria-hidden="true" />
         <span>{card.severity}</span>
       </div>
@@ -398,6 +402,7 @@ function FlagCard({ card }: { card: RiskIssueCard }) {
           ))}
         </ul>
       </section>
+      {evidenceCoverage ? <RiskEvidenceWorkflow coverage={evidenceCoverage} /> : null}
       <div className="flag-source-links">
         {card.sourceReferences.map((source) => (
           <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
@@ -409,6 +414,42 @@ function FlagCard({ card }: { card: RiskIssueCard }) {
       <small>{card.notLegalAdviceBoundary}</small>
     </article>
   );
+}
+
+function RiskEvidenceWorkflow({ coverage }: { coverage: RiskEvidenceCoverage }) {
+  return (
+    <section className={`risk-evidence-block ${coverage.coverageStatus}`} aria-label={`${coverage.flagTitle} evidence workflow`}>
+      <div className="risk-evidence-header">
+        <strong>Evidence workflow</strong>
+        <span>
+          {coverage.coveredCount}/{coverage.totalCount} covered
+        </span>
+      </div>
+      <ul className="risk-evidence-list">
+        {coverage.requirements.map((requirement) => (
+          <li key={requirement.id} className={requirement.status}>
+            <span className={`priority ${requirement.priority}`}>{requirement.priority}</span>
+            <div>
+              <strong>{requirement.title}</strong>
+              <p>{requirement.reason}</p>
+              <small>{formatRequirementStatus(requirement.status, requirement.matchedEvidenceLabels)}</small>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <small>{coverage.notLegalAdviceBoundary}</small>
+    </section>
+  );
+}
+
+function formatRequirementStatus(status: RiskEvidenceCoverage["requirements"][number]["status"], labels: string[]): string {
+  if (status === "covered") {
+    return `covered by ${labels.join(", ")}`;
+  }
+  if (status === "in-progress") {
+    return `in progress from ${labels.join(", ")}`;
+  }
+  return "missing evidence";
 }
 
 function RemediationRow({ item }: { item: RemediationItem }) {

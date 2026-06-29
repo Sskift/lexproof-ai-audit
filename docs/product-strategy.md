@@ -58,6 +58,7 @@ Implemented:
 - Evidence Manifest with per-item hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
 - Counsel Pack Markdown generation and download in `src/lib/counselPack.ts`.
+- Screenshot-backed README and submission pack with pitch narrative, product screenshots, and demo path.
 - Source references, remediation queue, and non-advice copy.
 - Tests for core hashing, validation, counsel-pack content, download helper, and UI workflow.
 
@@ -107,9 +108,6 @@ The expected mature product is a review operating system for legal/compliance re
 
 ### Must-Have Before Final Hackathon Submission
 
-- Screenshot-backed README section.
-- Screenshot-backed docs section.
-- Clear pitch section: problem, users, workflow, why now, why BLI.
 - Improved UI polish for long evidence rows and mobile evidence editing.
 
 ### Strong Differentiators
@@ -210,6 +208,7 @@ Rules:
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.
+- Screenshot-backed submission pack.
 
 ### Phase 2: Credible Professional Prototype
 

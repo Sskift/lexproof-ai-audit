@@ -4,6 +4,18 @@ LexProof AuditOS is a legal and compliance audit MVP for **BLI Legal Tech Hackat
 
 This project is not legal advice. It is an audit preparation workflow for lawyers, compliance teams, and builders.
 
+## Pitch
+
+**Problem:** early Web3 teams often approach counsel with scattered token terms, custody assumptions, KYC policies, AI drafts, governance notes, and launch claims. That makes legal/compliance review slower, more expensive, and harder to verify.
+
+**Users:** founders, compliance leads, protocol engineers, and counsel preparing a launch, RWA pilot, DAO action, custody workflow, or AI legal/compliance product for review.
+
+**Workflow:** create a project, run deterministic risk triage, use AI only for draft audit preparation, attach or request evidence, generate stable hashes, and export a counsel-ready packet.
+
+**Why now:** Web3 teams increasingly mix AI-generated work, tokenized assets, custody controls, and multi-jurisdiction launches. The review handoff needs source lineage and evidence integrity, not another generic chatbot.
+
+**Why BLI:** the hackathon's legal, compliance, finance, AI, RWA, RegTech, Bitcoin, Ethereum, and broader Web3 themes match a focused audit-preparation operating system with a clear non-advice boundary.
+
 ## Why This Hackathon
 
 I selected BLI Legal Tech Hackathon 2 as the highest value non-Casper DoraHacks target because it is active, virtual, open worldwide, has a long runway, and aligns with a feasible but strong MVP across legal, compliance, AI, RegTech, finance, RWA, and blockchain themes.
@@ -31,6 +43,20 @@ Key evidence:
 - Counsel Pack Markdown download with non-advice disclaimer, project facts, risk posture, manifest hash, source pack, and remediation queue.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+
+## Product Screenshots
+
+Risk Audit explains deterministic trigger facts and links source context for counsel review.
+
+![Risk Audit with source-linked issue cards](docs/assets/screenshots/risk-audit-source-links.jpg)
+
+AI Review keeps model output as draft audit preparation and records local run receipts with payload and response hashes.
+
+![AI Review Run Ledger with payload and response hashes](docs/assets/screenshots/ai-review-run-ledger.jpg)
+
+Counsel Pack exports Markdown, manifest JSON, and a simulated anchor receipt without claiming a real chain write.
+
+![Counsel Pack export surface](docs/assets/screenshots/counsel-pack-exports.jpg)
 
 ## How Users Connect Models
 
@@ -74,6 +100,7 @@ Workspace data is stored locally in browser `localStorage`. The MVP does not upl
 - [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.
 - [docs/research.md](docs/research.md): hackathon selection and audit research notes.
 - [docs/product-strategy.md](docs/product-strategy.md): competition fit, product outlook, gaps, and roadmap.
+- [docs/submission-pack.md](docs/submission-pack.md): screenshot-backed pitch, demo path, and submission narrative.
 
 ## Run Locally
 
@@ -90,6 +117,7 @@ The dev server defaults to `http://127.0.0.1:5173`.
 - Public GitHub repository: this repo
 - Demo video: record the app flow through project creation, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, and Counsel Pack
 - DoraHacks BUIDL submission: use the generated Counsel Pack and README summary
+- Screenshot-backed submission narrative: see [docs/submission-pack.md](docs/submission-pack.md)
 - Source pack: see [docs/research.md](docs/research.md)
 - Demo script: see [docs/demo-script.md](docs/demo-script.md)
 

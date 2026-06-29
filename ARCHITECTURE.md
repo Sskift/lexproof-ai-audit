@@ -205,7 +205,7 @@ Components are intentionally presentational and interaction-focused:
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts and evidence status.
-- `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records.
+- `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
 - `CounselPackPanel` previews and downloads Markdown output, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
@@ -247,6 +247,7 @@ UI tests cover:
 - custom project creation
 - Risk Audit updates from the new project profile
 - Evidence Ledger item creation
+- long evidence record editing with visible field labels
 - manifest bundle hash visibility
 - AI Review mock workflow
 - Redaction Gate visibility

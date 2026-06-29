@@ -54,6 +54,7 @@ Implemented:
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Editable Evidence Ledger with owner, status, source, content fields, and scenario evidence templates.
+- Evidence Ledger polish for long evidence rows, visible edit labels, mobile-friendly field stacking, and wrapped SHA/source text.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest with per-item hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
@@ -108,7 +109,7 @@ The expected mature product is a review operating system for legal/compliance re
 
 ### Must-Have Before Final Hackathon Submission
 
-- Improved UI polish for long evidence rows and mobile evidence editing.
+No remaining must-have gaps are identified for the current Phase 1 submission-ready MVP. Continue improving strong differentiators before final recording.
 
 ### Strong Differentiators
 
@@ -206,6 +207,7 @@ Rules:
 - First-stage US/EU/UK jurisdiction checklist.
 - Source-linked Risk Audit issue cards.
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
+- Long evidence row and mobile editing polish.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.
 - Screenshot-backed submission pack.

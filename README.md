@@ -36,7 +36,7 @@ Key evidence:
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Jurisdiction Checklist for US, EU, and UK audit-prep prompts without legal conclusions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, and “why this flag triggered” issue cards.
-- Editable Evidence Ledger with evidence status, owner, source notes, item hashes, and manifest bundle hash.
+- Editable Evidence Ledger with evidence status, owner, source notes, visible edit labels, long-row wrapping, item hashes, and manifest bundle hash.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest generator with deterministic SHA-256 item hashes, bundle hash, and JSON download.
 - Simulated Anchor Receipt for the manifest bundle hash. It is explicitly not a real on-chain write.

@@ -63,6 +63,34 @@ describe("App", () => {
     expect(screen.getByText(/Manifest bundle SHA-256/i)).toBeInTheDocument();
   });
 
+  it("keeps long evidence records editable with visible mobile-friendly field labels", async () => {
+    render(<App />);
+
+    const longSource =
+      "Synthetic review source: https://example.com/policies/tokenized-private-credit-launch-review-with-very-long-slug-and-version-history";
+    const longContent =
+      "Synthetic artifact summary with token terms, investor eligibility assumptions, wallet control escalation steps, disclosure review owner, marketing approval notes, and a very long reference id LP-2026-LEGAL-COMPLIANCE-READINESS-0000000000001.";
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Long launch review evidence" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Policy memorandum with long metadata" } });
+    fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: longSource } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), { target: { value: longContent } });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await screen.findByText("Long launch review evidence")).toBeInTheDocument();
+    expect(screen.getByText("Evidence 01 source")).toBeInTheDocument();
+    expect(screen.getByText("Evidence 01 content")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(longSource)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Owner for evidence 1/i), { target: { value: "Compliance" } });
+    fireEvent.change(screen.getByLabelText(/Status for evidence 1/i), { target: { value: "verified" } });
+
+    expect(screen.getByLabelText(/Owner for evidence 1/i)).toHaveValue("Compliance");
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("verified");
+  });
+
   it("runs AI Review with mock model settings and exposes missing evidence", async () => {
     render(<App />);
 

@@ -185,51 +185,90 @@ export function EvidenceLedger({
               <BadgeCheck size={18} aria-label="Included in manifest" />
             </div>
             <div className="ledger-editor-grid">
-              <input
-                aria-label={`Label for evidence ${index + 1}`}
-                value={item.label}
-                onChange={(event) => onUpdateEvidence(index, { label: event.target.value })}
-              />
-              <input
-                aria-label={`Kind for evidence ${index + 1}`}
-                value={item.kind}
-                onChange={(event) => onUpdateEvidence(index, { kind: event.target.value })}
-              />
-              <select
-                aria-label={`Status for evidence ${index + 1}`}
-                value={item.status ?? "draft"}
-                onChange={(event) => onUpdateEvidence(index, { status: event.target.value as EvidenceStatus })}
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label={`Owner for evidence ${index + 1}`}
-                value={item.owner ?? "Founder"}
-                onChange={(event) => onUpdateEvidence(index, { owner: event.target.value as EvidenceOwner })}
-              >
-                {owners.map((owner) => (
-                  <option key={owner} value={owner}>
-                    {owner}
-                  </option>
-                ))}
-              </select>
-              <input
-                aria-label={`Source for evidence ${index + 1}`}
-                value={item.source ?? ""}
-                onChange={(event) => onUpdateEvidence(index, { source: event.target.value })}
-              />
-              <textarea
-                aria-label={`Content for evidence ${index + 1}`}
-                value={item.content}
-                onChange={(event) => onUpdateEvidence(index, { content: event.target.value })}
-              />
+              <div className="editor-field title-field">
+                <label className="field-label" htmlFor={`evidence-${index + 1}-label`}>
+                  Evidence {String(index + 1).padStart(2, "0")} label
+                </label>
+                <input
+                  id={`evidence-${index + 1}-label`}
+                  aria-label={`Label for evidence ${index + 1}`}
+                  value={item.label}
+                  onChange={(event) => onUpdateEvidence(index, { label: event.target.value })}
+                />
+              </div>
+              <div className="editor-field title-field">
+                <label className="field-label" htmlFor={`evidence-${index + 1}-kind`}>
+                  Evidence {String(index + 1).padStart(2, "0")} kind
+                </label>
+                <input
+                  id={`evidence-${index + 1}-kind`}
+                  aria-label={`Kind for evidence ${index + 1}`}
+                  value={item.kind}
+                  onChange={(event) => onUpdateEvidence(index, { kind: event.target.value })}
+                />
+              </div>
+              <div className="editor-field">
+                <label className="field-label" htmlFor={`evidence-${index + 1}-status`}>
+                  Evidence {String(index + 1).padStart(2, "0")} status
+                </label>
+                <select
+                  id={`evidence-${index + 1}-status`}
+                  aria-label={`Status for evidence ${index + 1}`}
+                  value={item.status ?? "draft"}
+                  onChange={(event) => onUpdateEvidence(index, { status: event.target.value as EvidenceStatus })}
+                >
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="editor-field">
+                <label className="field-label" htmlFor={`evidence-${index + 1}-owner`}>
+                  Evidence {String(index + 1).padStart(2, "0")} owner
+                </label>
+                <select
+                  id={`evidence-${index + 1}-owner`}
+                  aria-label={`Owner for evidence ${index + 1}`}
+                  value={item.owner ?? "Founder"}
+                  onChange={(event) => onUpdateEvidence(index, { owner: event.target.value as EvidenceOwner })}
+                >
+                  {owners.map((owner) => (
+                    <option key={owner} value={owner}>
+                      {owner}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="editor-field source-field">
+                <label className="field-label" htmlFor={`evidence-${index + 1}-source`}>
+                  Evidence {String(index + 1).padStart(2, "0")} source
+                </label>
+                <input
+                  id={`evidence-${index + 1}-source`}
+                  aria-label={`Source for evidence ${index + 1}`}
+                  value={item.source ?? ""}
+                  onChange={(event) => onUpdateEvidence(index, { source: event.target.value })}
+                />
+              </div>
+              <div className="editor-field content-field">
+                <label className="field-label" htmlFor={`evidence-${index + 1}-content`}>
+                  Evidence {String(index + 1).padStart(2, "0")} content
+                </label>
+                <textarea
+                  id={`evidence-${index + 1}-content`}
+                  aria-label={`Content for evidence ${index + 1}`}
+                  value={item.content}
+                  onChange={(event) => onUpdateEvidence(index, { content: event.target.value })}
+                />
+              </div>
             </div>
             <div className="inline-actions">
-              <code>{manifest?.items[index]?.contentHash ?? "calculating"}</code>
+              <div className="hash-block">
+                <span>Evidence {String(index + 1).padStart(2, "0")} SHA-256</span>
+                <code>{manifest?.items[index]?.contentHash ?? "calculating"}</code>
+              </div>
               <button type="button" className="danger" onClick={() => onRemoveEvidence(index)} aria-label={`Remove ${item.label}`}>
                 <Trash2 size={16} aria-hidden="true" />
               </button>

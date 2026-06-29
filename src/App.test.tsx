@@ -255,6 +255,32 @@ describe("App", () => {
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 
+  it("routes Singapore, Switzerland, and UAE jurisdiction packs from custom project jurisdictions", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Global model audit desk" } });
+    fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
+    fireEvent.change(screen.getByLabelText(/Jurisdictions/i), {
+      target: { value: "Singapore, Switzerland, United Arab Emirates" }
+    });
+    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
+    fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Retail users" } });
+    fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+    fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "KYC policy metadata only" } });
+    fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "AI drafts missing-evidence questions" } });
+    fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "Simulated evidence anchor" } });
+    fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Planned public launch" } });
+    fireEvent.click(screen.getByRole("button", { name: /Jurisdiction Checklist/i }));
+
+    expect(screen.getByText(/Singapore fintech \/ digital asset counsel/i)).toBeInTheDocument();
+    expect(screen.getByText(/Swiss DLT \/ financial services counsel/i)).toBeInTheDocument();
+    expect(screen.getByText(/UAE virtual-assets \/ financial regulatory counsel/i)).toBeInTheDocument();
+    expect(screen.getByText(/Product scope and launch-intake control/i)).toBeInTheDocument();
+    expect(screen.getByText(/Token classification and prospectus-intake control/i)).toBeInTheDocument();
+    expect(screen.getByText(/Virtual asset activity scope control/i)).toBeInTheDocument();
+  });
+
   it("shows a Manifest JSON download action in the Counsel Pack", async () => {
     render(<App />);
 

@@ -19,7 +19,7 @@ export function JurisdictionChecklistPanel({ project, audit }: JurisdictionCheck
       <SectionHeader
         icon={Globe2}
         title="Jurisdiction Checklist"
-        subtitle="US, EU, and UK preparation checklist items for counsel review. Not legal advice."
+        subtitle="Jurisdiction preparation checklist items and local-counsel routing for counsel review. Not legal advice."
       />
 
       <div className="notice-banner">

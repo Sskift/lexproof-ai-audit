@@ -7,7 +7,7 @@ const project: ProjectProfile = {
   id: "jurisdiction-pack-project",
   projectName: "Global Launch Desk",
   entityType: "Startup issuer",
-  jurisdictions: ["United States", "European Union", "United Kingdom", "Brazil"],
+  jurisdictions: ["United States", "European Union", "United Kingdom", "Singapore", "Switzerland", "United Arab Emirates", "Brazil"],
   assetModel: "Tokenized private credit note with yield",
   userType: "Retail and accredited investors",
   custodyModel: "Platform controls omnibus wallet",
@@ -33,7 +33,7 @@ describe("createJurisdictionPacks", () => {
     const packs = createJurisdictionPacks(project, audit);
 
     expect(packs.map((pack) => pack.jurisdiction)).toEqual(
-      expect.arrayContaining(["United States", "European Union", "United Kingdom", "Brazil"])
+      expect.arrayContaining(["United States", "European Union", "United Kingdom", "Singapore", "Switzerland", "United Arab Emirates", "Brazil"])
     );
 
     const usPack = packs.find((pack) => pack.jurisdiction === "United States");
@@ -64,6 +64,36 @@ describe("createJurisdictionPacks", () => {
     const euPack = packs.find((pack) => pack.jurisdiction === "European Union");
     expect(euPack?.controls.map((control) => control.title)).toEqual(
       expect.arrayContaining(["Crypto-asset disclosure provenance control", "Data minimization and model-call control"])
+    );
+
+    const singaporePack = packs.find((pack) => pack.jurisdiction === "Singapore");
+    expect(singaporePack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Singapore fintech / digital asset counsel"
+      }
+    });
+    expect(singaporePack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining(["Product scope and launch-intake control", "Custody, AML, and data handoff control"])
+    );
+
+    const switzerlandPack = packs.find((pack) => pack.jurisdiction === "Switzerland");
+    expect(switzerlandPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Swiss DLT / financial services counsel"
+      }
+    });
+    expect(switzerlandPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining(["Token classification and prospectus-intake control", "Foundation, custody, and banking perimeter control"])
+    );
+
+    const uaePack = packs.find((pack) => pack.jurisdiction === "United Arab Emirates");
+    expect(uaePack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "UAE virtual-assets / financial regulatory counsel"
+      }
+    });
+    expect(uaePack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining(["Virtual asset activity scope control", "Marketing, custody, and cross-border access control"])
     );
 
     const brazilPack = packs.find((pack) => pack.jurisdiction === "Brazil");

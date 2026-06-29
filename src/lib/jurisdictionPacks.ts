@@ -34,7 +34,7 @@ export type JurisdictionPack = {
 type ControlTemplate = Omit<JurisdictionPackControl, "status" | "evidenceLabels">;
 
 type PackTemplate = {
-  jurisdiction: "United States" | "European Union" | "United Kingdom";
+  jurisdiction: "United States" | "European Union" | "United Kingdom" | "Singapore" | "Switzerland" | "United Arab Emirates";
   aliases: string[];
   summary: string;
   recommendedRole: string;
@@ -121,6 +121,81 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody"],
         evidenceKeywords: ["custody boundaries", "signer", "operational resilience", "escalation", "wallet control"]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Singapore",
+    aliases: ["singapore", "sg"],
+    summary:
+      "Prepare product-scope, token distribution, custody, AML/data, and AI review handoff controls for Singapore local counsel.",
+    recommendedRole: "Singapore fintech / digital asset counsel",
+    controls: [
+      {
+        id: "sg-product-scope-launch-control",
+        title: "Product scope and launch-intake control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        evidenceKeywords: ["product scope", "launch approval", "offering memo", "eligibility", "marketing approval", "token terms"]
+      },
+      {
+        id: "sg-custody-aml-data-control",
+        title: "Custody, AML, and data handoff control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
+        evidenceKeywords: ["custody", "wallet control", "aml", "kyc", "redaction", "model payload", "human review"]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Switzerland",
+    aliases: ["switzerland", "swiss", "ch"],
+    summary:
+      "Prepare token classification, offering/prospectus intake, foundation governance, custody, and banking perimeter evidence for Swiss counsel.",
+    recommendedRole: "Swiss DLT / financial services counsel",
+    controls: [
+      {
+        id: "ch-token-classification-control",
+        title: "Token classification and prospectus-intake control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        evidenceKeywords: ["token classification", "prospectus", "offering memo", "eligibility", "disclosure", "token terms"]
+      },
+      {
+        id: "ch-foundation-custody-control",
+        title: "Foundation, custody, and banking perimeter control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "evidence-anchor"],
+        evidenceKeywords: ["foundation", "custody", "wallet control", "banking", "manifest", "anchor", "governance"]
+      }
+    ]
+  },
+  {
+    jurisdiction: "United Arab Emirates",
+    aliases: ["united arab emirates", "uae", "dubai", "abu dhabi"],
+    summary:
+      "Prepare virtual-asset activity scope, marketing, custody, cross-border access, and data/model handoff controls for UAE local counsel.",
+    recommendedRole: "UAE virtual-assets / financial regulatory counsel",
+    controls: [
+      {
+        id: "uae-virtual-asset-scope-control",
+        title: "Virtual asset activity scope control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        evidenceKeywords: ["virtual asset", "activity scope", "offering memo", "eligibility", "launch approval", "token terms"]
+      },
+      {
+        id: "uae-marketing-custody-access-control",
+        title: "Marketing, custody, and cross-border access control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
+        evidenceKeywords: ["marketing approval", "cross-border", "wallet control", "custody", "kyc", "redaction", "human review"]
       }
     ]
   }

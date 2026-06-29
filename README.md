@@ -36,8 +36,8 @@ Key evidence:
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
-- Jurisdiction Checklist for US, EU, and UK audit-prep prompts without legal conclusions.
-- Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, and fallback jurisdictions.
+- Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
+- Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
 - Editable Evidence Ledger with evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, and manifest bundle hash.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
@@ -80,7 +80,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
 4. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt.
-5. Open **Jurisdiction Checklist** to see US/EU/UK preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
+5. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 6. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
 7. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
 8. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.

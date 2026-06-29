@@ -22,7 +22,7 @@ The product is not an AI judge, a law firm, a KYC provider, or a real chain-writ
    - private-key-like material blocks model calls
 5. Run the mock AI Review and show extracted facts, missing evidence, draft counsel questions, and remediation suggestions.
 6. Show the **AI Review Run Ledger** with provider/model metadata, redaction status, payload SHA-256, response SHA-256, and downloadable run JSON.
-7. Open **Jurisdiction Checklist** and show US/EU checklist cards as preparation prompts, not legal conclusions.
+7. Open **Jurisdiction Checklist** and show preparation prompts, jurisdiction packs, and local-counsel routing as audit-prep aids, not legal conclusions.
 8. Open **Risk Audit** and show deterministic flags, source links, “why this flag triggered,” score, and remediation queue.
 9. Open **Evidence Ledger**, apply the tokenized yield/RWA template, add one synthetic evidence item, and show the manifest bundle SHA-256 update.
 10. Open **Counsel Pack**, download Markdown, download Manifest JSON, and create the **Simulated Anchor Receipt**.

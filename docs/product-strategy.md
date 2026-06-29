@@ -53,8 +53,8 @@ Implemented:
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
 - Editable Counsel Questions queue that merges deterministic risk-rule prompts, AI draft questions, and manual user edits into Counsel Pack exports.
 - Editable Counsel Review Status queue that maps deterministic risk flags to reviewer, status, evidence summary, and notes.
-- Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
-- Jurisdiction Packs with US, EU, UK, and fallback local-counsel routing plus policy controls tied to active risk flags and evidence-ready status.
+- Jurisdiction Checklist with core US, EU, and UK audit-prep prompts that avoid legal conclusions.
+- Jurisdiction Packs with US, EU, UK, Singapore, Switzerland, UAE, and fallback local-counsel routing plus policy controls tied to active risk flags and evidence-ready status.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Per-risk evidence workflow coverage in Risk Audit, backed by deterministic evidence requirements in `src/lib/riskEvidence.ts`.
 - Missing evidence request workflow that turns Risk Audit requirements into `requested` Evidence Ledger items without treating them as verified evidence.
@@ -118,7 +118,7 @@ No remaining must-have gaps are identified for the current Phase 1 submission-re
 
 ### Strong Differentiators
 
-- Expand the jurisdiction pack library beyond first-stage US / EU / UK controls into more scenarios, product types, and counsel-review workflows.
+- Deepen jurisdiction pack controls into more scenarios, product types, evidence patterns, and counsel-review workflows.
 
 ### Production-Grade Later
 
@@ -198,7 +198,7 @@ Rules:
 - Browser Print / Save PDF export for Counsel Pack.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.
-- Jurisdiction packs with first-stage policy controls, evidence-ready status, and local-counsel routing.
+- Jurisdiction packs for US, EU, UK, Singapore, Switzerland, UAE, and fallback local-counsel intake with first-stage policy controls and evidence-ready status.
 - Source-linked Risk Audit issue cards.
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
 - Per-risk evidence workflow coverage in Risk Audit.
@@ -213,7 +213,7 @@ Rules:
 - Branded PDF templates and backend-rendered PDF export beyond browser Print / Save PDF.
 - Secure document intake, parsing, and OCR beyond metadata-only local file hashing.
 - User-editable AI counsel questions.
-- Expanded jurisdiction pack content libraries for additional jurisdictions and scenario-specific controls.
+- Deeper jurisdiction pack content libraries for scenario-specific controls, approvals, and counsel-review workflows.
 
 ### Phase 3: Real Compliance Workspace
 

@@ -193,7 +193,7 @@ Owns jurisdiction checklist generation:
 
 Owns jurisdiction pack behavior:
 
-- `createJurisdictionPacks(project, audit)` returns jurisdiction-specific policy controls for US, EU, UK, and fallback local-counsel intake.
+- `createJurisdictionPacks(project, audit)` returns jurisdiction-specific policy controls for US, EU, UK, Singapore, Switzerland, UAE, and fallback local-counsel intake.
 - Each control maps active risk flags to evidence keywords, owner, priority, and evidence-ready status.
 - Each pack includes a local-counsel route with recommended role, trigger, handoff note, source, and explicit non-advice boundary.
 
@@ -283,7 +283,7 @@ Components are intentionally presentational and interaction-focused:
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
-- `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
+- `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
 - `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
@@ -356,7 +356,7 @@ UI tests cover:
 Good next additions:
 
 - import custom JSON profiles
-- expand the jurisdiction pack content library beyond the first-stage US/EU/UK controls
+- deepen jurisdiction pack controls with more scenarios, evidence patterns, and local-counsel workflows
 - add source citation controls per flag
 - add optional real on-chain anchoring only after privacy, wallet, backend, and signing boundaries are documented
 - add screenshot-backed demo assets

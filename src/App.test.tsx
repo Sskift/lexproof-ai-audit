@@ -199,6 +199,14 @@ describe("App", () => {
     expect(screen.getByText(/Response SHA-256/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Mock local reviewer/i).length).toBeGreaterThan(1);
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Model Intake/i }));
+
+    expect(await screen.findByText(/AI Review run/i)).toBeInTheDocument();
+    expect(screen.getByText(/evidence summaries/i)).toBeInTheDocument();
+    expect(screen.getByText(/payload SHA-256/i)).toBeInTheDocument();
+    expect(screen.getByText(/response SHA-256/i)).toBeInTheDocument();
+    expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
   });
 
   it("registers a model connection profile and AI event intake record with a hash", async () => {

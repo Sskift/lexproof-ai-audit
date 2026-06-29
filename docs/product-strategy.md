@@ -159,8 +159,8 @@ The product is especially meaningful where legal/compliance work is high-context
 1. Founder creates a project and selects a scenario template.
 2. Founder enters product facts and adds synthetic-safe evidence summaries or browser-side local file hashes.
 3. Compliance registers model purpose and human-review ownership in Model Intake.
-4. AI Review extracts structured facts and highlights missing evidence.
-5. Model Intake records AI event summaries and review status for material model outputs.
+4. AI Review extracts structured facts, highlights missing evidence, and automatically creates a needs-review Model Intake event from the run receipt.
+5. Model Intake tracks AI event summaries, review status, and event hashes for material model outputs.
 6. Risk Audit produces deterministic flags, remediation owners, and missing evidence request actions.
 7. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
 8. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
@@ -175,7 +175,7 @@ The platform lets users connect models only through a controlled workflow.
 Recommended architecture:
 
 - `src/lib/modelProvider.ts` keeps provider config, OpenAI-compatible request construction, and deterministic mock provider behavior.
-- `src/lib/modelIntake.ts` validates model purpose, blocked data classes, human-review owner, and AI event hashes.
+- `src/lib/modelIntake.ts` validates model purpose, blocked data classes, human-review owner, AI Review run-to-event conversion, and AI event hashes.
 - `src/lib/modelReviewLedger.ts` creates local model-run receipts with payload and response SHA-256 hashes and JSON export without credentials.
 - `src/lib/aiReview.ts` builds prompt payloads from project facts and evidence summaries, parses structured JSON output, and validates suggestions before UI display.
 - `src/components/ModelSettingsPanel.tsx` exposes provider, base URL, model name, and API key inputs with local-only key handling in the first stage.
@@ -188,6 +188,7 @@ Rules:
 - Do not send raw KYC, private keys, or personal data.
 - Do not register models as final legal decision-makers.
 - Record material AI outputs as human-review event records before external reliance.
+- Automatically create a needs-review Model Intake event after each AI Review run.
 - Include Model Intake readiness and AI event hashes in Counsel Pack handoff materials.
 - Show a review payload before model call.
 - Mark all model output as AI-assisted draft.

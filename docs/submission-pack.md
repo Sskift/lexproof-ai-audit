@@ -24,7 +24,7 @@ The Risk Audit uses deterministic project facts, not model output, to explain wh
 
 ### Controlled Model Access
 
-The Model Intake tab registers provider/model purpose, allowed data classes, human-review owner, and hashed AI event records without storing credentials. The AI Review tab supports a mock reviewer for demos and an OpenAI-compatible provider for BYOM/BYOK workflows. The Redaction Gate previews evidence summaries before model calls, and the AI Review Run Ledger records local payload and response hashes without storing API keys.
+The Model Intake tab registers provider/model purpose, allowed data classes, human-review owner, and hashed AI event records without storing credentials. The AI Review tab supports a mock reviewer for demos and an OpenAI-compatible provider for BYOM/BYOK workflows. The Redaction Gate previews evidence summaries before model calls, the AI Review Run Ledger records local payload and response hashes without storing API keys, and each completed AI Review run automatically creates a needs-review Model Intake event.
 
 ![AI Review Run Ledger with payload and response hashes](assets/screenshots/ai-review-run-ledger.jpg)
 
@@ -38,7 +38,7 @@ The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with
 
 1. Load the `YieldPassport` synthetic sample.
 2. Open **Model Intake** and show model purpose, allowed data classes, human-review owner, and AI event hash records.
-3. Open **AI Review**, inspect the Redaction Gate, run the mock reviewer, and show the Run Ledger.
+3. Open **AI Review**, inspect the Redaction Gate, run the mock reviewer, and show the Run Ledger plus the automatic Model Intake event.
 4. Open **Risk Audit** and point to source-linked trigger facts.
 5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, and show the manifest bundle hash.
 6. Open **Counsel Pack** and show the Model Intake Summary, AI event hashes, Markdown download, Manifest JSON, and simulated anchor receipt.

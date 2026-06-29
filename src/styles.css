@@ -676,6 +676,15 @@ textarea {
   line-height: 1.4;
 }
 
+.model-event-input {
+  margin: 0;
+  border-left: 3px solid #9cc9c5;
+  padding-left: 10px;
+  color: #53616f;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 .run-card button {
   justify-self: start;
 }

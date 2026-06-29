@@ -316,6 +316,7 @@ export function ModelIntakePanel({ projectId, profile, events, onProfileChange, 
                 <span className={`redaction-pill ${event.reviewStatus}`}>{event.reviewStatus}</span>
               </header>
               <p>{event.outputSummary || "No model output summary recorded."}</p>
+              <p className="model-event-input">Input: {event.inputSummary || "No input summary recorded."}</p>
               <div className="run-facts">
                 <RunFact label="Human reviewer" value={event.humanReviewer || "Unassigned"} />
                 <RunFact label="Event SHA-256" value={eventHashes.get(event.id) ?? "Calculating"} />

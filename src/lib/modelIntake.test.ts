@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   buildModelIntakeSummary,
+  createAIReviewEventFromRun,
   exportModelIntakeJson,
   hashAIEventRecord,
   validateModelConnectionProfile,
   type AIEventRecord,
   type ModelConnectionProfile
 } from "./modelIntake";
+import type { AIReviewResult } from "./aiReview";
+import type { ModelReviewRun } from "./modelReviewLedger";
 
 const profile: ModelConnectionProfile = {
   providerName: "OpenAI-compatible gateway",
@@ -87,5 +90,56 @@ describe("buildModelIntakeSummary", () => {
     });
     expect(summary.notLegalAdviceBoundary).toContain("Not legal advice");
     expect(exportModelIntakeJson(profile, [event], summary)).toContain("\"modelIntakeVersion\": \"lexproof-model-intake-v1\"");
+  });
+});
+
+describe("createAIReviewEventFromRun", () => {
+  it("turns an AI review run receipt into a human-review AI event record", () => {
+    const run: ModelReviewRun = {
+      runVersion: "lexproof-ai-review-run-v1",
+      runId: "ai-run-1234",
+      generatedAt: "2026-06-29T09:00:00.000Z",
+      projectId: "project-1",
+      projectName: "YieldPassport",
+      providerLabel: "Mock local reviewer",
+      model: "lexproof-mock",
+      redactionStatus: "needs-review",
+      payloadHash: "a".repeat(64),
+      responseHash: "b".repeat(64),
+      riskFlagCount: 3,
+      evidenceSummaryCount: 2,
+      missingEvidenceCount: 1,
+      boundary: "AI-assisted draft for audit preparation only. Not legal advice."
+    };
+    const result: AIReviewResult = {
+      extractedFacts: ["Token yield memo references custody controls"],
+      missingEvidence: ["Signer control policy"],
+      draftQuestions: ["Which artifacts can be shared with counsel?"],
+      suggestedRemediation: ["Collect signer approval policy"],
+      modelBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
+    };
+
+    const event = createAIReviewEventFromRun(run, result, "Compliance");
+
+    expect(event).toMatchObject({
+      id: "ai-event-ai-run-1234",
+      projectId: "project-1",
+      eventType: "AI Review run",
+      humanReviewer: "Compliance",
+      reviewStatus: "needs-review",
+      sourceRunId: "ai-run-1234",
+      createdAt: "2026-06-29T09:00:00.000Z",
+      updatedAt: "2026-06-29T09:00:00.000Z"
+    });
+    expect(event.inputSummary).toContain("2 evidence summaries");
+    expect(event.inputSummary).toContain("3 risk flags");
+    expect(event.inputSummary).toContain("redaction status needs-review");
+    expect(event.inputSummary).toContain(run.payloadHash);
+    expect(event.outputSummary).toContain("1 extracted facts");
+    expect(event.outputSummary).toContain("1 missing evidence items");
+    expect(event.outputSummary).toContain("1 draft counsel questions");
+    expect(event.modelAction).toContain("Mock local reviewer");
+    expect(event.modelAction).toContain("response SHA-256");
+    expect(event.modelAction).toContain(run.boundary);
   });
 });

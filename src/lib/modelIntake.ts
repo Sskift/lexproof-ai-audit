@@ -1,3 +1,6 @@
+import type { AIReviewResult } from "./aiReview";
+import type { ModelReviewRun } from "./modelReviewLedger";
+
 export type ModelEndpointType = "mock" | "openai-compatible" | "enterprise-proxy";
 
 export type ModelDecisionRole = "draft-assistant" | "risk-triage" | "human-review-support" | "final-legal-decision";
@@ -84,6 +87,36 @@ export function validateModelConnectionProfile(profile: Partial<ModelConnectionP
 
 export async function hashAIEventRecord(event: AIEventRecord): Promise<string> {
   return sha256Hex(stableStringify(event));
+}
+
+export function createAIReviewEventFromRun(
+  run: ModelReviewRun,
+  result: AIReviewResult,
+  humanReviewer: string
+): AIEventRecord {
+  return {
+    id: `ai-event-${run.runId}`,
+    projectId: run.projectId,
+    eventType: "AI Review run",
+    inputSummary: [
+      `${run.evidenceSummaryCount} evidence summaries`,
+      `${run.riskFlagCount} risk flags`,
+      `redaction status ${run.redactionStatus}`,
+      `payload SHA-256 ${run.payloadHash}`
+    ].join("; "),
+    outputSummary: [
+      `${result.extractedFacts.length} extracted facts`,
+      `${result.missingEvidence.length} missing evidence items`,
+      `${result.draftQuestions.length} draft counsel questions`,
+      `${result.suggestedRemediation.length} remediation suggestions`
+    ].join("; "),
+    modelAction: `${run.providerLabel} ${run.model} produced an audit-prep review draft; response SHA-256 ${run.responseHash}; ${run.boundary}`,
+    humanReviewer: humanReviewer.trim() || "Compliance",
+    reviewStatus: "needs-review",
+    sourceRunId: run.runId,
+    createdAt: run.generatedAt,
+    updatedAt: run.generatedAt
+  };
 }
 
 export async function buildModelIntakeSummary(

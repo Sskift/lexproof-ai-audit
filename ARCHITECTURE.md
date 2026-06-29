@@ -71,6 +71,7 @@ sampleProfiles or blank project
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
   -> create local ModelReviewRun with payload and response hashes
+  -> createAIReviewEventFromRun(run, result, humanReviewer)
   -> merge AI draft questions into editable CounselQuestion queue
   -> createDefaultCounselQuestions(project, audit)
   -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
@@ -230,6 +231,7 @@ Owns model intake and AI event registration:
 
 - `validateModelConnectionProfile()` checks provider/model purpose, human-review owner, prohibited final legal-decision roles, and blocked raw KYC/personal-data classes.
 - `hashAIEventRecord()` creates a deterministic SHA-256 hash for each local AI event record.
+- `createAIReviewEventFromRun()` converts an AI Review run receipt and parsed output into a needs-review Model Intake event.
 - `buildModelIntakeSummary()` returns readiness, blockers, unresolved review counts, handoff checklist items, event hashes, and the non-advice boundary.
 - `exportModelIntakeJson()` exports profile, event, and summary metadata without credentials.
 
@@ -330,6 +332,7 @@ Domain tests live next to the audit engine and cover:
 - mock and OpenAI-compatible model provider behavior
 - model connection profile validation
 - AI event hashing and model intake summaries
+- AI Review run conversion into Model Intake events
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export

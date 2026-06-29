@@ -46,7 +46,13 @@ import {
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
-import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile, type ModelIntakeSummary } from "./lib/modelIntake";
+import {
+  buildModelIntakeSummary,
+  createAIReviewEventFromRun,
+  type AIEventRecord,
+  type ModelConnectionProfile,
+  type ModelIntakeSummary
+} from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
@@ -331,6 +337,10 @@ export default function App() {
       setAIReview(result);
       setCounselQuestions((current) => mergeQuestionsForProject(current, project.id, createQuestionsFromAIReview(project, result), true));
       setAIReviewRuns((current) => [run, ...current].slice(0, 20));
+      setAIEvents((current) => [
+        createAIReviewEventFromRun(run, result, modelIntakeProfile.humanReviewOwner),
+        ...current.filter((event) => event.sourceRunId !== run.runId)
+      ].slice(0, 80));
       setAIReviewStatus("complete");
     } catch (error) {
       setAIReviewStatus("error");

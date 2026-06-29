@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Anchor, CheckCircle2, Download, FileText } from "lucide-react";
+import { Anchor, CheckCircle2, Download, FileText, Printer } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   createSimulatedAnchorReceipt,
@@ -7,7 +7,7 @@ import {
   type SimulatedAnchorReceipt
 } from "../lib/anchorReceipt";
 import { CounselQuestionsPanel } from "./CounselQuestionsPanel";
-import { downloadMarkdownFile } from "../lib/counselPack";
+import { downloadMarkdownFile, printCounselPackPdf } from "../lib/counselPack";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
 import type { CounselQuestion } from "../lib/counselQuestions";
 import type { SubmissionFit } from "../lib/auditEngine";
@@ -39,12 +39,22 @@ export function CounselPackPanel({
   onUpdateReview
 }: CounselPackPanelProps) {
   const [receipt, setReceipt] = useState<SimulatedAnchorReceipt | null>(null);
+  const [printError, setPrintError] = useState("");
 
   const createReceipt = () => {
     if (!manifest) {
       return;
     }
     setReceipt(createSimulatedAnchorReceipt(manifest, "ethereum-sepolia"));
+  };
+
+  const printCounselPack = () => {
+    setPrintError("");
+    try {
+      printCounselPackPdf(`${projectName} Counsel Pack`, markdown);
+    } catch (error) {
+      setPrintError(error instanceof Error ? error.message : "Unable to open counsel pack print window.");
+    }
   };
 
   return (
@@ -83,6 +93,10 @@ export function CounselPackPanel({
             <Download size={16} aria-hidden="true" />
             Download Markdown
           </button>
+          <button type="button" className="secondary" onClick={printCounselPack}>
+            <Printer size={16} aria-hidden="true" />
+            Print / Save PDF
+          </button>
           <button
             type="button"
             className="secondary"
@@ -97,6 +111,7 @@ export function CounselPackPanel({
             {!manifest ? "Calculating Anchor Receipt" : receipt ? "Refresh Receipt" : "Create Simulated Anchor Receipt"}
           </button>
         </div>
+        {printError ? <p className="save-state">{printError}</p> : null}
       </div>
 
       {receipt ? (

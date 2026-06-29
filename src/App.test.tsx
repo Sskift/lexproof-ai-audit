@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("App", () => {
@@ -233,6 +233,34 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
 
     expect(await screen.findByRole("button", { name: /Download Manifest JSON/i })).toBeInTheDocument();
+  });
+
+  it("exposes a Counsel Pack print action for browser Save as PDF", async () => {
+    const originalOpen = window.open;
+    const print = vi.fn();
+    window.open = vi.fn(() => {
+      return {
+        document: {
+          open: vi.fn(),
+          write: vi.fn(),
+          close: vi.fn()
+        },
+        focus: vi.fn(),
+        print
+      } as unknown as Window;
+    });
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      fireEvent.click(await screen.findByRole("button", { name: /Print \/ Save PDF/i }));
+
+      expect(window.open).toHaveBeenCalledTimes(1);
+      expect(print).toHaveBeenCalledTimes(1);
+    } finally {
+      window.open = originalOpen;
+    }
   });
 
   it("creates a simulated anchor receipt from the Counsel Pack without real chain write claims", async () => {

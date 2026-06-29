@@ -84,3 +84,63 @@ export function downloadMarkdownFile(filename: string, content: string): void {
   link.remove();
   URL.revokeObjectURL(url);
 }
+
+export function buildPrintableCounselPackHtml(title: string, markdown: string): string {
+  const safeTitle = escapeHtml(title);
+  const safeMarkdown = escapeHtml(markdown);
+
+  return [
+    "<!doctype html>",
+    '<html lang="en">',
+    "<head>",
+    '<meta charset="utf-8" />',
+    '<meta name="viewport" content="width=device-width, initial-scale=1" />',
+    `<title>${safeTitle}</title>`,
+    "<style>",
+    ":root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }",
+    "body { margin: 0; background: #f7faf9; color: #1c2b2f; }",
+    "main { max-width: 860px; margin: 0 auto; padding: 32px; background: #ffffff; min-height: 100vh; }",
+    "h1 { margin: 0 0 8px; font-size: 22px; }",
+    ".boundary { margin: 0 0 20px; color: #596b70; font-size: 13px; }",
+    "pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }",
+    "@media print { body { background: #ffffff; } main { padding: 0; max-width: none; } button { display: none; } }",
+    "</style>",
+    "</head>",
+    "<body>",
+    "<main>",
+    `<h1>${safeTitle}</h1>`,
+    '<p class="boundary">Not legal advice. Browser print output is audit preparation material for counsel and compliance review.</p>',
+    `<pre>${safeMarkdown}</pre>`,
+    "</main>",
+    "</body>",
+    "</html>"
+  ].join("");
+}
+
+export function printCounselPackPdf(title: string, markdown: string): void {
+  const printWindow = window.open("", "_blank", "width=960,height=720");
+  if (!printWindow) {
+    throw new Error("Unable to open counsel pack print window.");
+  }
+
+  try {
+    printWindow.opener = null;
+  } catch {
+    // Some browsers expose opener as read-only for this window mode.
+  }
+
+  printWindow.document.open();
+  printWindow.document.write(buildPrintableCounselPackHtml(title, markdown));
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}

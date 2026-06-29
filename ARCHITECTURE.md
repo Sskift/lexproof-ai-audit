@@ -72,7 +72,8 @@ sampleProfiles or blank project
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
   -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews)
-  -> tabbed UI surfaces and Markdown download
+  -> buildPrintableCounselPackHtml(title, markdown)
+  -> tabbed UI surfaces, Markdown download, and browser Print / Save PDF
 ```
 
 The UI does not own legal scoring, hashing, validation, or export rules. It renders output from `src/lib` modules and owns only browser interaction state.
@@ -236,6 +237,8 @@ Owns export behavior:
 
 - `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews)` generates audit preparation Markdown with the non-advice boundary, editable counsel questions, review statuses, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
+- `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
+- `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
 
 ### `src/data/sampleProfiles.ts`
 
@@ -273,7 +276,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
-- `CounselPackPanel` previews and downloads Markdown output, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
+- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -302,6 +305,7 @@ Domain tests live next to the audit engine and cover:
 - model review run JSON export
 - counsel pack Markdown content
 - Markdown browser download behavior
+- printable counsel pack HTML and browser print behavior
 - redaction report warnings and blockers
 - jurisdiction checklist generation
 - jurisdiction pack controls and local-counsel routing
@@ -332,6 +336,7 @@ UI tests cover:
 - source-linked Risk Audit trigger explanations
 - evidence template application
 - manifest JSON download action
+- Counsel Pack Print / Save PDF action
 - simulated anchor receipt creation
 
 ## Extension Points
@@ -342,6 +347,6 @@ Good next additions:
 - expand the jurisdiction pack content library beyond the first-stage US/EU/UK controls
 - add source citation controls per flag
 - add optional real on-chain anchoring only after privacy, wallet, backend, and signing boundaries are documented
-- add PDF export and screenshot-backed demo assets
+- add screenshot-backed demo assets
 
 Avoid adding real legal conclusions, real wallet signing, or third-party data upload until the non-advice and data-handling boundaries are explicit.

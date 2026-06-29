@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
-import { buildMarkdownCounselPack, downloadMarkdownFile } from "./counselPack";
+import {
+  buildMarkdownCounselPack,
+  buildPrintableCounselPackHtml,
+  downloadMarkdownFile,
+  printCounselPackPdf
+} from "./counselPack";
 import type { CounselReviewItem } from "./counselReview";
 import { createEvidenceManifest } from "./evidenceManifest";
 import type { CounselQuestion } from "./counselQuestions";
@@ -101,6 +106,50 @@ describe("downloadMarkdownFile", () => {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
+    }
+  });
+});
+
+describe("buildPrintableCounselPackHtml", () => {
+  it("wraps counsel pack Markdown in printable HTML and escapes unsafe content", () => {
+    const html = buildPrintableCounselPackHtml(
+      "Counsel Pack <Draft>",
+      "# Counsel Pack\n\nNot legal advice.\n\n<script>alert('x')</script>"
+    );
+
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain("Counsel Pack &lt;Draft&gt;");
+    expect(html).toContain("Not legal advice.");
+    expect(html).toContain("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;");
+    expect(html).not.toContain("<script>alert");
+  });
+});
+
+describe("printCounselPackPdf", () => {
+  it("opens a printable counsel pack window for browser Save as PDF", () => {
+    const originalOpen = window.open;
+    const fakeWindow = {
+      document: {
+        open: vi.fn(),
+        write: vi.fn(),
+        close: vi.fn()
+      },
+      focus: vi.fn(),
+      print: vi.fn()
+    };
+    window.open = vi.fn(() => fakeWindow as unknown as Window);
+
+    try {
+      printCounselPackPdf("YieldPassport counsel pack", "# Counsel Pack\n\nNot legal advice.");
+
+      expect(window.open).toHaveBeenCalledWith("", "_blank", "width=960,height=720");
+      expect(fakeWindow.document.open).toHaveBeenCalledTimes(1);
+      expect(fakeWindow.document.write).toHaveBeenCalledWith(expect.stringContaining("Not legal advice."));
+      expect(fakeWindow.document.close).toHaveBeenCalledTimes(1);
+      expect(fakeWindow.focus).toHaveBeenCalledTimes(1);
+      expect(fakeWindow.print).toHaveBeenCalledTimes(1);
+    } finally {
+      window.open = originalOpen;
     }
   });
 });

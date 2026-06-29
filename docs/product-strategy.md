@@ -62,10 +62,10 @@ Implemented:
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest with per-item hashes, local file metadata hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
-- Counsel Pack Markdown generation and download in `src/lib/counselPack.ts`.
+- Counsel Pack Markdown generation, download, and browser Print / Save PDF handoff in `src/lib/counselPack.ts`.
 - Screenshot-backed README and submission pack with pitch narrative, product screenshots, and demo path.
 - Source references, remediation queue, and non-advice copy.
-- Tests for core hashing, local file evidence metadata, validation, counsel-pack content, download helper, and UI workflow.
+- Tests for core hashing, local file evidence metadata, validation, counsel-pack content, print/PDF handoff, download helpers, and UI workflow.
 
 Current limitation:
 
@@ -100,7 +100,7 @@ The expected mature product is a review operating system for legal/compliance re
    - Optional chain anchoring is explicit and privacy-preserving.
 
 5. **Counsel / Compliance Handoff**
-   - Counsel Pack is exportable as Markdown, PDF, and shareable review link.
+   - Counsel Pack is exportable as Markdown, browser-saved PDF, and shareable review link.
    - Pack includes project assumptions, risk flags, remediation queue, evidence manifest, open questions, and source pack.
    - Lawyers can mark issues reviewed, request more evidence, or override risk labels.
 
@@ -193,6 +193,7 @@ Rules:
 - Editable AI/rule-generated counsel questions in Counsel Pack.
 - Editable counsel review statuses in Counsel Pack.
 - Manifest JSON export.
+- Browser Print / Save PDF export for Counsel Pack.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.
 - Jurisdiction packs with first-stage policy controls, evidence-ready status, and local-counsel routing.
@@ -207,7 +208,7 @@ Rules:
 ### Phase 2: Credible Professional Prototype
 
 - Missing evidence workflows.
-- PDF export.
+- Branded PDF templates and backend-rendered PDF export beyond browser Print / Save PDF.
 - Secure document intake, parsing, and OCR beyond metadata-only local file hashing.
 - User-editable AI counsel questions.
 - Expanded jurisdiction pack content libraries for additional jurisdictions and scenario-specific controls.

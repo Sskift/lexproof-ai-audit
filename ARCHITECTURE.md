@@ -43,6 +43,7 @@ lexproof-ai-audit/
       evidenceManifest.ts    # Deterministic item and bundle hashes
       anchorReceipt.ts       # Local simulated manifest anchor receipt
       phase2Types.ts         # Phase 2 backend-boundary type contracts and pure helpers
+      phase2ApiContracts.ts  # Phase 2 API route, boundary, and Prisma schema draft contracts
       jurisdictionChecklist.ts # Jurisdiction checklist generation
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       counselPack.ts         # Markdown pack and browser download helper
@@ -313,6 +314,17 @@ Owns Phase 2 backend-boundary contracts:
 
 This module is a contract draft only. It does not create a backend, upload files, persist credentials, perform KYC, or make legal conclusions.
 
+### `src/lib/phase2ApiContracts.ts`
+
+Owns the Phase 2 backend design-spike contracts:
+
+- `listPhase2ApiRoutes()` returns the review workspace API route table for workspaces, evidence vault, model gateway, human review, exports, and audit log domains.
+- `validateModelGatewayBoundary()` blocks model gateway requests that bypass Redaction Gate, include credential material, include raw KYC/personal data, request final legal decisions, or lack a human-review owner.
+- `validateEvidenceUploadBoundary()` blocks evidence upload metadata that embeds raw document content, raw KYC/personal data, missing hashes, or missing file metadata.
+- `createPhase2PrismaSchemaDraft()` returns the SQLite/Prisma persistence draft for `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`.
+
+The contracts are executable design artifacts. They do not start a server, add backend dependencies, store files, persist provider keys, process KYC, or create real chain records.
+
 ### `src/lib/counselPack.ts`
 
 Owns export behavior:
@@ -371,6 +383,8 @@ Owns global and component-level styling. The UI should remain dense, functional,
 Phase 1 is intentionally local-first. React state, browser `localStorage`, pure TypeScript rules, browser-side hashing, mock/OpenAI-compatible model settings, Markdown download, browser Print / Save PDF, Model Intake JSON, Evidence Audit Trail JSON, and simulated anchor receipts all run in the browser. This is sufficient for the hackathon MVP and keeps the non-advice boundary visible.
 
 Phase 2 should introduce a small backend boundary without replacing the current workbench. The recommended professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
+
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. No Fastify health endpoint is added yet because the repository is still a single Vite SPA package; the health endpoint should be the first backend route after a `server/` package layout and runtime scripts are accepted.
 
 ### Model Gateway Responsibilities
 
@@ -461,6 +475,7 @@ Domain tests live next to the audit engine and cover:
 - local file SHA-256 hashing and metadata-only evidence creation
 - evidence audit trail create/update/remove events and JSON export
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
+- Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 

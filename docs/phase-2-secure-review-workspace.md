@@ -89,6 +89,11 @@ Acceptance at the end of Week 2:
 - no existing MVP workflow regresses
 - verification remains green
 
+Week 2 design-spike artifacts:
+
+- `docs/phase-2-backend-design-spike.md` records the backend stack decision, API route table, persistence-model scope, security boundaries, and health endpoint decision.
+- `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
+
 ## Recommended Backend Architecture
 
 Start with a small TypeScript backend in the same repository, not microservices.
@@ -192,6 +197,7 @@ Review workflow record for evidence, risk flags, model runs, or exports. Stores 
 Append-only operation metadata for review workspace actions. Stores actor, action, target, before/after hashes, summary, and timestamp.
 
 The first TypeScript contract draft lives in `src/lib/phase2Types.ts`.
+The API contract and Prisma schema draft live in `src/lib/phase2ApiContracts.ts`.
 
 ## Testing Strategy
 
@@ -202,6 +208,10 @@ Near-term tests:
 - tests that raw KYC or personal-data markers block the evidence-vault draft
 - tests that model gateway summaries do not expose credentials
 - audit-log tests for deterministic IDs
+- API route-contract tests for all Week 2 backend domains
+- tests that Model Gateway requests cannot bypass Redaction Gate, credentials, KYC, or human-review boundaries
+- tests that Evidence Upload requests cannot embed raw document content or raw KYC/personal data in the Phase 2 draft
+- tests that the Prisma schema draft contains only the expected Phase 2 persistence models
 
 Later backend tests:
 

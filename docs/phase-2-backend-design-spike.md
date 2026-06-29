@@ -42,12 +42,12 @@ It defines route metadata for:
 | --- | --- |
 | Workspaces | `POST /api/workspaces`, `GET /api/workspaces/:workspaceId`, `PATCH /api/workspaces/:workspaceId` |
 | Evidence Vault | `POST /api/workspaces/:workspaceId/evidence`, `GET /api/workspaces/:workspaceId/evidence`, `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`, `GET /api/workspaces/:workspaceId/evidence-manifest` |
-| Model Gateway | `POST /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs/:runId` |
+| Model Gateway | `GET /api/model-gateway/adapters`, `POST /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs/:runId` |
 | Human Review | `POST /api/workspaces/:workspaceId/reviews`, `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`, `GET /api/workspaces/:workspaceId/reviews` |
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
-Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log routes are now marked `implemented: true`. Exports remain marked `implemented: false`. Model Gateway remains mock-only until provider proxy policy is added, and Evidence Vault persists metadata only, not uploaded file bytes.
+Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log routes are now marked `implemented: true`. Exports remain marked `implemented: false`. Model Gateway exposes adapter readiness but enables only the mock adapter until provider proxy and server-side secret policy are added. Evidence Vault persists metadata only, not uploaded file bytes.
 
 ## Persistence Contract Source
 
@@ -74,6 +74,12 @@ It intentionally does not define KYC, legal-decision, wallet-signing, or chain-t
 - no human-review owner is assigned
 
 Allowed model output remains draft audit preparation only. Deterministic risk scoring remains outside model output.
+
+The backend adapter registry currently lists:
+
+- `mock`: enabled local mock adapter; no credentials accepted
+- `openai-compatible`: disabled placeholder until server-side secret policy is approved
+- `enterprise-proxy`: disabled placeholder until server-side secret policy is approved
 
 ## Evidence Upload Boundary
 
@@ -140,11 +146,12 @@ The upload route accepts multipart files, computes SHA-256 server-side, persists
 
 The first Model Gateway routes are implemented in `server/app.ts` and backed by `server/modelGatewayService.ts`:
 
+- `GET /api/model-gateway/adapters`
 - `POST /api/workspaces/:workspaceId/model-runs`
 - `GET /api/workspaces/:workspaceId/model-runs`
 - `GET /api/workspaces/:workspaceId/model-runs/:runId`
 
-The POST route validates Redaction Gate status, credential material, raw KYC/personal-data markers, final-legal-decision purposes, and human-review owner. It creates a mock run receipt with payload and response hashes, persists that receipt through the repository, and appends an audit-log record. It does not call external providers or persist credentials.
+The adapters route returns provider readiness without credentials. The POST route validates Redaction Gate status, credential material, raw KYC/personal-data markers, final-legal-decision purposes, human-review owner, and provider adapter availability. It creates a mock run receipt with payload and response hashes, persists that receipt through the repository, and appends an audit-log record. It does not call external providers or persist credentials.
 
 ## Human Review Routes
 
@@ -186,6 +193,7 @@ Workspace creation/update, Evidence Vault upload/update, Model Gateway run creat
 `server/app.test.ts` and `server/evidenceVaultService.test.ts` cover:
 
 - the Fastify health endpoint
+- Model Gateway adapter readiness with only the mock adapter enabled
 - server-side SHA-256 evidence metadata hashing
 - raw KYC/personal-data blocking before evidence vault record creation
 - mock Model Gateway route creation, listing, and boundary blocking

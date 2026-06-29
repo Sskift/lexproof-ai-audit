@@ -95,7 +95,7 @@ Week 2 design-spike artifacts:
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
 - `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Human Review, and Audit Log workflows.
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
-- `server/modelGatewayService.ts` adds mock Model Gateway run receipts behind redaction, credential, KYC, legal-decision, and human-review boundaries.
+- `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock run receipts behind redaction, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
 - `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.
 
@@ -148,10 +148,14 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
 
 ### Model Gateway
 
+- `GET /api/model-gateway/adapters`
+  - returns adapter readiness records
+  - enables only the local mock adapter in Phase 2A
+  - lists OpenAI-compatible and enterprise-proxy adapters as disabled placeholders until server-side secret policy is approved
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate
-  - calls the configured provider only after policy checks
+  - creates mock run receipts only after policy checks
   - returns `ModelGatewayRun` metadata and hashes
 - `GET /api/workspaces/:workspaceId/model-runs`
   - returns model run summaries
@@ -215,6 +219,7 @@ Near-term tests:
 - audit-log tests for deterministic IDs
 - API route-contract tests for all Week 2 backend domains
 - tests that Model Gateway requests cannot bypass Redaction Gate, credentials, KYC, or human-review boundaries
+- tests that non-mock Model Gateway adapters are blocked until provider proxy policy exists
 - tests that Evidence Upload requests cannot embed raw document content or raw KYC/personal data in the Phase 2 draft
 - tests that the Prisma schema draft contains only the expected Phase 2 persistence models
 - route tests for Workspace create/read/update and multipart Evidence Vault upload/list/update/manifest behavior
@@ -249,5 +254,5 @@ The Phase 2 near-term slice is accepted when:
 1. Review and approve the backend stack. Completed for the professional prototype: Node.js + TypeScript + Fastify + SQLite + Prisma.
 2. Add a backend package skeleton only after API contracts are accepted. Started with `server/app.ts`, `server/index.ts`, Workspace/Evidence/Model/Human Review/Audit Log routes, and `npm run start:api`.
 3. Implement evidence upload metadata and server-side hashing first. Started with `server/evidenceVaultService.ts`, multipart upload/list/update/manifest routes, and Prisma/SQLite metadata persistence; raw uploaded file-byte storage is still intentionally deferred.
-4. Move model calls behind the gateway after evidence and redaction boundaries are stable. Started with persisted mock gateway run receipts and API routes; real provider proxying remains deferred.
+4. Move model calls behind the gateway after evidence and redaction boundaries are stable. Started with adapter readiness, persisted mock gateway run receipts, and API routes; real provider proxying remains deferred.
 5. Add human review APIs before server-side Counsel Pack exports. Started with create/update/list routes persisted through Prisma/SQLite.

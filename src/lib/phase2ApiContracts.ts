@@ -61,6 +61,7 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       true
     ),
     createRoute("GET", "/api/workspaces/:workspaceId/evidence-manifest", "evidence-vault", "EvidenceManifestRequest", "EvidenceManifest", true),
+    createRoute("GET", "/api/model-gateway/adapters", "model-gateway", "ModelGatewayAdapterListRequest", "ModelGatewayAdapterDescriptor[]", true),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),

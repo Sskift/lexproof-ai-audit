@@ -2,6 +2,14 @@ import { createHash } from "node:crypto";
 import { validateModelGatewayBoundary, type ModelGatewayBoundaryInput } from "../src/lib/phase2ApiContracts.js";
 import type { ModelGatewayRun } from "../src/lib/phase2Types.js";
 
+export type ModelGatewayAdapterDescriptor = {
+  provider: CreateModelGatewayRunInput["provider"];
+  label: string;
+  enabled: boolean;
+  mode: "local-mock" | "external-provider-placeholder";
+  credentialPolicy: "no credentials accepted" | "deferred until server-side secret policy is approved";
+};
+
 export type CreateModelGatewayRunInput = ModelGatewayBoundaryInput & {
   workspaceId: string;
   payload: unknown;
@@ -18,11 +26,48 @@ export type ModelGatewayRunResult =
       errors: string[];
     };
 
+const modelGatewayAdapters: ModelGatewayAdapterDescriptor[] = [
+  {
+    provider: "mock",
+    label: "Mock local reviewer gateway",
+    enabled: true,
+    mode: "local-mock",
+    credentialPolicy: "no credentials accepted"
+  },
+  {
+    provider: "openai-compatible",
+    label: "OpenAI-compatible gateway",
+    enabled: false,
+    mode: "external-provider-placeholder",
+    credentialPolicy: "deferred until server-side secret policy is approved"
+  },
+  {
+    provider: "enterprise-proxy",
+    label: "Enterprise model proxy gateway",
+    enabled: false,
+    mode: "external-provider-placeholder",
+    credentialPolicy: "deferred until server-side secret policy is approved"
+  }
+];
+
+export function listModelGatewayAdapters(): ModelGatewayAdapterDescriptor[] {
+  return modelGatewayAdapters.map((adapter) => ({ ...adapter }));
+}
+
 export function createModelGatewayRun(input: CreateModelGatewayRunInput): ModelGatewayRunResult {
   const validation = validateModelGatewayBoundary(input);
 
   if (!validation.valid) {
     return { valid: false, errors: validation.errors };
+  }
+
+  const adapter = modelGatewayAdapters.find((item) => item.provider === input.provider);
+
+  if (!adapter?.enabled) {
+    return {
+      valid: false,
+      errors: ["Only the mock Model Gateway adapter is enabled in Phase 2A. External provider proxying is deferred."]
+    };
   }
 
   const createdAt = input.createdAt ?? new Date().toISOString();
@@ -38,7 +83,7 @@ export function createModelGatewayRun(input: CreateModelGatewayRunInput): ModelG
       id: `model-gateway-run-${idHash.slice(0, 16)}`,
       workspaceId: input.workspaceId,
       provider: input.provider,
-      providerLabel: providerLabel(input.provider),
+      providerLabel: adapter.label,
       model: input.model.trim(),
       purpose: input.purpose.trim(),
       status: "completed",
@@ -61,18 +106,6 @@ function createMockResponsePayload(input: CreateModelGatewayRunInput) {
     message: "Mock model gateway receipt created for audit preparation and human review.",
     notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
   };
-}
-
-function providerLabel(provider: CreateModelGatewayRunInput["provider"]): string {
-  if (provider === "mock") {
-    return "Mock local reviewer gateway";
-  }
-
-  if (provider === "enterprise-proxy") {
-    return "Enterprise model proxy gateway";
-  }
-
-  return "OpenAI-compatible gateway";
 }
 
 function sha256Hex(payload: string): string {

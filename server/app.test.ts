@@ -24,6 +24,35 @@ describe("Phase 2 backend app", () => {
     await server.close();
   });
 
+  it("lists model gateway adapters without accepting credentials or enabling external providers", async () => {
+    const server = buildServer();
+
+    const response = await server.inject({ method: "GET", url: "/api/model-gateway/adapters" });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([
+      expect.objectContaining({
+        provider: "mock",
+        enabled: true,
+        credentialPolicy: "no credentials accepted"
+      }),
+      expect.objectContaining({
+        provider: "openai-compatible",
+        enabled: false,
+        credentialPolicy: "deferred until server-side secret policy is approved"
+      }),
+      expect.objectContaining({
+        provider: "enterprise-proxy",
+        enabled: false,
+        credentialPolicy: "deferred until server-side secret policy is approved"
+      })
+    ]);
+    expect(response.body.toLowerCase()).not.toContain("api_key");
+    expect(response.body.toLowerCase()).not.toContain("private_key");
+
+    await server.close();
+  });
+
   it("creates model gateway mock run receipts without returning raw payload or credentials", async () => {
     const server = buildServer();
 

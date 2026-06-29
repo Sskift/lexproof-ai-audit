@@ -142,7 +142,7 @@ npm run build:server
 npm run start:api
 ```
 
-The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
+The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders until server-side secret policy is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
 
 ## Submission Assets
 

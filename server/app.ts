@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import multipart from "@fastify/multipart";
 import Fastify from "fastify";
-import { createModelGatewayRun } from "./modelGatewayService.js";
+import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
   createAuditLogRecord,
@@ -38,6 +38,8 @@ export function buildServer(options: BuildServerOptions = {}) {
     },
     notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
   }));
+
+  server.get("/api/model-gateway/adapters", async () => listModelGatewayAdapters());
 
   server.post<{ Body: CreateWorkspaceRequestBody }>("/api/workspaces", async (request, reply) => {
     try {

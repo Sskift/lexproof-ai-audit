@@ -1,7 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { createModelGatewayRun } from "./modelGatewayService";
+import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService";
 
 describe("Phase 2 model gateway service", () => {
+  it("lists provider adapters with only the mock adapter enabled for Phase 2A", () => {
+    expect(listModelGatewayAdapters()).toEqual([
+      {
+        provider: "mock",
+        label: "Mock local reviewer gateway",
+        enabled: true,
+        mode: "local-mock",
+        credentialPolicy: "no credentials accepted"
+      },
+      {
+        provider: "openai-compatible",
+        label: "OpenAI-compatible gateway",
+        enabled: false,
+        mode: "external-provider-placeholder",
+        credentialPolicy: "deferred until server-side secret policy is approved"
+      },
+      {
+        provider: "enterprise-proxy",
+        label: "Enterprise model proxy gateway",
+        enabled: false,
+        mode: "external-provider-placeholder",
+        credentialPolicy: "deferred until server-side secret policy is approved"
+      }
+    ]);
+  });
+
   it("creates deterministic mock run receipts with hashes and human review status", () => {
     const input = {
       workspaceId: "workspace-1",
@@ -57,6 +83,26 @@ describe("Phase 2 model gateway service", () => {
         "Model Gateway purpose cannot request final legal decisions.",
         "Human review owner is required before external reliance on model output."
       ]
+    });
+  });
+
+  it("blocks non-mock provider adapters even when redaction and review boundaries pass", () => {
+    const result = createModelGatewayRun({
+      workspaceId: "workspace-1",
+      provider: "openai-compatible",
+      model: "gpt-4.1-mini",
+      purpose: "Draft audit preparation issue spotting for counsel review.",
+      redactionStatus: "clean",
+      includesCredentialMaterial: false,
+      includesRawKycOrPersonalData: false,
+      humanReviewOwner: "Compliance",
+      payload: { projectName: "YieldPassport" },
+      createdAt: "2026-06-29T10:00:00.000Z"
+    });
+
+    expect(result).toEqual({
+      valid: false,
+      errors: ["Only the mock Model Gateway adapter is enabled in Phase 2A. External provider proxying is deferred."]
     });
   });
 });

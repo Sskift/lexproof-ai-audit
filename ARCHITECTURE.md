@@ -393,7 +393,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Backend exports, raw file persistence, OCR, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Backend exports, raw file persistence, OCR, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -405,7 +405,7 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it validates redaction, credential, KYC, final-decision, and human-review boundaries, then creates a mock run receipt with payload and response hashes. The route persists run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload and response hashes. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. The route persists run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 
@@ -446,6 +446,7 @@ These capabilities remain simulated or local in the current codebase:
 
 - API keys for live model calls are browser-session only and are not persisted.
 - The Phase 2 Model Gateway creates mock receipts only; it does not call external providers or store provider credentials.
+- OpenAI-compatible and enterprise-proxy Model Gateway adapters are visible as disabled readiness records only.
 - Evidence files are hashed locally in the browser or uploaded through the Phase 2 multipart route for server-side metadata hashing.
 - The Phase 2 server computes evidence hashes in memory for metadata records and persists evidence metadata, but does not persist uploaded file bytes.
 - Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records use Prisma/SQLite in the API process.
@@ -497,7 +498,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing
-- Phase 2 mock Model Gateway routes and persisted Human Review routes
+- Phase 2 Model Gateway adapter readiness, mock run routes, and persisted Human Review routes
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage

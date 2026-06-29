@@ -93,11 +93,11 @@ Week 2 design-spike artifacts:
 
 - `docs/phase-2-backend-design-spike.md` records the backend stack decision, API route table, persistence-model scope, security boundaries, and health endpoint decision.
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
-- `server/app.ts` adds the first Fastify route: `GET /api/health`.
+- `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Human Review, and Audit Log workflows.
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
 - `server/modelGatewayService.ts` adds mock Model Gateway run receipts behind redaction, credential, KYC, legal-decision, and human-review boundaries.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
-- `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Model Gateway, Human Review, and Audit Log records.
+- `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.
 
 ## Recommended Backend Architecture
 
@@ -217,6 +217,8 @@ Near-term tests:
 - tests that Model Gateway requests cannot bypass Redaction Gate, credentials, KYC, or human-review boundaries
 - tests that Evidence Upload requests cannot embed raw document content or raw KYC/personal data in the Phase 2 draft
 - tests that the Prisma schema draft contains only the expected Phase 2 persistence models
+- route tests for Workspace create/read/update and multipart Evidence Vault upload/list/update/manifest behavior
+- repository tests for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log persistence across Prisma/SQLite instances
 
 Later backend tests:
 
@@ -238,14 +240,14 @@ The Phase 2 near-term slice is accepted when:
 - `ARCHITECTURE.md` includes the Phase 2 extension architecture.
 - `src/lib/phase2Types.ts` exists with workspace, evidence vault, model gateway, human review, and audit log contracts.
 - Tests cover each new core helper.
-- No UI refactor or backend implementation is introduced prematurely.
+- Backend implementation remains scoped to the reviewed Phase 2 seams and does not introduce raw file persistence, OCR, real provider credentials, or chain writes prematurely.
 - The product is never described as an AI judge, legal advice engine, KYC provider, or real chain-writing service.
 - `npm run verify` passes.
 
 ## Implementation Order After This Slice
 
 1. Review and approve the backend stack. Completed for the professional prototype: Node.js + TypeScript + Fastify + SQLite + Prisma.
-2. Add a backend package skeleton only after API contracts are accepted. Started with `server/app.ts`, `server/index.ts`, `GET /api/health`, and `npm run start:api`.
-3. Implement evidence upload metadata and server-side hashing first. Started with `server/evidenceVaultService.ts`; persistence and multipart routing are still intentionally deferred.
+2. Add a backend package skeleton only after API contracts are accepted. Started with `server/app.ts`, `server/index.ts`, Workspace/Evidence/Model/Human Review/Audit Log routes, and `npm run start:api`.
+3. Implement evidence upload metadata and server-side hashing first. Started with `server/evidenceVaultService.ts`, multipart upload/list/update/manifest routes, and Prisma/SQLite metadata persistence; raw uploaded file-byte storage is still intentionally deferred.
 4. Move model calls behind the gateway after evidence and redaction boundaries are stable. Started with persisted mock gateway run receipts and API routes; real provider proxying remains deferred.
 5. Add human review APIs before server-side Counsel Pack exports. Started with create/update/list routes persisted through Prisma/SQLite.

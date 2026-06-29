@@ -47,7 +47,7 @@ It defines route metadata for:
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
-Workspace, evidence-vault routing, and exports are currently marked `implemented: false`. Model Gateway, Human Review, and Audit Log routes are now implemented as the first backend workflow seams. Model Gateway remains mock-only until provider proxy policy is added.
+Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log routes are now marked `implemented: true`. Exports remain marked `implemented: false`. Model Gateway remains mock-only until provider proxy policy is added, and Evidence Vault persists metadata only, not uploaded file bytes.
 
 ## Persistence Contract Source
 
@@ -83,7 +83,7 @@ Allowed model output remains draft audit preparation only. Deterministic risk sc
 - JSON request bodies contain raw document content
 - the request marks raw KYC or personal data for storage
 
-The first backend implementation should accept multipart upload streams or external-reference metadata. Raw file bytes should not be embedded in JSON API bodies or Counsel Pack exports.
+The first backend implementation accepts multipart upload streams, computes the file hash server-side, persists metadata, and keeps raw file bytes out of JSON API bodies and Counsel Pack exports. External-reference metadata can be added later behind the same boundary.
 
 ## Health Endpoint
 
@@ -112,8 +112,29 @@ It:
 - computes server-side SHA-256
 - returns metadata-only `EvidenceVaultRecord` values
 - blocks raw KYC or personal-data markers
-- does not persist files
+- does not persist uploaded file bytes
 - does not return raw document content in JSON
+
+## Workspace Routes
+
+The first Workspace routes are implemented in `server/app.ts` and backed by `server/reviewWorkspaceRepository.ts`:
+
+- `POST /api/workspaces`
+- `GET /api/workspaces/:workspaceId`
+- `PATCH /api/workspaces/:workspaceId`
+
+The routes create, read, and update durable workspace metadata with a visible non-advice boundary. Workspace create and update actions append audit-log records.
+
+## Evidence Vault Routes
+
+The first Evidence Vault routes are implemented in `server/app.ts` and backed by `server/evidenceVaultService.ts` and `server/reviewWorkspaceRepository.ts`:
+
+- `POST /api/workspaces/:workspaceId/evidence`
+- `GET /api/workspaces/:workspaceId/evidence`
+- `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`
+- `GET /api/workspaces/:workspaceId/evidence-manifest`
+
+The upload route accepts multipart files, computes SHA-256 server-side, persists metadata-only records, and appends audit-log records. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records. The manifest route returns current evidence versions with item hashes and a bundle hash.
 
 ## Model Gateway Routes
 
@@ -141,7 +162,7 @@ The first Audit Log route is implemented in `server/app.ts` and backed by `serve
 
 - `GET /api/workspaces/:workspaceId/audit-log`
 
-Model Gateway run creation, Human Review creation, and Human Review updates append audit-log records. Audit logs are metadata-only records and are not real chain anchors or signed approvals.
+Workspace creation/update, Evidence Vault upload/update, Model Gateway run creation, Human Review creation, and Human Review updates append audit-log records. Audit logs are metadata-only records and are not real chain anchors or signed approvals.
 
 ## Prisma Repository
 
@@ -149,7 +170,7 @@ Model Gateway run creation, Human Review creation, and Human Review updates appe
 
 - an in-memory adapter for isolated route tests
 - a Prisma/SQLite adapter for the API process
-- persistence for `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`
+- persistence for `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`
 
 `server/index.ts` uses `DATABASE_URL` when provided, otherwise `file:./prisma/review-workspace.db`. SQLite files are ignored by Git.
 
@@ -161,7 +182,6 @@ Model Gateway run creation, Human Review creation, and Human Review updates appe
 - model gateway boundary blockers
 - evidence upload boundary blockers
 - Prisma schema draft contains the five allowed models and avoids KYC/legal-decision/chain-transaction models
-- Prisma/SQLite repository persistence across repository instances
 
 `server/app.test.ts` and `server/evidenceVaultService.test.ts` cover:
 
@@ -170,7 +190,13 @@ Model Gateway run creation, Human Review creation, and Human Review updates appe
 - raw KYC/personal-data blocking before evidence vault record creation
 - mock Model Gateway route creation, listing, and boundary blocking
 - Human Review route creation, status update, and listing
-- Audit Log listing after model and review workflow actions
+- Workspace create/read/update routes
+- multipart Evidence Vault upload/list/update/manifest routes
+- Audit Log listing after workspace, evidence, model, and review workflow actions
+
+`server/reviewWorkspaceRepository.test.ts` covers:
+
+- Prisma/SQLite repository persistence across repository instances for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records
 
 `server/modelGatewayService.test.ts` and `server/humanReviewService.test.ts` cover:
 

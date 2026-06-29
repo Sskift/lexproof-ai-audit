@@ -47,13 +47,20 @@ const notLegalAdviceBoundary = "Not legal advice. Phase 2 APIs create audit prep
 
 export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
   return [
-    createRoute("POST", "/api/workspaces", "workspaces", "CreateWorkspaceRequest", "WorkspaceRecord"),
-    createRoute("GET", "/api/workspaces/:workspaceId", "workspaces", "WorkspaceLookupRequest", "WorkspaceRecord"),
-    createRoute("PATCH", "/api/workspaces/:workspaceId", "workspaces", "UpdateWorkspaceRequest", "WorkspaceRecord"),
-    createRoute("POST", "/api/workspaces/:workspaceId/evidence", "evidence-vault", "EvidenceUploadRequest", "EvidenceVaultRecord"),
-    createRoute("GET", "/api/workspaces/:workspaceId/evidence", "evidence-vault", "EvidenceListRequest", "EvidenceVaultRecord[]"),
-    createRoute("PATCH", "/api/workspaces/:workspaceId/evidence/:evidenceId", "evidence-vault", "UpdateEvidenceRequest", "EvidenceVaultRecord"),
-    createRoute("GET", "/api/workspaces/:workspaceId/evidence-manifest", "evidence-vault", "EvidenceManifestRequest", "EvidenceManifest"),
+    createRoute("POST", "/api/workspaces", "workspaces", "CreateWorkspaceRequest", "WorkspaceRecord", true),
+    createRoute("GET", "/api/workspaces/:workspaceId", "workspaces", "WorkspaceLookupRequest", "WorkspaceRecord", true),
+    createRoute("PATCH", "/api/workspaces/:workspaceId", "workspaces", "UpdateWorkspaceRequest", "WorkspaceRecord", true),
+    createRoute("POST", "/api/workspaces/:workspaceId/evidence", "evidence-vault", "EvidenceUploadRequest", "EvidenceVaultRecord", true),
+    createRoute("GET", "/api/workspaces/:workspaceId/evidence", "evidence-vault", "EvidenceListRequest", "EvidenceVaultRecord[]", true),
+    createRoute(
+      "PATCH",
+      "/api/workspaces/:workspaceId/evidence/:evidenceId",
+      "evidence-vault",
+      "UpdateEvidenceRequest",
+      "EvidenceVaultRecord",
+      true
+    ),
+    createRoute("GET", "/api/workspaces/:workspaceId/evidence-manifest", "evidence-vault", "EvidenceManifestRequest", "EvidenceManifest", true),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),

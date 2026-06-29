@@ -393,7 +393,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Workspace routes, evidence-vault upload routes, exports, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Backend exports, raw file persistence, OCR, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -446,9 +446,9 @@ These capabilities remain simulated or local in the current codebase:
 
 - API keys for live model calls are browser-session only and are not persisted.
 - The Phase 2 Model Gateway creates mock receipts only; it does not call external providers or store provider credentials.
-- Evidence files are hashed locally or represented by metadata; raw file upload/storage is not implemented.
-- The Phase 2 server computes evidence hashes in memory for metadata records, but does not persist uploaded files.
-- Model Gateway, Human Review, and Audit Log records use Prisma/SQLite in the API process.
+- Evidence files are hashed locally in the browser or uploaded through the Phase 2 multipart route for server-side metadata hashing.
+- The Phase 2 server computes evidence hashes in memory for metadata records and persists evidence metadata, but does not persist uploaded file bytes.
+- Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records use Prisma/SQLite in the API process.
 - Evidence Audit Trail is local browser metadata, not a signed external log.
 - Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
 - Manifest anchoring creates a simulated receipt and does not submit a transaction.
@@ -496,9 +496,9 @@ Domain tests live next to the audit engine and cover:
 - evidence audit trail create/update/remove events and JSON export
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
-- Phase 2 Fastify health endpoint and server-side evidence metadata hashing
+- Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing
 - Phase 2 mock Model Gateway routes and persisted Human Review routes
-- Phase 2 Prisma/SQLite repository persistence for Model Gateway, Human Review, and Audit Log records
+- Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 

@@ -31,6 +31,7 @@ Key evidence:
 
 - Custom Project Workspace for creating a local audit project from zero or loading synthetic samples.
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
+- Model Intake for registering provider/model purpose, allowed data classes, human-review owner, and hashed AI event records.
 - AI Review with mock and OpenAI-compatible model settings for audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
@@ -45,7 +46,7 @@ Key evidence:
 - Simulated Anchor Receipt for the manifest bundle hash. It is explicitly not a real on-chain write.
 - Counsel Pack Markdown download and browser Print / Save PDF handoff with non-advice disclaimer, project facts, risk posture, editable counsel questions, counsel review statuses, manifest hash, source pack, and remediation queue.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
-- Responsive React workbench with tabs for Audit Wizard, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+- Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ## Product Screenshots
 
@@ -65,27 +66,29 @@ Counsel Pack exports Markdown, browser Print / Save PDF output, manifest JSON, a
 
 LexProof uses a controlled BYOM/BYOK model workflow:
 
-1. Open **AI Review**.
-2. Use the built-in mock reviewer for demos, or choose the OpenAI-compatible provider.
-3. Enter a base URL, model name, and API key. In this first-stage SPA, the API key is kept in browser state and is not persisted to `localStorage`.
-4. Review the **Redaction Gate** payload summary before running the model.
-5. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
-6. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt.
+1. Open **Model Intake** to register the provider/model purpose, endpoint type, allowed data classes, and required human-review owner. Model Intake stores no API keys.
+2. Record AI event intake entries for model outputs that need audit tracking. Each event receives a deterministic SHA-256 hash and a review status.
+3. Open **AI Review** and use the built-in mock reviewer for demos, or choose the OpenAI-compatible provider.
+4. Enter a base URL, model name, and API key. In this first-stage SPA, the API key is kept in browser state and is not persisted to `localStorage`.
+5. Review the **Redaction Gate** payload summary before running the model.
+6. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
+7. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt.
 
-Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review.
+Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review. Model Intake records are local audit-prep metadata, not final adjudication.
 
 ## First-Stage Workflow
 
 1. Open the app and click **New project**, or load one of the synthetic sample profiles.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
-4. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt.
-5. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
-6. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
-7. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
-8. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
+4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
+5. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt.
+6. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
+7. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
+8. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
+9. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
 
-Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The MVP does not upload evidence, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model run ledger entries store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The MVP does not upload evidence, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model Intake and model-run ledger entries store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 
@@ -118,7 +121,7 @@ The dev server defaults to `http://127.0.0.1:5173`.
 ## Submission Assets
 
 - Public GitHub repository: this repo
-- Demo video: record the app flow through project creation, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, and Counsel Pack
+- Demo video: record the app flow through project creation, Model Intake, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, and Counsel Pack
 - DoraHacks BUIDL submission: use the generated Counsel Pack and README summary
 - Screenshot-backed submission narrative: see [docs/submission-pack.md](docs/submission-pack.md)
 - Source pack: see [docs/research.md](docs/research.md)

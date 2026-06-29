@@ -17,6 +17,7 @@ import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
+import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
@@ -45,6 +46,7 @@ import {
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
+import type { AIEventRecord, ModelConnectionProfile } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
@@ -53,17 +55,20 @@ import {
   type RiskEvidenceRequirement
 } from "./lib/riskEvidence";
 
-type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
+type TabId = "wizard" | "ai" | "model" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
 const STORAGE_KEY = "lexproof.currentProject.v1";
 const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
 const MODEL_REVIEW_RUNS_KEY = "lexproof.modelReviewRuns.v1";
+const MODEL_INTAKE_PROFILE_KEY = "lexproof.modelIntakeProfile.v1";
+const MODEL_INTAKE_EVENTS_KEY = "lexproof.modelIntakeEvents.v1";
 const COUNSEL_QUESTIONS_KEY = "lexproof.counselQuestions.v1";
 const COUNSEL_REVIEWS_KEY = "lexproof.counselReviews.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
+  { id: "model", label: "Model Intake", icon: Bot },
   { id: "jurisdiction", label: "Jurisdiction Checklist", icon: Globe2 },
   { id: "risk", label: "Risk Audit", icon: ShieldCheck },
   { id: "evidence", label: "Evidence Ledger", icon: DatabaseZap },
@@ -78,6 +83,8 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
+  const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
+  const [aiEvents, setAIEvents] = useState<AIEventRecord[]>(() => loadStoredAIEvents());
   const [aiReview, setAIReview] = useState<AIReviewResult | null>(null);
   const [aiReviewRuns, setAIReviewRuns] = useState<ModelReviewRun[]>(() => loadStoredModelReviewRuns());
   const [counselQuestions, setCounselQuestions] = useState<CounselQuestion[]>(() => loadStoredCounselQuestions());
@@ -99,6 +106,7 @@ export default function App() {
     () => aiReviewRuns.filter((run) => run.projectId === project.id).slice(0, 5),
     [aiReviewRuns, project.id]
   );
+  const currentAIEvents = useMemo(() => aiEvents.filter((event) => event.projectId === project.id), [aiEvents, project.id]);
   const currentCounselQuestions = useMemo(
     () => sortCounselQuestionsForReview(counselQuestions.filter((question) => question.projectId === project.id)),
     [counselQuestions, project.id]
@@ -142,6 +150,14 @@ export default function App() {
   useEffect(() => {
     safeStorage()?.setItem(MODEL_REVIEW_RUNS_KEY, JSON.stringify(aiReviewRuns.slice(0, 20)));
   }, [aiReviewRuns]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(MODEL_INTAKE_PROFILE_KEY, JSON.stringify(modelIntakeProfile));
+  }, [modelIntakeProfile]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(MODEL_INTAKE_EVENTS_KEY, JSON.stringify(aiEvents.slice(0, 80)));
+  }, [aiEvents]);
 
   useEffect(() => {
     setCounselQuestions((current) => mergeQuestionsForProject(current, project.id, createDefaultCounselQuestions(project, audit)));
@@ -301,6 +317,10 @@ export default function App() {
     );
   };
 
+  const addAIEvent = (event: AIEventRecord) => {
+    setAIEvents((current) => [event, ...current].slice(0, 80));
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -366,6 +386,15 @@ export default function App() {
               error={aiReviewError}
               onSettingsChange={setModelSettings}
               onRunReview={handleRunAIReview}
+            />
+          ) : null}
+          {activeTab === "model" ? (
+            <ModelIntakePanel
+              projectId={project.id}
+              profile={modelIntakeProfile}
+              events={currentAIEvents}
+              onProfileChange={setModelIntakeProfile}
+              onAddEvent={addAIEvent}
             />
           ) : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
@@ -672,6 +701,47 @@ function loadStoredModelReviewRuns(): ModelReviewRun[] {
   try {
     const parsed = JSON.parse(raw) as ModelReviewRun[];
     return Array.isArray(parsed) ? parsed.filter((run) => run.runVersion === "lexproof-ai-review-run-v1") : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadStoredModelIntakeProfile(): ModelConnectionProfile {
+  const fallback: ModelConnectionProfile = {
+    providerName: "Mock local reviewer",
+    modelName: "lexproof-mock",
+    endpointType: "mock",
+    useCase: "Audit-prep extraction, missing evidence suggestions, and draft counsel questions",
+    decisionRole: "human-review-support",
+    dataClasses: ["evidence summaries", "project facts", "policy metadata"],
+    humanReviewOwner: "Compliance"
+  };
+  const raw = safeStorage()?.getItem(MODEL_INTAKE_PROFILE_KEY);
+  if (!raw) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as ModelConnectionProfile;
+    if (parsed && typeof parsed.providerName === "string" && Array.isArray(parsed.dataClasses)) {
+      return parsed;
+    }
+  } catch {
+    return fallback;
+  }
+
+  return fallback;
+}
+
+function loadStoredAIEvents(): AIEventRecord[] {
+  const raw = safeStorage()?.getItem(MODEL_INTAKE_EVENTS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as AIEventRecord[];
+    return Array.isArray(parsed) ? parsed.filter((event) => typeof event.id === "string" && typeof event.projectId === "string") : [];
   } catch {
     return [];
   }

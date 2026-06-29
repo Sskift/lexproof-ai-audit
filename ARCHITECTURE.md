@@ -15,6 +15,7 @@ lexproof-ai-audit/
       AuditWizard.tsx        # Step-by-step project review surface
       AIReviewPanel.tsx      # Controlled model-assisted audit preparation
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
+      ModelIntakePanel.tsx   # Model connection profile and AI event intake records
       CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
@@ -26,6 +27,7 @@ lexproof-ai-audit/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
+      modelIntake.ts         # Model connection profile validation and AI event hashes
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
@@ -63,6 +65,8 @@ sampleProfiles or blank project
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
   -> recommendEvidenceTemplates(project)
+  -> validateModelConnectionProfile(modelIntakeProfile)
+  -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
   -> createRedactionReport(project.evidenceItems)
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
@@ -220,6 +224,17 @@ Owns model-run audit receipts:
 
 Run receipts support audit preparation and reproducibility. They are not legal conclusions, proof of model correctness, or a substitute for human review.
 
+### `src/lib/modelIntake.ts`
+
+Owns model intake and AI event registration:
+
+- `validateModelConnectionProfile()` checks provider/model purpose, human-review owner, prohibited final legal-decision roles, and blocked raw KYC/personal-data classes.
+- `hashAIEventRecord()` creates a deterministic SHA-256 hash for each local AI event record.
+- `buildModelIntakeSummary()` returns readiness, blockers, unresolved review counts, handoff checklist items, event hashes, and the non-advice boundary.
+- `exportModelIntakeJson()` exports profile, event, and summary metadata without credentials.
+
+Model Intake records are local audit-prep metadata. They do not store API keys, perform KYC, make legal determinations, or prove model correctness.
+
 ### `src/lib/evidenceManifest.ts`
 
 Owns deterministic manifest behavior:
@@ -270,7 +285,7 @@ Owns UI state and composition:
 - active tab
 - async evidence manifest state
 
-The component calls library modules and renders the workbench surfaces: Audit Wizard, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+The component calls library modules and renders the workbench surfaces: Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ### `src/components/*`
 
@@ -280,6 +295,7 @@ Components are intentionally presentational and interaction-focused:
 - `AuditWizard` displays the step-by-step audit review.
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
+- `ModelIntakePanel` edits model connection profile metadata, AI event records, event hashes, and human-review readiness.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -312,6 +328,8 @@ Domain tests live next to the audit engine and cover:
 - missing evidence checklist generation
 - missing evidence request generation for Evidence Ledger
 - mock and OpenAI-compatible model provider behavior
+- model connection profile validation
+- AI event hashing and model intake summaries
 - model review run payload and response hashing
 - model review run JSON export
 - counsel pack Markdown content
@@ -340,6 +358,7 @@ UI tests cover:
 - long evidence record editing with visible field labels
 - manifest bundle hash visibility
 - AI Review mock workflow
+- Model Intake profile and AI event workflow
 - Redaction Gate visibility
 - AI Review Run Ledger visibility
 - editable counsel questions in Counsel Pack

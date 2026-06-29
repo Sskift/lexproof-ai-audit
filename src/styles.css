@@ -472,6 +472,10 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.settings-grid .full-width {
+  grid-column: 1 / -1;
+}
+
 .review-actions {
   display: flex;
   flex-wrap: wrap;
@@ -733,6 +737,73 @@ textarea {
 .redaction-pill.blocked {
   color: #9f241a;
   background: #f3d1cd;
+}
+
+.redaction-pill.reviewed {
+  color: #176b52;
+  background: #dcefe5;
+}
+
+.redaction-pill.rejected {
+  color: #9f241a;
+  background: #f3d1cd;
+}
+
+.model-event-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.model-event-form button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.model-readiness {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.model-readiness strong {
+  border-radius: 999px;
+  padding: 5px 8px;
+  color: #102a43;
+  background: #e7edf8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.model-readiness.ready strong {
+  color: #176b52;
+  background: #dcefe5;
+}
+
+.model-readiness.needs-review strong {
+  color: #7a3f15;
+  background: #f6e1c1;
+}
+
+.model-readiness.blocked strong {
+  color: #9f241a;
+  background: #f3d1cd;
+}
+
+.model-readiness span {
+  color: #657382;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.model-checklist {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  color: #445361;
+  line-height: 1.45;
 }
 
 .risk-summary {
@@ -1818,6 +1889,7 @@ textarea {
   .fit-grid,
   .ledger-form,
   .ledger-editor-grid,
+  .model-event-form,
   .run-facts,
   .wizard-steps {
     grid-template-columns: 1fr;

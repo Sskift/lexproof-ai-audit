@@ -35,7 +35,7 @@ Sources:
 | --- | --- | --- |
 | Legal tech | Counsel Pack, editable counsel questions, review statuses, and non-advice audit memo are aligned | Add signed approvals, collaboration, and deeper lawyer-review workflows |
 | Compliance / RegTech | Risk flags, remediation queue, evidence ledger, jurisdiction packs, and policy-control routing are aligned | Expand the policy control library across more product scenarios and jurisdictions |
-| AI | Controlled AI Review, mock reviewer, OpenAI-compatible model settings, redaction gate, and run ledger are aligned | Add enterprise proxy controls, admin policies, and richer document extraction |
+| AI | Model Intake, controlled AI Review, mock reviewer, OpenAI-compatible model settings, redaction gate, event hashes, and run ledger are aligned | Add enterprise proxy controls, admin policies, and richer document extraction |
 | Blockchain / Web3 | Evidence manifest and SHA-256 bundle hash are aligned | Add optional verifiable anchor interface or simulated anchor receipt with clear boundary |
 | Finance / RWA | Sample yield/private-credit workflow is aligned | Add richer token/RWA classification intake and disclosure evidence templates |
 | Bitcoin / Ethereum | Current UI references Ethereum and blockchain use | Add chain-neutral anchor abstraction and examples for Ethereum, Bitcoin timestamping, or registry workflows |
@@ -48,6 +48,7 @@ Implemented:
 - Local-first React + TypeScript + Vite workbench.
 - Custom Project Workspace with localStorage persistence.
 - Audit Wizard for project facts and handoff readiness.
+- Model Intake with provider/model purpose, endpoint type, allowed data classes, human-review owner, readiness checklist, and hashed AI event records.
 - AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
 - Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
@@ -70,7 +71,7 @@ Implemented:
 
 Current limitation:
 
-The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, first-stage jurisdiction policy controls, local review statuses, and browser-side local file hashing, but it does not yet provide accounts, collaboration, secure backend evidence storage, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
+The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, model intake metadata, first-stage jurisdiction policy controls, local review statuses, and browser-side local file hashing, but it does not yet provide accounts, collaboration, secure backend evidence storage, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
 
 ## Expected End State
 
@@ -83,8 +84,10 @@ The expected mature product is a review operating system for legal/compliance re
 
 2. **Model-Assisted Audit Preparation**
    - User can connect OpenAI-compatible or enterprise model providers.
+   - User can register model purpose, allowed data classes, and human-review owner before relying on outputs.
    - AI can extract facts, summarize evidence, detect missing documents, draft issue rationales, and suggest remediation tasks.
    - Model output is always marked as draft and requires human review.
+   - AI event records should capture input/output summaries, review status, and deterministic hashes.
    - Each completed model run should record provider/model metadata, payload hash, response hash, redaction status, and run time.
    - Raw KYC, private keys, and personal data are blocked or redacted before model calls.
 
@@ -155,13 +158,15 @@ The product is especially meaningful where legal/compliance work is high-context
 
 1. Founder creates a project and selects a scenario template.
 2. Founder enters product facts and adds synthetic-safe evidence summaries or browser-side local file hashes.
-3. AI Review extracts structured facts and highlights missing evidence.
-4. Risk Audit produces deterministic flags, remediation owners, and missing evidence request actions.
-5. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
-6. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
-7. Engineering hashes evidence and creates a manifest.
-8. Compliance exports a Counsel Pack for review meeting or investor diligence.
-9. Optional anchor records a manifest hash after legal/privacy review.
+3. Compliance registers model purpose and human-review ownership in Model Intake.
+4. AI Review extracts structured facts and highlights missing evidence.
+5. Model Intake records AI event summaries and review status for material model outputs.
+6. Risk Audit produces deterministic flags, remediation owners, and missing evidence request actions.
+7. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
+8. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
+9. Engineering hashes evidence and creates a manifest.
+10. Compliance exports a Counsel Pack for review meeting or investor diligence.
+11. Optional anchor records a manifest hash after legal/privacy review.
 
 ## AI Model Access Plan
 
@@ -170,15 +175,19 @@ The platform lets users connect models only through a controlled workflow.
 Recommended architecture:
 
 - `src/lib/modelProvider.ts` keeps provider config, OpenAI-compatible request construction, and deterministic mock provider behavior.
+- `src/lib/modelIntake.ts` validates model purpose, blocked data classes, human-review owner, and AI event hashes.
 - `src/lib/modelReviewLedger.ts` creates local model-run receipts with payload and response SHA-256 hashes and JSON export without credentials.
 - `src/lib/aiReview.ts` builds prompt payloads from project facts and evidence summaries, parses structured JSON output, and validates suggestions before UI display.
 - `src/components/ModelSettingsPanel.tsx` exposes provider, base URL, model name, and API key inputs with local-only key handling in the first stage.
+- `src/components/ModelIntakePanel.tsx` exposes model profile metadata and AI event intake records without storing credentials.
 - `src/components/AIReviewPanel.tsx` runs AI Review and shows extracted facts, missing evidence, draft questions, suggested remediation, redaction status, and run receipts.
 
 Rules:
 
 - Do not auto-send raw evidence.
 - Do not send raw KYC, private keys, or personal data.
+- Do not register models as final legal decision-makers.
+- Record material AI outputs as human-review event records before external reliance.
 - Show a review payload before model call.
 - Mark all model output as AI-assisted draft.
 - Keep deterministic audit scoring separate from model response.
@@ -189,6 +198,7 @@ Rules:
 ### Phase 1: Submission-Ready MVP
 
 - Current workspace features.
+- Model Intake profile and AI event hash ledger.
 - AI Review with mock/OpenAI-compatible provider.
 - Redaction Gate before model calls.
 - AI Review Run Ledger with payload/response hash receipts.

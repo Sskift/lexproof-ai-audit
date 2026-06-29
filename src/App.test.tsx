@@ -8,6 +8,8 @@ describe("App", () => {
     window.localStorage?.removeItem?.("lexproof.currentProject.v1");
     window.localStorage?.removeItem?.("lexproof.modelSettings.v1");
     window.localStorage?.removeItem?.("lexproof.modelReviewRuns.v1");
+    window.localStorage?.removeItem?.("lexproof.modelIntakeProfile.v1");
+    window.localStorage?.removeItem?.("lexproof.modelIntakeEvents.v1");
     window.localStorage?.removeItem?.("lexproof.counselQuestions.v1");
     window.localStorage?.removeItem?.("lexproof.counselReviews.v1");
   });
@@ -19,6 +21,7 @@ describe("App", () => {
     expect(screen.getAllByText(/BLI Legal Tech Hackathon 2/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Risk Audit/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/AI Review/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Model Intake/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Jurisdiction Checklist/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Evidence Ledger/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Counsel Pack/i).length).toBeGreaterThan(0);
@@ -195,6 +198,42 @@ describe("App", () => {
     expect(await screen.findByText(/Payload SHA-256/i)).toBeInTheDocument();
     expect(screen.getByText(/Response SHA-256/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Mock local reviewer/i).length).toBeGreaterThan(1);
+    expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+  });
+
+  it("registers a model connection profile and AI event intake record with a hash", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Model Intake/i }));
+
+    expect(screen.getByRole("heading", { name: /Model Intake/i })).toBeInTheDocument();
+    expect(screen.getByText(/AI events are audit-prep records/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Provider name/i), { target: { value: "OpenAI-compatible gateway" } });
+    fireEvent.change(screen.getByLabelText(/Intake model name/i), { target: { value: "gpt-audit-review" } });
+    fireEvent.change(screen.getByLabelText(/Model use case/i), {
+      target: { value: "Evidence extraction and draft counsel questions" }
+    });
+    fireEvent.change(screen.getByLabelText(/Human review owner/i), { target: { value: "Compliance" } });
+    fireEvent.change(screen.getByLabelText(/Allowed data classes/i), {
+      target: { value: "evidence summaries, policy metadata" }
+    });
+
+    fireEvent.change(screen.getByLabelText(/AI event type/i), { target: { value: "Evidence review" } });
+    fireEvent.change(screen.getByLabelText(/Event input summary/i), {
+      target: { value: "Review token terms and custody policy summary" }
+    });
+    fireEvent.change(screen.getByLabelText(/Event output summary/i), {
+      target: { value: "Drafted missing evidence question for wallet authority" }
+    });
+    fireEvent.change(screen.getByLabelText(/Model action/i), { target: { value: "Generated draft audit-prep questions" } });
+    fireEvent.change(screen.getByLabelText(/Event human reviewer/i), { target: { value: "Compliance" } });
+    fireEvent.click(screen.getByRole("button", { name: /Add AI event/i }));
+
+    expect(await screen.findByText(/Evidence review/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/needs-review/i).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/Resolve AI event review items before external reliance/i)).toBeInTheDocument();
+    expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 

@@ -1298,6 +1298,141 @@ textarea {
   gap: 12px;
 }
 
+.jurisdiction-pack-section {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.pack-section-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pack-section-summary strong,
+.pack-section-summary span {
+  border: 1px solid #c9d5de;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #176b87;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.jurisdiction-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.jurisdiction-pack-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.jurisdiction-pack-card header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+}
+
+.jurisdiction-pack-card header span,
+.jurisdiction-pack-card header small,
+.jurisdiction-pack-card > small {
+  color: #657382;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.jurisdiction-pack-card h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.jurisdiction-pack-card p,
+.jurisdiction-route small {
+  margin-bottom: 0;
+  color: #445361;
+  line-height: 1.45;
+}
+
+.jurisdiction-route {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #eef5f6;
+}
+
+.jurisdiction-route strong,
+.jurisdiction-route span {
+  display: block;
+}
+
+.jurisdiction-route strong {
+  color: #102a43;
+  font-size: 0.82rem;
+}
+
+.jurisdiction-route span {
+  color: #176b87;
+  font-weight: 900;
+}
+
+.jurisdiction-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.jurisdiction-control {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.jurisdiction-control.evidence-ready {
+  border-color: #b8d8c8;
+  background: #f2faf5;
+}
+
+.jurisdiction-control > div {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.jurisdiction-control strong {
+  color: #172431;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.jurisdiction-control p,
+.jurisdiction-control small {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.jurisdiction-control.evidence-ready small {
+  color: #176b52;
+  font-weight: 800;
+}
+
 .jurisdiction-card {
   padding: 14px;
   border: 1px solid #d9e2e8;
@@ -1555,6 +1690,7 @@ textarea {
   .redaction-summary,
   .redaction-preview-grid,
   .jurisdiction-grid,
+  .jurisdiction-pack-grid,
   .receipt-grid,
   .template-grid {
     grid-template-columns: 1fr;

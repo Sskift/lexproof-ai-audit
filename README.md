@@ -36,6 +36,7 @@ Key evidence:
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Jurisdiction Checklist for US, EU, and UK audit-prep prompts without legal conclusions.
+- Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, and per-risk evidence workflow coverage.
 - Editable Evidence Ledger with evidence status, owner, source notes, visible edit labels, long-row wrapping, item hashes, and manifest bundle hash.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
@@ -78,7 +79,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
 4. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt.
-5. Open **Jurisdiction Checklist** to see US/EU/UK preparation prompts for counsel review.
+5. Open **Jurisdiction Checklist** to see US/EU/UK preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 6. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, and remediation owners.
 7. Add or edit records in **Evidence Ledger**, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
 8. Open **Counsel Pack** to edit the counsel question queue, then download the Markdown audit-prep packet, manifest JSON, or a simulated anchor receipt JSON for counsel/compliance review.

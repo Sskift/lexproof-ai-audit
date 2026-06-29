@@ -180,6 +180,10 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
     expect(screen.getByText(/US offering and asset classification review/i)).toBeInTheDocument();
     expect(screen.getByText(/EU crypto-asset disclosure readiness review/i)).toBeInTheDocument();
+    expect(screen.getByText(/Jurisdiction Packs/i)).toBeInTheDocument();
+    expect(screen.getByText(/Policy controls/i)).toBeInTheDocument();
+    expect(screen.getByText(/Local counsel routing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Offering and disclosure control/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 

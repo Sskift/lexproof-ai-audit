@@ -16,7 +16,7 @@ lexproof-ai-audit/
       AIReviewPanel.tsx      # Controlled model-assisted audit preparation
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
       CounselQuestionsPanel.tsx # Editable counsel question queue
-      JurisdictionChecklistPanel.tsx # US/EU/UK audit-prep checklist surface
+      JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
       CounselPackPanel.tsx   # Markdown, manifest, and simulated receipt export
     data/
@@ -35,6 +35,7 @@ lexproof-ai-audit/
       evidenceManifest.ts    # Deterministic item and bundle hashes
       anchorReceipt.ts       # Local simulated manifest anchor receipt
       jurisdictionChecklist.ts # Jurisdiction checklist generation
+      jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       counselPack.ts         # Markdown pack and browser download helper
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
@@ -55,6 +56,7 @@ sampleProfiles or blank project
   -> createRiskIssueCards(project, audit)
   -> createRiskEvidenceCoverage(audit, project.evidenceItems)
   -> createJurisdictionChecklist(project, audit)
+  -> createJurisdictionPacks(project, audit)
   -> recommendEvidenceTemplates(project)
   -> createRedactionReport(project.evidenceItems)
   -> buildAIReviewPayload(project, audit, evidenceItems)
@@ -152,6 +154,16 @@ Owns jurisdiction checklist generation:
 - Checklist items are preparation prompts with source text, priority, and evidence status.
 - The module does not classify legality, compliance, securities status, or licensing status.
 
+### `src/lib/jurisdictionPacks.ts`
+
+Owns jurisdiction pack behavior:
+
+- `createJurisdictionPacks(project, audit)` returns jurisdiction-specific policy controls for US, EU, UK, and fallback local-counsel intake.
+- Each control maps active risk flags to evidence keywords, owner, priority, and evidence-ready status.
+- Each pack includes a local-counsel route with recommended role, trigger, handoff note, source, and explicit non-advice boundary.
+
+Packs are audit preparation routing aids only. They do not determine legal status or compliance.
+
 ### `src/lib/modelProvider.ts`
 
 Owns model connection boundaries:
@@ -220,7 +232,7 @@ Owns UI state and composition:
 - active tab
 - async evidence manifest state
 
-The component calls library modules and renders five surfaces: Audit Wizard, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+The component calls library modules and renders the workbench surfaces: Audit Wizard, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ### `src/components/*`
 
@@ -232,7 +244,7 @@ Components are intentionally presentational and interaction-focused:
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
-- `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts and evidence status.
+- `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
 - `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
 - `CounselPackPanel` previews and downloads Markdown output, manifest JSON, and simulated anchor receipt JSON.
@@ -265,6 +277,7 @@ Domain tests live next to the audit engine and cover:
 - Markdown browser download behavior
 - redaction report warnings and blockers
 - jurisdiction checklist generation
+- jurisdiction pack controls and local-counsel routing
 - simulated anchor receipt export
 - evidence template recommendation and instantiation
 - source-linked risk issue card generation
@@ -285,7 +298,7 @@ UI tests cover:
 - Redaction Gate visibility
 - AI Review Run Ledger visibility
 - editable counsel questions in Counsel Pack
-- Jurisdiction Checklist tab
+- Jurisdiction Checklist tab with policy controls and local-counsel routing
 - source-linked Risk Audit trigger explanations
 - evidence template application
 - manifest JSON download action
@@ -296,7 +309,7 @@ UI tests cover:
 Good next additions:
 
 - import custom JSON profiles
-- add richer jurisdiction checklists
+- expand the jurisdiction pack content library beyond the first-stage US/EU/UK controls
 - add source citation controls per flag
 - add optional real on-chain anchoring only after privacy, wallet, backend, and signing boundaries are documented
 - add PDF export and screenshot-backed demo assets

@@ -8,7 +8,7 @@ LexProof AuditOS should be positioned as an AI-assisted legal and compliance aud
 
 > Web3 teams need a repeatable way to turn launch facts, evidence, policy records, and AI-assisted issue spotting into a counsel-ready review packet before public release, fundraising, exchange listing, or protocol governance action.
 
-The current app already has the right first-stage shape: custom project workspace, risk triage, editable evidence ledger, deterministic evidence manifest, and downloadable counsel pack. The next leap is to make it credible in a realistic professional workflow: model-assisted drafting, jurisdiction-aware issue checklists, evidence provenance controls, collaboration, review approvals, and optional verifiable anchoring.
+The current app already has the right first-stage shape: custom project workspace, model-assisted audit drafting, jurisdiction-aware issue checklists, policy-control routing, editable evidence ledger, deterministic evidence manifest, and downloadable counsel pack. The next leap is to make it credible in a realistic professional workflow: deeper control libraries, collaboration, review approvals, document intake, and optional verifiable anchoring.
 
 The product should keep the non-advice boundary everywhere. It creates audit preparation materials for lawyers and compliance teams. It does not provide legal advice, adjudicate disputes, validate securities status, perform KYC, or write real blockchain records in the first stage.
 
@@ -34,8 +34,8 @@ Sources:
 | Hackathon Signal | Current LexProof Fit | Gap To Strong Submission |
 | --- | --- | --- |
 | Legal tech | Counsel Pack and non-advice audit memo are aligned | Add lawyer-review workflow, approvals, and source-linked issue explanations |
-| Compliance / RegTech | Risk flags, remediation queue, evidence ledger are aligned | Add jurisdiction-specific regulatory checklists and policy control mapping |
-| AI | Current product is AI-ready but not model-connected | Add controlled model provider settings and AI Review tab for extraction/drafting |
+| Compliance / RegTech | Risk flags, remediation queue, evidence ledger, jurisdiction packs, and policy-control routing are aligned | Expand the policy control library across more product scenarios and jurisdictions |
+| AI | Controlled AI Review, mock reviewer, OpenAI-compatible model settings, redaction gate, and run ledger are aligned | Add enterprise proxy controls, admin policies, and richer document extraction |
 | Blockchain / Web3 | Evidence manifest and SHA-256 bundle hash are aligned | Add optional verifiable anchor interface or simulated anchor receipt with clear boundary |
 | Finance / RWA | Sample yield/private-credit workflow is aligned | Add richer token/RWA classification intake and disclosure evidence templates |
 | Bitcoin / Ethereum | Current UI references Ethereum and blockchain use | Add chain-neutral anchor abstraction and examples for Ethereum, Bitcoin timestamping, or registry workflows |
@@ -53,6 +53,7 @@ Implemented:
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
 - Editable Counsel Questions queue that merges deterministic risk-rule prompts, AI draft questions, and manual user edits into Counsel Pack exports.
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
+- Jurisdiction Packs with US, EU, UK, and fallback local-counsel routing plus policy controls tied to active risk flags and evidence-ready status.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Per-risk evidence workflow coverage in Risk Audit, backed by deterministic evidence requirements in `src/lib/riskEvidence.ts`.
 - Editable Evidence Ledger with owner, status, source, content fields, and scenario evidence templates.
@@ -67,7 +68,7 @@ Implemented:
 
 Current limitation:
 
-The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, but it does not yet provide accounts, collaboration, file uploads, real document parsing, signed approvals, policy control libraries, full KYC redaction, or verifiable chain anchoring.
+The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries and first-stage jurisdiction policy controls, but it does not yet provide accounts, collaboration, file uploads, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
 
 ## Expected End State
 
@@ -115,7 +116,7 @@ No remaining must-have gaps are identified for the current Phase 1 submission-re
 
 ### Strong Differentiators
 
-- Deeper jurisdiction pack architecture beyond first-stage US / EU / UK checklist prompts.
+- Expand the jurisdiction pack library beyond first-stage US / EU / UK controls into more scenarios, product types, and counsel-review workflows.
 
 ### Production-Grade Later
 
@@ -162,28 +163,15 @@ The product is especially meaningful where legal/compliance work is high-context
 
 ## AI Model Access Plan
 
-The platform should let users connect models, but only through a controlled workflow.
+The platform lets users connect models only through a controlled workflow.
 
 Recommended architecture:
 
-- `src/lib/modelProvider.ts`
-  - provider config type
-  - OpenAI-compatible request adapter
-  - mock provider for tests and demos
-- `src/lib/modelReviewLedger.ts`
-  - local model-run receipts
-  - payload and response SHA-256 hashes
-  - JSON export without credentials
-- `src/lib/aiReview.ts`
-  - build prompt payload from project and evidence summaries
-  - parse structured JSON output
-  - validate suggestions before UI display
-- `src/components/ModelSettingsPanel.tsx`
-  - provider, base URL, model name, API key input
-  - local-only key handling in first stage
-- `src/components/AIReviewPanel.tsx`
-  - run AI review
-  - show extracted facts, missing evidence, draft questions, and suggested remediation
+- `src/lib/modelProvider.ts` keeps provider config, OpenAI-compatible request construction, and deterministic mock provider behavior.
+- `src/lib/modelReviewLedger.ts` creates local model-run receipts with payload and response SHA-256 hashes and JSON export without credentials.
+- `src/lib/aiReview.ts` builds prompt payloads from project facts and evidence summaries, parses structured JSON output, and validates suggestions before UI display.
+- `src/components/ModelSettingsPanel.tsx` exposes provider, base URL, model name, and API key inputs with local-only key handling in the first stage.
+- `src/components/AIReviewPanel.tsx` runs AI Review and shows extracted facts, missing evidence, draft questions, suggested remediation, redaction status, and run receipts.
 
 Rules:
 
@@ -206,6 +194,7 @@ Rules:
 - Manifest JSON export.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.
+- Jurisdiction packs with first-stage policy controls, evidence-ready status, and local-counsel routing.
 - Source-linked Risk Audit issue cards.
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
 - Per-risk evidence workflow coverage in Risk Audit.
@@ -221,7 +210,7 @@ Rules:
 - PDF export.
 - File hashing and metadata extraction.
 - User-editable AI counsel questions.
-- Deeper jurisdiction packs with policy controls and local-counsel routing.
+- Expanded jurisdiction pack content libraries for additional jurisdictions and scenario-specific controls.
 
 ### Phase 3: Real Compliance Workspace
 

@@ -307,13 +307,13 @@ describe("App", () => {
     expect(await screen.findByText(/P0 reviewed \[asset-yield\] Yield-bearing or investment-like asset/i)).toBeInTheDocument();
   });
 
-  it("shows jurisdiction-specific audit preparation checklist items", () => {
+  it("shows jurisdiction-specific audit preparation checklist items", async () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /Jurisdiction Checklist/i }));
 
-    expect(screen.getByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
-    expect(screen.getByText(/US offering and asset classification review/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    expect(await screen.findByText(/US offering and asset classification review/i)).toBeInTheDocument();
     expect(screen.getByText(/EU crypto-asset disclosure readiness review/i)).toBeInTheDocument();
     expect(screen.getByText(/Jurisdiction Packs/i)).toBeInTheDocument();
     expect(screen.getByText(/Policy controls/i)).toBeInTheDocument();
@@ -322,7 +322,7 @@ describe("App", () => {
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });
 
-  it("routes Singapore, Switzerland, and UAE jurisdiction packs from custom project jurisdictions", () => {
+  it("routes Singapore, Switzerland, and UAE jurisdiction packs from custom project jurisdictions", async () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /New project/i }));
@@ -340,7 +340,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Planned public launch" } });
     fireEvent.click(screen.getByRole("button", { name: /Jurisdiction Checklist/i }));
 
-    expect(screen.getByText(/Singapore fintech \/ digital asset counsel/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Singapore fintech \/ digital asset counsel/i)).toBeInTheDocument();
     expect(screen.getByText(/Swiss DLT \/ financial services counsel/i)).toBeInTheDocument();
     expect(screen.getByText(/UAE virtual-assets \/ financial regulatory counsel/i)).toBeInTheDocument();
     expect(screen.getByText(/Product scope and launch-intake control/i)).toBeInTheDocument();

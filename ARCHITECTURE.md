@@ -31,6 +31,7 @@ lexproof-ai-audit/
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
       counselReview.ts       # Counsel/compliance review status queue helpers
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
+      fileEvidence.ts        # Browser-side local file hashing and metadata evidence
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
@@ -56,6 +57,7 @@ sampleProfiles or blank project
   -> analyzeAuditProfile(project)
   -> createRiskIssueCards(project, audit)
   -> createRiskEvidenceCoverage(audit, project.evidenceItems)
+  -> createEvidenceItemFromFile(file) for browser-side local file metadata evidence
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
   -> recommendEvidenceTemplates(project)
@@ -159,6 +161,15 @@ Owns evidence template behavior:
 
 Templates currently cover tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows. Template content is synthetic-safe and should not include raw KYC, personal records, or secrets.
 
+### `src/lib/fileEvidence.ts`
+
+Owns local file evidence intake behavior:
+
+- `hashLocalFile(file)` hashes browser `File` bytes with SHA-256.
+- `createEvidenceItemFromFile(file, options)` turns local file name, MIME type, byte size, last-modified time, and SHA-256 into an `EvidenceItem`.
+
+The module does not upload files and does not store raw file bytes or raw document content. The resulting ledger item is metadata-only audit preparation material.
+
 ### `src/lib/jurisdictionChecklist.ts`
 
 Owns jurisdiction checklist generation:
@@ -261,7 +272,7 @@ Components are intentionally presentational and interaction-focused:
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
-- `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
+- `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
 - `CounselPackPanel` previews and downloads Markdown output, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
 
 ### `src/styles.css`
@@ -296,6 +307,7 @@ Domain tests live next to the audit engine and cover:
 - jurisdiction pack controls and local-counsel routing
 - simulated anchor receipt export
 - evidence template recommendation and instantiation
+- local file SHA-256 hashing and metadata-only evidence creation
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 
@@ -308,6 +320,7 @@ UI tests cover:
 - Risk Audit updates from the new project profile
 - per-risk evidence workflow coverage updates from ledger evidence
 - Evidence Ledger item creation
+- local file evidence import without displaying raw file content
 - long evidence record editing with visible field labels
 - manifest bundle hash visibility
 - AI Review mock workflow

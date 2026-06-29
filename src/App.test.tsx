@@ -8,6 +8,8 @@ describe("App", () => {
     window.localStorage?.removeItem?.("lexproof.currentProject.v1");
     window.localStorage?.removeItem?.("lexproof.modelSettings.v1");
     window.localStorage?.removeItem?.("lexproof.modelReviewRuns.v1");
+    window.localStorage?.removeItem?.("lexproof.counselQuestions.v1");
+    window.localStorage?.removeItem?.("lexproof.counselReviews.v1");
   });
 
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
@@ -89,6 +91,24 @@ describe("App", () => {
 
     expect(screen.getByLabelText(/Owner for evidence 1/i)).toHaveValue("Compliance");
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("verified");
+  });
+
+  it("adds a local file as hashed evidence metadata without showing raw file content", async () => {
+    render(<App />);
+
+    const file = new File(["Confidential launch memo body"], "launch-approval.pdf", {
+      type: "application/pdf",
+      lastModified: Date.UTC(2026, 5, 29, 8, 0, 0)
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Local evidence file/i), { target: { files: [file] } });
+
+    expect(await screen.findByText("launch-approval.pdf")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Local file metadata")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("local file: launch-approval.pdf")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/File SHA-256:/i)).toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/Confidential launch memo body/i)).not.toBeInTheDocument();
   });
 
   it("shows per-risk evidence workflow coverage and updates it from ledger evidence", async () => {

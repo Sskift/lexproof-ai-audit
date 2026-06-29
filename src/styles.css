@@ -1134,6 +1134,23 @@ textarea {
   width: 100%;
 }
 
+.file-evidence-section {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.file-evidence-input {
+  display: grid;
+  gap: 7px;
+}
+
+.file-evidence-input input {
+  padding: 9px 12px;
+}
+
 .ledger-item {
   grid-template-columns: 48px minmax(0, 1fr) 28px;
   padding: 12px;

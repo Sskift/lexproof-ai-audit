@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { BadgeCheck, DatabaseZap, LockKeyhole, Trash2 } from "lucide-react";
+import { BadgeCheck, DatabaseZap, FileUp, LockKeyhole, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
+import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
 
 type EvidenceLedgerProps = {
@@ -39,6 +40,7 @@ export function EvidenceLedger({
   onRemoveEvidence
 }: EvidenceLedgerProps) {
   const [draft, setDraft] = useState<EvidenceItem>(blankEvidence);
+  const [fileImportState, setFileImportState] = useState("");
 
   const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
 
@@ -48,6 +50,19 @@ export function EvidenceLedger({
     }
     onAddEvidence(draft);
     setDraft(blankEvidence);
+  };
+
+  const importLocalFile = async (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+    setFileImportState(`Hashing ${file.name}`);
+    const item = await createEvidenceItemFromFile(file, {
+      owner: "Founder",
+      status: "received"
+    });
+    onAddEvidence(item);
+    setFileImportState(`Added ${file.name} as local file metadata`);
   };
 
   return (
@@ -91,6 +106,29 @@ export function EvidenceLedger({
             );
           })}
         </div>
+      </section>
+
+      <section className="file-evidence-section">
+        <div className="panel-title compact-title">
+          <FileUp size={17} aria-hidden="true" />
+          <h3>Local File Evidence</h3>
+        </div>
+        <p className="section-note">
+          Hash a local file in the browser and add only its metadata to the ledger. Raw file content is not uploaded or stored.
+        </p>
+        <label className="file-evidence-input" htmlFor="local-evidence-file">
+          <span className="field-label">Local evidence file</span>
+          <input
+            id="local-evidence-file"
+            type="file"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              void importLocalFile(file);
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+        {fileImportState ? <p className="save-state">{fileImportState}</p> : null}
       </section>
 
       <div className="ledger-form">

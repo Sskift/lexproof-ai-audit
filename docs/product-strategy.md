@@ -57,19 +57,19 @@ Implemented:
 - Jurisdiction Packs with US, EU, UK, and fallback local-counsel routing plus policy controls tied to active risk flags and evidence-ready status.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Per-risk evidence workflow coverage in Risk Audit, backed by deterministic evidence requirements in `src/lib/riskEvidence.ts`.
-- Editable Evidence Ledger with owner, status, source, content fields, and scenario evidence templates.
+- Editable Evidence Ledger with owner, status, source, content fields, scenario evidence templates, and browser-side local file metadata hashing.
 - Evidence Ledger polish for long evidence rows, visible edit labels, mobile-friendly field stacking, and wrapped SHA/source text.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
-- Evidence Manifest with per-item hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
+- Evidence Manifest with per-item hashes, local file metadata hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
 - Counsel Pack Markdown generation and download in `src/lib/counselPack.ts`.
 - Screenshot-backed README and submission pack with pitch narrative, product screenshots, and demo path.
 - Source references, remediation queue, and non-advice copy.
-- Tests for core hashing, validation, counsel-pack content, download helper, and UI workflow.
+- Tests for core hashing, local file evidence metadata, validation, counsel-pack content, download helper, and UI workflow.
 
 Current limitation:
 
-The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, first-stage jurisdiction policy controls, and local review statuses, but it does not yet provide accounts, collaboration, file uploads, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
+The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, first-stage jurisdiction policy controls, local review statuses, and browser-side local file hashing, but it does not yet provide accounts, collaboration, secure backend evidence storage, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
 
 ## Expected End State
 
@@ -123,8 +123,7 @@ No remaining must-have gaps are identified for the current Phase 1 submission-re
 
 - Authentication and team workspaces.
 - Role permissions for founder, counsel, compliance, engineer, investor reviewer.
-- File uploads with client-side hashing and metadata extraction.
-- Secure backend storage with encryption and access logs.
+- Secure evidence storage with upload controls, encryption, and access logs.
 - Real document parsing and OCR.
 - Real chain anchoring or timestamping integration.
 - SOC2-style audit logs and data retention settings.
@@ -154,7 +153,7 @@ The product is especially meaningful where legal/compliance work is high-context
 ## How A Real User Would Use It
 
 1. Founder creates a project and selects a scenario template.
-2. Founder enters product facts and uploads or summarizes synthetic-safe evidence.
+2. Founder enters product facts and adds synthetic-safe evidence summaries or browser-side local file hashes.
 3. AI Review extracts structured facts and highlights missing evidence.
 4. Risk Audit produces deterministic flags and remediation owners.
 5. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
@@ -209,7 +208,7 @@ Rules:
 
 - Missing evidence workflows.
 - PDF export.
-- File hashing and metadata extraction.
+- Secure document intake, parsing, and OCR beyond metadata-only local file hashing.
 - User-editable AI counsel questions.
 - Expanded jurisdiction pack content libraries for additional jurisdictions and scenario-specific controls.
 

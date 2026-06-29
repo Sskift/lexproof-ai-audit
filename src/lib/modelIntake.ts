@@ -169,6 +169,24 @@ export function exportModelIntakeJson(
   return `${JSON.stringify({ modelIntakeVersion: "lexproof-model-intake-v1", profile, events, summary }, null, 2)}\n`;
 }
 
+export function downloadModelIntakeJson(
+  filename: string,
+  profile: ModelConnectionProfile,
+  events: AIEventRecord[],
+  summary: ModelIntakeSummary
+): void {
+  const blob = new Blob([exportModelIntakeJson(profile, events, summary)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function createHandoffChecklist(validation: ModelConnectionValidation, unresolvedEventCount: number): string[] {
   const checklist = [
     "Confirm model use remains audit preparation only.",

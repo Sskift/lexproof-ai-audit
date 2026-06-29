@@ -31,7 +31,7 @@ Key evidence:
 
 - Custom Project Workspace for creating a local audit project from zero or loading synthetic samples.
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
-- Model Intake for registering provider/model purpose, allowed data classes, human-review owner, and editable hashed AI event review records.
+- Model Intake for registering provider/model purpose, allowed data classes, human-review owner, editable hashed AI event review records, and downloadable Model Intake JSON.
 - AI Review with mock and OpenAI-compatible model settings for audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
@@ -58,7 +58,11 @@ AI Review keeps model output as draft audit preparation and records local run re
 
 ![AI Review Run Ledger with payload and response hashes](docs/assets/screenshots/ai-review-run-ledger.jpg)
 
-Counsel Pack exports Markdown, browser Print / Save PDF output, Model Intake summary, AI event hashes, manifest JSON, and a simulated anchor receipt without claiming a real chain write.
+Model Intake records provider purpose, human review readiness, AI event hashes, and standalone JSON export.
+
+![Model Intake JSON export](docs/assets/screenshots/model-intake-json-export.png)
+
+Counsel Pack exports Markdown, browser Print / Save PDF output, Model Intake summary, AI event hashes, manifest JSON, and a simulated anchor receipt without claiming a real chain write. Model Intake can also download its own profile, event ledger, readiness checklist, and event hashes as JSON.
 
 ![Counsel Pack export surface](docs/assets/screenshots/counsel-pack-exports.jpg)
 
@@ -73,7 +77,7 @@ LexProof uses a controlled BYOM/BYOK model workflow:
 5. Review the **Redaction Gate** payload summary before running the model.
 6. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
 7. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt. The same run is also recorded in **Model Intake** as a needs-review AI event.
-8. Mark AI events reviewed or rejected in **Model Intake** after human review, then open **Counsel Pack** to export the Model Intake Summary, readiness status, human-review owner, review statuses, and AI event hashes with the review packet.
+8. Mark AI events reviewed or rejected in **Model Intake** after human review, download **Model Intake JSON** for the model-event audit trail, then open **Counsel Pack** to export the Model Intake Summary, readiness status, human-review owner, review statuses, and AI event hashes with the review packet.
 
 Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review. Model Intake records are local audit-prep metadata, not final adjudication.
 
@@ -84,13 +88,13 @@ Model output is draft audit preparation only. It does not change deterministic r
 3. Use **Audit Wizard** to review the facts and the non-advice handoff boundary.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
 5. Open **AI Review** to inspect the Redaction Gate and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
-6. Return to **Model Intake** to assign a reviewer and move AI event records from `needs-review` to `reviewed` or `rejected`.
+6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.
 7. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 8. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
 9. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
 10. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet with Model Intake summary and AI event hashes, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
 
-Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The MVP does not upload evidence, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model Intake and model-run ledger entries store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The MVP does not upload evidence, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model Intake JSON and model-run ledger exports store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 

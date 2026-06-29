@@ -821,6 +821,13 @@ textarea {
   line-height: 1.45;
 }
 
+.model-intake-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .risk-summary {
   display: grid;
   grid-template-columns: 156px minmax(0, 1fr);

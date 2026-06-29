@@ -175,11 +175,11 @@ The platform lets users connect models only through a controlled workflow.
 Recommended architecture:
 
 - `src/lib/modelProvider.ts` keeps provider config, OpenAI-compatible request construction, and deterministic mock provider behavior.
-- `src/lib/modelIntake.ts` validates model purpose, blocked data classes, human-review owner, AI Review run-to-event conversion, and AI event hashes.
+- `src/lib/modelIntake.ts` validates model purpose, blocked data classes, human-review owner, AI Review run-to-event conversion, AI event hashes, and downloadable Model Intake JSON.
 - `src/lib/modelReviewLedger.ts` creates local model-run receipts with payload and response SHA-256 hashes and JSON export without credentials.
 - `src/lib/aiReview.ts` builds prompt payloads from project facts and evidence summaries, parses structured JSON output, and validates suggestions before UI display.
 - `src/components/ModelSettingsPanel.tsx` exposes provider, base URL, model name, and API key inputs with local-only key handling in the first stage.
-- `src/components/ModelIntakePanel.tsx` exposes model profile metadata and AI event intake records without storing credentials.
+- `src/components/ModelIntakePanel.tsx` exposes model profile metadata, AI event intake records, readiness status, and Model Intake JSON export without storing credentials.
 - `src/components/AIReviewPanel.tsx` runs AI Review and shows extracted facts, missing evidence, draft questions, suggested remediation, redaction status, and run receipts.
 
 Rules:
@@ -190,7 +190,7 @@ Rules:
 - Record material AI outputs as human-review event records before external reliance.
 - Automatically create a needs-review Model Intake event after each AI Review run.
 - Let reviewers mark AI events as reviewed or rejected before external reliance.
-- Include Model Intake readiness and AI event hashes in Counsel Pack handoff materials.
+- Include Model Intake readiness and AI event hashes in Counsel Pack handoff materials, and let teams download a standalone Model Intake JSON audit trail.
 - Show a review payload before model call.
 - Mark all model output as AI-assisted draft.
 - Keep deterministic audit scoring separate from model response.
@@ -201,7 +201,7 @@ Rules:
 ### Phase 1: Submission-Ready MVP
 
 - Current workspace features.
-- Model Intake profile and editable AI event hash ledger.
+- Model Intake profile, editable AI event hash ledger, and standalone Model Intake JSON export.
 - AI Review with mock/OpenAI-compatible provider.
 - Redaction Gate before model calls.
 - AI Review Run Ledger with payload/response hash receipts.

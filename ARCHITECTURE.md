@@ -234,6 +234,7 @@ Owns model intake and AI event registration:
 - `createAIReviewEventFromRun()` converts an AI Review run receipt and parsed output into a needs-review Model Intake event.
 - `buildModelIntakeSummary()` returns readiness, blockers, unresolved review counts, handoff checklist items, event hashes, and the non-advice boundary.
 - `exportModelIntakeJson()` exports profile, event, and summary metadata without credentials.
+- `downloadModelIntakeJson()` downloads the model intake profile, AI event ledger, readiness checklist, and event hashes as local JSON.
 
 Model Intake records are local audit-prep metadata. They do not store API keys, perform KYC, make legal determinations, or prove model correctness.
 
@@ -297,7 +298,7 @@ Components are intentionally presentational and interaction-focused:
 - `AuditWizard` displays the step-by-step audit review.
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
-- `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, and human-review readiness.
+- `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -332,6 +333,7 @@ Domain tests live next to the audit engine and cover:
 - mock and OpenAI-compatible model provider behavior
 - model connection profile validation
 - AI event hashing and model intake summaries
+- Model Intake JSON browser download behavior
 - AI Review run conversion into Model Intake events
 - AI event reviewer and review-status editing
 - counsel pack model intake export

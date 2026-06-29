@@ -24,7 +24,9 @@ The Risk Audit uses deterministic project facts, not model output, to explain wh
 
 ### Controlled Model Access
 
-The Model Intake tab registers provider/model purpose, allowed data classes, human-review owner, and editable hashed AI event records without storing credentials. The AI Review tab supports a mock reviewer for demos and an OpenAI-compatible provider for BYOM/BYOK workflows. The Redaction Gate previews evidence summaries before model calls, the AI Review Run Ledger records local payload and response hashes without storing API keys, and each completed AI Review run automatically creates a needs-review Model Intake event that can be marked reviewed or rejected.
+The Model Intake tab registers provider/model purpose, allowed data classes, human-review owner, and editable hashed AI event records without storing credentials. It also exports a standalone Model Intake JSON audit trail with profile metadata, readiness status, and event hashes. The AI Review tab supports a mock reviewer for demos and an OpenAI-compatible provider for BYOM/BYOK workflows. The Redaction Gate previews evidence summaries before model calls, the AI Review Run Ledger records local payload and response hashes without storing API keys, and each completed AI Review run automatically creates a needs-review Model Intake event that can be marked reviewed or rejected.
+
+![Model Intake JSON export](assets/screenshots/model-intake-json-export.png)
 
 ![AI Review Run Ledger with payload and response hashes](assets/screenshots/ai-review-run-ledger.jpg)
 
@@ -37,7 +39,7 @@ The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with
 ## Demo Path
 
 1. Load the `YieldPassport` synthetic sample.
-2. Open **Model Intake** and show model purpose, allowed data classes, human-review owner, and AI event hash records.
+2. Open **Model Intake** and show model purpose, allowed data classes, human-review owner, AI event hash records, and Model Intake JSON download.
 3. Open **AI Review**, inspect the Redaction Gate, run the mock reviewer, and show the Run Ledger plus the automatic editable Model Intake event.
 4. Open **Risk Audit** and point to source-linked trigger facts.
 5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, and show the manifest bundle hash.

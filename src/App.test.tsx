@@ -249,6 +249,7 @@ describe("App", () => {
     expect(screen.getAllByText(/needs-review/i).length).toBeGreaterThan(0);
     expect(await screen.findByText(/Resolve AI event review items before external reliance/i)).toBeInTheDocument();
     expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Download Model Intake JSON/i })).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));

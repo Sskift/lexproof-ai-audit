@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   applyAIEventReviewUpdate,
   buildModelIntakeSummary,
   createAIReviewEventFromRun,
+  downloadModelIntakeJson,
   exportModelIntakeJson,
   hashAIEventRecord,
   validateModelConnectionProfile,
@@ -113,6 +114,33 @@ describe("buildModelIntakeSummary", () => {
     });
     expect(summary.notLegalAdviceBoundary).toContain("Not legal advice");
     expect(exportModelIntakeJson(profile, [event], summary)).toContain("\"modelIntakeVersion\": \"lexproof-model-intake-v1\"");
+  });
+});
+
+describe("downloadModelIntakeJson", () => {
+  it("downloads model intake profile, events, and summary as JSON through a browser Blob", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:model-intake");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const summary = await buildModelIntakeSummary(profile, [event]);
+
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      downloadModelIntakeJson("model-intake.json", profile, [event], summary);
+
+      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:model-intake");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
   });
 });
 

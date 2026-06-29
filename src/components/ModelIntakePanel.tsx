@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Bot, Fingerprint, ListChecks, PlusCircle, ShieldAlert } from "lucide-react";
+import { Bot, Download, Fingerprint, ListChecks, PlusCircle, ShieldAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   buildModelIntakeSummary,
+  downloadModelIntakeJson,
   validateModelConnectionProfile,
   type AIEventRecord,
   type AIEventReviewStatus,
@@ -81,6 +82,14 @@ export function ModelIntakePanel({
       updatedAt: now
     });
     setEventForm(blankEventForm);
+  };
+
+  const downloadIntake = () => {
+    if (!summary) {
+      return;
+    }
+
+    downloadModelIntakeJson(`${projectId || "project"}-model-intake.json`, profile, events, summary);
   };
 
   const eventHashes = new Map(summary?.eventHashes.map((item) => [item.eventId, item.hash]) ?? []);
@@ -304,6 +313,12 @@ export function ModelIntakePanel({
             <li key={item}>{item}</li>
           ))}
         </ul>
+        <div className="model-intake-actions">
+          <button type="button" className="secondary" disabled={!summary} onClick={downloadIntake}>
+            <Download size={16} aria-hidden="true" />
+            Download Model Intake JSON
+          </button>
+        </div>
         <small>{summary?.notLegalAdviceBoundary ?? "Not legal advice. Model intake records are audit preparation materials."}</small>
       </section>
 

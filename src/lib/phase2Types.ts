@@ -1,0 +1,179 @@
+export type WorkspaceRecord = {
+  recordVersion: "lexproof-workspace-record-v1";
+  id: string;
+  name: string;
+  organizationName: string;
+  ownerId: string;
+  status: "draft" | "active" | "archived";
+  createdAt: string;
+  updatedAt: string;
+  notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only.";
+};
+
+export type EvidenceVaultStatus = "requested" | "submitted" | "under-review" | "verified" | "rejected";
+
+export type EvidenceVaultRecord = {
+  recordVersion: "lexproof-evidence-vault-record-v1";
+  id: string;
+  workspaceId: string;
+  filename: string;
+  mimeType: string;
+  byteSize: number;
+  fileHash: string;
+  storageMode: "local-metadata" | "server-vault" | "external-reference";
+  status: EvidenceVaultStatus;
+  owner: string;
+  sourceNote: string;
+  version: number;
+  linkedRiskFlagIds: string[];
+  containsRawKycOrPersonalData: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ModelGatewayRunStatus = "queued" | "blocked" | "completed" | "failed";
+
+export type ModelGatewayRun = {
+  recordVersion: "lexproof-model-gateway-run-v1";
+  id: string;
+  workspaceId: string;
+  provider: "mock" | "openai-compatible" | "enterprise-proxy";
+  providerLabel: string;
+  model: string;
+  purpose: string;
+  status: ModelGatewayRunStatus;
+  redactionStatus: "clean" | "needs-review" | "blocked";
+  payloadHash: string;
+  responseHash: string;
+  humanReviewStatus: "not-required" | "needs-review" | "reviewed" | "rejected";
+  createdAt: string;
+  completedAt?: string;
+  notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice.";
+};
+
+export type ModelGatewayRunSummary = {
+  id: string;
+  providerLabel: string;
+  model: string;
+  status: ModelGatewayRunStatus;
+  redactionStatus: ModelGatewayRun["redactionStatus"];
+  humanReviewStatus: ModelGatewayRun["humanReviewStatus"];
+  payloadHash: string;
+  responseHash: string;
+  requiresHumanReview: boolean;
+  boundary: ModelGatewayRun["notLegalAdviceBoundary"];
+};
+
+export type HumanReviewRecord = {
+  recordVersion: "lexproof-human-review-record-v1";
+  id: string;
+  workspaceId: string;
+  targetType: "risk-flag" | "evidence" | "model-run" | "counsel-pack";
+  targetId: string;
+  reviewerId: string;
+  status: "requested" | "under-review" | "reviewed" | "rejected" | "needs-more-evidence";
+  comment: string;
+  createdAt: string;
+  updatedAt: string;
+  notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status.";
+};
+
+export type AuditLogRecord = {
+  recordVersion: "lexproof-audit-log-record-v1";
+  id: string;
+  workspaceId: string;
+  actorId: string;
+  action: string;
+  targetType: "workspace" | "evidence" | "model-run" | "human-review" | "export";
+  targetId: string;
+  beforeHash: string;
+  afterHash: string;
+  summary: string;
+  createdAt: string;
+  notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata.";
+};
+
+export type EvidenceVaultValidationResult = {
+  valid: boolean;
+  errors: string[];
+};
+
+export function createAuditLogRecord(
+  input: Omit<AuditLogRecord, "recordVersion" | "id" | "notLegalAdviceBoundary">
+): AuditLogRecord {
+  return {
+    recordVersion: "lexproof-audit-log-record-v1",
+    id: `audit-log-${hashId([
+      input.workspaceId,
+      input.actorId,
+      input.action,
+      input.targetType,
+      input.targetId,
+      input.beforeHash,
+      input.afterHash,
+      input.createdAt
+    ])}`,
+    ...input,
+    notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
+  };
+}
+
+export function createModelGatewayRunSummary(run: ModelGatewayRun): ModelGatewayRunSummary {
+  return {
+    id: run.id,
+    providerLabel: run.providerLabel,
+    model: run.model,
+    status: run.status,
+    redactionStatus: run.redactionStatus,
+    humanReviewStatus: run.humanReviewStatus,
+    payloadHash: run.payloadHash,
+    responseHash: run.responseHash,
+    requiresHumanReview: run.humanReviewStatus === "needs-review",
+    boundary: run.notLegalAdviceBoundary
+  };
+}
+
+export function validateEvidenceVaultRecord(record: EvidenceVaultRecord): EvidenceVaultValidationResult {
+  const errors: string[] = [];
+
+  if (!record.workspaceId.trim()) {
+    errors.push("Workspace ID is required.");
+  }
+
+  if (!record.filename.trim()) {
+    errors.push("Evidence filename is required.");
+  }
+
+  if (!record.fileHash.trim()) {
+    errors.push("Evidence file hash is required.");
+  }
+
+  if (!record.owner.trim()) {
+    errors.push("Evidence owner is required.");
+  }
+
+  if (record.byteSize <= 0) {
+    errors.push("Evidence byte size must be greater than zero.");
+  }
+
+  if (record.containsRawKycOrPersonalData) {
+    errors.push("Raw KYC or personal data cannot be stored in the Phase 2 evidence vault draft.");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+function hashId(parts: string[]): string {
+  let hash = 0xcbf29ce484222325n;
+  const payload = parts.map((part) => part.trim()).join("|");
+
+  for (let index = 0; index < payload.length; index += 1) {
+    hash ^= BigInt(payload.charCodeAt(index));
+    hash = (hash * 0x100000001b3n) & 0xffffffffffffffffn;
+  }
+
+  return hash.toString(16).padStart(16, "0").slice(0, 12);
+}

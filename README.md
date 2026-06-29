@@ -121,6 +121,7 @@ Workspace data is stored locally in browser `localStorage`. Local file evidence 
 - [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.
 - [docs/research.md](docs/research.md): hackathon selection and audit research notes.
 - [docs/product-strategy.md](docs/product-strategy.md): competition fit, product outlook, gaps, and roadmap.
+- [docs/phase-2-secure-review-workspace.md](docs/phase-2-secure-review-workspace.md): near-term Secure Review Workspace plan and backend-boundary contracts.
 - [docs/submission-pack.md](docs/submission-pack.md): screenshot-backed pitch, demo path, and submission narrative.
 
 ## Run Locally

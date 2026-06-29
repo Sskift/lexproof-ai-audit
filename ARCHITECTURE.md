@@ -42,6 +42,7 @@ lexproof-ai-audit/
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
       anchorReceipt.ts       # Local simulated manifest anchor receipt
+      phase2Types.ts         # Phase 2 backend-boundary type contracts and pure helpers
       jurisdictionChecklist.ts # Jurisdiction checklist generation
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       counselPack.ts         # Markdown pack and browser download helper
@@ -297,6 +298,21 @@ Owns simulated manifest anchoring:
 
 The receipt status is `not-submitted` and the mode is `simulated`. It is not a real on-chain write and contains only manifest metadata, not raw evidence.
 
+### `src/lib/phase2Types.ts`
+
+Owns Phase 2 backend-boundary contracts:
+
+- `WorkspaceRecord` describes a durable secure review workspace.
+- `EvidenceVaultRecord` describes uploaded-file or external-reference metadata for a future evidence vault.
+- `ModelGatewayRun` describes server-mediated model-run receipts without credentials.
+- `HumanReviewRecord` describes reviewer workflow metadata for risk flags, evidence, model runs, and exports.
+- `AuditLogRecord` describes append-only operation metadata for workspace actions.
+- `createAuditLogRecord()` creates deterministic local audit-log IDs from material metadata.
+- `createModelGatewayRunSummary()` returns a credential-free model-run summary for UI and exports.
+- `validateEvidenceVaultRecord()` returns explicit validation errors for missing evidence metadata and blocked raw KYC/personal-data handling.
+
+This module is a contract draft only. It does not create a backend, upload files, persist credentials, perform KYC, or make legal conclusions.
+
 ### `src/lib/counselPack.ts`
 
 Owns export behavior:
@@ -350,6 +366,60 @@ Components are intentionally presentational and interaction-focused:
 
 Owns global and component-level styling. The UI should remain dense, functional, and judge-demo friendly. Avoid decorative layouts that hide the product workflow.
 
+## Phase 2 Extension Architecture
+
+Phase 1 is intentionally local-first. React state, browser `localStorage`, pure TypeScript rules, browser-side hashing, mock/OpenAI-compatible model settings, Markdown download, browser Print / Save PDF, Model Intake JSON, Evidence Audit Trail JSON, and simulated anchor receipts all run in the browser. This is sufficient for the hackathon MVP and keeps the non-advice boundary visible.
+
+Phase 2 should introduce a small backend boundary without replacing the current workbench. The recommended professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
+
+### Model Gateway Responsibilities
+
+- proxy model calls through a server-side policy boundary
+- apply Redaction Gate checks before provider calls
+- keep provider credentials out of React state and exports
+- record provider label, model, purpose, payload hash, response hash, status, and redaction status
+- create human-review-required receipts for material AI outputs
+
+The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
+
+### Evidence Vault Responsibilities
+
+- accept file upload metadata or external evidence references
+- compute and store server-side file hashes
+- keep raw file bytes out of Counsel Pack exports by default
+- track owner, source notes, linked risk flags, evidence status, version, and timestamps
+- feed the Evidence Manifest with stable server-side evidence versions
+
+The Phase 2 draft must not store raw KYC or personal data. Secure document parsing and OCR should be added only after privacy and retention boundaries are documented.
+
+### Human Review Workflow Responsibilities
+
+- create review requests for deterministic risk flags, evidence records, model runs, and counsel packs
+- let reviewers mark items as `under-review`, `reviewed`, `rejected`, or `needs-more-evidence`
+- preserve comments and reviewer identity as workflow metadata
+- include human-review status in exports
+
+Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
+
+### Audit Log Responsibilities
+
+- append operation metadata for workspace, evidence, model-run, human-review, and export actions
+- record actor, target, action, timestamp, summary, and before/after hashes
+- support export and review of process integrity without storing raw secrets
+
+Audit logs are review metadata. They are not real chain anchors, signed approvals, or legal conclusions.
+
+### Current Simulated Capabilities
+
+These capabilities remain simulated or local in the current codebase:
+
+- API keys for live model calls are browser-session only and are not persisted.
+- Evidence files are hashed locally or represented by metadata; raw file upload/storage is not implemented.
+- Evidence Audit Trail is local browser metadata, not a signed external log.
+- Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
+- Manifest anchoring creates a simulated receipt and does not submit a transaction.
+- Model Intake and AI Review ledgers are local audit-prep metadata, not final model governance certification.
+
 ## Testing Strategy
 
 Domain tests live next to the audit engine and cover:
@@ -390,6 +460,7 @@ Domain tests live next to the audit engine and cover:
 - evidence template recommendation and instantiation
 - local file SHA-256 hashing and metadata-only evidence creation
 - evidence audit trail create/update/remove events and JSON export
+- Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 

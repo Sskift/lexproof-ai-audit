@@ -1,4 +1,5 @@
 import type { AuditResult } from "./auditEngine";
+import type { CounselReviewItem } from "./counselReview";
 import type { CounselQuestion } from "./counselQuestions";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
@@ -7,7 +8,8 @@ export function buildMarkdownCounselPack(
   project: ProjectProfile,
   audit: AuditResult,
   manifest: EvidenceManifest,
-  counselQuestions: CounselQuestion[] = []
+  counselQuestions: CounselQuestion[] = [],
+  counselReviews: CounselReviewItem[] = []
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${flag.title}: ${flag.rationale}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${item.owner}: ${item.action}`).join("\n");
@@ -17,6 +19,7 @@ export function buildMarkdownCounselPack(
   const questions = counselQuestions
     .map((item) => `- ${item.priority} ${item.status} [${item.relatedFlagId ?? item.source}] ${item.question}`)
     .join("\n");
+  const reviews = counselReviews.map(formatReviewItem).join("\n");
   const sources = audit.sourcePack.map((source) => `- ${source.title}: ${source.url}`).join("\n");
 
   return [
@@ -46,6 +49,9 @@ export function buildMarkdownCounselPack(
     "## Counsel Questions",
     questions || "- No counsel questions have been added yet.",
     "",
+    "## Counsel Review Status",
+    reviews || "- No counsel review statuses have been generated yet.",
+    "",
     "## Remediation Queue",
     remediation,
     "",
@@ -58,6 +64,12 @@ export function buildMarkdownCounselPack(
     "## Source Pack",
     sources
   ].join("\n");
+}
+
+function formatReviewItem(item: CounselReviewItem): string {
+  const reviewer = item.reviewer.trim() || "unassigned";
+  const note = item.reviewerNote.trim() ? `\n  - note: ${item.reviewerNote.trim()}` : "";
+  return `- ${item.priority} ${item.status} [${item.flagId}] ${item.title} (${item.owner}; ${item.evidenceSummary}; reviewer: ${reviewer})${note}`;
 }
 
 export function downloadMarkdownFile(filename: string, content: string): void {

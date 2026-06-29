@@ -1586,6 +1586,80 @@ textarea {
   font-size: 0.76rem;
 }
 
+.review-status-panel {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.review-status-list {
+  display: grid;
+  gap: 12px;
+}
+
+.review-status-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.review-status-card.ready-for-counsel {
+  border-color: #b8d8c8;
+  background: #f2faf5;
+}
+
+.review-status-card.reviewed {
+  border-color: #a9c8df;
+  background: #f2f8fb;
+}
+
+.review-status-card.blocked,
+.review-status-card.needs-evidence {
+  border-color: #e9bd87;
+  background: #fffdf3;
+}
+
+.review-status-card header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.review-status-card strong,
+.review-status-card small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.review-status-card strong {
+  color: #172431;
+  line-height: 1.3;
+}
+
+.review-status-card small {
+  color: #657382;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.review-status-grid {
+  display: grid;
+  grid-template-columns: 160px 180px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.review-note-field textarea {
+  min-height: 72px;
+}
+
 .anchor-receipt {
   margin-bottom: 14px;
   padding: 14px;
@@ -1691,6 +1765,7 @@ textarea {
   .redaction-preview-grid,
   .jurisdiction-grid,
   .jurisdiction-pack-grid,
+  .review-status-grid,
   .receipt-grid,
   .template-grid {
     grid-template-columns: 1fr;

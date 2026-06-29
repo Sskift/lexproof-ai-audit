@@ -29,6 +29,7 @@ lexproof-ai-audit/
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
+      counselReview.ts       # Counsel/compliance review status queue helpers
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
@@ -64,9 +65,11 @@ sampleProfiles or blank project
   -> create local ModelReviewRun with payload and response hashes
   -> merge AI draft questions into editable CounselQuestion queue
   -> createDefaultCounselQuestions(project, audit)
+  -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
+  -> merge edits into editable CounselReviewItem queue
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
-  -> buildMarkdownCounselPack(project, audit, manifest)
+  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews)
   -> tabbed UI surfaces and Markdown download
 ```
 
@@ -105,6 +108,16 @@ Owns counsel question queue behavior:
 - `sortCounselQuestionsForReview()` puts AI review drafts, risk-rule prompts, and manual questions into a stable review order.
 
 Questions are audit preparation prompts only. They do not create legal conclusions and remain editable by the user before export.
+
+### `src/lib/counselReview.ts`
+
+Owns counsel review status behavior:
+
+- `createDefaultCounselReviewItems(project, audit, evidenceCoverage)` creates one editable review row per active deterministic risk flag.
+- Default status is derived from evidence coverage: complete coverage becomes `ready-for-counsel`; incomplete coverage becomes `needs-evidence`.
+- `mergeCounselReviewQueues()` preserves user-edited status, reviewer, notes, and update time while refreshing generated risk context and evidence summaries.
+
+Review status is local audit workflow metadata only. It is not a signed approval, legal conclusion, or substitute for counsel review.
 
 ### `src/lib/aiReview.ts`
 
@@ -210,7 +223,7 @@ The receipt status is `not-submitted` and the mode is `simulated`. It is not a r
 
 Owns export behavior:
 
-- `buildMarkdownCounselPack(project, audit, manifest)` generates audit preparation Markdown with the non-advice boundary.
+- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews)` generates audit preparation Markdown with the non-advice boundary, editable counsel questions, review statuses, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 
 ### `src/data/sampleProfiles.ts`
@@ -229,6 +242,7 @@ Owns UI state and composition:
 
 - current `ProjectProfile`
 - localStorage read/write for valid projects
+- editable counsel questions and counsel review statuses
 - active tab
 - async evidence manifest state
 
@@ -243,11 +257,12 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
+- `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
 - `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
-- `CounselPackPanel` previews and downloads Markdown output, manifest JSON, and simulated anchor receipt JSON.
+- `CounselPackPanel` previews and downloads Markdown output, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -263,6 +278,7 @@ Domain tests live next to the audit engine and cover:
 - hash changes when evidence changes
 - counsel memo content
 - counsel question generation and queue merging
+- counsel review status generation and queue merging
 - hackathon submission fit
 - project validation errors
 - manifest item and bundle hashing
@@ -298,6 +314,7 @@ UI tests cover:
 - Redaction Gate visibility
 - AI Review Run Ledger visibility
 - editable counsel questions in Counsel Pack
+- editable counsel review statuses in Counsel Pack
 - Jurisdiction Checklist tab with policy controls and local-counsel routing
 - source-linked Risk Audit trigger explanations
 - evidence template application

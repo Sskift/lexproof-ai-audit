@@ -172,6 +172,26 @@ describe("App", () => {
     expect(await screen.findByText(/P1 answered \[ai-review\] Edited counsel question about AI evidence sharing\?/i)).toBeInTheDocument();
   });
 
+  it("updates counsel review status for a risk item in the Counsel Pack", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    expect(screen.getByRole("heading", { name: /Counsel Review Status/i })).toBeInTheDocument();
+    expect(screen.getByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status for review 1/i), { target: { value: "reviewed" } });
+    fireEvent.change(screen.getByLabelText(/Reviewer for review 1/i), { target: { value: "Outside counsel" } });
+    fireEvent.change(screen.getByLabelText(/Review note 1/i), {
+      target: { value: "Reviewed offering and disclosure assumptions with counsel." }
+    });
+
+    expect(screen.getByLabelText(/Status for review 1/i)).toHaveValue("reviewed");
+    expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Reviewed offering and disclosure assumptions with counsel.")).toBeInTheDocument();
+    expect(await screen.findByText(/P0 reviewed \[asset-yield\] Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+  });
+
   it("shows jurisdiction-specific audit preparation checklist items", () => {
     render(<App />);
 

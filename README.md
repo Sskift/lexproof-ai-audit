@@ -35,6 +35,7 @@ Key evidence:
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
+- Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Jurisdiction Checklist for US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, and per-risk evidence workflow coverage.
@@ -42,7 +43,7 @@ Key evidence:
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest generator with deterministic SHA-256 item hashes, bundle hash, and JSON download.
 - Simulated Anchor Receipt for the manifest bundle hash. It is explicitly not a real on-chain write.
-- Counsel Pack Markdown download with non-advice disclaimer, project facts, risk posture, editable counsel questions, manifest hash, source pack, and remediation queue.
+- Counsel Pack Markdown download with non-advice disclaimer, project facts, risk posture, editable counsel questions, counsel review statuses, manifest hash, source pack, and remediation queue.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
@@ -82,7 +83,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 5. Open **Jurisdiction Checklist** to see US/EU/UK preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 6. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, and remediation owners.
 7. Add or edit records in **Evidence Ledger**, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256.
-8. Open **Counsel Pack** to edit the counsel question queue, then download the Markdown audit-prep packet, manifest JSON, or a simulated anchor receipt JSON for counsel/compliance review.
+8. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet, manifest JSON, or a simulated anchor receipt JSON for counsel/compliance review.
 
 Workspace data is stored locally in browser `localStorage`. The MVP does not upload evidence by default, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model run ledger entries store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 

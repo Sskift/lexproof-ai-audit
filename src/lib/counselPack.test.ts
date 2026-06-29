@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { buildMarkdownCounselPack, downloadMarkdownFile } from "./counselPack";
+import type { CounselReviewItem } from "./counselReview";
 import { createEvidenceManifest } from "./evidenceManifest";
 import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
@@ -45,13 +46,34 @@ describe("buildMarkdownCounselPack", () => {
         notLegalAdviceBoundary: "Not legal advice. Counsel questions are audit preparation prompts only."
       }
     ];
-    const markdown = buildMarkdownCounselPack(project, audit, manifest, questions);
+    const reviews: CounselReviewItem[] = [
+      {
+        id: "review-custody",
+        projectId: project.id,
+        flagId: "custody",
+        title: "Custody or wallet control",
+        severity: "critical",
+        owner: "Compliance",
+        priority: "P0",
+        status: "needs-evidence",
+        evidenceSummary: "0/2 evidence requirements covered",
+        reviewer: "Outside counsel",
+        reviewerNote: "Need signer control policy before review can close.",
+        updatedAt: "2026-06-29T08:00:00.000Z",
+        notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow only."
+      }
+    ];
+    const markdown = buildMarkdownCounselPack(project, audit, manifest, questions, reviews);
 
     expect(markdown).toContain("Not legal advice");
     expect(markdown).toContain(`Risk level: ${audit.riskLevel}`);
     expect(markdown).toContain(manifest.bundleHash);
     expect(markdown).toContain("## Counsel Questions");
     expect(markdown).toContain("- P0 open [custody] Who can approve wallet operations before launch?");
+    expect(markdown).toContain("## Counsel Review Status");
+    expect(markdown).toContain("- P0 needs-evidence [custody] Custody or wallet control");
+    expect(markdown).toContain("reviewer: Outside counsel");
+    expect(markdown).toContain("Need signer control policy before review can close.");
     expect(markdown).toContain("## Remediation Queue");
     expect(markdown).toContain(audit.remediation[0].action);
   });

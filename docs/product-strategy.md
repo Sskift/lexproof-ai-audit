@@ -33,7 +33,7 @@ Sources:
 
 | Hackathon Signal | Current LexProof Fit | Gap To Strong Submission |
 | --- | --- | --- |
-| Legal tech | Counsel Pack and non-advice audit memo are aligned | Add lawyer-review workflow, approvals, and source-linked issue explanations |
+| Legal tech | Counsel Pack, editable counsel questions, review statuses, and non-advice audit memo are aligned | Add signed approvals, collaboration, and deeper lawyer-review workflows |
 | Compliance / RegTech | Risk flags, remediation queue, evidence ledger, jurisdiction packs, and policy-control routing are aligned | Expand the policy control library across more product scenarios and jurisdictions |
 | AI | Controlled AI Review, mock reviewer, OpenAI-compatible model settings, redaction gate, and run ledger are aligned | Add enterprise proxy controls, admin policies, and richer document extraction |
 | Blockchain / Web3 | Evidence manifest and SHA-256 bundle hash are aligned | Add optional verifiable anchor interface or simulated anchor receipt with clear boundary |
@@ -52,6 +52,7 @@ Implemented:
 - Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
 - AI Review Run Ledger with local payload/response hash receipts for completed model calls.
 - Editable Counsel Questions queue that merges deterministic risk-rule prompts, AI draft questions, and manual user edits into Counsel Pack exports.
+- Editable Counsel Review Status queue that maps deterministic risk flags to reviewer, status, evidence summary, and notes.
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
 - Jurisdiction Packs with US, EU, UK, and fallback local-counsel routing plus policy controls tied to active risk flags and evidence-ready status.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
@@ -68,7 +69,7 @@ Implemented:
 
 Current limitation:
 
-The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries and first-stage jurisdiction policy controls, but it does not yet provide accounts, collaboration, file uploads, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
+The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, first-stage jurisdiction policy controls, and local review statuses, but it does not yet provide accounts, collaboration, file uploads, real document parsing, signed approvals, a production-grade policy-control library, full KYC redaction, or verifiable chain anchoring.
 
 ## Expected End State
 
@@ -156,7 +157,7 @@ The product is especially meaningful where legal/compliance work is high-context
 2. Founder enters product facts and uploads or summarizes synthetic-safe evidence.
 3. AI Review extracts structured facts and highlights missing evidence.
 4. Risk Audit produces deterministic flags and remediation owners.
-5. Counsel reviews flags, asks for evidence, and edits assumptions.
+5. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
 6. Engineering hashes evidence and creates a manifest.
 7. Compliance exports a Counsel Pack for review meeting or investor diligence.
 8. Optional anchor records a manifest hash after legal/privacy review.
@@ -191,6 +192,7 @@ Rules:
 - Redaction Gate before model calls.
 - AI Review Run Ledger with payload/response hash receipts.
 - Editable AI/rule-generated counsel questions in Counsel Pack.
+- Editable counsel review statuses in Counsel Pack.
 - Manifest JSON export.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.
@@ -206,7 +208,6 @@ Rules:
 ### Phase 2: Credible Professional Prototype
 
 - Missing evidence workflows.
-- Counsel review statuses.
 - PDF export.
 - File hashing and metadata extraction.
 - User-editable AI counsel questions.

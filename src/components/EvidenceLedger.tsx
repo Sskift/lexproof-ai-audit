@@ -2,12 +2,16 @@ import { useState } from "react";
 import { BadgeCheck, DatabaseZap, LockKeyhole, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
+import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
 
 type EvidenceLedgerProps = {
   evidenceItems: EvidenceItem[];
   manifest: EvidenceManifest | null;
+  evidenceTemplates: EvidenceTemplate[];
+  recommendedTemplateIds: string[];
   onAddEvidence: (item: EvidenceItem) => void;
+  onApplyEvidenceTemplate: (templateId: string) => void;
   onUpdateEvidence: (index: number, updates: Partial<EvidenceItem>) => void;
   onRemoveEvidence: (index: number) => void;
 };
@@ -27,7 +31,10 @@ const blankEvidence: EvidenceItem = {
 export function EvidenceLedger({
   evidenceItems,
   manifest,
+  evidenceTemplates,
+  recommendedTemplateIds,
   onAddEvidence,
+  onApplyEvidenceTemplate,
   onUpdateEvidence,
   onRemoveEvidence
 }: EvidenceLedgerProps) {
@@ -59,6 +66,32 @@ export function EvidenceLedger({
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
       </div>
+
+      <section className="template-section">
+        <div className="panel-title compact-title">
+          <BadgeCheck size={17} aria-hidden="true" />
+          <h3>Evidence Templates</h3>
+        </div>
+        <div className="template-grid">
+          {evidenceTemplates.map((template) => {
+            const recommended = recommendedTemplateIds.includes(template.id);
+            return (
+              <article key={template.id} className={recommended ? "template-card recommended" : "template-card"}>
+                <div className="template-card-header">
+                  <strong>{template.title}</strong>
+                  {recommended ? <span>Recommended</span> : null}
+                </div>
+                <p>{template.description}</p>
+                <small>{template.notLegalAdviceBoundary}</small>
+                <button type="button" className="secondary" onClick={() => onApplyEvidenceTemplate(template.id)}>
+                  <BadgeCheck size={16} aria-hidden="true" />
+                  Apply {template.shortLabel} template
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="ledger-form">
         <div>

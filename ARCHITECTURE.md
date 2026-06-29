@@ -20,11 +20,14 @@ lexproof-ai-audit/
       CounselPackPanel.tsx   # Markdown, manifest, and simulated receipt export
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
+      evidenceTemplates.ts   # Seed evidence request templates
     lib/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
       projectModel.ts        # Project/evidence types and validation
+      evidenceTemplates.ts   # Template recommendation and instantiation helpers
+      riskExplainers.ts      # Source-linked issue cards and trigger facts
       evidenceManifest.ts    # Deterministic item and bundle hashes
       anchorReceipt.ts       # Local simulated manifest anchor receipt
       jurisdictionChecklist.ts # Jurisdiction checklist generation
@@ -45,7 +48,9 @@ sampleProfiles or blank project
   -> ProjectProfile in App state
   -> localStorage persistence when valid
   -> analyzeAuditProfile(project)
+  -> createRiskIssueCards(project, audit)
   -> createJurisdictionChecklist(project, audit)
+  -> recommendEvidenceTemplates(project)
   -> createRedactionReport(project.evidenceItems)
   -> buildAIReviewPayload(project, audit, evidenceItems)
   -> runAIReview(...) through mock or OpenAI-compatible provider
@@ -91,6 +96,24 @@ Owns model-assisted audit preparation behavior:
 - `parseAIReviewJson()` accepts structured model JSON and ignores unsupported fields.
 
 Evidence content is previewed and private-key-like values are redacted before model calls. Private-key-like material blocks the UI call. AI output remains a draft and does not control risk scoring.
+
+### `src/lib/riskExplainers.ts`
+
+Owns user-facing issue explanation:
+
+- `createRiskIssueCards(project, audit)` maps deterministic flags to trigger facts such as asset model, custody model, data sensitivity, or AI usage.
+- Each issue card links back to source references from the audit source pack.
+- The output explains why a flag triggered for audit preparation. It does not create legal conclusions.
+
+### `src/lib/evidenceTemplates.ts`
+
+Owns evidence template behavior:
+
+- `listEvidenceTemplates()` returns the static template library from `src/data/evidenceTemplates.ts`.
+- `recommendEvidenceTemplates(project)` ranks templates against current project facts.
+- `createEvidenceItemsFromTemplate(templateId)` creates requested evidence items for the ledger.
+
+Templates currently cover tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows. Template content is synthetic-safe and should not include raw KYC, personal records, or secrets.
 
 ### `src/lib/jurisdictionChecklist.ts`
 
@@ -169,7 +192,7 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts and evidence status.
-- `EvidenceLedger` adds, edits, and removes local evidence records.
+- `EvidenceLedger` applies scenario templates and adds, edits, or removes local evidence records.
 - `CounselPackPanel` previews and downloads Markdown output, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
@@ -198,6 +221,8 @@ Domain tests live next to the audit engine and cover:
 - redaction report warnings and blockers
 - jurisdiction checklist generation
 - simulated anchor receipt export
+- evidence template recommendation and instantiation
+- source-linked risk issue card generation
 
 UI tests cover:
 
@@ -211,6 +236,8 @@ UI tests cover:
 - AI Review mock workflow
 - Redaction Gate visibility
 - Jurisdiction Checklist tab
+- source-linked Risk Audit trigger explanations
+- evidence template application
 - manifest JSON download action
 - simulated anchor receipt creation
 

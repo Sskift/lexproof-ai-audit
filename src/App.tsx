@@ -23,6 +23,7 @@ import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditPro
 import { createRedactionReport, runAIReview, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
+import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import {
   createMockModelProvider,
   createOpenAICompatibleModelProvider,
@@ -30,6 +31,7 @@ import {
   type ModelSettings
 } from "./lib/modelProvider";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
+import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 
 type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
@@ -59,6 +61,11 @@ export default function App() {
 
   const audit = useMemo(() => analyzeAuditProfile(project), [project]);
   const fit = useMemo(() => createSubmissionFit(), []);
+  const evidenceTemplates = useMemo(() => listEvidenceTemplates(), []);
+  const recommendedEvidenceTemplateIds = useMemo(
+    () => recommendEvidenceTemplates(project).map((template) => template.id),
+    [project]
+  );
   const validation = useMemo(() => validateProjectProfile(project), [project]);
   const modelSettingsValidation = useMemo(() => validateModelSettings(modelSettings), [modelSettings]);
   const markdown = useMemo(
@@ -151,6 +158,22 @@ export default function App() {
       evidenceItems: current.evidenceItems.map((item, itemIndex) =>
         itemIndex === index ? { ...item, ...updates, updatedAt: now } : item
       ),
+      updatedAt: now
+    }));
+  };
+
+  const applyEvidenceTemplate = (templateId: string) => {
+    const now = new Date().toISOString();
+    const items = createEvidenceItemsFromTemplate(templateId).map((item, index) => ({
+      ...item,
+      id: createLocalId(`template-${index + 1}`),
+      addedAt: now,
+      updatedAt: now
+    }));
+
+    setProject((current) => ({
+      ...current,
+      evidenceItems: [...current.evidenceItems, ...items],
       updatedAt: now
     }));
   };
@@ -259,12 +282,15 @@ export default function App() {
             />
           ) : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
-          {activeTab === "risk" ? <RiskAuditPanel audit={audit} /> : null}
+          {activeTab === "risk" ? <RiskAuditPanel project={project} audit={audit} /> : null}
           {activeTab === "evidence" ? (
             <EvidenceLedger
               evidenceItems={project.evidenceItems}
               manifest={manifest}
+              evidenceTemplates={evidenceTemplates}
+              recommendedTemplateIds={recommendedEvidenceTemplateIds}
               onAddEvidence={addEvidence}
+              onApplyEvidenceTemplate={applyEvidenceTemplate}
               onUpdateEvidence={updateEvidence}
               onRemoveEvidence={removeEvidence}
             />
@@ -279,7 +305,9 @@ export default function App() {
   );
 }
 
-function RiskAuditPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile> }) {
+function RiskAuditPanel({ project, audit }: { project: ProjectProfile; audit: ReturnType<typeof analyzeAuditProfile> }) {
+  const issueCards = createRiskIssueCards(project, audit);
+
   return (
     <section className="panel stage-panel">
       <SectionHeader
@@ -302,8 +330,8 @@ function RiskAuditPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfil
       </div>
       <div className="flag-grid">
         {audit.flags.length === 0 ? <p className="empty-state">No material flags detected in the current facts.</p> : null}
-        {audit.flags.map((flag) => (
-          <FlagCard key={flag.id} flag={flag} />
+        {issueCards.map((card) => (
+          <FlagCard key={card.flagId} card={card} />
         ))}
       </div>
       <h3 className="subhead">Remediation Queue</h3>
@@ -337,16 +365,32 @@ function SourcesPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile>
   );
 }
 
-function FlagCard({ flag }: { flag: AuditFlag }) {
+function FlagCard({ card }: { card: RiskIssueCard }) {
   return (
-    <article className={`flag-card ${flag.severity}`}>
+    <article className={`flag-card ${card.severity}`}>
       <div>
         <AlertTriangle size={18} aria-hidden="true" />
-        <span>{flag.severity}</span>
+        <span>{card.severity}</span>
       </div>
-      <h3>{flag.title}</h3>
-      <p>{flag.rationale}</p>
-      <small>{flag.source}</small>
+      <h3>{card.title}</h3>
+      <p>{card.rationale}</p>
+      <section className="flag-explainer" aria-label={`Why ${card.title} triggered`}>
+        <strong>Why this flag triggered</strong>
+        <ul>
+          {card.whyTriggered.map((trigger) => (
+            <li key={trigger}>{trigger}</li>
+          ))}
+        </ul>
+      </section>
+      <div className="flag-source-links">
+        {card.sourceReferences.map((source) => (
+          <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
+            <Link2 size={14} aria-hidden="true" />
+            {source.title}
+          </a>
+        ))}
+      </div>
+      <small>{card.notLegalAdviceBoundary}</small>
     </article>
   );
 }

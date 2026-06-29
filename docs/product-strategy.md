@@ -51,8 +51,9 @@ Implemented:
 - AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
 - Redaction Gate before model calls with payload preview, KYC/personal-data warnings, and private-key-like blockers.
 - Jurisdiction Checklist with US, EU, and UK audit-prep prompts that avoid legal conclusions.
-- Risk Audit from deterministic rules in `src/lib/auditEngine.ts`.
-- Editable Evidence Ledger with owner, status, source, and content fields.
+- Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
+- Editable Evidence Ledger with owner, status, source, content fields, and scenario evidence templates.
+- Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest with per-item hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Simulated Anchor Receipt for manifest bundle hashes, clearly marked as not a real on-chain write.
 - Counsel Pack Markdown generation and download in `src/lib/counselPack.ts`.
@@ -107,15 +108,10 @@ The expected mature product is a review operating system for legal/compliance re
 - Screenshot-backed README section.
 - Screenshot-backed docs section.
 - Clear pitch section: problem, users, workflow, why now, why BLI.
-- Evidence templates for at least three high-value scenarios:
-  - tokenized yield / RWA issuance
-  - DAO governance / multisig execution
-  - AI-generated legal/compliance workflow
 - Improved UI polish for long evidence rows and mobile evidence editing.
 
 ### Strong Differentiators
 
-- Source-linked issue cards with “why this flag triggered.”
 - Missing evidence checklist per risk flag.
 - AI-generated but user-editable counsel questions.
 - Deeper jurisdiction pack architecture beyond first-stage US / EU / UK checklist prompts.
@@ -202,6 +198,8 @@ Rules:
 - Manifest JSON export.
 - Simulated anchor receipt export.
 - First-stage US/EU/UK jurisdiction checklist.
+- Source-linked Risk Audit issue cards.
+- Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.
 

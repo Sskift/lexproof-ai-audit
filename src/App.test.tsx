@@ -42,8 +42,14 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Why this flag triggered/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Asset model: Tokenized yield note/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Apply tokenized yield \/ RWA template/i }));
+    expect(await screen.findByText(/RWA disclosure assumptions memo/i)).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Launch memo" } });
     fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
     fireEvent.change(screen.getByLabelText(/Evidence content/i), {

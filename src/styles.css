@@ -717,6 +717,48 @@ textarea {
   color: #677685;
 }
 
+.flag-explainer {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef5f6;
+}
+
+.flag-explainer strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #102a43;
+  font-size: 0.82rem;
+}
+
+.flag-explainer ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #445361;
+  line-height: 1.45;
+}
+
+.flag-source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.flag-source-links a {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid #c9d5de;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #176b87;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .flag-card.critical {
   border-color: #e2a7a1;
 }
@@ -806,6 +848,70 @@ textarea {
 .hash-banner code {
   overflow-wrap: anywhere;
   font-size: 0.86rem;
+}
+
+.template-section {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.template-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.template-card.recommended {
+  border-color: #b8d8c8;
+  background: #f2faf5;
+}
+
+.template-card-header {
+  display: grid;
+  gap: 8px;
+}
+
+.template-card-header strong {
+  line-height: 1.25;
+}
+
+.template-card-header span {
+  width: fit-content;
+  border-radius: 999px;
+  background: #dcefe5;
+  color: #176b52;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.template-card p,
+.template-card small {
+  margin-bottom: 0;
+  color: #53616f;
+  line-height: 1.4;
+}
+
+.template-card small {
+  font-size: 0.78rem;
+}
+
+.template-card button {
+  width: 100%;
 }
 
 .ledger-item {
@@ -1101,7 +1207,8 @@ textarea {
   .redaction-summary,
   .redaction-preview-grid,
   .jurisdiction-grid,
-  .receipt-grid {
+  .receipt-grid,
+  .template-grid {
     grid-template-columns: 1fr;
   }
 

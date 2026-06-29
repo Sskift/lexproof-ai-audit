@@ -2,7 +2,7 @@ import { CheckCircle2, Download, FileText } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { downloadMarkdownFile } from "../lib/counselPack";
 import type { SubmissionFit } from "../lib/auditEngine";
-import type { EvidenceManifest } from "../lib/evidenceManifest";
+import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
 
 type CounselPackPanelProps = {
   projectName: string;
@@ -34,10 +34,21 @@ export function CounselPackPanel({ projectName, fit, manifest, markdown }: Couns
           <span>Manifest bundle SHA-256</span>
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
-        <button type="button" onClick={() => downloadMarkdownFile(`${slug(projectName)}-counsel-pack.md`, markdown)}>
-          <Download size={16} aria-hidden="true" />
-          Download Markdown
-        </button>
+        <div className="export-buttons">
+          <button type="button" onClick={() => downloadMarkdownFile(`${slug(projectName)}-counsel-pack.md`, markdown)}>
+            <Download size={16} aria-hidden="true" />
+            Download Markdown
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!manifest}
+            onClick={() => manifest && downloadManifestJson(`${slug(projectName)}-manifest.json`, manifest)}
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Manifest JSON
+          </button>
+        </div>
       </div>
 
       <pre className="memo">{markdown}</pre>

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
-import { createEvidenceManifest, exportManifestJson, hashEvidenceItem } from "./evidenceManifest";
+import { createEvidenceManifest, downloadManifestJson, exportManifestJson, hashEvidenceItem } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
 
 const project: ProjectProfile = {
@@ -76,5 +76,30 @@ describe("evidence manifest", () => {
       itemCount: 2,
       bundleHash: manifest.bundleHash
     });
+  });
+
+  it("downloads the manifest as JSON through a browser Blob", async () => {
+    const audit = analyzeAuditProfile(project);
+    const manifest = await createEvidenceManifest(project, audit, project.evidenceItems);
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:manifest");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      downloadManifestJson("manifest.json", manifest);
+
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:manifest");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
   });
 });

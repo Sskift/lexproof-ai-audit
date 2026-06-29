@@ -48,16 +48,17 @@ Implemented:
 - Local-first React + TypeScript + Vite workbench.
 - Custom Project Workspace with localStorage persistence.
 - Audit Wizard for project facts and handoff readiness.
+- AI Review with mock reviewer, OpenAI-compatible request adapter, model settings, evidence preview redaction, and missing evidence checklist.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`.
 - Editable Evidence Ledger with owner, status, source, and content fields.
-- Evidence Manifest with per-item hashes and bundle hash in `src/lib/evidenceManifest.ts`.
+- Evidence Manifest with per-item hashes, bundle hash, and JSON download in `src/lib/evidenceManifest.ts`.
 - Counsel Pack Markdown generation and download in `src/lib/counselPack.ts`.
 - Source references, remediation queue, and non-advice copy.
 - Tests for core hashing, validation, counsel-pack content, download helper, and UI workflow.
 
 Current limitation:
 
-The MVP proves workflow, not production readiness. It does not yet integrate an AI model, user accounts, collaboration, file uploads, real document parsing, signed approvals, policy control libraries, real KYC redaction, or verifiable chain anchoring.
+The MVP proves workflow, not production readiness. It has controlled model-adapter boundaries, but it does not yet provide accounts, collaboration, file uploads, real document parsing, signed approvals, policy control libraries, full KYC redaction, or verifiable chain anchoring.
 
 ## Expected End State
 
@@ -100,9 +101,7 @@ The expected mature product is a review operating system for legal/compliance re
 
 ### Must-Have Before Final Hackathon Submission
 
-- AI Review tab with provider-agnostic model interface.
-- Model settings panel with OpenAI-compatible endpoint, model name, and privacy warnings.
-- Manifest JSON download.
+- Screenshot-backed README section.
 - Better demo script and screenshots in docs.
 - Clear pitch section: problem, users, workflow, why now, why BLI.
 - Evidence templates for at least three high-value scenarios:

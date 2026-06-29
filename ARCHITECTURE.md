@@ -13,12 +13,16 @@ lexproof-ai-audit/
     components/
       ProjectWorkspace.tsx   # Editable project profile and sample loading
       AuditWizard.tsx        # Step-by-step project review surface
+      AIReviewPanel.tsx      # Controlled model-assisted audit preparation
+      ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
       CounselPackPanel.tsx   # Markdown counsel pack preview and download
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
     lib/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
+      aiReview.ts            # AI review payload, redaction, missing evidence checklist
+      modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
       projectModel.ts        # Project/evidence types and validation
       evidenceManifest.ts    # Deterministic item and bundle hashes
       counselPack.ts         # Markdown pack and browser download helper
@@ -38,6 +42,8 @@ sampleProfiles or blank project
   -> ProjectProfile in App state
   -> localStorage persistence when valid
   -> analyzeAuditProfile(project)
+  -> buildAIReviewPayload(project, audit, evidenceItems)
+  -> runAIReview(...) through mock or OpenAI-compatible provider
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> buildMarkdownCounselPack(project, audit, manifest)
   -> tabbed UI surfaces and Markdown download
@@ -68,6 +74,28 @@ Owns first-stage workspace types and validation:
 
 This module does not store data and does not accept raw KYC or private data handling.
 
+### `src/lib/aiReview.ts`
+
+Owns model-assisted audit preparation behavior:
+
+- `buildAIReviewPayload()` creates a non-advice model payload with project facts, risk flags, evidence previews, and missing evidence requirements.
+- `createMissingEvidenceChecklist()` maps deterministic audit flags to concrete evidence requests.
+- `runAIReview()` combines model output with deterministic missing evidence.
+- `parseAIReviewJson()` accepts structured model JSON and ignores unsupported fields.
+
+Evidence content is previewed and private-key-like values are redacted before model calls. AI output remains a draft and does not control risk scoring.
+
+### `src/lib/modelProvider.ts`
+
+Owns model connection boundaries:
+
+- `createMockModelProvider()` returns deterministic demo output for judges and tests.
+- `buildOpenAICompatibleRequest()` prepares a chat-completions request without putting API keys in the JSON body.
+- `createOpenAICompatibleModelProvider()` can call a user-supplied OpenAI-compatible endpoint.
+- `validateModelSettings()` prevents live calls without endpoint, model, and API key.
+
+API keys are not persisted by the app.
+
 ### `src/lib/evidenceManifest.ts`
 
 Owns deterministic manifest behavior:
@@ -75,6 +103,7 @@ Owns deterministic manifest behavior:
 - `hashEvidenceItem(item)` hashes normalized evidence content and material metadata.
 - `createEvidenceManifest(project, audit, evidenceItems)` returns item hashes, risk context, and a bundle SHA-256.
 - `exportManifestJson(manifest)` produces readable JSON for future export surfaces.
+- `downloadManifestJson(filename, manifest)` downloads the manifest locally as JSON.
 
 The first-stage manifest is local and simulated. It is not a real chain write or proof of external existence.
 
@@ -112,8 +141,10 @@ Components are intentionally presentational and interaction-focused:
 
 - `ProjectWorkspace` edits project facts and loads synthetic samples.
 - `AuditWizard` displays the step-by-step audit review.
+- `AIReviewPanel` runs model-assisted review and shows missing evidence.
+- `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `EvidenceLedger` adds, edits, and removes local evidence records.
-- `CounselPackPanel` previews and downloads Markdown output.
+- `CounselPackPanel` previews and downloads Markdown output and manifest JSON.
 
 ### `src/styles.css`
 
@@ -132,6 +163,10 @@ Domain tests live next to the audit engine and cover:
 - project validation errors
 - manifest item and bundle hashing
 - manifest JSON export
+- manifest JSON browser download behavior
+- AI review payload redaction
+- missing evidence checklist generation
+- mock and OpenAI-compatible model provider behavior
 - counsel pack Markdown content
 - Markdown browser download behavior
 
@@ -144,6 +179,8 @@ UI tests cover:
 - Risk Audit updates from the new project profile
 - Evidence Ledger item creation
 - manifest bundle hash visibility
+- AI Review mock workflow
+- manifest JSON download action
 
 ## Extension Points
 
@@ -153,6 +190,6 @@ Good next additions:
 - add richer jurisdiction checklists
 - add source citation controls per flag
 - add optional on-chain anchoring only after privacy and wallet boundaries are documented
-- add manifest JSON download once users can review exactly what leaves the browser
+- add PDF export and screenshot-backed demo assets
 
 Avoid adding real legal conclusions, real wallet signing, or third-party data upload until the non-advice and data-handling boundaries are explicit.

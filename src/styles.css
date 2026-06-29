@@ -405,6 +405,128 @@ textarea {
   margin-bottom: 0;
 }
 
+.notice-banner {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f6f1e8;
+  color: #3e4a56;
+}
+
+.notice-banner svg {
+  color: #a74421;
+  flex: 0 0 auto;
+}
+
+.notice-banner p {
+  margin-bottom: 0;
+  line-height: 1.45;
+}
+
+.model-settings,
+.review-section {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.compact-title {
+  margin-bottom: 12px;
+}
+
+.compact-title h3 {
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.settings-grid,
+.ai-output-grid,
+.checklist-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.error-text {
+  color: #9f241a;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.checklist-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.checklist-item,
+.review-card {
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.checklist-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+}
+
+.checklist-item.covered {
+  border-color: #b8d8c8;
+  background: #f2faf5;
+}
+
+.checklist-item strong,
+.review-card h4 {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.checklist-item p {
+  margin-bottom: 6px;
+  color: #445361;
+  line-height: 1.4;
+}
+
+.checklist-item small {
+  color: #657382;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ai-output-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.review-card {
+  padding: 12px;
+}
+
+.review-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #445361;
+  line-height: 1.45;
+}
+
 .risk-summary {
   display: grid;
   grid-template-columns: 156px minmax(0, 1fr);
@@ -738,6 +860,13 @@ textarea {
   font-size: 0.82rem;
 }
 
+.export-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .memo {
   max-height: 520px;
   overflow: auto;
@@ -786,8 +915,15 @@ textarea {
   .topbar,
   .workspace,
   .risk-summary,
-  .counsel-actions {
+  .counsel-actions,
+  .settings-grid,
+  .checklist-grid,
+  .ai-output-grid {
     grid-template-columns: 1fr;
+  }
+
+  .export-buttons {
+    justify-content: flex-start;
   }
 
   .stage-panel {

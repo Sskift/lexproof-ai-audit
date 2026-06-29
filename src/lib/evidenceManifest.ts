@@ -75,6 +75,19 @@ export function exportManifestJson(manifest: EvidenceManifest): string {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
+export function downloadManifestJson(filename: string, manifest: EvidenceManifest): void {
+  const blob = new Blob([exportManifestJson(manifest)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function normalizeEvidenceItem(item: EvidenceItem) {
   return {
     label: item.label.trim(),

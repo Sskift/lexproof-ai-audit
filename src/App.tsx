@@ -1,21 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BookOpen, ClipboardList, DatabaseZap, FileText, Github, Link2, Scale, ShieldCheck } from "lucide-react";
+import { AlertTriangle, BookOpen, Bot, ClipboardList, DatabaseZap, FileText, Github, Link2, Scale, ShieldCheck } from "lucide-react";
+import { AIReviewPanel } from "./components/AIReviewPanel";
 import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
+import { runAIReview, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
+import {
+  createMockModelProvider,
+  createOpenAICompatibleModelProvider,
+  validateModelSettings,
+  type ModelSettings
+} from "./lib/modelProvider";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 
-type TabId = "wizard" | "risk" | "evidence" | "counsel" | "sources";
+type TabId = "wizard" | "ai" | "risk" | "evidence" | "counsel" | "sources";
 
 const STORAGE_KEY = "lexproof.currentProject.v1";
+const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
+  { id: "ai", label: "AI Review", icon: Bot },
   { id: "risk", label: "Risk Audit", icon: ShieldCheck },
   { id: "evidence", label: "Evidence Ledger", icon: DatabaseZap },
   { id: "counsel", label: "Counsel Pack", icon: FileText },
@@ -28,10 +38,15 @@ export default function App() {
   const [showValidation, setShowValidation] = useState(false);
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
+  const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
+  const [aiReview, setAIReview] = useState<AIReviewResult | null>(null);
+  const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
+  const [aiReviewError, setAIReviewError] = useState("");
 
   const audit = useMemo(() => analyzeAuditProfile(project), [project]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const validation = useMemo(() => validateProjectProfile(project), [project]);
+  const modelSettingsValidation = useMemo(() => validateModelSettings(modelSettings), [modelSettings]);
   const markdown = useMemo(
     () =>
       manifest
@@ -58,6 +73,11 @@ export default function App() {
       safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(project));
     }
   }, [project, validation.valid]);
+
+  useEffect(() => {
+    const { apiKey: _apiKey, ...nonSecretSettings } = modelSettings;
+    safeStorage()?.setItem(MODEL_SETTINGS_KEY, JSON.stringify(nonSecretSettings));
+  }, [modelSettings]);
 
   const updateProject = (nextProject: ProjectProfile) => {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
@@ -130,6 +150,27 @@ export default function App() {
     }));
   };
 
+  const handleRunAIReview = async () => {
+    setAIReviewError("");
+    if (!modelSettingsValidation.valid) {
+      setAIReviewStatus("error");
+      setAIReviewError(modelSettingsValidation.errors.join(" "));
+      return;
+    }
+
+    setAIReviewStatus("running");
+    try {
+      const provider =
+        modelSettings.provider === "mock" ? createMockModelProvider() : createOpenAICompatibleModelProvider(modelSettings);
+      const nextReview = await runAIReview(project, audit, project.evidenceItems, provider);
+      setAIReview(nextReview);
+      setAIReviewStatus("complete");
+    } catch (error) {
+      setAIReviewStatus("error");
+      setAIReviewError(error instanceof Error ? error.message : "Model review failed.");
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -183,6 +224,19 @@ export default function App() {
           </nav>
 
           {activeTab === "wizard" ? <AuditWizard project={project} audit={audit} /> : null}
+          {activeTab === "ai" ? (
+            <AIReviewPanel
+              project={project}
+              audit={audit}
+              settings={modelSettings}
+              settingsValidation={modelSettingsValidation}
+              result={aiReview}
+              status={aiReviewStatus}
+              error={aiReviewError}
+              onSettingsChange={setModelSettings}
+              onRunReview={handleRunAIReview}
+            />
+          ) : null}
           {activeTab === "risk" ? <RiskAuditPanel audit={audit} /> : null}
           {activeTab === "evidence" ? (
             <EvidenceLedger
@@ -339,6 +393,32 @@ function loadStoredProject(): ProjectProfile | null {
   }
 
   return null;
+}
+
+function loadStoredModelSettings(): ModelSettings {
+  const fallback: ModelSettings = {
+    provider: "mock",
+    model: "lexproof-mock"
+  };
+  const raw = safeStorage()?.getItem(MODEL_SETTINGS_KEY);
+  if (!raw) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ModelSettings>;
+    if (parsed.provider === "mock" || parsed.provider === "openai-compatible") {
+      return {
+        provider: parsed.provider,
+        model: parsed.model || (parsed.provider === "mock" ? "lexproof-mock" : ""),
+        baseUrl: parsed.baseUrl
+      };
+    }
+  } catch {
+    return fallback;
+  }
+
+  return fallback;
 }
 
 function safeStorage(): Storage | null {

@@ -14,6 +14,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /LexProof AuditOS/i })).toBeInTheDocument();
     expect(screen.getAllByText(/BLI Legal Tech Hackathon 2/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Risk Audit/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/AI Review/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Evidence Ledger/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Counsel Pack/i).length).toBeGreaterThan(0);
 
@@ -51,5 +52,25 @@ describe("App", () => {
 
     expect(await screen.findByText("Launch memo")).toBeInTheDocument();
     expect(screen.getByText(/Manifest bundle SHA-256/i)).toBeInTheDocument();
+  });
+
+  it("runs AI Review with mock model settings and exposes missing evidence", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
+
+    expect(await screen.findByText(/AI-assisted draft/i)).toBeInTheDocument();
+    expect(screen.getByText(/Missing Evidence Checklist/i)).toBeInTheDocument();
+    expect(screen.getByText(/Signer control policy/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows a Manifest JSON download action in the Counsel Pack", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    expect(await screen.findByRole("button", { name: /Download Manifest JSON/i })).toBeInTheDocument();
   });
 });

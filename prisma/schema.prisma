@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model WorkspaceRecord {
+  id                     String   @id
+  name                   String
+  organizationName       String
+  ownerId                String
+  status                 String
+  createdAt              DateTime
+  updatedAt              DateTime
+  notLegalAdviceBoundary String
+}
+
+model EvidenceVaultRecord {
+  id                           String   @id
+  workspaceId                  String
+  filename                     String
+  mimeType                     String
+  byteSize                     Int
+  fileHash                     String
+  storageMode                  String
+  status                       String
+  owner                        String
+  sourceNote                   String
+  version                      Int
+  linkedRiskFlagIdsJson        String
+  containsRawKycOrPersonalData Boolean
+  createdAt                    DateTime
+  updatedAt                    DateTime
+
+  @@index([workspaceId])
+}
+
+model ModelGatewayRun {
+  id                     String    @id
+  workspaceId            String
+  provider               String
+  providerLabel          String
+  model                  String
+  purpose                String
+  status                 String
+  redactionStatus        String
+  payloadHash            String
+  responseHash           String
+  humanReviewStatus      String
+  createdAt              DateTime
+  completedAt            DateTime?
+  notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}
+
+model HumanReviewRecord {
+  id                     String   @id
+  workspaceId            String
+  targetType             String
+  targetId               String
+  reviewerId             String
+  status                 String
+  comment                String
+  createdAt              DateTime
+  updatedAt              DateTime
+  notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}
+
+model AuditLogRecord {
+  id                     String   @id
+  workspaceId            String
+  actorId                String
+  action                 String
+  targetType             String
+  targetId               String
+  beforeHash             String
+  afterHash              String
+  summary                String
+  createdAt              DateTime
+  notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}

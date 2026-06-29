@@ -30,6 +30,14 @@ describe("Phase 2 backend API contracts", () => {
         implemented: true
       })
     );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/audit-log",
+        domain: "audit-log",
+        implemented: true
+      })
+    );
     expect(routes.every((route) => route.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
   });
 
@@ -84,6 +92,9 @@ describe("Phase 2 backend API contracts", () => {
     expect(schema).toContain("model ModelGatewayRun");
     expect(schema).toContain("model HumanReviewRecord");
     expect(schema).toContain("model AuditLogRecord");
+    expect(schema).toContain('provider = "sqlite"');
+    expect(schema).toContain('provider = "prisma-client-js"');
+    expect(schema).toContain("@@index([workspaceId])");
     expect(schema).not.toContain("model Kyc");
     expect(schema).not.toContain("model LegalDecision");
     expect(schema).not.toContain("model ChainTransaction");

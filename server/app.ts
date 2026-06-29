@@ -1,12 +1,20 @@
 import Fastify from "fastify";
 import { createModelGatewayRun } from "./modelGatewayService.js";
-import { createModelGatewayRunSummary, type HumanReviewRecord, type ModelGatewayRun } from "../src/lib/phase2Types.js";
+import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
+import { createAuditLogRecord, createModelGatewayRunSummary, type HumanReviewRecord } from "../src/lib/phase2Types.js";
 import { createHumanReviewRecord, updateHumanReviewRecord } from "./humanReviewService.js";
 
-export function buildServer() {
+export type BuildServerOptions = {
+  repository?: ReviewWorkspaceRepository;
+};
+
+export function buildServer(options: BuildServerOptions = {}) {
   const server = Fastify({ logger: false });
-  const modelRuns = new Map<string, ModelGatewayRun[]>();
-  const humanReviews = new Map<string, HumanReviewRecord[]>();
+  const repository = options.repository ?? createMemoryReviewWorkspaceRepository();
+
+  server.addHook("onClose", async () => {
+    await repository.close();
+  });
 
   server.get("/api/health", async () => ({
     status: "ok",
@@ -15,8 +23,8 @@ export function buildServer() {
     capabilities: {
       modelGateway: "mock-run-ready",
       evidenceVault: "metadata-hashing-ready",
-      humanReview: "in-memory-ready",
-      auditLog: "contract-only"
+      humanReview: "repository-ready",
+      auditLog: "repository-ready"
     },
     notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
   }));
@@ -44,19 +52,32 @@ export function buildServer() {
         });
       }
 
-      modelRuns.set(request.params.workspaceId, [...(modelRuns.get(request.params.workspaceId) ?? []), result.run]);
+      await repository.saveModelGatewayRun(result.run);
+      await repository.appendAuditLogRecord(
+        createAuditLogRecord({
+          workspaceId: request.params.workspaceId,
+          actorId: "system",
+          action: "model.run.created",
+          targetType: "model-run",
+          targetId: result.run.id,
+          beforeHash: "",
+          afterHash: result.run.responseHash,
+          summary: "Created mock model gateway run for audit preparation.",
+          createdAt: result.run.createdAt
+        })
+      );
       return reply.status(201).send(result.run);
     }
   );
 
   server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/model-runs", async (request) =>
-    (modelRuns.get(request.params.workspaceId) ?? []).map(createModelGatewayRunSummary)
+    (await repository.listModelGatewayRuns(request.params.workspaceId)).map(createModelGatewayRunSummary)
   );
 
   server.get<{ Params: { workspaceId: string; runId: string } }>(
     "/api/workspaces/:workspaceId/model-runs/:runId",
     async (request, reply) => {
-      const run = (modelRuns.get(request.params.workspaceId) ?? []).find((item) => item.id === request.params.runId);
+      const run = await repository.findModelGatewayRun(request.params.workspaceId, request.params.runId);
       if (!run) {
         return reply.status(404).send({ error: "Model Gateway run not found." });
       }
@@ -75,7 +96,20 @@ export function buildServer() {
           reviewerId: request.body.reviewerId,
           comment: request.body.comment
         });
-        humanReviews.set(request.params.workspaceId, [...(humanReviews.get(request.params.workspaceId) ?? []), review]);
+        await repository.saveHumanReviewRecord(review);
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: review.reviewerId,
+            action: "human-review.created",
+            targetType: "human-review",
+            targetId: review.id,
+            beforeHash: "",
+            afterHash: review.id,
+            summary: "Created human review request.",
+            createdAt: review.createdAt
+          })
+        );
         return reply.status(201).send(review);
       } catch (error) {
         return reply.status(400).send({
@@ -89,7 +123,7 @@ export function buildServer() {
   server.patch<{ Params: { workspaceId: string; reviewId: string }; Body: HumanReviewUpdateBody }>(
     "/api/workspaces/:workspaceId/reviews/:reviewId",
     async (request, reply) => {
-      const reviews = humanReviews.get(request.params.workspaceId) ?? [];
+      const reviews = await repository.listHumanReviewRecords(request.params.workspaceId);
       const reviewIndex = reviews.findIndex((item) => item.id === request.params.reviewId);
 
       if (reviewIndex === -1) {
@@ -101,15 +135,30 @@ export function buildServer() {
         comment: request.body.comment,
         reviewerId: request.body.reviewerId
       });
-      const nextReviews = [...reviews];
-      nextReviews[reviewIndex] = updated;
-      humanReviews.set(request.params.workspaceId, nextReviews);
+      await repository.updateHumanReviewRecord(updated);
+      await repository.appendAuditLogRecord(
+        createAuditLogRecord({
+          workspaceId: request.params.workspaceId,
+          actorId: updated.reviewerId,
+          action: "human-review.updated",
+          targetType: "human-review",
+          targetId: updated.id,
+          beforeHash: reviews[reviewIndex].status,
+          afterHash: updated.status,
+          summary: `Updated human review status to ${updated.status}.`,
+          createdAt: updated.updatedAt
+        })
+      );
       return updated;
     }
   );
 
   server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/reviews", async (request) =>
-    humanReviews.get(request.params.workspaceId) ?? []
+    repository.listHumanReviewRecords(request.params.workspaceId)
+  );
+
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/audit-log", async (request) =>
+    repository.listAuditLogRecords(request.params.workspaceId)
   );
 
   return server;

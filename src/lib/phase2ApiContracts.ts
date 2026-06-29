@@ -62,7 +62,7 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     createRoute("GET", "/api/workspaces/:workspaceId/reviews", "human-review", "HumanReviewListRequest", "HumanReviewRecord[]", true),
     createRoute("POST", "/api/workspaces/:workspaceId/exports/counsel-pack", "exports", "CreateCounselPackExportRequest", "CounselPackExportRecord"),
     createRoute("GET", "/api/workspaces/:workspaceId/exports/:exportId", "exports", "ExportDownloadRequest", "ExportArtifact"),
-    createRoute("GET", "/api/workspaces/:workspaceId/audit-log", "audit-log", "AuditLogListRequest", "AuditLogRecord[]")
+    createRoute("GET", "/api/workspaces/:workspaceId/audit-log", "audit-log", "AuditLogListRequest", "AuditLogRecord[]", true)
   ];
 }
 
@@ -123,13 +123,13 @@ export function validateEvidenceUploadBoundary(input: EvidenceUploadBoundaryInpu
 }
 
 export function createPhase2PrismaSchemaDraft(): string {
-  return `datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  return `generator client {
+  provider = "prisma-client-js"
 }
 
-generator client {
-  provider = "prisma-client-js"
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model WorkspaceRecord {
@@ -141,33 +141,30 @@ model WorkspaceRecord {
   createdAt              DateTime
   updatedAt              DateTime
   notLegalAdviceBoundary String
-  evidence               EvidenceVaultRecord[]
-  modelRuns              ModelGatewayRun[]
-  reviews                HumanReviewRecord[]
-  auditLogs              AuditLogRecord[]
 }
 
 model EvidenceVaultRecord {
-  id                              String   @id
-  workspaceId                     String
-  filename                        String
-  mimeType                        String
-  byteSize                        Int
-  fileHash                        String
-  storageMode                     String
-  status                          String
-  owner                           String
-  sourceNote                      String
-  version                         Int
-  linkedRiskFlagIdsJson           String
-  containsRawKycOrPersonalData    Boolean
-  createdAt                       DateTime
-  updatedAt                       DateTime
-  workspace                       WorkspaceRecord @relation(fields: [workspaceId], references: [id])
+  id                           String   @id
+  workspaceId                  String
+  filename                     String
+  mimeType                     String
+  byteSize                     Int
+  fileHash                     String
+  storageMode                  String
+  status                       String
+  owner                        String
+  sourceNote                   String
+  version                      Int
+  linkedRiskFlagIdsJson        String
+  containsRawKycOrPersonalData Boolean
+  createdAt                    DateTime
+  updatedAt                    DateTime
+
+  @@index([workspaceId])
 }
 
 model ModelGatewayRun {
-  id                     String   @id
+  id                     String    @id
   workspaceId            String
   provider               String
   providerLabel          String
@@ -181,7 +178,8 @@ model ModelGatewayRun {
   createdAt              DateTime
   completedAt            DateTime?
   notLegalAdviceBoundary String
-  workspace              WorkspaceRecord @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
 }
 
 model HumanReviewRecord {
@@ -195,7 +193,8 @@ model HumanReviewRecord {
   createdAt              DateTime
   updatedAt              DateTime
   notLegalAdviceBoundary String
-  workspace              WorkspaceRecord @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
 }
 
 model AuditLogRecord {
@@ -210,7 +209,8 @@ model AuditLogRecord {
   summary                String
   createdAt              DateTime
   notLegalAdviceBoundary String
-  workspace              WorkspaceRecord @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
 }
 `;
 }

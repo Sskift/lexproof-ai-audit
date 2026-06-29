@@ -1,6 +1,9 @@
 node_modules
 dist
 server-dist
+*.db
+*.db-journal
+prisma/*.db
 .DS_Store
 .env
 .env.local

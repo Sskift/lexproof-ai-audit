@@ -142,7 +142,7 @@ npm run build:server
 npm run start:api
 ```
 
-The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, mock Model Gateway run routes, in-memory Human Review routes, and server-side evidence metadata hashing utilities. It does not persist files, store model credentials, process KYC, call external model providers, or write to a blockchain.
+The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, mock Model Gateway run routes, Human Review routes, Audit Log listing, Prisma/SQLite persistence for model/review/audit records, and server-side evidence metadata hashing utilities. It does not persist uploaded files, store model credentials, process KYC, call external model providers, or write to a blockchain.
 
 ## Submission Assets
 

@@ -15,8 +15,8 @@ describe("Phase 2 backend app", () => {
       capabilities: {
         modelGateway: "mock-run-ready",
         evidenceVault: "metadata-hashing-ready",
-        humanReview: "in-memory-ready",
-        auditLog: "contract-only"
+        humanReview: "repository-ready",
+        auditLog: "repository-ready"
       },
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
@@ -74,6 +74,18 @@ describe("Phase 2 backend app", () => {
         requiresHumanReview: true
       })
     );
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/audit-log" });
+    expect(auditResponse.statusCode).toBe(200);
+    expect(auditResponse.json()).toEqual([
+      expect.objectContaining({
+        action: "model.run.created",
+        targetType: "model-run",
+        targetId: response.json().id,
+        afterHash: response.json().responseHash,
+        summary: "Created mock model gateway run for audit preparation."
+      })
+    ]);
 
     await server.close();
   });
@@ -164,6 +176,22 @@ describe("Phase 2 backend app", () => {
     expect(listResponse.statusCode).toBe(200);
     expect(listResponse.json()).toHaveLength(1);
     expect(listResponse.json()[0]).toEqual(expect.objectContaining({ id: created.id, status: "reviewed" }));
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/audit-log" });
+    expect(auditResponse.statusCode).toBe(200);
+    expect(auditResponse.json()).toEqual([
+      expect.objectContaining({
+        action: "human-review.created",
+        targetType: "human-review",
+        targetId: created.id
+      }),
+      expect.objectContaining({
+        action: "human-review.updated",
+        targetType: "human-review",
+        targetId: created.id,
+        summary: "Updated human review status to reviewed."
+      })
+    ]);
 
     await server.close();
   });

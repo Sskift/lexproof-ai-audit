@@ -11,7 +11,10 @@ lexproof-ai-audit/
     index.ts                 # API process entry point
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
     modelGatewayService.ts   # Mock Model Gateway run receipts and boundary checks
-    humanReviewService.ts    # In-memory human review record helpers
+    humanReviewService.ts    # Human review record helpers
+    reviewWorkspaceRepository.ts # Memory and Prisma/SQLite repository adapters
+  prisma/
+    schema.prisma            # Phase 2 SQLite/Prisma persistence schema
   src/
     App.tsx                  # React workbench shell, persistence, and tab composition
     styles.css               # Responsive UI styling
@@ -390,7 +393,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, mock Model Gateway run routes, and in-memory Human Review routes. Workspace, evidence-vault route persistence, exports, audit-log routes, and database persistence are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Workspace routes, evidence-vault upload routes, exports, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -402,7 +405,7 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it validates redaction, credential, KYC, final-decision, and human-review boundaries, then creates a mock run receipt with payload and response hashes. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it validates redaction, credential, KYC, final-decision, and human-review boundaries, then creates a mock run receipt with payload and response hashes. The route persists run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 
@@ -425,7 +428,7 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
 
-`server/humanReviewService.ts` implements in-memory review record creation and status updates for the Phase 2 API skeleton. Records are process-local until SQLite/Prisma persistence is added.
+`server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository and appends audit-log records.
 
 ### Audit Log Responsibilities
 
@@ -435,6 +438,8 @@ Human review records are not signed legal opinions. They track audit preparation
 
 Audit logs are review metadata. They are not real chain anchors, signed approvals, or legal conclusions.
 
+`server/reviewWorkspaceRepository.ts` provides both an in-memory adapter for tests and a Prisma/SQLite adapter for the API process. The Prisma schema covers only `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`.
+
 ### Current Simulated Capabilities
 
 These capabilities remain simulated or local in the current codebase:
@@ -443,7 +448,7 @@ These capabilities remain simulated or local in the current codebase:
 - The Phase 2 Model Gateway creates mock receipts only; it does not call external providers or store provider credentials.
 - Evidence files are hashed locally or represented by metadata; raw file upload/storage is not implemented.
 - The Phase 2 server computes evidence hashes in memory for metadata records, but does not persist uploaded files.
-- Human Review API records are in-memory and process-local until persistence is added.
+- Model Gateway, Human Review, and Audit Log records use Prisma/SQLite in the API process.
 - Evidence Audit Trail is local browser metadata, not a signed external log.
 - Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
 - Manifest anchoring creates a simulated receipt and does not submit a transaction.
@@ -492,7 +497,8 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint and server-side evidence metadata hashing
-- Phase 2 mock Model Gateway routes and in-memory Human Review routes
+- Phase 2 mock Model Gateway routes and persisted Human Review routes
+- Phase 2 Prisma/SQLite repository persistence for Model Gateway, Human Review, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 

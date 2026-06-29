@@ -37,6 +37,7 @@ import {
 } from "./lib/counselQuestions";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
+import { createEvidenceRequestFromRequirement } from "./lib/missingEvidenceWorkflow";
 import { runAIReviewWithLedger, type ModelReviewRun } from "./lib/modelReviewLedger";
 import {
   createMockModelProvider,
@@ -46,7 +47,11 @@ import {
 } from "./lib/modelProvider";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
-import { createRiskEvidenceCoverage, type RiskEvidenceCoverage } from "./lib/riskEvidence";
+import {
+  createRiskEvidenceCoverage,
+  type RiskEvidenceCoverage,
+  type RiskEvidenceRequirement
+} from "./lib/riskEvidence";
 
 type TabId = "wizard" | "ai" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
@@ -364,7 +369,13 @@ export default function App() {
             />
           ) : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
-          {activeTab === "risk" ? <RiskAuditPanel project={project} audit={audit} /> : null}
+          {activeTab === "risk" ? (
+            <RiskAuditPanel
+              project={project}
+              audit={audit}
+              onRequestEvidence={(requirement) => addEvidence(createEvidenceRequestFromRequirement(requirement))}
+            />
+          ) : null}
           {activeTab === "evidence" ? (
             <EvidenceLedger
               evidenceItems={project.evidenceItems}
@@ -398,7 +409,15 @@ export default function App() {
   );
 }
 
-function RiskAuditPanel({ project, audit }: { project: ProjectProfile; audit: ReturnType<typeof analyzeAuditProfile> }) {
+function RiskAuditPanel({
+  project,
+  audit,
+  onRequestEvidence
+}: {
+  project: ProjectProfile;
+  audit: ReturnType<typeof analyzeAuditProfile>;
+  onRequestEvidence: (requirement: RiskEvidenceRequirement) => void;
+}) {
   const issueCards = createRiskIssueCards(project, audit);
   const evidenceCoverageByFlag = new Map(
     createRiskEvidenceCoverage(audit, project.evidenceItems).map((coverage) => [coverage.flagId, coverage])
@@ -427,7 +446,12 @@ function RiskAuditPanel({ project, audit }: { project: ProjectProfile; audit: Re
       <div className="flag-grid">
         {audit.flags.length === 0 ? <p className="empty-state">No material flags detected in the current facts.</p> : null}
         {issueCards.map((card) => (
-          <FlagCard key={card.flagId} card={card} evidenceCoverage={evidenceCoverageByFlag.get(card.flagId)} />
+          <FlagCard
+            key={card.flagId}
+            card={card}
+            evidenceCoverage={evidenceCoverageByFlag.get(card.flagId)}
+            onRequestEvidence={onRequestEvidence}
+          />
         ))}
       </div>
       <h3 className="subhead">Remediation Queue</h3>
@@ -461,7 +485,15 @@ function SourcesPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile>
   );
 }
 
-function FlagCard({ card, evidenceCoverage }: { card: RiskIssueCard; evidenceCoverage?: RiskEvidenceCoverage }) {
+function FlagCard({
+  card,
+  evidenceCoverage,
+  onRequestEvidence
+}: {
+  card: RiskIssueCard;
+  evidenceCoverage?: RiskEvidenceCoverage;
+  onRequestEvidence: (requirement: RiskEvidenceRequirement) => void;
+}) {
   return (
     <article className={`flag-card ${card.severity}`}>
       <div className="flag-meta">
@@ -478,7 +510,7 @@ function FlagCard({ card, evidenceCoverage }: { card: RiskIssueCard; evidenceCov
           ))}
         </ul>
       </section>
-      {evidenceCoverage ? <RiskEvidenceWorkflow coverage={evidenceCoverage} /> : null}
+      {evidenceCoverage ? <RiskEvidenceWorkflow coverage={evidenceCoverage} onRequestEvidence={onRequestEvidence} /> : null}
       <div className="flag-source-links">
         {card.sourceReferences.map((source) => (
           <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
@@ -492,7 +524,13 @@ function FlagCard({ card, evidenceCoverage }: { card: RiskIssueCard; evidenceCov
   );
 }
 
-function RiskEvidenceWorkflow({ coverage }: { coverage: RiskEvidenceCoverage }) {
+function RiskEvidenceWorkflow({
+  coverage,
+  onRequestEvidence
+}: {
+  coverage: RiskEvidenceCoverage;
+  onRequestEvidence: (requirement: RiskEvidenceRequirement) => void;
+}) {
   return (
     <section className={`risk-evidence-block ${coverage.coverageStatus}`} aria-label={`${coverage.flagTitle} evidence workflow`}>
       <div className="risk-evidence-header">
@@ -509,6 +547,11 @@ function RiskEvidenceWorkflow({ coverage }: { coverage: RiskEvidenceCoverage }) 
               <strong>{requirement.title}</strong>
               <p>{requirement.reason}</p>
               <small>{formatRequirementStatus(requirement.status, requirement.matchedEvidenceLabels)}</small>
+              {requirement.status === "missing" ? (
+                <button type="button" className="risk-evidence-request" onClick={() => onRequestEvidence(requirement)}>
+                  Request evidence: {requirement.title}
+                </button>
+              ) : null}
             </div>
           </li>
         ))}

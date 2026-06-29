@@ -57,6 +57,7 @@ Implemented:
 - Jurisdiction Packs with US, EU, UK, and fallback local-counsel routing plus policy controls tied to active risk flags and evidence-ready status.
 - Risk Audit from deterministic rules in `src/lib/auditEngine.ts`, with source-linked issue cards explaining why each flag triggered.
 - Per-risk evidence workflow coverage in Risk Audit, backed by deterministic evidence requirements in `src/lib/riskEvidence.ts`.
+- Missing evidence request workflow that turns Risk Audit requirements into `requested` Evidence Ledger items without treating them as verified evidence.
 - Editable Evidence Ledger with owner, status, source, content fields, scenario evidence templates, and browser-side local file metadata hashing.
 - Evidence Ledger polish for long evidence rows, visible edit labels, mobile-friendly field stacking, and wrapped SHA/source text.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
@@ -65,7 +66,7 @@ Implemented:
 - Counsel Pack Markdown generation, download, and browser Print / Save PDF handoff in `src/lib/counselPack.ts`.
 - Screenshot-backed README and submission pack with pitch narrative, product screenshots, and demo path.
 - Source references, remediation queue, and non-advice copy.
-- Tests for core hashing, local file evidence metadata, validation, counsel-pack content, print/PDF handoff, download helpers, and UI workflow.
+- Tests for core hashing, local file evidence metadata, missing evidence requests, validation, counsel-pack content, print/PDF handoff, download helpers, and UI workflow.
 
 Current limitation:
 
@@ -155,11 +156,12 @@ The product is especially meaningful where legal/compliance work is high-context
 1. Founder creates a project and selects a scenario template.
 2. Founder enters product facts and adds synthetic-safe evidence summaries or browser-side local file hashes.
 3. AI Review extracts structured facts and highlights missing evidence.
-4. Risk Audit produces deterministic flags and remediation owners.
-5. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
-6. Engineering hashes evidence and creates a manifest.
-7. Compliance exports a Counsel Pack for review meeting or investor diligence.
-8. Optional anchor records a manifest hash after legal/privacy review.
+4. Risk Audit produces deterministic flags, remediation owners, and missing evidence request actions.
+5. Founder or compliance lead turns missing requirements into requested Evidence Ledger items.
+6. Counsel reviews flags, updates review statuses, asks for evidence, and edits assumptions.
+7. Engineering hashes evidence and creates a manifest.
+8. Compliance exports a Counsel Pack for review meeting or investor diligence.
+9. Optional anchor records a manifest hash after legal/privacy review.
 
 ## AI Model Access Plan
 
@@ -200,6 +202,7 @@ Rules:
 - Source-linked Risk Audit issue cards.
 - Evidence templates for tokenized yield/RWA, DAO governance/multisig, and AI compliance workflows.
 - Per-risk evidence workflow coverage in Risk Audit.
+- Missing evidence request workflow from Risk Audit into Evidence Ledger.
 - Long evidence row and mobile editing polish.
 - Better demo dataset and pitch docs.
 - Screenshot-backed README section.
@@ -207,7 +210,6 @@ Rules:
 
 ### Phase 2: Credible Professional Prototype
 
-- Missing evidence workflows.
 - Branded PDF templates and backend-rendered PDF export beyond browser Print / Save PDF.
 - Secure document intake, parsing, and OCR beyond metadata-only local file hashing.
 - User-editable AI counsel questions.

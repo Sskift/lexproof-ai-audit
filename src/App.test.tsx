@@ -149,6 +149,34 @@ describe("App", () => {
     expect(screen.getByText(/covered by Signer control note/i)).toBeInTheDocument();
   });
 
+  it("requests missing risk evidence into the Evidence Ledger as an in-progress item", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Missing Evidence Desk" } });
+    fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
+    fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States" } });
+    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
+    fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Accredited investors" } });
+    fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+    fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "Policy metadata only" } });
+    fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "No model decisions" } });
+    fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "No chain writes" } });
+    fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Private beta" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Request evidence: Signer control policy/i }));
+
+    expect((await screen.findAllByText(/in progress from Signer control policy/i)).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+
+    expect(await screen.findByText("Signer control policy")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Evidence request")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("requested");
+    expect(screen.getByDisplayValue("risk evidence requirement: signer-control")).toBeInTheDocument();
+  });
+
   it("runs AI Review with mock model settings and exposes missing evidence", async () => {
     render(<App />);
 

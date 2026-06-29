@@ -32,6 +32,7 @@ lexproof-ai-audit/
       counselReview.ts       # Counsel/compliance review status queue helpers
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
+      missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
@@ -57,6 +58,7 @@ sampleProfiles or blank project
   -> analyzeAuditProfile(project)
   -> createRiskIssueCards(project, audit)
   -> createRiskEvidenceCoverage(audit, project.evidenceItems)
+  -> createEvidenceRequestFromRequirement(requirement) for missing Risk Audit evidence
   -> createEvidenceItemFromFile(file) for browser-side local file metadata evidence
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
@@ -151,6 +153,14 @@ Owns per-risk evidence workflow behavior:
 - `createMissingEvidenceChecklist(audit, evidenceItems)` preserves the AI Review checklist contract while using the same requirement library.
 
 Coverage is audit preparation status only. It does not determine legal compliance or replace counsel review.
+
+### `src/lib/missingEvidenceWorkflow.ts`
+
+Owns the handoff from Risk Audit coverage gaps into ledger requests:
+
+- `createEvidenceRequestFromRequirement(requirement)` turns a missing deterministic evidence requirement into a `requested` Evidence Ledger item.
+- The generated request includes the related risk flag, priority, reason, and non-advice boundary.
+- Requested evidence counts as `in-progress` in Risk Audit coverage, not `covered`; only received or verified evidence counts as covered.
 
 ### `src/lib/evidenceTemplates.ts`
 
@@ -274,7 +284,7 @@ Components are intentionally presentational and interaction-focused:
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders US/EU/UK audit-prep prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
-- `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts`.
+- `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, and adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing.
 - `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
 
@@ -300,6 +310,7 @@ Domain tests live next to the audit engine and cover:
 - manifest JSON browser download behavior
 - AI review payload redaction
 - missing evidence checklist generation
+- missing evidence request generation for Evidence Ledger
 - mock and OpenAI-compatible model provider behavior
 - model review run payload and response hashing
 - model review run JSON export
@@ -323,6 +334,7 @@ UI tests cover:
 - custom project creation
 - Risk Audit updates from the new project profile
 - per-risk evidence workflow coverage updates from ledger evidence
+- missing Risk Audit evidence request flow into Evidence Ledger
 - Evidence Ledger item creation
 - local file evidence import without displaying raw file content
 - long evidence record editing with visible field labels

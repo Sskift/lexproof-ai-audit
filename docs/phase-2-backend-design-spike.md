@@ -47,7 +47,7 @@ It defines route metadata for:
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
-Every domain route is currently marked `implemented: false`. This is intentional: the route contracts are ready for review, but workspace, model, review, export, and audit-log persistence are not implemented yet. The only implemented backend route is the no-op health endpoint.
+Workspace, evidence-vault routing, exports, and audit-log domain routes are currently marked `implemented: false`. Model Gateway and Human Review routes are now implemented as the first backend workflow seams. They are intentionally in-memory and mock-only until SQLite/Prisma persistence and provider proxy policy are added.
 
 ## Persistence Contract Source
 
@@ -91,7 +91,7 @@ The first backend route is implemented in `server/app.ts`:
 
 - `GET /api/health`
 
-It reports service status, Phase 2 backend version, contract-only capability states, evidence vault metadata-hashing readiness, and the non-advice boundary. It does not expose persistence, credentials, model execution, KYC, or chain-write behavior.
+It reports service status, Phase 2 backend version, mock gateway readiness, evidence vault metadata-hashing readiness, in-memory human review readiness, and the non-advice boundary. It does not expose persistence, credentials, real external model execution, KYC, or chain-write behavior.
 
 Run after build:
 
@@ -115,6 +115,26 @@ It:
 - does not persist files
 - does not return raw document content in JSON
 
+## Model Gateway Routes
+
+The first Model Gateway routes are implemented in `server/app.ts` and backed by `server/modelGatewayService.ts`:
+
+- `POST /api/workspaces/:workspaceId/model-runs`
+- `GET /api/workspaces/:workspaceId/model-runs`
+- `GET /api/workspaces/:workspaceId/model-runs/:runId`
+
+The POST route validates Redaction Gate status, credential material, raw KYC/personal-data markers, final-legal-decision purposes, and human-review owner. It creates a mock run receipt with payload and response hashes. It does not call external providers or persist credentials.
+
+## Human Review Routes
+
+The first Human Review routes are implemented in `server/app.ts` and backed by `server/humanReviewService.ts`:
+
+- `POST /api/workspaces/:workspaceId/reviews`
+- `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`
+- `GET /api/workspaces/:workspaceId/reviews`
+
+The current records are process-local and in-memory. They support create, update, and list behavior for review workflow testing before SQLite/Prisma persistence is added.
+
 ## Tests
 
 `src/lib/phase2ApiContracts.test.ts` covers:
@@ -129,5 +149,14 @@ It:
 - the Fastify health endpoint
 - server-side SHA-256 evidence metadata hashing
 - raw KYC/personal-data blocking before evidence vault record creation
+- mock Model Gateway route creation, listing, and boundary blocking
+- Human Review route creation, status update, and listing
+
+`server/modelGatewayService.test.ts` and `server/humanReviewService.test.ts` cover:
+
+- deterministic mock gateway receipts
+- model gateway boundary failures
+- deterministic human review records
+- human review status updates and validation errors
 
 These tests make the backend design spike and first backend seam reviewable without claiming production backend behavior.

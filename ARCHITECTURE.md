@@ -10,6 +10,8 @@ lexproof-ai-audit/
     app.ts                   # Fastify app and Phase 2 health endpoint
     index.ts                 # API process entry point
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
+    modelGatewayService.ts   # Mock Model Gateway run receipts and boundary checks
+    humanReviewService.ts    # In-memory human review record helpers
   src/
     App.tsx                  # React workbench shell, persistence, and tab composition
     styles.css               # Responsive UI styling
@@ -388,7 +390,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The first backend route is `GET /api/health` in `server/app.ts`; domain routes remain contract-only until persistence and API review are complete.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, mock Model Gateway run routes, and in-memory Human Review routes. Workspace, evidence-vault route persistence, exports, audit-log routes, and database persistence are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -399,6 +401,8 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 - create human-review-required receipts for material AI outputs
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
+
+`server/modelGatewayService.ts` implements the first gateway seam: it validates redaction, credential, KYC, final-decision, and human-review boundaries, then creates a mock run receipt with payload and response hashes. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 
@@ -421,6 +425,8 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
 
+`server/humanReviewService.ts` implements in-memory review record creation and status updates for the Phase 2 API skeleton. Records are process-local until SQLite/Prisma persistence is added.
+
 ### Audit Log Responsibilities
 
 - append operation metadata for workspace, evidence, model-run, human-review, and export actions
@@ -434,8 +440,10 @@ Audit logs are review metadata. They are not real chain anchors, signed approval
 These capabilities remain simulated or local in the current codebase:
 
 - API keys for live model calls are browser-session only and are not persisted.
+- The Phase 2 Model Gateway creates mock receipts only; it does not call external providers or store provider credentials.
 - Evidence files are hashed locally or represented by metadata; raw file upload/storage is not implemented.
 - The Phase 2 server computes evidence hashes in memory for metadata records, but does not persist uploaded files.
+- Human Review API records are in-memory and process-local until persistence is added.
 - Evidence Audit Trail is local browser metadata, not a signed external log.
 - Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
 - Manifest anchoring creates a simulated receipt and does not submit a transaction.
@@ -484,6 +492,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint and server-side evidence metadata hashing
+- Phase 2 mock Model Gateway routes and in-memory Human Review routes
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 

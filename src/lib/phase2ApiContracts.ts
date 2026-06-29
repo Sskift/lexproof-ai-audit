@@ -54,12 +54,12 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     createRoute("GET", "/api/workspaces/:workspaceId/evidence", "evidence-vault", "EvidenceListRequest", "EvidenceVaultRecord[]"),
     createRoute("PATCH", "/api/workspaces/:workspaceId/evidence/:evidenceId", "evidence-vault", "UpdateEvidenceRequest", "EvidenceVaultRecord"),
     createRoute("GET", "/api/workspaces/:workspaceId/evidence-manifest", "evidence-vault", "EvidenceManifestRequest", "EvidenceManifest"),
-    createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun"),
-    createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]"),
-    createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun"),
-    createRoute("POST", "/api/workspaces/:workspaceId/reviews", "human-review", "CreateHumanReviewRequest", "HumanReviewRecord"),
-    createRoute("PATCH", "/api/workspaces/:workspaceId/reviews/:reviewId", "human-review", "UpdateHumanReviewRequest", "HumanReviewRecord"),
-    createRoute("GET", "/api/workspaces/:workspaceId/reviews", "human-review", "HumanReviewListRequest", "HumanReviewRecord[]"),
+    createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
+    createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
+    createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),
+    createRoute("POST", "/api/workspaces/:workspaceId/reviews", "human-review", "CreateHumanReviewRequest", "HumanReviewRecord", true),
+    createRoute("PATCH", "/api/workspaces/:workspaceId/reviews/:reviewId", "human-review", "UpdateHumanReviewRequest", "HumanReviewRecord", true),
+    createRoute("GET", "/api/workspaces/:workspaceId/reviews", "human-review", "HumanReviewListRequest", "HumanReviewRecord[]", true),
     createRoute("POST", "/api/workspaces/:workspaceId/exports/counsel-pack", "exports", "CreateCounselPackExportRequest", "CounselPackExportRecord"),
     createRoute("GET", "/api/workspaces/:workspaceId/exports/:exportId", "exports", "ExportDownloadRequest", "ExportArtifact"),
     createRoute("GET", "/api/workspaces/:workspaceId/audit-log", "audit-log", "AuditLogListRequest", "AuditLogRecord[]")
@@ -220,7 +220,8 @@ function createRoute(
   path: string,
   domain: Phase2ApiDomain,
   requestContract: string,
-  responseContract: string
+  responseContract: string,
+  implemented = false
 ): Phase2ApiRoute {
   return {
     method,
@@ -228,7 +229,7 @@ function createRoute(
     domain,
     requestContract,
     responseContract,
-    implemented: false,
+    implemented,
     notLegalAdviceBoundary
   };
 }

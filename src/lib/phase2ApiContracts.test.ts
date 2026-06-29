@@ -19,7 +19,15 @@ describe("Phase 2 backend API contracts", () => {
         method: "POST",
         path: "/api/workspaces/:workspaceId/model-runs",
         domain: "model-gateway",
-        implemented: false
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "POST",
+        path: "/api/workspaces/:workspaceId/reviews",
+        domain: "human-review",
+        implemented: true
       })
     );
     expect(routes.every((route) => route.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);

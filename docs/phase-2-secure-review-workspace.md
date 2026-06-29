@@ -95,6 +95,8 @@ Week 2 design-spike artifacts:
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
 - `server/app.ts` adds the first Fastify route: `GET /api/health`.
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
+- `server/modelGatewayService.ts` adds mock Model Gateway run receipts behind redaction, credential, KYC, legal-decision, and human-review boundaries.
+- `server/humanReviewService.ts` adds in-memory human-review record creation and status updates.
 
 ## Recommended Backend Architecture
 
@@ -244,5 +246,5 @@ The Phase 2 near-term slice is accepted when:
 1. Review and approve the backend stack. Completed for the professional prototype: Node.js + TypeScript + Fastify + SQLite + Prisma.
 2. Add a backend package skeleton only after API contracts are accepted. Started with `server/app.ts`, `server/index.ts`, `GET /api/health`, and `npm run start:api`.
 3. Implement evidence upload metadata and server-side hashing first. Started with `server/evidenceVaultService.ts`; persistence and multipart routing are still intentionally deferred.
-4. Move model calls behind the gateway after evidence and redaction boundaries are stable. Next implementation step.
-5. Add human review APIs before server-side Counsel Pack exports. Follows Model Gateway route implementation.
+4. Move model calls behind the gateway after evidence and redaction boundaries are stable. Started with mock gateway run receipts and API routes; real provider proxying remains deferred.
+5. Add human review APIs before server-side Counsel Pack exports. Started with in-memory create/update/list routes; persistence remains deferred.

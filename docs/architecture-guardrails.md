@@ -26,7 +26,7 @@ LexProof should grow as a layered review workspace, not as a collection of disco
 - **Data contract:** `src/data` owns synthetic profiles, scenario definitions, evidence templates, demo readiness metadata, and reviewed static source libraries. Data files do not import application logic.
 - **Backend contract:** `server` owns durable API behavior, request validation, repository access, audit logging, model gateway receipts, vault metadata, review records, and export records. Routes are thin; services and repositories carry behavior.
 - **Persistence contract:** `prisma/schema.prisma` describes durable server state only. UI and client-side domain modules depend on stable TypeScript contracts, not Prisma models.
-- **Documentation contract:** README explains how to run and demo; `docs/work-universe.md` defines what to build; this file defines where it belongs; `docs/engineering-workflow.md` defines how to verify and keep the repository clean.
+- **Documentation contract:** README explains how to run and demo; `docs/project-governance.md` is the operating contract; `docs/work-universe.md` defines what to build; this file defines where it belongs; `docs/engineering-workflow.md` defines how to verify and keep the repository clean.
 
 If a proposed feature cannot name its frontend, domain, backend, data, and verification boundaries, split it before implementation.
 

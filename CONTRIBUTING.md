@@ -12,6 +12,7 @@ This is a hackathon MVP, so the codebase should stay easy to inspect, demo, and 
 
 ## Engineering Guardrails
 
+- Start feature, backend, UI, test, and documentation work from [docs/project-governance.md](docs/project-governance.md) so scope, ownership, verification, and handoff stay aligned.
 - Put domain rules in `src/lib/auditEngine.ts`.
 - Put seeded demo profiles in `src/data/sampleProfiles.ts`.
 - Keep React components focused on presentation and interaction state.
@@ -31,6 +32,7 @@ Direct commits to `main` are allowed when all of the following are true:
 - no unrelated files are staged
 - generated files are ignored
 - the pushed state is demo-ready
+- the work maps to one authority path in [docs/project-governance.md](docs/project-governance.md)
 
 Use a branch for risky or multi-session work. See [WORKFLOW.md](WORKFLOW.md).
 

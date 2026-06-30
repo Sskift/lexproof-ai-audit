@@ -288,6 +288,7 @@ Workspace data is stored locally in browser `localStorage`. Local file evidence 
 
 ## Project Docs
 
+- [docs/project-governance.md](docs/project-governance.md): operating contract for work intake, architecture ownership, workflow, verification, and clean handoff.
 - [WORKFLOW.md](WORKFLOW.md): direct-to-main development and push workflow.
 - [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, data flow, and extension points.
 - [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.

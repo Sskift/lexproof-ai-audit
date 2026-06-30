@@ -8,6 +8,8 @@ LexProof remains **Not legal advice**. Every item below must produce audit prepa
 
 Treat this document as the complete build universe and product direction file. A new feature, issue, or agent prompt must either map to an existing workstream below or first amend this file with a clear capability area, owner layer, proof path, and non-goals.
 
+Start from `docs/project-governance.md` when turning this universe into implementation work. This file answers **what can be built**; `docs/architecture-guardrails.md` answers **where it belongs**; `docs/engineering-workflow.md` answers **how to verify and hand off**.
+
 Rules:
 
 - Pick one smallest demonstrable slice from a workstream instead of starting a broad rewrite.

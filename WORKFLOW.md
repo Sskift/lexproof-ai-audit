@@ -2,6 +2,8 @@
 
 This repo uses a **direct-to-main workflow** because it is a compact hackathon MVP with one primary maintainer and a short feedback loop. The rule is not "push anything to main"; the rule is "keep main always runnable, verified, and easy to audit."
 
+Use [docs/project-governance.md](docs/project-governance.md) before implementation to select the workstream, owner layer, verification path, and commit scope. That file is the operating contract that connects the product backlog, architecture boundaries, test discipline, and clean handoff rules.
+
 ## Main Branch Rules
 
 - Work directly on `main` for normal MVP changes.

@@ -4,6 +4,7 @@ This file is the operational rulebook for keeping LexProof AuditOS clean, demoab
 
 Use it with:
 
+- `docs/project-governance.md` for the required work intake gate and authority order.
 - `WORKFLOW.md` for direct-to-main policy.
 - `CONTRIBUTING.md` for product and engineering guardrails.
 - `ARCHITECTURE.md` and `docs/architecture-guardrails.md` for module boundaries.
@@ -17,7 +18,7 @@ Run:
 git status -sb
 ```
 
-Then decide the smallest valid slice:
+Then decide the smallest valid slice through `docs/project-governance.md`:
 
 - Documentation-only: edit docs, run `npm run verify` before commit if pushing to `main`.
 - Pure logic: write or update focused tests first, implement in `src/lib`, then run targeted tests and `npm run verify`.
@@ -25,6 +26,16 @@ Then decide the smallest valid slice:
 - Backend workflow: add or update service/route tests, implement service/repository/route, run targeted server tests and `npm run verify`.
 
 Do not stage unrelated files. If unrelated local changes exist, leave them out of the commit.
+
+The slice is not ready for implementation until it names:
+
+- workstream from `docs/work-universe.md`
+- user journey
+- owning layer from `docs/architecture-guardrails.md`
+- Not legal advice wording
+- privacy boundary
+- targeted verification command
+- expected commit scope
 
 ## Work Intake Contract
 
@@ -408,6 +419,7 @@ Update docs when a user-visible workflow, API boundary, architecture rule, or de
 
 Use existing docs first:
 
+- Operating contract and authority order: `docs/project-governance.md`.
 - Backlog and product direction: `docs/work-universe.md`.
 - Feature placement and anti-drift: `docs/architecture-guardrails.md`.
 - Test commands, screenshot policy, and cleanliness: `docs/engineering-workflow.md`.

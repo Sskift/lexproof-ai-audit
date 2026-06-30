@@ -2,6 +2,8 @@
 
 LexProof AuditOS is a Vite React single-page application. The app is intentionally local-first: all demo data, scoring, hashing, and memo generation happen in the browser with pure TypeScript logic.
 
+Start future work from [docs/project-governance.md](docs/project-governance.md). It defines the authority order for work intake, architecture ownership, workflow, verification, and clean handoff.
+
 For future feature placement and anti-drift rules, use [docs/architecture-guardrails.md](docs/architecture-guardrails.md) with this file. For the approved backlog direction, use [docs/work-universe.md](docs/work-universe.md).
 
 ## Top-Level Shape
@@ -105,6 +107,7 @@ lexproof-ai-audit/
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
+    project-governance.md    # Operating contract for intake, architecture, workflow, verification, and handoff
     research.md              # Hackathon and audit research notes
   README.md                  # Product and submission overview
   WORKFLOW.md                # Direct-to-main development process

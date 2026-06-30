@@ -5,7 +5,7 @@ import { createMissingEvidenceChecklist, createRedactionReport, type AIReviewRes
 import type { AuditResult } from "../lib/auditEngine";
 import { createModelAccessWorkflow } from "../lib/modelAccessWorkflow";
 import { createModelConnectionReadiness } from "../lib/modelConnectionReadiness";
-import type { ModelConnectReceipt } from "../lib/modelConnect";
+import { downloadModelConnectReceiptJson, type ModelConnectReceipt } from "../lib/modelConnect";
 import type { ModelIntakeSummary } from "../lib/modelIntake";
 import { downloadModelReviewRunJson, type ModelReviewRun } from "../lib/modelReviewLedger";
 import type { ModelSettings, ModelSettingsValidation } from "../lib/modelProvider";
@@ -103,6 +103,15 @@ export function AIReviewPanel({
                 ))}
               </ul>
             ) : null}
+            <button
+              type="button"
+              className="secondary"
+              aria-label="Download Model Connect Receipt JSON"
+              onClick={() => downloadModelConnectReceiptJson(`${project.id || "project"}-model-connect-receipt.json`, modelConnectReceipt)}
+            >
+              <Download size={16} aria-hidden="true" />
+              Download receipt JSON
+            </button>
           </div>
         ) : (
           <p className="empty-state">No model connection receipt yet. Validate before running a session model.</p>

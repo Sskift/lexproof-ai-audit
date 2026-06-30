@@ -42,6 +42,23 @@ export function createModelConnectReceipt(input: CreateModelConnectReceiptInput)
   };
 }
 
+export function exportModelConnectReceiptJson(receipt: ModelConnectReceipt): string {
+  return `${JSON.stringify(receipt, null, 2)}\n`;
+}
+
+export function downloadModelConnectReceiptJson(filename: string, receipt: ModelConnectReceipt): void {
+  const blob = new Blob([exportModelConnectReceiptJson(receipt)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function providerLabel(settings: ModelSettings): string {
   if (settings.provider === "mock") {
     return "Mock local reviewer";

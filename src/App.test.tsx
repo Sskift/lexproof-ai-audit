@@ -286,6 +286,58 @@ describe("App", () => {
     expect(security.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   });
 
+  it("downloads a metadata-only Model Connect receipt without exposing session credentials", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:model-connect-receipt");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+      expect(await screen.findByText(/Model Connect receipt/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Download Model Connect Receipt JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:model-connect-receipt");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Model Connect receipt JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          receiptVersion: "lexproof-model-connect-receipt-v1",
+          provider: "mock",
+          mode: "local-mock",
+          status: "ready",
+          notLegalAdviceBoundary: "Not legal advice. Model Connect validates audit-prep routing only."
+        })
+      );
+      expect(payload).not.toContain("apiKey");
+      expect(payload).not.toContain("sk-");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("shows Integration Readiness Registry adapter states and blocked recovery without leaking unsafe evidence", async () => {
     render(<App />);
 

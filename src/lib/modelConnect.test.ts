@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createModelConnectReceipt } from "./modelConnect";
+import { createModelConnectReceipt, exportModelConnectReceiptJson } from "./modelConnect";
 import { validateModelSettings } from "./modelProvider";
 
 describe("model connect receipts", () => {
@@ -29,6 +29,29 @@ describe("model connect receipts", () => {
       notLegalAdviceBoundary: "Not legal advice. Model Connect validates audit-prep routing only."
     });
     expect(JSON.stringify(receipt)).not.toContain("sk-session-only");
+  });
+
+  it("exports a metadata-only Model Connect receipt JSON without session credentials", () => {
+    const receipt = createModelConnectReceipt({
+      settings: {
+        provider: "openai-compatible",
+        model: "gpt-audit-review",
+        baseUrl: "https://models.example.test/v1",
+        apiKey: "sk-session-only"
+      },
+      settingsValidation: { valid: true, errors: [] },
+      redactionStatus: "clean",
+      createdAt: "2026-06-30T00:00:00.000Z"
+    });
+
+    const json = exportModelConnectReceiptJson(receipt);
+    const parsed = JSON.parse(json);
+
+    expect(parsed).toEqual(receipt);
+    expect(parsed.notLegalAdviceBoundary).toBe("Not legal advice. Model Connect validates audit-prep routing only.");
+    expect(json).toContain("\"receiptVersion\": \"lexproof-model-connect-receipt-v1\"");
+    expect(json).not.toContain("sk-session-only");
+    expect(json).not.toContain("apiKey");
   });
 
   it("blocks model connect when settings or redaction gate are not ready", () => {

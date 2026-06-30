@@ -54,7 +54,7 @@ export async function runSecureReviewJourney(input: RunSecureReviewJourneyInput)
     fetcher
   });
   const modelGatewayRun = await createModelGatewayRun(input, evidenceVault, humanReviewOwner, fetcher);
-  const humanReview = await createHumanReview(input, modelGatewayRun, humanReviewOwner, fetcher);
+  const humanReview = await resolveModelRunHumanReview(input, modelGatewayRun, humanReviewOwner, fetcher);
   const auditLogRecords = await fetchAuditLog(input.apiBaseUrl, workspaceId, fetcher);
 
   return {
@@ -176,12 +176,18 @@ function createEvidenceRecordSummary(record: EvidenceVaultRecordResponse) {
   };
 }
 
-async function createHumanReview(
+async function resolveModelRunHumanReview(
   input: RunSecureReviewJourneyInput,
   modelGatewayRun: ModelGatewayRun,
   humanReviewOwner: string,
   fetcher: SecureReviewFetch
 ): Promise<HumanReviewRecord> {
+  const queuedReview = await findQueuedModelRunHumanReview(input.apiBaseUrl, input.project.id, modelGatewayRun.id, fetcher);
+
+  if (queuedReview) {
+    return queuedReview;
+  }
+
   const response = await fetcher(buildWorkspaceUrl(input.apiBaseUrl, input.project.id, "reviews"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -194,6 +200,18 @@ async function createHumanReview(
   });
 
   return readJsonResponse<HumanReviewRecord>(response, "Human review request creation failed.");
+}
+
+async function findQueuedModelRunHumanReview(
+  apiBaseUrl: string | undefined,
+  workspaceId: string,
+  modelRunId: string,
+  fetcher: SecureReviewFetch
+): Promise<HumanReviewRecord | null> {
+  const response = await fetcher(buildWorkspaceUrl(apiBaseUrl, workspaceId, "reviews"), { method: "GET" });
+  const records = await readJsonResponse<HumanReviewRecord[]>(response, "Human review lookup failed.");
+
+  return records.find((record) => record.targetType === "model-run" && record.targetId === modelRunId) ?? null;
 }
 
 async function fetchAuditLog(apiBaseUrl: string | undefined, workspaceId: string, fetcher: SecureReviewFetch): Promise<AuditLogRecord[]> {

@@ -1225,22 +1225,24 @@ describe("App", () => {
         );
       }
 
-      if (path.endsWith("/reviews") && init?.method === "POST") {
+      if (path.endsWith("/reviews") && init?.method === "GET") {
         return appJsonResponse(
-          {
-            recordVersion: "lexproof-human-review-record-v1",
-            id: "human-review-full",
-            workspaceId: "project-ui",
-            targetType: "model-run",
-            targetId: "model-gateway-run-full",
-            reviewerId: "Compliance",
-            status: "requested",
-            comment: "Review Model Gateway run before counsel pack reliance.",
-            createdAt: "2026-06-30T00:00:00.000Z",
-            updatedAt: "2026-06-30T00:00:00.000Z",
-            notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
-          },
-          201
+          [
+            {
+              recordVersion: "lexproof-human-review-record-v1",
+              id: "human-review-full",
+              workspaceId: "project-ui",
+              targetType: "model-run",
+              targetId: "model-gateway-run-full",
+              reviewerId: "Compliance",
+              status: "requested",
+              comment: "Review Model Gateway output before audit-prep reliance. AI-assisted draft only. Not legal advice.",
+              createdAt: "2026-06-30T00:00:00.000Z",
+              updatedAt: "2026-06-30T00:00:00.000Z",
+              notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+            }
+          ],
+          200
         );
       }
 
@@ -1270,7 +1272,7 @@ describe("App", () => {
             }),
             createAppAuditLogRecord({
               id: "audit-log-review",
-              action: "human-review.created",
+              action: "model.run.human-review-queued",
               targetType: "human-review",
               targetId: "human-review-full",
               createdAt: "2026-06-30T00:00:04.000Z"
@@ -1323,7 +1325,7 @@ describe("App", () => {
       expect(screen.getByText(/Human review request human-review-full/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit log events 4/i)).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /Audit Log Export/i })).toBeInTheDocument();
-      expect(screen.getByText(/Last audit action human-review.created/i)).toBeInTheDocument();
+      expect(screen.getByText(/Last audit action model.run.human-review-queued/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit actors Compliance/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Download Audit Log JSON/i })).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /Model Gateway Evaluation/i })).toBeInTheDocument();

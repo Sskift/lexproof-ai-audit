@@ -85,29 +85,25 @@ describe("Secure Review Journey routes", () => {
     );
     expect(modelRunResponse.body.toLowerCase()).not.toContain("api_key");
 
-    const reviewResponse = await server.inject({
-      method: "POST",
-      url: "/api/workspaces/workspace-secure-review-e2e/reviews",
-      payload: {
-        targetType: "model-run",
-        targetId: modelRunResponse.json().id,
-        reviewerId: "Compliance",
-        comment: "Review Model Gateway run before counsel pack reliance."
-      }
+    const reviewsResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-secure-review-e2e/reviews"
     });
-    expect(reviewResponse.statusCode).toBe(201);
-    expect(reviewResponse.json()).toEqual(
+    expect(reviewsResponse.statusCode).toBe(200);
+    expect(reviewsResponse.json()).toEqual([
       expect.objectContaining({
         targetType: "model-run",
         targetId: modelRunResponse.json().id,
+        reviewerId: "Compliance",
         status: "requested",
         notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
       })
-    );
+    ]);
+    const review = reviewsResponse.json()[0];
 
     const returnedReviewResponse = await server.inject({
       method: "PATCH",
-      url: `/api/workspaces/workspace-secure-review-e2e/reviews/${reviewResponse.json().id}`,
+      url: `/api/workspaces/workspace-secure-review-e2e/reviews/${review.id}`,
       payload: {
         status: "needs-more-evidence",
         comment: "Returned for more evidence before any external reliance."
@@ -126,7 +122,7 @@ describe("Secure Review Journey routes", () => {
         expect.objectContaining({ action: "workspace.created" }),
         expect.objectContaining({ action: "evidence.created" }),
         expect.objectContaining({ action: "model.run.created" }),
-        expect.objectContaining({ action: "human-review.created" }),
+        expect.objectContaining({ action: "model.run.human-review-queued" }),
         expect.objectContaining({ action: "human-review.updated" })
       ])
     );

@@ -129,17 +129,36 @@ describe("Phase 2 backend app", () => {
       })
     );
 
-    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/audit-log" });
-    expect(auditResponse.statusCode).toBe(200);
-    expect(auditResponse.json()).toEqual([
+    const reviewsResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/reviews" });
+    expect(reviewsResponse.statusCode).toBe(200);
+    expect(reviewsResponse.json()).toEqual([
       expect.objectContaining({
-        action: "model.run.created",
         targetType: "model-run",
         targetId: response.json().id,
-        afterHash: response.json().responseHash,
-        summary: "Created mock model gateway run for audit preparation."
+        reviewerId: "Compliance",
+        status: "requested",
+        notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
       })
     ]);
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/audit-log" });
+    expect(auditResponse.statusCode).toBe(200);
+    expect(auditResponse.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "model.run.created",
+          targetType: "model-run",
+          targetId: response.json().id,
+          afterHash: response.json().responseHash,
+          summary: "Created mock model gateway run for audit preparation."
+        }),
+        expect.objectContaining({
+          action: "model.run.human-review-queued",
+          targetType: "human-review",
+          summary: "Queued completed Model Gateway output for human review before audit-prep reliance."
+        })
+      ])
+    );
 
     await server.close();
   });
@@ -374,21 +393,21 @@ describe("Phase 2 backend app", () => {
     expect(modelRunResponse.statusCode).toBe(201);
     expect(modelRunResponse.json()).toEqual(expect.objectContaining({ humanReviewStatus: "needs-review" }));
 
-    const reviewResponse = await server.inject({
-      method: "POST",
-      url: "/api/workspaces/workspace-model-review/reviews",
-      payload: {
+    const reviewListResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-model-review/reviews" });
+    expect(reviewListResponse.statusCode).toBe(200);
+    expect(reviewListResponse.json()).toEqual([
+      expect.objectContaining({
         targetType: "model-run",
         targetId: modelRunResponse.json().id,
         reviewerId: "Counsel",
-        comment: "Review model output before audit-prep reliance."
-      }
-    });
-    expect(reviewResponse.statusCode).toBe(201);
+        status: "requested"
+      })
+    ]);
+    const review = reviewListResponse.json()[0];
 
     const reviewedResponse = await server.inject({
       method: "PATCH",
-      url: `/api/workspaces/workspace-model-review/reviews/${reviewResponse.json().id}`,
+      url: `/api/workspaces/workspace-model-review/reviews/${review.id}`,
       payload: {
         status: "reviewed",
         comment: "Reviewed for audit-prep reliance, not legal approval."
@@ -409,7 +428,8 @@ describe("Phase 2 backend app", () => {
     const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-model-review/audit-log" });
     expect(auditResponse.json()).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ action: "human-review.updated", targetId: reviewResponse.json().id }),
+        expect.objectContaining({ action: "model.run.human-review-queued", targetType: "human-review" }),
+        expect.objectContaining({ action: "human-review.updated", targetId: review.id }),
         expect.objectContaining({
           action: "model.run.review-status.synced",
           targetType: "model-run",

@@ -67,7 +67,7 @@ describe("secure review journey", () => {
     ).rejects.toThrow("Validate Model Connect before running the secure review journey.");
   });
 
-  it("creates workspace, syncs evidence, creates a model gateway run, and opens human review", async () => {
+  it("creates workspace, syncs evidence, creates a model gateway run, and uses the server-queued human review", async () => {
     const uploadedForms: FormData[] = [];
     const requestBodies: Array<{ url: string; body: unknown }> = [];
     const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -149,8 +149,9 @@ describe("secure review journey", () => {
         }, 201);
       }
 
-      if (path.endsWith("/reviews") && init?.method === "POST") {
-        return jsonResponse({
+      if (path.endsWith("/reviews") && init?.method === "GET") {
+        return jsonResponse([
+          {
           recordVersion: "lexproof-human-review-record-v1",
           id: "human-review-secure",
           workspaceId: project.id,
@@ -162,7 +163,8 @@ describe("secure review journey", () => {
           createdAt: "2026-06-30T00:00:00.000Z",
           updatedAt: "2026-06-30T00:00:00.000Z",
           notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
-        }, 201);
+          }
+        ], 200);
       }
 
       if (path.endsWith("/audit-log") && init?.method === "GET") {
@@ -204,6 +206,7 @@ describe("secure review journey", () => {
     expect(modelRunBody.allowedDataClasses).toEqual(["audit-prep metadata", "evidence hashes", "risk flag summaries"]);
     expect(JSON.stringify(modelRunBody)).toContain("Model Connect validates audit-prep routing only");
     expect(JSON.stringify(modelRunBody).toLowerCase()).not.toContain("api_key");
+    expect(requestBodies.some((request) => request.url.endsWith("/reviews"))).toBe(false);
   });
 
   it("preserves Model Gateway failure receipt remediation when the server blocks a run", async () => {

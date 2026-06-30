@@ -51,7 +51,7 @@ The repository already has:
 - Local-first project workspace and synthetic sample profiles.
 - Deterministic risk audit, issue explainers, source links, remediation queue, and risk evidence coverage.
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
-- Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, server-side Counsel Pack export metadata records, and Audit Log listing.
+- Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts with automatic Human Review queueing for completed output, Human Review, server-side Counsel Pack export metadata records, and Audit Log listing.
 - Local Human Review operations with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence updates, and downloadable timeline JSON with audit log IDs.
 - Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, Evidence Vault control coverage summary, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
@@ -222,6 +222,7 @@ Build:
 - Model Gateway route that enforces Redaction Gate, allowed data classes, purpose, reviewer, and final-decision blockers.
 - Safe Model Gateway failure receipts with run ID, retry state, error code, and remediation steps.
 - Model run evaluation records: payload hash, response hash, source evidence hash, provider metadata, human-review status, and retry/error state. The first metadata-only evaluation artifact is implemented in `src/lib/modelGatewayEvaluation.ts` and rendered in `SecureReviewWorkspace` with JSON download.
+- Automatic server-side Human Review queueing for completed Model Gateway output. `server/modelGatewayRoutes.ts` now creates a `model-run` Human Review request and audit-log record when a completed run enters the workspace; `runSecureReviewJourney()` reads that queued review instead of creating a duplicate.
 - Admin-visible model connection failures with remediation steps.
 
 Acceptance:

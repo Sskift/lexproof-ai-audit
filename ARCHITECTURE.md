@@ -703,11 +703,11 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 - keep provider credentials out of React state and exports
 - record provider label, model, purpose, payload hash, response hash, source evidence hash, status, redaction status, retry state, and provider policy metadata
 - persist blocked/failed run receipts with error codes and remediation steps
-- create human-review-required receipts for material AI outputs
+- automatically queue human-review-required records for completed Model Gateway output
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository, automatically creates a `model-run` Human Review request for completed output, and appends audit-log records for both the run and the review queue action. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 
@@ -766,7 +766,7 @@ Audit logs are review metadata. They are not real chain anchors, signed approval
 These capabilities remain simulated or local in the current codebase:
 
 - API keys for live model calls are browser-session only and are not persisted.
-- The Phase 2 Model Gateway creates mock success receipts and safe failure receipts only; it does not call external providers or store provider credentials.
+- The Phase 2 Model Gateway creates mock success receipts, auto-queues completed output for Human Review, and creates safe failure receipts only; it does not call external providers or store provider credentials.
 - OpenAI-compatible and enterprise-proxy Model Gateway adapters are visible as disabled readiness records only.
 - Evidence files are hashed locally in the browser or uploaded through the Phase 2 multipart route for server-side metadata hashing.
 - The Phase 2 server computes evidence hashes in memory for metadata records and persists evidence metadata, but does not persist uploaded file bytes.

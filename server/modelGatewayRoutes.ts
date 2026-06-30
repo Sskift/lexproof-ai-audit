@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { createHumanReviewRecord } from "./humanReviewService.js";
 import {
   createModelGatewayRun,
   createServerModelGatewayProviderPolicyReport,
@@ -83,6 +84,36 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
           afterHash: result.run.responseHash,
           summary: "Created mock model gateway run for audit preparation.",
           createdAt: result.run.createdAt
+        })
+      );
+      const review = createHumanReviewRecord({
+        workspaceId: request.params.workspaceId,
+        targetType: "model-run",
+        targetId: result.run.id,
+        reviewerId: request.body.humanReviewOwner,
+        comment: "Review Model Gateway output before audit-prep reliance. AI-assisted draft only. Not legal advice.",
+        createdAt: result.run.createdAt
+      });
+      await repository.saveHumanReviewRecord(review);
+      await repository.appendAuditLogRecord(
+        createAuditLogRecord({
+          workspaceId: request.params.workspaceId,
+          actorId: review.reviewerId,
+          action: "model.run.human-review-queued",
+          targetType: "human-review",
+          targetId: review.id,
+          beforeHash: "",
+          afterHash: sha256Hex(
+            stableStringify({
+              id: review.id,
+              targetType: review.targetType,
+              targetId: review.targetId,
+              reviewerId: review.reviewerId,
+              status: review.status
+            })
+          ),
+          summary: "Queued completed Model Gateway output for human review before audit-prep reliance.",
+          createdAt: review.createdAt
         })
       );
       return reply.status(201).send(result.run);

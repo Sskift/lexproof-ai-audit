@@ -84,7 +84,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Enter `http://127.0.0.1:8787` in **Provider Policy API base URL**, click **Refresh Server Provider Policy**, and show **Server provider policy synced**. If the API is down, show the recovery action instead of collecting credentials.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.
-   - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
+   - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, the automatically queued Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
 
 7. **Export counsel pack**

@@ -112,14 +112,84 @@ describe("model gateway route module", () => {
     expect(lookupResponse.statusCode).toBe(200);
     expect(lookupResponse.json()).toEqual(expect.objectContaining({ id: runResponse.json().id }));
 
-    expect(await repository.listAuditLogRecords("workspace-model-routes")).toEqual([
+    expect(await repository.listHumanReviewRecords("workspace-model-routes")).toEqual([
       expect.objectContaining({
-        action: "model.run.created",
         targetType: "model-run",
         targetId: runResponse.json().id,
-        summary: "Created mock model gateway run for audit preparation."
+        reviewerId: "Counsel",
+        status: "requested"
       })
     ]);
+    expect(await repository.listAuditLogRecords("workspace-model-routes")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "model.run.created",
+          targetType: "model-run",
+          targetId: runResponse.json().id,
+          summary: "Created mock model gateway run for audit preparation."
+        }),
+        expect.objectContaining({
+          action: "model.run.human-review-queued",
+          targetType: "human-review",
+          summary: "Queued completed Model Gateway output for human review before audit-prep reliance."
+        })
+      ])
+    );
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("automatically queues completed model gateway output for human review", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerModelGatewayRoutes(server, { repository });
+
+    const runResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-model-auto-review/model-runs",
+      payload: {
+        provider: "mock",
+        model: "lexproof-mock",
+        purpose: "Draft audit preparation issue spotting for counsel review.",
+        redactionStatus: "clean",
+        humanReviewOwner: "Compliance reviewer",
+        includesCredentialMaterial: false,
+        includesRawKycOrPersonalData: false,
+        allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
+        payload: {
+          projectName: "YieldPassport",
+          evidenceVault: {
+            bundleHash: "c".repeat(64),
+            records: [{ fileHash: "d".repeat(64), status: "verified" }]
+          }
+        }
+      }
+    });
+
+    expect(runResponse.statusCode).toBe(201);
+
+    expect(await repository.listHumanReviewRecords("workspace-model-auto-review")).toEqual([
+      expect.objectContaining({
+        recordVersion: "lexproof-human-review-record-v1",
+        workspaceId: "workspace-model-auto-review",
+        targetType: "model-run",
+        targetId: runResponse.json().id,
+        reviewerId: "Compliance reviewer",
+        status: "requested",
+        comment: "Review Model Gateway output before audit-prep reliance. AI-assisted draft only. Not legal advice.",
+        notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+      })
+    ]);
+    expect(await repository.listAuditLogRecords("workspace-model-auto-review")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "model.run.human-review-queued",
+          targetType: "human-review",
+          summary: "Queued completed Model Gateway output for human review before audit-prep reliance."
+        })
+      ])
+    );
 
     await server.close();
     await repository.close();

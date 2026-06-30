@@ -24,6 +24,9 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /LexProof AuditOS/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Regulatory Command Center/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Workspace Action Queue/i })).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Workspace actions are audit preparation workflow prompts only./i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Resolve source evidence gaps/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Source Review Ledger/i })).toBeInTheDocument();
     expect(
       screen.getAllByText(/Not legal advice. Source review metadata is audit preparation lineage only./i).length
@@ -42,6 +45,15 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
 
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
+  });
+
+  it("routes first-screen action queue items to the matching workbench tab", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Resolve source evidence gaps/i }));
+
+    expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
+    expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
   });
 
   it("loads a judge-ready demo scenario from the seeded scenario library", async () => {

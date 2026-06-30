@@ -84,6 +84,7 @@ lexproof-ai-audit/
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
+      workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
       counselPack.ts         # Markdown pack and browser download helper
       dataBoundary.ts        # Export Safety Gate classification, redaction, and blocker report
       counselPackTemplates.ts # Counsel Pack template definitions and recommendation logic
@@ -141,6 +142,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
   -> createSecurityReviewChecklist(model connect, retention report, data boundary report, manifest hash)
+  -> createWorkspaceActionQueue(project validation, source graph, source review, human review, security, data boundary, manifest/export status)
   -> createSimulatedAnchorReceipt(manifest)
   -> recommendCounselPackTemplate(project, audit)
   -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate, dataBoundaryReport, regulatorySourceReview)
@@ -332,6 +334,16 @@ Owns source review metadata for the Regulatory Command Center:
 - The output repeats the Not legal advice boundary and creates review actions for source metadata refresh only.
 
 This module tracks source lineage and review freshness. It does not decide whether a law applies, whether a source is legally current, or whether a project is compliant.
+
+### `src/lib/workspaceActionQueue.ts`
+
+Owns first-screen operational action ranking for the Regulatory Command Center:
+
+- `createWorkspaceActionQueue(input)` combines project validation, regulatory evidence gaps, Source Review refresh actions, Human Review status, Security Review readiness, Export Safety Gate status, manifest readiness, and Counsel Pack version state.
+- Queue items include priority, target tab, concise summary, CTA, and the Not legal advice boundary.
+- The component renders the queue and navigation only; it does not decide action priority.
+
+Workspace actions are audit preparation workflow prompts only. They do not make legal conclusions, approve launch readiness, or replace counsel review.
 
 ### `src/data/regulatoryClauses.ts`
 

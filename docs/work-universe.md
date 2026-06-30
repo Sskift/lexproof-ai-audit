@@ -164,7 +164,7 @@ Goal: make the product feel like a real review cockpit.
 
 Build:
 
-- A first-screen Regulatory Command Center with project readiness, jurisdiction risk matrix, evidence coverage, model readiness, human review status, and export readiness.
+- A first-screen Regulatory Command Center with project readiness, jurisdiction risk matrix, evidence coverage, model readiness, human review status, and export readiness. The first Workspace Action Queue is implemented in `src/lib/workspaceActionQueue.ts` and `RegulatoryCommandCenter`: it ranks recoverable project facts, source evidence gaps, source refresh, human review, security readiness, and export actions with Not legal advice wording.
 - Clear left-to-right journey: project facts -> model/evidence intake -> risk/source graph -> review -> vault/manifest -> counsel export.
 - Dense professional panels, icons, tabs, status chips, empty states, error recovery, and screenshot-ready demo surfaces.
 - Frontend copy that is concise, operational, and consistent with audit preparation.

@@ -107,8 +107,9 @@ import {
   type RiskEvidenceRequirement
 } from "./lib/riskEvidence";
 import { createSecurityReviewChecklist } from "./lib/securityReviewChecklist";
+import { createWorkspaceActionQueue, type WorkspaceActionTarget } from "./lib/workspaceActionQueue";
 
-type TabId = "wizard" | "ai" | "model" | "review" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
+type TabId = WorkspaceActionTarget;
 
 const STORAGE_KEY = "lexproof.currentProject.v1";
 const MODEL_SETTINGS_KEY = "lexproof.modelSettings.v1";
@@ -275,6 +276,31 @@ export default function App() {
       modelConnectReceipt,
       project.evidenceItems.length,
       securityReviewChecklist
+    ]
+  );
+  const workspaceActionQueue = useMemo(
+    () =>
+      createWorkspaceActionQueue({
+        validation,
+        regulatoryGraph,
+        sourceReview: regulatorySourceReview,
+        humanReviewQueue,
+        securityReviewChecklist,
+        dataBoundaryReport,
+        evidenceCount: project.evidenceItems.length,
+        manifestHash: manifest?.bundleHash,
+        counselPackVersionCount: currentCounselPackVersions.length
+      }),
+    [
+      currentCounselPackVersions.length,
+      dataBoundaryReport,
+      humanReviewQueue,
+      manifest?.bundleHash,
+      project.evidenceItems.length,
+      regulatoryGraph,
+      regulatorySourceReview,
+      securityReviewChecklist,
+      validation
     ]
   );
   const grcTicketExport = useMemo(
@@ -757,6 +783,7 @@ export default function App() {
             audit={audit}
             graph={regulatoryGraph}
             sourceReview={regulatorySourceReview}
+            actionQueue={workspaceActionQueue}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />

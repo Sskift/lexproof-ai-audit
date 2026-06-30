@@ -582,6 +582,108 @@ textarea {
   padding: 12px;
 }
 
+.workspace-action-queue {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #cfdce5;
+  border-radius: 8px;
+  background: #f8fbfc;
+  padding: 12px;
+}
+
+.workspace-action-queue > p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.action-count {
+  margin-left: auto;
+  border: 1px solid #c8d8e6;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #33495f;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.workspace-action-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workspace-action-item {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.workspace-action-item.p0 {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.workspace-action-item.p1 {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.workspace-action-item header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.workspace-action-item header span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #263d73;
+  color: #ffffff;
+  padding: 4px 7px;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.workspace-action-item.p0 header span {
+  background: #9f241a;
+}
+
+.workspace-action-item.p1 header span {
+  background: #a6531c;
+}
+
+.workspace-action-item strong,
+.workspace-action-item p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.workspace-action-item strong {
+  color: #172431;
+  line-height: 1.25;
+}
+
+.workspace-action-item p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.workspace-action-item button {
+  justify-self: start;
+}
+
 .reg-source-review.review-due {
   border-color: #e9bd87;
   background: #fffaf2;
@@ -4340,6 +4442,7 @@ textarea {
   .secure-flow-grid,
   .reg-command-layout,
   .reg-command-metrics,
+  .workspace-action-list,
   .model-connect-receipt > div:first-child,
   .human-review-summary,
   .human-review-card header,

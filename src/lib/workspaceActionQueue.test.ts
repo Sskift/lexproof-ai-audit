@@ -1,0 +1,184 @@
+import { describe, expect, it } from "vitest";
+import type { DataBoundaryReport } from "./dataBoundary";
+import type { HumanReviewQueue } from "./humanReviewWorkflow";
+import type { ProjectValidationResult } from "./projectModel";
+import type { RegulatoryGraph } from "./regulatoryGraph";
+import type { RegulatorySourceReview } from "./regulatorySourceReview";
+import type { SecurityReviewChecklistReport } from "./securityReviewChecklist";
+import { createWorkspaceActionQueue } from "./workspaceActionQueue";
+
+describe("createWorkspaceActionQueue", () => {
+  it("prioritizes recoverable workspace actions without making legal conclusions", () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({
+        evidenceGaps: [
+          {
+            id: "eu-mica-whitepaper",
+            clauseId: "eu-mica-title-ii-white-paper",
+            jurisdiction: "European Union",
+            citation: "Regulation (EU) 2023/1114, Title II",
+            title: "White paper disclosure evidence",
+            reason: "Confirm disclosure controls before counsel handoff.",
+            priority: "P0",
+            sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng"
+          }
+        ]
+      }),
+      sourceReview: sourceReview({ actionCount: 1 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 2, blockedCount: 1 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "blocked", blockerCount: 1 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: false, blockerCount: 1 }),
+      evidenceCount: 0,
+      manifestHash: "",
+      counselPackVersionCount: 0
+    });
+
+    expect(queue.queueVersion).toBe("lexproof-workspace-action-queue-v1");
+    expect(queue.summary).toEqual({
+      totalCount: 7,
+      p0Count: 3,
+      nextTarget: "review",
+      notLegalAdviceBoundary: "Not legal advice. Workspace actions are audit preparation workflow prompts only."
+    });
+    expect(queue.items.map((item) => item.id)).toEqual([
+      "recover-human-review",
+      "resolve-regulatory-evidence-gaps",
+      "clear-export-safety-gate",
+      "refresh-source-review",
+      "complete-human-review",
+      "validate-security-readiness",
+      "save-counsel-pack-version"
+    ]);
+    expect(queue.items[0]).toEqual(
+      expect.objectContaining({
+        priority: "P0",
+        target: "review",
+        title: "Recover blocked review decisions",
+        cta: "Open review queue"
+      })
+    );
+    expect(queue.items[1].summary).toContain("White paper disclosure evidence");
+    expect(queue.items.every((item) => item.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
+  });
+
+  it("surfaces a ready export action when blockers are cleared and the first pack version exists", () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({ evidenceGaps: [] }),
+      sourceReview: sourceReview({ actionCount: 0 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 0, blockedCount: 0 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "ready", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 2,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 1
+    });
+
+    expect(queue.items).toEqual([
+      expect.objectContaining({
+        id: "download-counsel-pack",
+        priority: "P3",
+        target: "counsel",
+        title: "Export counsel-ready packet",
+        summary: "Manifest abc123def456 is ready with 1 saved Counsel Pack version.",
+        cta: "Open export queue"
+      })
+    ]);
+  });
+});
+
+function validation(overrides: Partial<ProjectValidationResult>): ProjectValidationResult {
+  return {
+    valid: false,
+    errors: ["Project name is required."],
+    ...overrides
+  };
+}
+
+function graph(overrides: Partial<RegulatoryGraph>): RegulatoryGraph {
+  return {
+    graphVersion: "lexproof-regulatory-graph-v1",
+    projectId: "project-action-queue",
+    generatedAt: "2026-06-30T00:00:00.000Z",
+    matchedClauses: [],
+    jurisdictionSummaries: [],
+    evidenceGaps: [],
+    topActions: [],
+    notLegalAdviceBoundary: "Not legal advice. Regulatory graph output is audit preparation material only.",
+    ...overrides
+  };
+}
+
+function sourceReview({ actionCount }: { actionCount: number }): RegulatorySourceReview {
+  return {
+    status: actionCount > 0 ? "review-due" : "current",
+    totalSourceCount: actionCount,
+    currentSourceCount: 0,
+    reviewDueCount: actionCount,
+    metadataMissingCount: 0,
+    reviewWindowDays: 90,
+    items: [],
+    actions: Array.from({ length: actionCount }, (_, index) => ({
+      id: `source-review-${index + 1}`,
+      priority: "P1",
+      action: "Refresh source metadata before counsel handoff.",
+      clauseId: `clause-${index + 1}`,
+      sourceUrl: "https://example.com/source"
+    })),
+    notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only."
+  };
+}
+
+function humanReviewQueue({ openCount, blockedCount }: { openCount: number; blockedCount: number }): HumanReviewQueue {
+  return {
+    queueVersion: "lexproof-human-review-queue-v1",
+    items: [],
+    summary: {
+      totalCount: openCount + blockedCount,
+      openCount,
+      reviewedCount: 0,
+      blockedCount,
+      notLegalAdviceBoundary: "Not legal advice. Human review workflow status is audit preparation workflow only."
+    }
+  };
+}
+
+function securityChecklist({
+  overallStatus,
+  blockerCount
+}: {
+  overallStatus: SecurityReviewChecklistReport["overallStatus"];
+  blockerCount: number;
+}): SecurityReviewChecklistReport {
+  return {
+    reportVersion: "lexproof-security-review-checklist-v1",
+    overallStatus,
+    readyCount: overallStatus === "ready" ? 3 : 0,
+    reviewCount: overallStatus === "needs-review" ? 1 : 0,
+    blockerCount,
+    items: [],
+    nextActions: [],
+    notLegalAdviceBoundary: "Not legal advice. Security review checklist output is audit preparation metadata only."
+  };
+}
+
+function dataBoundary({
+  exportAllowed,
+  blockerCount
+}: {
+  exportAllowed: boolean;
+  blockerCount: number;
+}): DataBoundaryReport {
+  return {
+    reportVersion: "lexproof-data-boundary-v1",
+    status: exportAllowed ? "clean" : "blocked",
+    exportAllowed,
+    detectedClasses: [],
+    blockerCount,
+    warningCount: 0,
+    findings: [],
+    remediation: [],
+    notLegalAdviceBoundary: "Not legal advice. Data boundary output is audit preparation material only."
+  };
+}

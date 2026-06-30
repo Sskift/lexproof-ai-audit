@@ -3,14 +3,16 @@ import type { AuditResult } from "../lib/auditEngine";
 import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGraph";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
+import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
 
 type RegulatoryCommandCenterProps = {
   project: ProjectProfile;
   audit: AuditResult;
   graph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
+  actionQueue: WorkspaceActionQueue;
   manifestHash?: string;
-  onNavigate: (tab: "jurisdiction" | "risk" | "evidence" | "counsel") => void;
+  onNavigate: (tab: WorkspaceActionTarget) => void;
 };
 
 export function RegulatoryCommandCenter({
@@ -18,6 +20,7 @@ export function RegulatoryCommandCenter({
   audit,
   graph,
   sourceReview,
+  actionQueue,
   manifestHash,
   onNavigate
 }: RegulatoryCommandCenterProps) {
@@ -46,6 +49,30 @@ export function RegulatoryCommandCenter({
         <ShieldCheck size={18} aria-hidden="true" />
         <span>{graph.notLegalAdviceBoundary}</span>
       </div>
+
+      <section className="workspace-action-queue" aria-label="Workspace Action Queue">
+        <div className="reg-section-title">
+          <ListChecks size={17} aria-hidden="true" />
+          <h3>Workspace Action Queue</h3>
+          <span className="action-count">{actionQueue.summary.totalCount} open</span>
+        </div>
+        <p>{actionQueue.notLegalAdviceBoundary}</p>
+        <div className="workspace-action-list">
+          {actionQueue.items.slice(0, 4).map((item) => (
+            <article key={item.id} className={`workspace-action-item ${item.priority.toLowerCase()}`}>
+              <header>
+                <span>{item.priority}</span>
+                <strong>{item.title}</strong>
+              </header>
+              <p>{item.summary}</p>
+              <button type="button" className="secondary" onClick={() => onNavigate(item.target)}>
+                <ListChecks size={14} aria-hidden="true" />
+                {item.cta}
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="reg-command-metrics" aria-label="Regulatory readiness metrics">
         <Metric label="Jurisdictions" value={graph.jurisdictionSummaries.length} helper={project.jurisdictions.join(", ") || "not set"} />

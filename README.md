@@ -43,7 +43,7 @@ Key evidence:
 - Human Review queue with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
-- Regulatory Command Center first screen with jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
+- Regulatory Command Center first screen with a Workspace Action Queue, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
 - Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, UK FCA, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
@@ -69,9 +69,11 @@ The Demo Scenario Library turns seeded synthetic profiles into runnable judging 
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
-The Regulatory Command Center turns project facts into source-backed jurisdiction triggers, source review freshness, evidence gaps, and local counsel handoff status without making legal conclusions.
+The Regulatory Command Center turns project facts into a first-screen Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, evidence gaps, and local counsel handoff status without making legal conclusions.
 
 ![Regulatory Command Center](docs/assets/screenshots/regulatory-command-center.png)
+
+![Workspace Action Queue](docs/assets/screenshots/workspace-action-queue.png)
 
 ![Regulatory Source Review Ledger](docs/assets/screenshots/regulatory-source-review-ledger.png)
 
@@ -210,7 +212,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, or **Public source education review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
-3. Review the **Regulatory Command Center** for jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary.
+3. Review the **Regulatory Command Center** for the **Workspace Action Queue**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. Use queue buttons to jump directly to evidence, model, review, or export recovery work.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
 5. Open **AI Review** to inspect Model Access Workflow, Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.

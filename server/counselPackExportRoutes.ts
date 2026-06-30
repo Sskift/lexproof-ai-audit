@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createCounselPackExportRecord } from "./counselPackExportService.js";
+import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { createAuditLogRecord, type CounselPackExportRecord } from "../src/lib/phase2Types.js";
 
@@ -53,10 +54,14 @@ export function registerCounselPackExportRoutes(server: FastifyInstance, options
 
         return reply.status(201).send(record);
       } catch (error) {
-        return reply.status(400).send({
-          error: error instanceof Error ? error.message : "Counsel Pack export record creation failed.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "COUNSEL_PACK_EXPORT_CREATE_FAILED",
+            fallbackMessage: "Counsel Pack export record creation failed.",
+            recoveryAction: "Remove raw content and blocked data classes, then retry with manifest and artifact hashes only."
+          })
+        );
       }
     }
   );
@@ -70,7 +75,7 @@ export function registerCounselPackExportRoutes(server: FastifyInstance, options
     async (request, reply) => {
       const record = await repository.findCounselPackExportRecord(request.params.workspaceId, request.params.exportId);
       if (!record) {
-        return reply.status(404).send({ error: "Counsel Pack export record not found." });
+        return reply.status(404).send(createCounselPackExportNotFoundError());
       }
       return record;
     }
@@ -95,3 +100,12 @@ type CounselPackExportRequestBody = {
   rawContent?: string;
   content?: string;
 };
+
+function createCounselPackExportNotFoundError() {
+  return createApiErrorResponse({
+    error: new Error("Counsel Pack export record not found."),
+    code: "COUNSEL_PACK_EXPORT_NOT_FOUND",
+    fallbackMessage: "Counsel Pack export record not found.",
+    recoveryAction: "Create a Counsel Pack export record before lookup or verify the export ID."
+  });
+}

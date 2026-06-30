@@ -177,7 +177,7 @@ The first Counsel Pack export-record routes are implemented in `server/counselPa
 - `GET /api/workspaces/:workspaceId/exports`
 - `GET /api/workspaces/:workspaceId/exports/:exportId`
 
-The POST route creates a metadata-only server record from the latest local Counsel Pack version. It validates SHA-256 manifest and artifact hashes, version metadata, artifact size, source count, review summary, credential blockers, raw KYC/personal-data blockers, and raw Markdown/PDF content blockers before persistence. Successful records include the Not legal advice boundary and append an audit-log record. The routes intentionally do not render exports server-side or persist raw Counsel Pack content.
+The POST route creates a metadata-only server record from the latest local Counsel Pack version. It validates SHA-256 manifest and artifact hashes, version metadata, artifact size, source count, review summary, credential blockers, raw KYC/personal-data blockers, and raw Markdown/PDF content blockers before persistence. Successful records include the Not legal advice boundary and append an audit-log record. Unsafe create payloads and missing export lookups return typed error codes, recovery guidance, and the audit-prep boundary. The routes intentionally do not render exports server-side or persist raw Counsel Pack content.
 
 ## Audit Log Route
 
@@ -222,7 +222,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Workspace route-module registration independently from the full app composition
-- Shared typed API error helper plus Workspace and Model Gateway error code responses
+- Shared typed API error helper plus Workspace, Model Gateway, and Counsel Pack export error code responses
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition

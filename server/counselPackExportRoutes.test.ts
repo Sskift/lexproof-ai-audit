@@ -115,10 +115,34 @@ describe("Counsel Pack export route module", () => {
     expect(response.json()).toEqual({
       error:
         "Manifest hash must be a SHA-256 hex digest. Artifact hash must be a SHA-256 hex digest. Counsel Pack export records must not include raw KYC or personal data. Counsel Pack export records must not include API keys, private keys, or credential material. Server export records accept hashes and metadata only, not raw Markdown or PDF content.",
+      code: "COUNSEL_PACK_EXPORT_CREATE_FAILED",
+      recoveryAction: "Remove raw content and blocked data classes, then retry with manifest and artifact hashes only.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
     expect(response.body).not.toContain("sk-live-secret");
     expect(response.body.toLowerCase()).not.toContain("api_key");
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("returns a typed audit-prep error for missing export lookups", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerCounselPackExportRoutes(server, { repository });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-export-routes/exports/missing-export"
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      error: "Counsel Pack export record not found.",
+      code: "COUNSEL_PACK_EXPORT_NOT_FOUND",
+      recoveryAction: "Create a Counsel Pack export record before lookup or verify the export ID.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
 
     await server.close();
     await repository.close();

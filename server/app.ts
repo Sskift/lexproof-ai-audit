@@ -4,7 +4,10 @@ import Fastify from "fastify";
 import { createCounselPackExportRecord } from "./counselPackExportService.js";
 import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
-import { createEvidenceVaultStatusEffectFromHumanReview } from "../src/lib/serverHumanReviewEffects.js";
+import {
+  createEvidenceVaultStatusEffectFromHumanReview,
+  createModelGatewayReviewStatusEffectFromHumanReview
+} from "../src/lib/serverHumanReviewEffects.js";
 import { createServerHumanReviewQueueView, type ServerHumanReviewQueueFilters } from "../src/lib/serverHumanReviewQueue.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
@@ -545,6 +548,17 @@ export function buildServer(options: BuildServerOptions = {}) {
         ? await repository.findEvidenceVaultRecord(request.params.workspaceId, evidenceEffect.targetEvidenceId)
         : null;
       let updatedEvidence: EvidenceVaultRecord | null = null;
+      const modelRunEffect = createModelGatewayReviewStatusEffectFromHumanReview(updated);
+      const existingModelRun = modelRunEffect
+        ? await repository.findModelGatewayRun(request.params.workspaceId, modelRunEffect.targetRunId)
+        : null;
+      const updatedModelRun =
+        modelRunEffect && existingModelRun && existingModelRun.humanReviewStatus !== modelRunEffect.nextStatus
+          ? {
+              ...existingModelRun,
+              humanReviewStatus: modelRunEffect.nextStatus
+            }
+          : null;
 
       if (evidenceEffect && existingEvidence && existingEvidence.status !== evidenceEffect.nextStatus) {
         const transition = validateEvidenceVaultStatusTransition(existingEvidence.status, evidenceEffect.nextStatus);
@@ -589,6 +603,22 @@ export function buildServer(options: BuildServerOptions = {}) {
             beforeHash: sha256Hex(stableStringify(existingEvidence)),
             afterHash: sha256Hex(stableStringify(updatedEvidence)),
             summary: evidenceEffect.summary,
+            createdAt: updated.updatedAt
+          })
+        );
+      }
+      if (modelRunEffect && existingModelRun && updatedModelRun) {
+        await repository.saveModelGatewayRun(updatedModelRun);
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: updated.reviewerId,
+            action: "model.run.review-status.synced",
+            targetType: "model-run",
+            targetId: updatedModelRun.id,
+            beforeHash: sha256Hex(stableStringify(existingModelRun)),
+            afterHash: sha256Hex(stableStringify(updatedModelRun)),
+            summary: modelRunEffect.summary,
             createdAt: updated.updatedAt
           })
         );

@@ -351,6 +351,77 @@ describe("Phase 2 backend app", () => {
     await server.close();
   });
 
+  it("syncs model-run human review decisions back to Model Gateway receipts", async () => {
+    const server = buildServer();
+    const modelRunResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-model-review/model-runs",
+      payload: {
+        provider: "mock",
+        model: "lexproof-mock",
+        purpose: "Draft audit preparation issue spotting for counsel review.",
+        redactionStatus: "clean",
+        humanReviewOwner: "Counsel",
+        includesCredentialMaterial: false,
+        includesRawKycOrPersonalData: false,
+        allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
+        payload: {
+          projectName: "YieldPassport",
+          issue: "Summarize model-run review status only."
+        }
+      }
+    });
+    expect(modelRunResponse.statusCode).toBe(201);
+    expect(modelRunResponse.json()).toEqual(expect.objectContaining({ humanReviewStatus: "needs-review" }));
+
+    const reviewResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-model-review/reviews",
+      payload: {
+        targetType: "model-run",
+        targetId: modelRunResponse.json().id,
+        reviewerId: "Counsel",
+        comment: "Review model output before audit-prep reliance."
+      }
+    });
+    expect(reviewResponse.statusCode).toBe(201);
+
+    const reviewedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-model-review/reviews/${reviewResponse.json().id}`,
+      payload: {
+        status: "reviewed",
+        comment: "Reviewed for audit-prep reliance, not legal approval."
+      }
+    });
+    expect(reviewedResponse.statusCode).toBe(200);
+
+    const modelRunLookup = await server.inject({
+      method: "GET",
+      url: `/api/workspaces/workspace-model-review/model-runs/${modelRunResponse.json().id}`
+    });
+    expect(modelRunLookup.statusCode).toBe(200);
+    expect(modelRunLookup.json()).toEqual(expect.objectContaining({ id: modelRunResponse.json().id, humanReviewStatus: "reviewed" }));
+
+    const modelRunList = await server.inject({ method: "GET", url: "/api/workspaces/workspace-model-review/model-runs" });
+    expect(modelRunList.json()).toEqual([expect.objectContaining({ id: modelRunResponse.json().id, humanReviewStatus: "reviewed", requiresHumanReview: false })]);
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-model-review/audit-log" });
+    expect(auditResponse.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: "human-review.updated", targetId: reviewResponse.json().id }),
+        expect.objectContaining({
+          action: "model.run.review-status.synced",
+          targetType: "model-run",
+          targetId: modelRunResponse.json().id,
+          summary: "Human Review marked model run reviewed for audit-prep reliance."
+        })
+      ])
+    );
+
+    await server.close();
+  });
+
   it("creates and reads metadata-only Counsel Pack export records with audit logs", async () => {
     const server = buildServer();
 

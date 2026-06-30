@@ -553,14 +553,14 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 - create review requests for deterministic risk flags, evidence records, model runs, and counsel packs
 - expose queue views filtered by target type, status, and reviewer for operational triage
 - let reviewers mark items as `under-review`, `reviewed`, `rejected`, or `needs-more-evidence`
-- sync evidence-target review decisions back to Evidence Vault status metadata
+- sync evidence-target and model-run-target review decisions back to linked workflow metadata
 - preserve comments, reviewer identity, due dates, status history, and audit-log IDs as workflow metadata
 - export a review timeline JSON for counsel/compliance handoff
 - include human-review status in exports
 
 Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
 
-`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `src/lib/serverHumanReviewQueue.ts` creates metadata-only server queue views with target/status/reviewer counts and next actions. `src/lib/serverHumanReviewEffects.ts` maps evidence-target review decisions to Evidence Vault status updates without treating review as legal approval. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository, returns filtered queue views, syncs linked evidence status when applicable, and appends audit-log records for create/update/sync actions.
+`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `src/lib/serverHumanReviewQueue.ts` creates metadata-only server queue views with target/status/reviewer counts and next actions. `src/lib/serverHumanReviewEffects.ts` maps evidence-target review decisions to Evidence Vault status updates and model-run-target decisions to Model Gateway `humanReviewStatus` updates without treating review as legal approval. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository, returns filtered queue views, syncs linked evidence/model-run status when applicable, and appends audit-log records for create/update/sync actions.
 
 ### Counsel Pack Export Record Responsibilities
 
@@ -648,7 +648,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing
-- Phase 2 Model Gateway adapter readiness, mock run routes, persisted Human Review routes, filtered server-side review queue views, and evidence-target review status sync
+- Phase 2 Model Gateway adapter readiness, mock run routes, persisted Human Review routes, filtered server-side review queue views, and linked evidence/model-run review status sync
 - Phase 2 Counsel Pack export-record creation, route validation, repository persistence, and audit-log creation
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation

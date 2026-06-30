@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createEvidenceVaultStatusEffectFromHumanReview } from "./serverHumanReviewEffects";
+import {
+  createEvidenceVaultStatusEffectFromHumanReview,
+  createModelGatewayReviewStatusEffectFromHumanReview
+} from "./serverHumanReviewEffects";
 import type { HumanReviewRecord } from "./phase2Types";
 
 describe("server human review effects", () => {
@@ -35,6 +38,37 @@ describe("server human review effects", () => {
     ).toBeNull();
   });
 
+  it("maps model-run review statuses to Model Gateway human-review status updates", () => {
+    expect(
+      createModelGatewayReviewStatusEffectFromHumanReview(
+        createReview({ targetType: "model-run", targetId: "model-gateway-run-1", status: "reviewed" })
+      )
+    ).toEqual({
+      targetRunId: "model-gateway-run-1",
+      nextStatus: "reviewed",
+      summary: "Human Review marked model run reviewed for audit-prep reliance.",
+      notLegalAdviceBoundary: "Not legal advice. Human review effects update audit preparation workflow metadata only."
+    });
+    expect(
+      createModelGatewayReviewStatusEffectFromHumanReview(
+        createReview({ targetType: "model-run", targetId: "model-gateway-run-1", status: "rejected" })
+      )
+    ).toEqual(expect.objectContaining({ targetRunId: "model-gateway-run-1", nextStatus: "rejected" }));
+    expect(
+      createModelGatewayReviewStatusEffectFromHumanReview(
+        createReview({ targetType: "model-run", targetId: "model-gateway-run-1", status: "needs-more-evidence" })
+      )
+    ).toEqual(expect.objectContaining({ targetRunId: "model-gateway-run-1", nextStatus: "needs-review" }));
+  });
+
+  it("does not create a Model Gateway effect for non-model-run review targets", () => {
+    expect(
+      createModelGatewayReviewStatusEffectFromHumanReview(
+        createReview({ targetType: "evidence", targetId: "evidence-vault-1", status: "reviewed" })
+      )
+    ).toBeNull();
+  });
+
   it("keeps the effect as workflow metadata, not legal approval", () => {
     const effect = createEvidenceVaultStatusEffectFromHumanReview(
       createReview({ targetType: "evidence", targetId: "evidence-vault-1", status: "reviewed" })
@@ -42,6 +76,13 @@ describe("server human review effects", () => {
 
     expect(JSON.stringify(effect).toLowerCase()).not.toContain("approved");
     expect(effect?.notLegalAdviceBoundary).toContain("Not legal advice");
+    expect(
+      JSON.stringify(
+        createModelGatewayReviewStatusEffectFromHumanReview(
+          createReview({ targetType: "model-run", targetId: "model-gateway-run-1", status: "reviewed" })
+        )
+      ).toLowerCase()
+    ).not.toContain("approved");
   });
 });
 

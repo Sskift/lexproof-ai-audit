@@ -167,7 +167,7 @@ The first Human Review routes are implemented in `server/app.ts` and backed by `
 - `GET /api/workspaces/:workspaceId/reviews`
 - `GET /api/workspaces/:workspaceId/reviews/queue`
 
-The current routes support create, update, list, filtered queue-view behavior, and evidence-target status sync through the repository. The queue view groups review records by target type, status, and reviewer, then returns operational next actions for evidence, model-run, risk-flag, and counsel-pack review triage. When an evidence-target review is marked `needs-more-evidence`, `under-review`, `reviewed`, or `rejected`, the linked Evidence Vault record is moved to the corresponding workflow status and an audit-log record is appended. Review decisions remain workflow metadata, not signed legal approvals.
+The current routes support create, update, list, filtered queue-view behavior, and linked target status sync through the repository. The queue view groups review records by target type, status, and reviewer, then returns operational next actions for evidence, model-run, risk-flag, and counsel-pack review triage. When an evidence-target review is marked `needs-more-evidence`, `under-review`, `reviewed`, or `rejected`, the linked Evidence Vault record is moved to the corresponding workflow status and an audit-log record is appended. When a model-run-target review is marked `reviewed` or `rejected`, the linked Model Gateway receipt updates `humanReviewStatus` and appends audit-log metadata. Review decisions remain workflow metadata, not signed legal approvals.
 
 ## Counsel Pack Export Record Routes
 
@@ -216,7 +216,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - raw KYC/personal-data blocking before evidence vault record creation
 - duplicate evidence hash blocking and rejected-evidence replacement lineage
 - mock Model Gateway route creation, listing, safe failure receipts, and boundary blocking
-- Human Review route creation, status update, listing, filtered queue summary, and linked Evidence Vault status sync
+- Human Review route creation, status update, listing, filtered queue summary, and linked Evidence Vault / Model Gateway status sync
 - Counsel Pack export-record creation, listing, lookup, metadata-only validation, and audit-log creation
 - Workspace create/read/update routes
 - multipart Evidence Vault upload/list/update/manifest routes
@@ -232,7 +232,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - model gateway boundary failures with retry state and remediation steps
 - deterministic human review records
 - server-side Human Review queue summaries
-- server-side Human Review effects on linked evidence status
+- server-side Human Review effects on linked evidence and model-run status
 - human review status updates and validation errors
 
 `server/counselPackExportService.test.ts` covers:

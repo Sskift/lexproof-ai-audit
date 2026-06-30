@@ -185,7 +185,7 @@ The first Audit Log route is implemented in `server/auditLogRoutes.ts` and backe
 
 - `GET /api/workspaces/:workspaceId/audit-log`
 
-Workspace creation/update, Evidence Vault upload/update/replacement, Model Gateway run creation/blocking/failure, Human Review creation/update, and Counsel Pack export-record creation append audit-log records. Audit logs are metadata-only records and are not real chain anchors or signed approvals.
+Workspace creation/update, Evidence Vault upload/update/replacement, Model Gateway run creation/blocking/failure, Human Review creation/update, and Counsel Pack export-record creation append audit-log records. Audit Log listing supports actor, action, target type, and target ID filters through `src/lib/auditLogFilters.ts`; unsupported target-type filters return typed recovery errors. Audit logs are metadata-only records and are not real chain anchors or signed approvals.
 
 ## Prisma Repository
 
@@ -220,14 +220,14 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - Counsel Pack export-record creation, listing, lookup, metadata-only validation, and audit-log creation
 - Workspace create/read/update routes
 - multipart Evidence Vault upload/list/update/manifest routes
-- Audit Log listing after workspace, evidence, model, review, and export workflow actions
+- Audit Log listing and filtering after workspace, evidence, model, review, and export workflow actions
 - Workspace route-module registration independently from the full app composition
-- Shared typed API error helper plus Workspace, Evidence Vault, Model Gateway, Human Review, and Counsel Pack export error code responses
+- Shared typed API error helper plus Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack export, and Audit Log filter error code responses
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition
 - Evidence Vault route-module registration independently from the full app composition
-- Audit Log route-module registration independently from the full app composition
+- Audit Log route-module registration and filter validation independently from the full app composition
 
 `server/reviewWorkspaceRepository.test.ts` covers:
 

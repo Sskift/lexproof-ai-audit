@@ -32,8 +32,20 @@ describe("Audit Log route module", () => {
       summary: "Updated human review status to reviewed.",
       createdAt: "2026-06-30T00:01:00.000Z"
     });
+    const thirdRecord = createAuditLogRecord({
+      workspaceId: "workspace-audit-routes",
+      actorId: "Counsel",
+      action: "evidence.updated",
+      targetType: "evidence",
+      targetId: "evidence-1",
+      beforeHash: "received",
+      afterHash: "verified",
+      summary: "Updated evidence status to verified.",
+      createdAt: "2026-06-30T00:02:00.000Z"
+    });
     await repository.appendAuditLogRecord(firstRecord);
     await repository.appendAuditLogRecord(secondRecord);
+    await repository.appendAuditLogRecord(thirdRecord);
 
     const response = await server.inject({
       method: "GET",
@@ -54,6 +66,12 @@ describe("Audit Log route module", () => {
         action: "human-review.updated",
         targetType: "human-review",
         notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
+      }),
+      expect.objectContaining({
+        id: thirdRecord.id,
+        action: "evidence.updated",
+        targetType: "evidence",
+        notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
       })
     ]);
     expect(response.body.toLowerCase()).not.toContain("api_key");
@@ -65,6 +83,25 @@ describe("Audit Log route module", () => {
     });
     expect(emptyResponse.statusCode).toBe(200);
     expect(emptyResponse.json()).toEqual([]);
+
+    const filteredResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-audit-routes/audit-log?actorId=Counsel&targetType=evidence&action=evidence.updated&targetId=evidence-1"
+    });
+    expect(filteredResponse.statusCode).toBe(200);
+    expect(filteredResponse.json()).toEqual([expect.objectContaining({ id: thirdRecord.id, actorId: "Counsel", targetType: "evidence" })]);
+
+    const invalidFilterResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-audit-routes/audit-log?targetType=legal-opinion"
+    });
+    expect(invalidFilterResponse.statusCode).toBe(400);
+    expect(invalidFilterResponse.json()).toEqual({
+      error: "Audit log target type must be workspace, evidence, model-run, human-review, or export.",
+      code: "AUDIT_LOG_FILTER_FAILED",
+      recoveryAction: "Use supported audit log filters for actorId, action, targetType, or targetId.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
 
     await server.close();
     await repository.close();

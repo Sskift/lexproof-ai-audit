@@ -21,6 +21,8 @@ const baseInput = {
     open: 6
   },
   sourceCount: 4,
+  sourcePackHash: "c".repeat(64),
+  sourceReviewStatus: "review-due" as const,
   createdBy: "Compliance",
   includesRawKycOrPersonalData: false,
   includesCredentialMaterial: false,
@@ -54,6 +56,8 @@ describe("counsel pack export service", () => {
         open: 6
       },
       sourceCount: 4,
+      sourcePackHash: "c".repeat(64),
+      sourceReviewStatus: "review-due",
       createdBy: "Compliance",
       status: "ready",
       createdAt: "2026-06-30T08:30:00.000Z",
@@ -69,6 +73,7 @@ describe("counsel pack export service", () => {
         ...baseInput,
         manifestHash: "not-a-hash",
         artifactHash: "also-not-a-hash",
+        sourcePackHash: "not-a-source-pack-hash",
         includesRawKycOrPersonalData: true,
         includesCredentialMaterial: true,
         rawMarkdown: "# Counsel Pack\n\nsk-live-secret should never be accepted"
@@ -77,6 +82,7 @@ describe("counsel pack export service", () => {
       [
         "Manifest hash must be a SHA-256 hex digest.",
         "Artifact hash must be a SHA-256 hex digest.",
+        "Source pack hash must be a SHA-256 hex digest.",
         "Counsel Pack export records must not include raw KYC or personal data.",
         "Counsel Pack export records must not include API keys, private keys, or credential material.",
         "Server export records accept hashes and metadata only, not raw Markdown or PDF content."

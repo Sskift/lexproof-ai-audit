@@ -26,6 +26,18 @@ const versionRecord: CounselPackVersionRecord = {
     { title: "SEC Framework", url: "https://www.sec.gov/" },
     { title: "CFTC Advisory", url: "https://www.cftc.gov/" }
   ],
+  regulatorySourcePack: {
+    packVersion: "lexproof-regulatory-source-pack-v1",
+    packHash: "c".repeat(64),
+    sourceCount: 6,
+    evidenceGapCount: 2,
+    sourceReviewStatus: "review-due",
+    currentSourceCount: 5,
+    reviewDueCount: 1,
+    metadataMissingCount: 0,
+    reviewWindowDays: 90,
+    notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only."
+  },
   exportedAt: "2026-06-30T08:30:00.000Z",
   notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
 };
@@ -45,6 +57,8 @@ describe("counsel pack export client", () => {
         riskLevel: "critical",
         reviewSummary: versionRecord.reviewSummary,
         sourceCount: 2,
+        sourcePackHash: "c".repeat(64),
+        sourceReviewStatus: "review-due",
         createdBy: "Compliance",
         includesRawKycOrPersonalData: false,
         includesCredentialMaterial: false

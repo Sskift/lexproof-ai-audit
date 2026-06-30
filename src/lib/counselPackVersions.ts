@@ -2,6 +2,7 @@ import type { AuditResult } from "./auditEngine";
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
+import type { RegulatorySourcePack } from "./regulatorySourcePack";
 
 export type CounselPackReviewSummary = {
   total: number;
@@ -25,12 +26,26 @@ export type CounselPackSourceSnapshot = {
   url: string;
 };
 
+export type CounselPackRegulatorySourcePackSnapshot = {
+  packVersion: RegulatorySourcePack["packVersion"];
+  packHash: string;
+  sourceCount: number;
+  evidenceGapCount: number;
+  sourceReviewStatus: RegulatorySourcePack["sourceReview"]["status"];
+  currentSourceCount: number;
+  reviewDueCount: number;
+  metadataMissingCount: number;
+  reviewWindowDays: number;
+  notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only.";
+};
+
 export type CounselPackVersionDiff = {
   diffVersion: "lexproof-counsel-pack-version-diff-v1";
   previousVersion: number;
   nextVersion: number;
   manifestHashChanged: boolean;
   markdownHashChanged: boolean;
+  regulatorySourcePackHashChanged: boolean;
   reviewStatusChanges: Array<{
     flagId: string;
     title: string;
@@ -57,6 +72,7 @@ export type CounselPackVersionRecord = {
   reviewSummary: CounselPackReviewSummary;
   reviewStatuses: CounselPackReviewStatusSnapshot[];
   sourcePack: CounselPackSourceSnapshot[];
+  regulatorySourcePack?: CounselPackRegulatorySourcePackSnapshot;
   exportedAt: string;
   diffFromPrevious?: CounselPackVersionDiff;
   notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only.";
@@ -66,6 +82,7 @@ export type CreateCounselPackVersionRecordInput = {
   project: ProjectProfile;
   audit: AuditResult;
   manifest: EvidenceManifest;
+  regulatorySourcePack?: RegulatorySourcePack | null;
   markdown: string;
   counselReviews: CounselReviewItem[];
   previousVersions?: CounselPackVersionRecord[];
@@ -76,6 +93,7 @@ export async function createCounselPackVersionRecord({
   project,
   audit,
   manifest,
+  regulatorySourcePack,
   markdown,
   counselReviews,
   previousVersions = [],
@@ -90,9 +108,11 @@ export async function createCounselPackVersionRecord({
       manifestHash: manifest.bundleHash,
       markdownHash,
       projectId: project.id,
+      sourcePackHash: regulatorySourcePack?.packHash ?? "",
       version
     })
   );
+  const regulatorySourcePackSnapshot = regulatorySourcePack ? snapshotRegulatorySourcePack(regulatorySourcePack) : undefined;
   const baseRecord: CounselPackVersionRecord = {
     recordVersion: "lexproof-counsel-pack-version-v1",
     id: `counsel-pack-version-${idHash.slice(0, 16)}`,
@@ -110,6 +130,7 @@ export async function createCounselPackVersionRecord({
       title: source.title,
       url: source.url
     })),
+    ...(regulatorySourcePackSnapshot ? { regulatorySourcePack: regulatorySourcePackSnapshot } : {}),
     exportedAt,
     notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
   };
@@ -150,6 +171,8 @@ export function createCounselPackDiff(
   const removedSourceCount = [...previousSources].filter((source) => !nextSources.has(source)).length;
   const manifestHashChanged = previous.manifestHash !== next.manifestHash;
   const markdownHashChanged = previous.markdownHash !== next.markdownHash;
+  const regulatorySourcePackHashChanged =
+    (previous.regulatorySourcePack?.packHash ?? "") !== (next.regulatorySourcePack?.packHash ?? "");
 
   return {
     diffVersion: "lexproof-counsel-pack-version-diff-v1",
@@ -157,12 +180,14 @@ export function createCounselPackDiff(
     nextVersion: next.version,
     manifestHashChanged,
     markdownHashChanged,
+    regulatorySourcePackHashChanged,
     reviewStatusChanges,
     addedSourceCount,
     removedSourceCount,
     summary: [
       manifestHashChanged ? "Manifest changed" : "Manifest unchanged",
       markdownHashChanged ? "Markdown changed" : "Markdown unchanged",
+      regulatorySourcePackHashChanged ? "Source pack changed" : "Source pack unchanged",
       `${reviewStatusChanges.length} review status ${reviewStatusChanges.length === 1 ? "changed" : "changes"}`,
       `${addedSourceCount} sources added`,
       `${removedSourceCount} sources removed.`
@@ -215,6 +240,21 @@ function snapshotReviewStatus(review: CounselReviewItem): CounselPackReviewStatu
     status: review.status,
     reviewer: review.reviewer,
     evidenceSummary: review.evidenceSummary
+  };
+}
+
+function snapshotRegulatorySourcePack(pack: RegulatorySourcePack): CounselPackRegulatorySourcePackSnapshot {
+  return {
+    packVersion: pack.packVersion,
+    packHash: pack.packHash,
+    sourceCount: pack.sourceCount,
+    evidenceGapCount: pack.evidenceGapCount,
+    sourceReviewStatus: pack.sourceReview.status,
+    currentSourceCount: pack.sourceReview.currentSourceCount,
+    reviewDueCount: pack.sourceReview.reviewDueCount,
+    metadataMissingCount: pack.sourceReview.metadataMissingCount,
+    reviewWindowDays: pack.sourceReview.reviewWindowDays,
+    notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only."
   };
 }
 

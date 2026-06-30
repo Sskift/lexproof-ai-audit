@@ -403,6 +403,8 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
       "riskLevel" TEXT NOT NULL,
       "reviewSummaryJson" TEXT NOT NULL,
       "sourceCount" INTEGER NOT NULL,
+      "sourcePackHash" TEXT NOT NULL DEFAULT '',
+      "sourceReviewStatus" TEXT NOT NULL DEFAULT 'metadata-missing',
       "createdBy" TEXT NOT NULL,
       "status" TEXT NOT NULL,
       "createdAt" DATETIME NOT NULL,
@@ -412,6 +414,8 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
   await prisma.$executeRawUnsafe(
     `CREATE INDEX IF NOT EXISTS "CounselPackExportRecord_workspaceId_idx" ON "CounselPackExportRecord"("workspaceId");`
   );
+  await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourcePackHash", "TEXT NOT NULL DEFAULT ''");
+  await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourceReviewStatus", "TEXT NOT NULL DEFAULT 'metadata-missing'");
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "AuditLogRecord" (
@@ -720,6 +724,8 @@ function serializeCounselPackExportRecord(record: CounselPackExportRecord) {
     riskLevel: record.riskLevel,
     reviewSummaryJson: JSON.stringify(record.reviewSummary),
     sourceCount: record.sourceCount,
+    sourcePackHash: record.sourcePackHash,
+    sourceReviewStatus: record.sourceReviewStatus,
     createdBy: record.createdBy,
     status: record.status,
     createdAt: new Date(record.createdAt),
@@ -742,6 +748,8 @@ type PersistedCounselPackExportRecord = {
   riskLevel: string;
   reviewSummaryJson: string;
   sourceCount: number;
+  sourcePackHash?: string | null;
+  sourceReviewStatus?: string | null;
   createdBy: string;
   status: string;
   createdAt: Date;
@@ -765,6 +773,8 @@ function deserializeCounselPackExportRecord(record: PersistedCounselPackExportRe
     riskLevel: record.riskLevel as CounselPackExportRecord["riskLevel"],
     reviewSummary: parseCounselPackExportReviewSummary(record.reviewSummaryJson),
     sourceCount: record.sourceCount,
+    sourcePackHash: record.sourcePackHash ?? "",
+    sourceReviewStatus: parseCounselPackExportSourceReviewStatus(record.sourceReviewStatus),
     createdBy: record.createdBy,
     status: "ready",
     createdAt: record.createdAt.toISOString(),
@@ -795,6 +805,13 @@ function parseCounselPackExportReviewSummary(payload: string): CounselPackExport
   } catch {
     return fallback;
   }
+}
+
+function parseCounselPackExportSourceReviewStatus(value: string | null | undefined): CounselPackExportRecord["sourceReviewStatus"] {
+  if (value === "current" || value === "review-due" || value === "metadata-missing") {
+    return value;
+  }
+  return "metadata-missing";
 }
 
 function serializeAuditLogRecord(record: AuditLogRecord) {

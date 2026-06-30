@@ -682,6 +682,9 @@ export default function App() {
     if (!manifest) {
       throw new Error("Evidence manifest is still calculating.");
     }
+    if (!regulatorySourcePack) {
+      throw new Error("Regulatory Source Pack is still calculating.");
+    }
     if (!dataBoundaryReport.exportAllowed) {
       throw new Error("Export Safety Gate blocked this Counsel Pack. Remove blocked materials before saving a version.");
     }
@@ -690,6 +693,7 @@ export default function App() {
       project,
       audit,
       manifest,
+      regulatorySourcePack,
       markdown,
       counselReviews: currentCounselReviews,
       previousVersions: currentCounselPackVersions

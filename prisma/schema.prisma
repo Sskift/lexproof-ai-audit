@@ -99,6 +99,8 @@ model CounselPackExportRecord {
   riskLevel              String
   reviewSummaryJson      String
   sourceCount            Int
+  sourcePackHash         String   @default("")
+  sourceReviewStatus     String   @default("metadata-missing")
   createdBy              String
   status                 String
   createdAt              DateTime

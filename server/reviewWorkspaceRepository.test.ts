@@ -144,6 +144,8 @@ describe("Prisma review workspace repository", () => {
         open: 6
       },
       sourceCount: 4,
+      sourcePackHash: "c".repeat(64),
+      sourceReviewStatus: "current",
       createdBy: "Compliance",
       includesRawKycOrPersonalData: false,
       includesCredentialMaterial: false,

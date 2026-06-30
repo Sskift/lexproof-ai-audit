@@ -1516,7 +1516,9 @@ describe("App", () => {
           manifestHash: expect.stringMatching(/^[a-f0-9]{64}$/),
           artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/),
           includesRawKycOrPersonalData: false,
-          includesCredentialMaterial: false
+          includesCredentialMaterial: false,
+          sourcePackHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          sourceReviewStatus: expect.stringMatching(/^(current|review-due|metadata-missing)$/)
         })
       );
       expect(JSON.stringify(body)).not.toContain("# Counsel Pack");
@@ -1538,6 +1540,8 @@ describe("App", () => {
           riskLevel: body.riskLevel,
           reviewSummary: body.reviewSummary,
           sourceCount: body.sourceCount,
+          sourcePackHash: body.sourcePackHash,
+          sourceReviewStatus: body.sourceReviewStatus,
           createdBy: body.createdBy,
           status: "ready",
           createdAt: "2026-06-30T08:30:00.000Z",

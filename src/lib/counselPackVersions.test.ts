@@ -9,6 +9,7 @@ import {
   exportCounselPackVersionJson
 } from "./counselPackVersions";
 import type { ProjectProfile } from "./projectModel";
+import type { RegulatorySourcePack } from "./regulatorySourcePack";
 
 const project: ProjectProfile = {
   id: "project-export",
@@ -74,12 +75,37 @@ const reviews: CounselReviewItem[] = [
   }
 ];
 
+const regulatorySourcePack: RegulatorySourcePack = {
+  packVersion: "lexproof-regulatory-source-pack-v1",
+  projectId: project.id,
+  generatedAt: "2026-06-30T00:15:00.000Z",
+  sourceCount: 4,
+  evidenceGapCount: 2,
+  jurisdictionSummaries: [],
+  clauses: [],
+  evidenceGaps: [],
+  sourceReview: {
+    status: "current",
+    totalSourceCount: 4,
+    currentSourceCount: 4,
+    reviewDueCount: 0,
+    metadataMissingCount: 0,
+    reviewWindowDays: 90,
+    items: [],
+    actions: [],
+    notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only."
+  },
+  packHash: "c".repeat(64),
+  notLegalAdviceBoundary: "Not legal advice. Regulatory source packs are audit preparation materials only."
+};
+
 describe("counsel pack version records", () => {
-  it("creates deterministic version records with manifest hash, source pack, review summary, and non-advice boundary", async () => {
+  it("creates deterministic version records with manifest hash, regulatory source pack hash, review summary, and non-advice boundary", async () => {
     const record = await createCounselPackVersionRecord({
       project,
       audit,
       manifest,
+      regulatorySourcePack,
       markdown: "# Counsel Pack\n\nNot legal advice.",
       counselReviews: reviews,
       previousVersions: [],
@@ -124,6 +150,18 @@ describe("counsel pack version records", () => {
           url: "https://www.cftc.gov/"
         }
       ],
+      regulatorySourcePack: {
+        packVersion: "lexproof-regulatory-source-pack-v1",
+        packHash: "c".repeat(64),
+        sourceCount: 4,
+        evidenceGapCount: 2,
+        sourceReviewStatus: "current",
+        currentSourceCount: 4,
+        reviewDueCount: 0,
+        metadataMissingCount: 0,
+        reviewWindowDays: 90,
+        notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only."
+      },
       exportedAt: "2026-06-30T01:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
     });
@@ -135,6 +173,7 @@ describe("counsel pack version records", () => {
       project,
       audit,
       manifest,
+      regulatorySourcePack,
       markdown: "# Counsel Pack\n\nVersion one.",
       counselReviews: reviews,
       previousVersions: [],
@@ -144,6 +183,7 @@ describe("counsel pack version records", () => {
       project,
       audit,
       manifest: { ...manifest, bundleHash: "b".repeat(64), itemCount: 2 },
+      regulatorySourcePack: { ...regulatorySourcePack, packHash: "d".repeat(64), evidenceGapCount: 3 },
       markdown: "# Counsel Pack\n\nVersion two.",
       counselReviews: [{ ...reviews[0], status: "reviewed", reviewerNote: "Reviewed for handoff." }],
       previousVersions: [previous],
@@ -157,6 +197,7 @@ describe("counsel pack version records", () => {
       nextVersion: 2,
       manifestHashChanged: true,
       markdownHashChanged: true,
+      regulatorySourcePackHashChanged: true,
       reviewStatusChanges: [
         {
           flagId: "custody",
@@ -167,7 +208,7 @@ describe("counsel pack version records", () => {
       ],
       addedSourceCount: 0,
       removedSourceCount: 0,
-      summary: "Manifest changed; Markdown changed; 1 review status changed; 0 sources added; 0 sources removed.",
+      summary: "Manifest changed; Markdown changed; Source pack changed; 1 review status changed; 0 sources added; 0 sources removed.",
       notLegalAdviceBoundary: "Not legal advice. Counsel Pack version diffs are audit preparation change metadata only."
     });
     expect(createCounselPackDiff(previous, next)).toEqual(next.diffFromPrevious);
@@ -178,6 +219,7 @@ describe("counsel pack version records", () => {
       project,
       audit,
       manifest,
+      regulatorySourcePack,
       markdown: "# Counsel Pack\n\nSensitive draft text should be hashed only.",
       counselReviews: reviews,
       previousVersions: [],

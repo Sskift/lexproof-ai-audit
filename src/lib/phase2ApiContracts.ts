@@ -267,6 +267,8 @@ model CounselPackExportRecord {
   riskLevel              String
   reviewSummaryJson      String
   sourceCount            Int
+  sourcePackHash         String
+  sourceReviewStatus     String
   createdBy              String
   status                 String
   createdAt              DateTime

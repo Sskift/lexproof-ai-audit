@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
-import type { CounselPackExportRecord, CounselPackExportReviewSummary } from "../src/lib/phase2Types.js";
+import type {
+  CounselPackExportRecord,
+  CounselPackExportReviewSummary,
+  CounselPackExportSourceReviewStatus
+} from "../src/lib/phase2Types.js";
 
 export type CreateCounselPackExportInput = {
   workspaceId: string;
@@ -14,6 +18,8 @@ export type CreateCounselPackExportInput = {
   riskLevel: CounselPackExportRecord["riskLevel"];
   reviewSummary: CounselPackExportReviewSummary;
   sourceCount: number;
+  sourcePackHash: string;
+  sourceReviewStatus: CounselPackExportSourceReviewStatus;
   createdBy: string;
   includesRawKycOrPersonalData: boolean;
   includesCredentialMaterial: boolean;
@@ -57,6 +63,8 @@ export function createCounselPackExportRecord(input: CreateCounselPackExportInpu
     riskLevel: input.riskLevel,
     reviewSummary: { ...input.reviewSummary },
     sourceCount: input.sourceCount,
+    sourcePackHash: input.sourcePackHash.trim(),
+    sourceReviewStatus: input.sourceReviewStatus,
     createdBy: input.createdBy.trim(),
     status: "ready",
     createdAt,
@@ -103,6 +111,14 @@ function validateCounselPackExportInput(input: CreateCounselPackExportInput): st
     errors.push("Source count cannot be negative.");
   }
 
+  if (!isSha256Hex(input.sourcePackHash)) {
+    errors.push("Source pack hash must be a SHA-256 hex digest.");
+  }
+
+  if (!["current", "review-due", "metadata-missing"].includes(input.sourceReviewStatus)) {
+    errors.push("Source review status must be current, review-due, or metadata-missing.");
+  }
+
   if (!input.createdBy.trim()) {
     errors.push("Export creator is required.");
   }
@@ -126,8 +142,8 @@ function hasRawArtifactContent(input: CreateCounselPackExportInput): boolean {
   return Boolean(input.rawMarkdown?.trim() || input.rawContent?.trim() || input.content?.trim());
 }
 
-function isSha256Hex(value: string): boolean {
-  return /^[a-f0-9]{64}$/i.test(value.trim());
+function isSha256Hex(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/i.test(value.trim());
 }
 
 function sha256Hex(payload: string): string {

@@ -444,6 +444,8 @@ function ServerExportRecordsPanel({
                 <VersionFact label="Manifest" value={shortHash(record.manifestHash)} />
                 <VersionFact label="Artifact" value={shortHash(record.artifactHash)} />
                 <VersionFact label="Sources" value={String(record.sourceCount)} />
+                <VersionFact label="Source Pack" value={shortHash(record.sourcePackHash)} />
+                <VersionFact label="Source Review" value={record.sourceReviewStatus} />
                 <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
               </div>
               <small>{record.notLegalAdviceBoundary}</small>
@@ -492,6 +494,8 @@ function CounselPackVersionsPanel({
                 <VersionFact label="Manifest" value={shortHash(record.manifestHash)} />
                 <VersionFact label="Markdown" value={shortHash(record.markdownHash)} />
                 <VersionFact label="Sources" value={String(record.sourcePack.length)} />
+                <VersionFact label="Source Pack" value={record.regulatorySourcePack ? shortHash(record.regulatorySourcePack.packHash) : "missing"} />
+                <VersionFact label="Source Review" value={record.regulatorySourcePack?.sourceReviewStatus ?? "metadata-missing"} />
                 <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
               </div>
               <p className="counsel-version-diff">
@@ -609,7 +613,10 @@ function VersionFact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function shortHash(value: string): string {
+function shortHash(value: string | undefined): string {
+  if (!value) {
+    return "missing";
+  }
   return value.length > 16 ? `${value.slice(0, 12)}...${value.slice(-4)}` : value;
 }
 

@@ -124,6 +124,8 @@ export type CounselPackExportReviewSummary = {
   open: number;
 };
 
+export type CounselPackExportSourceReviewStatus = "current" | "review-due" | "metadata-missing";
+
 export type CounselPackExportRecord = {
   recordVersion: "lexproof-counsel-pack-export-record-v1";
   id: string;
@@ -140,6 +142,8 @@ export type CounselPackExportRecord = {
   riskLevel: "low" | "moderate" | "high" | "critical";
   reviewSummary: CounselPackExportReviewSummary;
   sourceCount: number;
+  sourcePackHash: string;
+  sourceReviewStatus: CounselPackExportSourceReviewStatus;
   createdBy: string;
   status: "ready";
   createdAt: string;

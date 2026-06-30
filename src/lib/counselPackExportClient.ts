@@ -23,6 +23,9 @@ export async function createServerCounselPackExportRecord({
   if (!fetcher) {
     throw new Error("Fetch is required to create a server Counsel Pack export record.");
   }
+  if (!versionRecord.regulatorySourcePack?.packHash) {
+    throw new Error("Save a fresh Counsel Pack version with Regulatory Source Pack metadata before server export.");
+  }
 
   const response = await fetcher(buildWorkspaceUrl(apiBaseUrl, workspaceId, "exports/counsel-pack"), {
     method: "POST",
@@ -38,6 +41,8 @@ export async function createServerCounselPackExportRecord({
       riskLevel: versionRecord.riskLevel,
       reviewSummary: versionRecord.reviewSummary,
       sourceCount: versionRecord.sourcePack.length,
+      sourcePackHash: versionRecord.regulatorySourcePack.packHash,
+      sourceReviewStatus: versionRecord.regulatorySourcePack.sourceReviewStatus,
       createdBy: createdBy.trim() || "Compliance",
       includesRawKycOrPersonalData: false,
       includesCredentialMaterial: false

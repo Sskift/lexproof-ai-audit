@@ -578,8 +578,8 @@ Templates are audit-preparation routing aids only. They must not hide missing ev
 
 Owns Counsel Pack export version metadata:
 
-- `createCounselPackVersionRecord(project, audit, manifest, markdown, counselReviews, previousVersions)` stores export metadata with manifest hash, Markdown hash, review-status snapshot, source snapshot, export timestamp, and Not legal advice boundary.
-- `createCounselPackDiff(previous, next)` compares manifest hash, Markdown hash, source changes, and review-status changes between saved exports.
+- `createCounselPackVersionRecord(project, audit, manifest, regulatorySourcePack, markdown, counselReviews, previousVersions)` stores export metadata with manifest hash, Markdown hash, Regulatory Source Pack hash, source review status, review-status snapshot, source snapshot, export timestamp, and Not legal advice boundary.
+- `createCounselPackDiff(previous, next)` compares manifest hash, Markdown hash, Regulatory Source Pack hash, source changes, and review-status changes between saved exports.
 - `exportCounselPackVersionJson(record)` and `downloadCounselPackVersionJson(filename, record)` export metadata-only JSON.
 
 Version records intentionally do not store raw Markdown content, credentials, raw KYC, personal data, or legal conclusions. They are audit preparation export metadata only.
@@ -589,7 +589,7 @@ Version records intentionally do not store raw Markdown content, credentials, ra
 Owns the browser-to-Phase-2 API call for server export records:
 
 - `createServerCounselPackExportRecord(apiBaseUrl, workspaceId, versionRecord, createdBy)` maps the latest local Counsel Pack version into a metadata-only API request.
-- The request includes manifest hash, Markdown artifact hash, artifact size, review summary, source count, and the Not legal advice boundary.
+- The request includes manifest hash, Markdown artifact hash, artifact size, review summary, source count, Regulatory Source Pack hash, source review status, and the Not legal advice boundary.
 - It does not send raw Markdown, PDF bytes, credentials, raw KYC, or personal data.
 
 ### `src/data/sampleProfiles.ts`
@@ -712,7 +712,7 @@ Human review records are not signed legal opinions. They track audit preparation
 ### Counsel Pack Export Record Responsibilities
 
 - create server-side records for saved local Counsel Pack versions
-- persist version number, project title, artifact name, manifest hash, artifact hash, artifact size, risk level, review summary, source count, creator, status, timestamp, and Not legal advice boundary
+- persist version number, project title, artifact name, manifest hash, artifact hash, artifact size, risk level, review summary, source count, Regulatory Source Pack hash, source review status, creator, status, timestamp, and Not legal advice boundary
 - reject raw Markdown/PDF content, raw KYC/personal data, credential material, invalid hashes, and invalid artifact metadata
 - append audit-log records when a server export record is created
 
@@ -742,7 +742,7 @@ These capabilities remain simulated or local in the current codebase:
 - Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records use Prisma/SQLite in the API process.
 - Evidence Audit Trail is local browser metadata, not a signed external log.
 - Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
-- Server export records store hashes and metadata for a local Counsel Pack version, not the raw Markdown/PDF artifact.
+- Server export records store hashes, Regulatory Source Pack lineage metadata, and metadata for a local Counsel Pack version, not the raw Markdown/PDF artifact.
 - Manifest anchoring creates a simulated receipt and does not submit a transaction.
 - Model Intake and AI Review ledgers are local audit-prep metadata, not final model governance certification.
 

@@ -69,11 +69,13 @@ Key evidence:
 
 ## Product Screenshots
 
-The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts and Not legal advice boundaries, including RWA launch, DAO review, public-source review, AI legal workflow review, and Brazil VASP source review paths.
+The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts and Not legal advice boundaries, including RWA launch, DAO review, public-source review, AI legal workflow review, Brazil VASP source review, and marketing claims review paths.
 
 ![Demo Scenario Library](docs/assets/screenshots/demo-scenario-library-ai-workflow.png)
 
 ![Demo Scenario Library Brazil VASP path](docs/assets/screenshots/demo-scenario-library-brazil-vasp.png)
+
+![Demo Scenario Library marketing claims path](docs/assets/screenshots/demo-scenario-library-marketing-claims.png)
 
 Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, validated synthetic scenarios, no private credentials, current screenshot set, and a `/api/health` preflight for the Phase 2 API. Not legal advice.
 
@@ -94,6 +96,12 @@ The AI legal workflow scenario now routes `LexAssist Evidence Desk` into EU AI A
 Brazil projects now route to Banco Central virtual asset service and CVM crypto-asset securities source controls, with evidence gaps for authorization, AML/CFT, classification, disclosure, and investor communication. Not legal advice.
 
 ![Brazil regulatory source graph](docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png)
+
+The marketing claims scenario routes `SignalBridge Marketing Review` into UK FCA financial-promotion and UAE VARA marketing/access source controls, then opens the Marketing Claims Counsel Pack template with promotion approval gaps still visible. Not legal advice.
+
+![Marketing claims source graph](docs/assets/screenshots/demo-scenario-library-marketing-claims.png)
+
+![Marketing Claims Counsel Pack template](docs/assets/screenshots/counsel-pack-marketing-claims-template.png)
 
 ![Workspace Action Queue](docs/assets/screenshots/workspace-action-queue.png)
 
@@ -225,7 +233,7 @@ Sources now includes a generated Submission Pack JSON artifact for judges. It su
 
 The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
 
-1. Demo Scenario Library launch from a synthetic profile such as **High-risk RWA launch** or **Brazil VASP source review**.
+1. Demo Scenario Library launch from a synthetic profile such as **High-risk RWA launch**, **Brazil VASP source review**, or **Marketing claims review**.
 2. Workspace Journey review on the command center to show the full path and next blocked/review action.
 3. Model Connect validation with the mock local reviewer.
 4. Evidence selection or local metadata-only evidence intake.
@@ -272,9 +280,9 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 ## First-Stage Workflow
 
-1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, **Public source education review**, **AI legal workflow review**, or **Brazil VASP source review**.
+1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, **Public source education review**, **AI legal workflow review**, **Brazil VASP source review**, or **Marketing claims review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
-3. Review the **Regulatory Command Center** for the **Workspace Journey**, **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, Source Update Approval Queue, evidence gaps, and the non-advice handoff boundary. The **AI legal workflow review** scenario shows EU AI Act and UK ICO AI data protection controls for human oversight, source lineage, redaction, and reviewer decision logs. The **Brazil VASP source review** scenario shows Banco Central and CVM source controls for authorization, AML/CFT, classification, disclosure, and investor-communication evidence gaps. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff, download the Source Review Packet JSON when counsel needs the source refresh action queue and packet hash, or download the Source Approval Queue JSON when review-due source updates need an approval gate before matching behavior changes. Use journey and queue buttons to jump directly to project facts, evidence, model, review, or export recovery work.
+3. Review the **Regulatory Command Center** for the **Workspace Journey**, **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, Source Update Approval Queue, evidence gaps, and the non-advice handoff boundary. The **AI legal workflow review** scenario shows EU AI Act and UK ICO AI data protection controls for human oversight, source lineage, redaction, and reviewer decision logs. The **Brazil VASP source review** scenario shows Banco Central and CVM source controls for authorization, AML/CFT, classification, disclosure, and investor-communication evidence gaps. The **Marketing claims review** scenario shows UK FCA and UAE VARA source controls for promotion approval, risk warnings, client categorisation, activity scope, and access-control evidence gaps. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff, download the Source Review Packet JSON when counsel needs the source refresh action queue and packet hash, or download the Source Approval Queue JSON when review-due source updates need an approval gate before matching behavior changes. Use journey and queue buttons to jump directly to project facts, evidence, model, review, or export recovery work.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
 5. Open **AI Review** to inspect Model Access Workflow, Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.

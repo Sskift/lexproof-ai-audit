@@ -98,6 +98,30 @@ describe("validateDemoScenarioLibrary", () => {
     );
     expect(brazilScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
+
+  it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(marketingScenario).toEqual(
+      expect.objectContaining({
+        title: "Marketing claims review",
+        projectName: "SignalBridge Marketing Review",
+        recommendedStartTab: "counsel",
+        focusTags: expect.arrayContaining(["Marketing claims", "UK FCA", "UAE VARA"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Marketing Claims Counsel Pack", "Source Pack JSON"])
+      })
+    );
+    expect(marketingScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect UK and UAE marketing source controls",
+        "Review promotion approval evidence gaps",
+        "Export Marketing Claims counsel pack"
+      ])
+    );
+    expect(marketingScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });
 
 describe("findDemoScenarioById", () => {

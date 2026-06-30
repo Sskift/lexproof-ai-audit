@@ -84,5 +84,22 @@ export const sampleProfiles: AuditProfile[] = [
       { label: "Wallet governance summary", kind: "Runbook", content: "Synthetic wallet roles, escalation contacts, and transfer-review checkpoints without secrets." },
       { label: "Counsel source review log", kind: "CSV", content: "Official-source citation, review date, reviewer notes, and next review date." }
     ]
+  },
+  {
+    projectName: "SignalBridge Marketing Review",
+    entityType: "Virtual asset marketing operations team",
+    jurisdictions: ["United Kingdom", "United Arab Emirates"],
+    assetModel: "Virtual asset public education and product-positioning campaign with no token sale in demo scope",
+    userType: "Retail audience segments, community followers, and exchange listing reviewers",
+    custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
+    dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
+    aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
+    blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
+    operatingStage: "Planned public marketing campaign before UK and UAE counsel review",
+    evidenceItems: [
+      { label: "Claims inventory", kind: "CSV", content: "Synthetic claim IDs, channels, launch date, reviewer placeholder, and source owner." },
+      { label: "Audience routing note", kind: "Markdown", content: "Synthetic jurisdiction targeting, geofence assumptions, and channel labels." },
+      { label: "Counsel review tracker", kind: "Runbook", content: "Synthetic review owner, pending decision states, and escalation timing." }
+    ]
   }
 ];

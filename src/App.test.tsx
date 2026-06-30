@@ -247,6 +247,26 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Marketing claims review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("SignalBridge Marketing Review");
+    expect(await screen.findByRole("heading", { name: "Counsel Pack", level: 2 })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText(/Export template/i)).toHaveValue("marketing-claims"));
+    expect(screen.getAllByText(/Marketing Claims Review/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Route source-triggered promotional risk flags to counsel without deciding legality./i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/FCA PS23\/6 and FG23\/3/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/VARA Virtual Assets and Related Activities Regulations 2023/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK financial promotion approval pack/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UAE marketing and cross-border access evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("shows judge demo readiness and checks the Phase 2 API without private credentials", async () => {
     const fetchMock = vi.fn(async () =>
       new Response(

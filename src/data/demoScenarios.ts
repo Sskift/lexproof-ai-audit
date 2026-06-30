@@ -90,5 +90,22 @@ export const demoScenarios: DemoScenario[] = [
     expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
     focusTags: ["Brazil", "VASP", "Source graph"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
+    id: "cross-border-marketing-claims-path",
+    projectName: "SignalBridge Marketing Review",
+    title: "Marketing claims review",
+    summary: "Cross-border virtual asset promotion, retail audience, approval workflow, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "counsel",
+    judgePath: [
+      "Inspect UK and UAE marketing source controls",
+      "Review promotion approval evidence gaps",
+      "Select Marketing Claims counsel pack",
+      "Export Marketing Claims counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Marketing Claims Counsel Pack", "Source Pack JSON"],
+    focusTags: ["Marketing claims", "UK FCA", "UAE VARA"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   }
 ];

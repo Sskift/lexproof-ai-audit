@@ -32,10 +32,13 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
    - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, EU AI Act / UK ICO AI data protection source controls, and counsel export.
    - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
+   - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review UK FCA / UAE VARA promotion source gaps.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
+   - Marketing path screenshot: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
+   - Marketing template screenshot: `docs/assets/screenshots/counsel-pack-marketing-claims-template.png`.
 
 1. **Review command center**
    - Start on the **Regulatory Command Center** at the top of the workbench.
@@ -50,6 +53,8 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
    - Optional Brazil path screenshot after **Start Brazil VASP source review**: `docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png`.
+   - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
+   - Optional marketing template screenshot after **Start Marketing claims review**: `docs/assets/screenshots/counsel-pack-marketing-claims-template.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 
 2. **Connect model**

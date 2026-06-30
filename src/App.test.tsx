@@ -1,9 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("App", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     window.localStorage?.removeItem?.("lexproof.currentProject.v1");
     window.localStorage?.removeItem?.("lexproof.modelSettings.v1");
@@ -70,6 +74,48 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
+  });
+
+  it("shows judge demo readiness and checks the Phase 2 API without private credentials", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          status: "ok",
+          service: "lexproof-secure-review-workspace-api",
+          version: "lexproof-phase-2-backend-v1",
+          capabilities: {
+            modelGateway: "mock-run-ready",
+            evidenceVault: "metadata-versioning-ready",
+            humanReview: "repository-ready",
+            exports: "metadata-records-ready",
+            auditLog: "repository-ready"
+          },
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const readinessHeading = screen.getByRole("heading", { name: /Judge Demo Readiness/i });
+    const readinessPanel = readinessHeading.closest("section");
+
+    expect(readinessPanel).not.toBeNull();
+    const readiness = within(readinessPanel as HTMLElement);
+    expect(readiness.getByText(/Not legal advice. Demo readiness checks are audit preparation readiness metadata only./i)).toBeInTheDocument();
+    expect(readiness.getByText(/Phase 2 API preflight not checked/i)).toBeInTheDocument();
+    expect(readiness.getByText(/Private credentials not required ready/i)).toBeInTheDocument();
+    expect(readiness.getAllByText(/npm run verify/i).length).toBeGreaterThan(0);
+
+    fireEvent.change(readiness.getByLabelText(/Demo API base URL/i), { target: { value: "http://127.0.0.1:8787" } });
+    fireEvent.click(readiness.getByRole("button", { name: /Check Demo API/i }));
+
+    expect(await readiness.findByText(/Phase 2 API preflight ready/i)).toBeInTheDocument();
+    expect(readiness.getAllByText(/lexproof-phase-2-backend-v1/i).length).toBeGreaterThan(0);
+    expect(readiness.getByText(/modelGateway: mock-run-ready/i)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
   });
 
   it("shows the Security Review Checklist and updates model and evidence gates from workflow state", async () => {

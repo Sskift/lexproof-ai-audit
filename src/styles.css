@@ -370,6 +370,133 @@ textarea {
   text-align: left;
 }
 
+.demo-readiness-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.demo-readiness-panel.needs-api {
+  border-color: #e9bd87;
+  background: #fffdf8;
+}
+
+.demo-readiness-panel.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.demo-readiness-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.demo-readiness-header h3 {
+  margin: 0;
+  color: #172431;
+  font-size: 0.96rem;
+}
+
+.demo-readiness-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.demo-readiness-check {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.demo-readiness-check.ready {
+  border-color: #b8d8c8;
+}
+
+.demo-readiness-check.not-checked {
+  border-color: #e9bd87;
+}
+
+.demo-readiness-check.failed,
+.demo-readiness-check.blocked {
+  border-color: #e2a7a1;
+}
+
+.demo-readiness-check header,
+.demo-readiness-commands,
+.demo-api-result {
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+}
+
+.demo-readiness-check header svg,
+.demo-readiness-commands svg,
+.demo-api-result svg {
+  color: #2362a5;
+}
+
+.demo-readiness-check strong {
+  color: #172431;
+  line-height: 1.25;
+}
+
+.demo-readiness-check p,
+.demo-readiness-check small,
+.demo-readiness-commands span,
+.demo-api-result span,
+.demo-api-result small {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.demo-readiness-commands,
+.demo-api-result {
+  padding: 9px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 0.76rem;
+}
+
+.demo-readiness-api {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.demo-readiness-api button {
+  min-height: 42px;
+  justify-self: start;
+}
+
+.demo-api-result.ready {
+  border-color: #b8d8c8;
+}
+
+.demo-api-result.failed {
+  border-color: #e2a7a1;
+}
+
+.demo-api-result strong {
+  display: block;
+  color: #172431;
+  line-height: 1.25;
+}
+
 .field-stack {
   display: grid;
   gap: 8px;
@@ -2012,6 +2139,7 @@ textarea {
 }
 
 .workflow-status.needs-human-review,
+.workflow-status.needs-api,
 .workflow-status.needs-policy,
 .workflow-status.needs-review {
   color: #7a3f15;

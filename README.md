@@ -69,6 +69,10 @@ The Demo Scenario Library turns seeded synthetic profiles into runnable judging 
 
 ![Demo Scenario Library](docs/assets/screenshots/demo-scenario-library.png)
 
+Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, validated synthetic scenarios, no private credentials, current screenshot set, and a `/api/health` preflight for the Phase 2 API. Not legal advice.
+
+![Judge Demo Readiness](docs/assets/screenshots/judge-demo-readiness.png)
+
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
 The Regulatory Command Center turns project facts into a first-screen Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, evidence gaps, and local counsel handoff status without making legal conclusions.

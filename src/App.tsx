@@ -26,6 +26,7 @@ import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { RegulatoryCommandCenter } from "./components/RegulatoryCommandCenter";
 import { SecureReviewWorkspace } from "./components/SecureReviewWorkspace";
 import { SecurityReviewChecklistPanel } from "./components/SecurityReviewChecklistPanel";
+import { demoReadinessScreenshotRefs } from "./data/demoReadiness";
 import { demoScenarios } from "./data/demoScenarios";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
@@ -800,6 +801,8 @@ export default function App() {
           project={project}
           sampleProfiles={sampleProfiles}
           demoScenarios={demoScenarioValidation.valid ? demoScenarios : []}
+          demoScenarioValidation={demoScenarioValidation}
+          demoScreenshotRefs={demoReadinessScreenshotRefs}
           fit={fit}
           validation={validation}
           showValidation={showValidation}

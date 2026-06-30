@@ -20,6 +20,13 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 
 ## End-To-End Demo Path
 
+Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
+
+- Confirm **Scenario library**, **Clean clone commands**, **Private credentials not required**, and **Screenshot set** are ready.
+- Enter `http://127.0.0.1:8787` in **Demo API base URL**, click **Check Demo API**, and confirm **Phase 2 API preflight ready**.
+- Screenshot: `docs/assets/screenshots/judge-demo-readiness.png`.
+- This check is readiness metadata only. Not legal advice.
+
 0. **Start from a seeded scenario**
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.

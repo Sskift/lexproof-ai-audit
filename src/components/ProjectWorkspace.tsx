@@ -1,13 +1,16 @@
 import { CirclePlus, Gavel, Layers3, Save } from "lucide-react";
 import type { AuditProfile, SubmissionFit } from "../lib/auditEngine";
-import type { DemoScenario } from "../lib/demoScenarioLibrary";
+import type { DemoScenario, DemoScenarioValidationResult } from "../lib/demoScenarioLibrary";
 import type { ProjectProfile, ProjectValidationResult } from "../lib/projectModel";
+import { DemoReadinessPanel } from "./DemoReadinessPanel";
 import { DemoScenarioLibrary } from "./DemoScenarioLibrary";
 
 type ProjectWorkspaceProps = {
   project: ProjectProfile;
   sampleProfiles: AuditProfile[];
   demoScenarios: DemoScenario[];
+  demoScenarioValidation: DemoScenarioValidationResult;
+  demoScreenshotRefs: string[];
   fit: SubmissionFit;
   validation: ProjectValidationResult;
   showValidation: boolean;
@@ -23,6 +26,8 @@ export function ProjectWorkspace({
   project,
   sampleProfiles,
   demoScenarios,
+  demoScenarioValidation,
+  demoScreenshotRefs,
   fit,
   validation,
   showValidation,
@@ -74,6 +79,12 @@ export function ProjectWorkspace({
           scenarios={demoScenarios}
           activeProjectName={project.projectName}
           onStartScenario={onLoadDemoScenario}
+        />
+
+        <DemoReadinessPanel
+          scenarioValidation={demoScenarioValidation}
+          scenarioCount={demoScenarios.length}
+          screenshotRefs={demoScreenshotRefs}
         />
 
         <div className="field-stack">

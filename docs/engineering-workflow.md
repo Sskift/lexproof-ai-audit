@@ -26,6 +26,26 @@ Then decide the smallest valid slice:
 
 Do not stage unrelated files. If unrelated local changes exist, leave them out of the commit.
 
+## Work Intake Contract
+
+Every implementation prompt or issue should contain these fields before code changes begin:
+
+- **Workstream:** one ID from `docs/work-universe.md`, for example `W2 Evidence Vault and Provenance`.
+- **User journey:** the exact flow being improved, such as `Evidence Ledger -> Evidence Vault sync -> Manifest`.
+- **Layer placement:** files or modules expected in `src/lib`, `src/data`, `src/components`, `server`, `prisma`, and docs.
+- **Non-advice boundary:** the generated output wording or state that keeps the feature as audit preparation only.
+- **Privacy boundary:** data classes that must be blocked, redacted, or excluded.
+- **Verification:** targeted tests, full gate, and whether a screenshot is required.
+- **Commit scope:** files that are expected to change and files that should not be touched.
+
+Minimal agent prompt template:
+
+```text
+Implement <workstream/slice>. User journey: <flow>. Put domain logic in <src/lib module>, static demo/source data in <src/data module>, UI in <component>, backend in <server route/service> only if needed. Preserve Not legal advice. Do not store secrets, raw KYC, private keys, personal data, raw evidence bytes, or real chain writes. Add only tests that prove new core behavior. Run <targeted tests>, then npm run verify. Capture a screenshot only if UI changed. Inspect git diff, stage only scoped files, commit, and push origin/main after verification passes.
+```
+
+If the prompt cannot be filled without guessing, narrow the slice before editing.
+
 ## Test Selection Matrix
 
 | Change type | Minimum targeted verification | Full gate |
@@ -91,6 +111,53 @@ Current full gate expands to:
 npm test
 npm run build
 ```
+
+### Backend And End-to-End Launch Recipes
+
+Use these when a change touches the Phase 2 API, secure review journey, Evidence Vault, Model Gateway, Human Review, audit logs, or server Counsel Pack export records.
+
+Build the server:
+
+```bash
+npm run build:server
+```
+
+Start the API with local SQLite:
+
+```bash
+DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+```
+
+Start the frontend in a second terminal:
+
+```bash
+npm run dev -- --port 5173
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+Minimum API smoke check:
+
+```bash
+curl http://127.0.0.1:8787/api/health
+```
+
+Expected result: a JSON health response from the local API. Do not commit the local SQLite file.
+
+### Browser Smoke Recipes
+
+Use a browser smoke when a visible workflow changes:
+
+1. Start the app with `npm run dev -- --port 5173`.
+2. Load `http://127.0.0.1:5173/`.
+3. Run the affected path from the same start state a judge would use.
+4. Confirm the Not legal advice boundary is visible in generated/export surfaces.
+5. Confirm empty, failure, or recovery states render when the slice introduces them.
+6. Save screenshots under `docs/assets/screenshots/` only when the visual state is durable and useful.
 
 ## Local Run Recipes
 
@@ -190,6 +257,18 @@ Do not test the same sentence of copy in both a library test and a UI test unles
 
 If a feature has no new core logic and only rearranges docs or copy, do not add tests. Run the full gate before push because `main` must remain runnable.
 
+### Test Budget Rules
+
+Keep tests proportional to risk:
+
+- **One new core function:** one focused unit test file or one focused case in the nearest existing test file.
+- **One server route behavior:** one route test for request validation, response contract, persistence effect, and audit-log effect if applicable.
+- **One UI workflow:** one user-visible state transition test, not paragraph-level copy snapshots.
+- **One data-only source/template change:** one test that proves matching, recommendation, or validation behavior changes; no test if docs-only text changes.
+- **One error state:** one test that proves the actionable error code/state, not decorative wording.
+
+Do not add tests that only assert implementation details, repeat the same guarantee across three layers, or freeze copy that is likely to change. If a test cannot fail for a real user-visible regression, it is probably noise.
+
 ### Regression Budget
 
 Keep the test suite useful:
@@ -211,6 +290,13 @@ Before staging:
 git status -sb
 git diff --stat
 git diff --check
+```
+
+Review changed files:
+
+```bash
+git diff --stat
+git diff -- <file>
 ```
 
 Run:
@@ -270,9 +356,21 @@ If a branch is used, keep the same verification gate before merging back.
 
 - Never commit credentials, `.env` secrets, raw KYC, private keys, seed phrases, or personal data.
 - Never commit `node_modules`, `dist`, `server-dist`, coverage output, TypeScript build info, or local SQLite databases.
+- Never commit local API databases such as `demo-review-workspace.db`, throwaway downloads, ad hoc browser recordings, or screenshots that are not linked to a durable demo state.
 - Keep docs, screenshots, tests, and source changes in the same commit only when they describe the same user-visible slice.
 - Fix forward on `main` if a pushed change breaks the app.
 - Do not run destructive git reset/checkout commands to hide uncertainty.
+
+### Generated File Watchlist
+
+Before staging, check for common accidental artifacts:
+
+```bash
+git status -sb
+find . -maxdepth 3 \( -name "dist" -o -name "server-dist" -o -name "coverage" -o -name "*.tsbuildinfo" -o -name "*.db" \) -print
+```
+
+Remove only generated files you created during the current slice. Leave unrelated user changes alone.
 
 ### Staging Rules
 
@@ -317,6 +415,16 @@ Use existing docs first:
 - Demo path: `docs/demo-script.md`.
 
 Do not create a new plan document when one of these files is the correct home. New docs need a durable audience and must be linked from README or an existing docs index.
+
+## Definition Of Clean Handoff
+
+A handoff is clean only when:
+
+- `git status -sb` shows no unstaged or untracked project changes after push, except unrelated user-owned changes that were explicitly left out.
+- The final message names the verification command that was run and its result.
+- Any screenshot path is included when screenshots were required.
+- Any skipped verification is called out as a limitation, not implied as passing.
+- The commit contains one coherent slice, not a mix of unrelated cleanup, generated output, and feature work.
 
 ## Agent Prompt Contract
 

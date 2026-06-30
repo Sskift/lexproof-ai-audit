@@ -4,6 +4,19 @@ This file is the single backlog boundary for LexProof AuditOS. It lists the prod
 
 LexProof remains **Not legal advice**. Every item below must produce audit preparation material, evidence workflow metadata, source lineage, model governance records, or counsel handoff artifacts. It must not produce legal conclusions, perform KYC, store secrets in the client, or claim real chain proof without a real verifiable transaction.
 
+## How To Use This File
+
+Treat this document as the complete build universe and product direction file. A new feature, issue, or agent prompt must either map to an existing workstream below or first amend this file with a clear capability area, owner layer, proof path, and non-goals.
+
+Rules:
+
+- Pick one smallest demonstrable slice from a workstream instead of starting a broad rewrite.
+- Name the workstream ID in commits, issues, and agent prompts when possible, for example `W4 Human Review Workflow`.
+- Keep one user journey in view: project facts -> evidence/model intake -> risk/source graph -> human review -> vault/manifest -> counsel pack/export.
+- Do not add parallel demo-only features when the same behavior belongs in an existing module.
+- Do not promote a later-horizon capability, such as auth, raw document storage, or real chain anchoring, unless its privacy, retention, and verification boundaries are already written and tested.
+- If a requested feature does not fit any workstream, add it to `Backlog Intake Rules` below before implementation so future work does not drift.
+
 ## Product Direction
 
 LexProof should become an AI and Web3 regulatory evidence operating system:
@@ -13,6 +26,20 @@ LexProof should become an AI and Web3 regulatory evidence operating system:
 - A jurisdiction-aware source and control graph that helps counsel see what needs review without pretending to decide legality.
 - A verifiable evidence package generator that exports manifests, model receipts, review status, source lineage, and counsel-ready Markdown/PDF.
 - A demoable workbench that feels like a professional GRC/legal operations tool, not a landing page or generic chatbot.
+
+## North-Star Journey
+
+The product should converge on one complete operating flow:
+
+1. **Create workspace:** a team creates or loads a synthetic-safe project profile with jurisdictions, asset model, AI usage, data boundary, custody, and launch facts.
+2. **Connect model safely:** the user configures a mock or future server-gated model path, confirms allowed data classes, and records a human-review owner without persisting secrets.
+3. **Collect evidence:** the user requests, adds, hashes, templates, replaces, rejects, and verifies metadata-first evidence.
+4. **Map risk and sources:** deterministic audit rules, jurisdiction packs, and reviewed regulatory source clauses produce review triggers, not legal conclusions.
+5. **Route human review:** evidence, model runs, source refreshes, risk flags, and export packets move through returned/rejected/reviewed states with history.
+6. **Vault and manifest:** server-backed metadata records produce versioned evidence lineage, duplicate detection, manifest hashes, and audit logs.
+7. **Export counsel packet:** Counsel Pack, Regulatory Source Pack, Submission Pack, model receipts, review timeline, and simulated anchor receipts are downloadable audit-prep artifacts.
+
+Every future slice should make at least one step in this journey more real, safer, or easier to demonstrate.
 
 ## Current Baseline
 
@@ -67,6 +94,36 @@ This is the full scope boundary. New work should fit one of these capabilities o
 | Integrations | External systems are added only behind disabled-by-default readiness gates | Integration Readiness Registry, adapter-specific panels | `src/lib/integrationReadiness.ts`, future focused client/service modules | Adapter disabled-state tests, failure recovery tests, no real call by default |
 | Frontend workbench quality | The app feels like a dense professional audit cockpit, not a marketing page | Tabs, panels, status chips, empty/error/recovery states, responsive layout | `src/components/*`, `src/App.tsx`, `src/styles.css` | App tests for workflow state, screenshot for visible demo surfaces |
 | Demo and judge readiness | A clean clone can run the whole story without secrets | README, demo script, screenshots, readiness preflight | `src/lib/demoScenarioLibrary.ts`, `src/lib/demoReadiness.ts`, docs | Scenario/readiness tests, screenshot set, documented commands |
+
+## Capability Ownership Map
+
+Use this map when turning a rough idea into implementation work.
+
+| Capability | Product direction | Frontend work | Domain work | Backend work | Data/docs work |
+| --- | --- | --- | --- | --- | --- |
+| Project workspace | Move from static samples to durable audit matters with explicit assumptions | Workspace editor, scenario launcher, validation messages, local persistence recovery | Profile validation, scenario validation, migration helpers | Workspace create/read/update, future org scoping | Synthetic sample profiles, demo scenario docs |
+| Regulatory intelligence | Build source-backed review triggers and control coverage for AI/Web3 workflows | Command Center, source ledger, control matrix, local counsel routing | Clause matching, source freshness, source pack, evidence gap logic | Future source-review approval queue | Reviewed source clause data with dates and citations |
+| Risk and remediation | Keep deterministic risk scoring explainable and evidence-dependent | Risk cards, trigger facts, owner/status queue, GRC export panel | Audit rules, explainers, evidence requirements, ticket bundle generation | Future ticket adapter with disabled-by-default gate | Risk rule notes and non-advice copy |
+| Model governance | Make BYOM/BYOK useful without turning AI into a decision-maker | Model Intake, Model Connect, redaction gate, run receipts, failure recovery | Provider validation, redaction checks, model run ledger, evaluation artifacts | Gateway routes, provider policy, receipt persistence, audit logs | Model setup guide and limitation notes |
+| Evidence operations | Treat evidence as metadata-first, versioned, hashable, and recoverable | Ledger, file hash intake, retention panel, vault sync/recovery UI | Manifest hashing, retention policy, upload boundary, status workflow | Vault upload/list/update/replacement/manifest routes | Evidence templates and safe examples |
+| Human review | Turn review into operational workflow, not a decorative status | Review queue, due dates, returned/rejected recovery, timeline export | Review queue generation, status effects, timeline building | Review create/list/update, linked target updates, audit logs | Demo path and reviewer-state descriptions |
+| Counsel/export | Produce reproducible handoff artifacts for counsel and judges | Template selector, preview, export gates, version history, server export record | Markdown builder, version diff, source pack, submission pack, data boundary | Export record routes and persistence | README/demo script/screenshots |
+| Security/privacy | Block unsafe data before model, vault, and export surfaces | Clear blockers, recovery actions, readiness registry | Classification, redaction, boundary reports, readiness gates | Server upload/model/export policy checks | Privacy and non-goal documentation |
+| Integrations | Add real external systems only when gated and observable | Adapter readiness cards and failure states | Adapter contracts and validation | Provider/storage/OCR/GRC/chain adapters | Secret/retention/wallet policies |
+| Demo quality | Keep main runnable and judge-friendly | First-screen path, screenshots, empty/error states | Demo readiness validators | Health/preflight routes | Demo script, submission pack, known limitations |
+
+## Backlog Intake Rules
+
+Before adding a new item to the build universe, answer these questions in the relevant workstream or in a new row above:
+
+- What user journey step does it improve?
+- Which existing module owns the domain behavior?
+- Does it require a server boundary or can it stay local-first?
+- What data must be synthetic, reviewed, or excluded?
+- What is the smallest proof: unit test, route test, UI test, screenshot, or demo script update?
+- What must not be built in this slice?
+
+Reject or defer work that cannot answer these questions without inventing a new architecture.
 
 ## Build Horizon
 

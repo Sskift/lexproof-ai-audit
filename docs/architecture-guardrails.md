@@ -17,6 +17,19 @@ React Workbench (src/App.tsx, src/components)
 
 The intended shape is a modular monolith for the hackathon and early pilot phase. Add focused modules inside the existing folders before adding new top-level packages. A new top-level directory needs a clear runtime boundary, such as a worker, CLI, or independent package that cannot live cleanly in `src`, `server`, `docs`, or `prisma`.
 
+## Architecture Contract
+
+LexProof should grow as a layered review workspace, not as a collection of disconnected demos. New work must preserve these contracts:
+
+- **Frontend contract:** React components render workflow state, collect user input, show empty/error/recovery states, and call typed helpers. Components do not decide legal/compliance rules, evidence hashes, model policy, export contents, or server status transitions.
+- **Domain contract:** `src/lib` owns deterministic rules, workflow state transitions, validation, hashing, export builders, API client contracts, and security boundaries. A core function should be callable from a test without rendering React.
+- **Data contract:** `src/data` owns synthetic profiles, scenario definitions, evidence templates, demo readiness metadata, and reviewed static source libraries. Data files do not import application logic.
+- **Backend contract:** `server` owns durable API behavior, request validation, repository access, audit logging, model gateway receipts, vault metadata, review records, and export records. Routes are thin; services and repositories carry behavior.
+- **Persistence contract:** `prisma/schema.prisma` describes durable server state only. UI and client-side domain modules depend on stable TypeScript contracts, not Prisma models.
+- **Documentation contract:** README explains how to run and demo; `docs/work-universe.md` defines what to build; this file defines where it belongs; `docs/engineering-workflow.md` defines how to verify and keep the repository clean.
+
+If a proposed feature cannot name its frontend, domain, backend, data, and verification boundaries, split it before implementation.
+
 ## Dependency Rules
 
 - `src/components` may import from `src/lib`, `src/data`, React, and UI libraries. Components must not contain scoring, hashing, source matching, manifest, model policy, or evidence validation rules.
@@ -34,6 +47,23 @@ Forbidden dependency directions:
 - React components must not import Prisma types directly.
 - Tests may import across layers only to verify a real integration boundary; they must not make production code depend on test helpers.
 
+## Bounded Contexts
+
+Use these contexts to avoid creating generic helpers or moving behavior into `App.tsx`.
+
+| Context | Canonical types/artifacts | Domain owner | UI owner | Server owner | Drift warning |
+| --- | --- | --- | --- | --- | --- |
+| Workspace/project | `ProjectProfile`, validation errors, scenario IDs | `src/lib/projectModel.ts`, `src/lib/demoScenarioLibrary.ts` | `ProjectWorkspace`, `AuditWizard`, `DemoScenarioLibrary` | `workspaceRoutes`, repository workspace methods | Project validation duplicated in JSX or route handlers |
+| Audit/risk | audit result, risk flags, issue cards, remediation queue | `auditEngine.ts`, `riskExplainers.ts`, `riskEvidence.ts` | `Risk Audit` sections in `App.tsx` or focused panels | Future ticket/export routes only | AI output or server state changing deterministic score |
+| Regulatory graph | clause IDs, source review records, control matrix, source pack | `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `regulatoryControlMatrix.ts`, `regulatorySourcePack.ts` | `RegulatoryCommandCenter`, `RegulatoryControlMatrixPanel` | Future reviewed-source workflow routes | Source clauses hard-coded in components |
+| Evidence | `EvidenceItem`, manifest, vault record, retention report | `evidenceManifest.ts`, `retentionPolicy.ts`, `evidenceVaultWorkflow.ts`, `evidenceUploadBoundary.ts` | `EvidenceLedger` | `evidenceVaultRoutes`, `evidenceVaultService` | Raw evidence bytes or unsafe metadata flowing into exports |
+| Model governance | model settings, intake profile, run receipt, evaluation record | `modelConnect.ts`, `modelIntake.ts`, `modelProvider.ts`, `modelReviewLedger.ts`, `modelGatewayEvaluation.ts` | `ModelSettingsPanel`, `AIReviewPanel`, `ModelIntakePanel` | `modelGatewayRoutes`, `modelGatewayService` | API keys persisted or model output treated as a decision |
+| Human review | review item, timeline, status history, linked effects | `humanReviewWorkflow.ts`, `serverHumanReviewQueue.ts`, `serverHumanReviewEffects.ts` | `HumanReviewPanel` | `humanReviewRoutes`, `humanReviewService` | Approval labels that imply legal sign-off |
+| Counsel/export | Markdown pack, export template, version record, submission pack | `counselPack.ts`, `counselPackTemplates.ts`, `counselPackVersions.ts`, `submissionPack.ts`, `dataBoundary.ts` | `CounselPackPanel`, `SubmissionPackPanel` | `counselPackExportRoutes`, `counselPackExportService` | Export string assembly hidden in JSX |
+| Security/readiness | classification finding, redaction report, integration gate | `dataClassification.ts`, `dataBoundary.ts`, `securityReviewChecklist.ts`, `integrationReadiness.ts` | `SecurityReviewChecklistPanel`, `IntegrationReadinessPanel` | Route/service validators | Blockers implemented only as visual warnings |
+
+When adding a file, place it under one context. If it belongs to several contexts, create a small contract type in `src/lib` and keep each context's behavior local.
+
 ## Feature Placement Pattern
 
 Add new capabilities in this order:
@@ -47,6 +77,19 @@ Add new capabilities in this order:
 7. README/docs update only for user-visible behavior changes.
 
 Do not start with UI state and then backfill domain logic.
+
+### Slice Shape
+
+For most features, keep the first slice to this shape:
+
+1. One domain function or data entry that changes real behavior.
+2. One focused test proving that behavior.
+3. One UI or API path that exposes the behavior, if needed.
+4. One failure/empty/recovery state when a user can get stuck.
+5. One docs update when the workflow or demo path changes.
+6. One screenshot only when the UI change is judge-visible.
+
+Avoid mixing unrelated domain changes, broad CSS redesign, API refactors, and demo script churn in the same commit.
 
 ## Feature Routing Table
 
@@ -75,6 +118,21 @@ If a feature touches more than three rows, split it into incremental slices. Eac
 - Server persistence owns workspace, evidence metadata, model-run receipts, human-review records, export metadata, and audit logs when the Phase 2 API is running.
 - Exported artifacts should be rebuildable from explicit inputs. Do not hide material state in UI-only refs or temporary globals.
 - When the same concept appears in client and server, define the stable contract in `src/lib` and have both sides use it if it is runtime-safe for Node and browser.
+
+## API Boundary Pattern
+
+Server-backed features should use this boundary:
+
+```text
+React panel
+  -> src/lib/<feature>Client.ts typed request/response helper
+  -> server/<feature>Routes.ts request parsing and typed errors
+  -> server/<feature>Service.ts validation, hashing, transitions, receipts
+  -> server/reviewWorkspaceRepository.ts repository interface
+  -> prisma/schema.prisma durable shape when persistence is needed
+```
+
+Do not call `fetch` from multiple components for the same route family. Do not let a route mutate repository state before all data-boundary, status-transition, and Not legal advice checks have passed.
 
 ## File Size And Split Rules
 

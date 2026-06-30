@@ -13,6 +13,7 @@ import type { ProjectProfile } from "./projectModel";
 import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile } from "./modelIntake";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
+import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import { createDataBoundaryReport } from "./dataBoundary";
 
 const project: ProjectProfile = {
@@ -158,6 +159,49 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("FCA PS23/6 and FG23/3");
     expect(markdown).toContain("Evidence gaps");
     expect(markdown).toContain("Not legal advice. Regulatory graph output is audit preparation material only.");
+  });
+
+  it("includes source update approval gates in Markdown handoff when source approvals are open", async () => {
+    const graphProject: ProjectProfile = {
+      ...project,
+      jurisdictions: ["European Union", "United Kingdom"],
+      assetModel: "Tokenized private credit note with yield",
+      userType: "Retail users",
+      operatingStage: "Planned public launch",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(graphProject);
+    const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
+    const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, {
+      asOf: "2026-10-01T00:00:00.000Z"
+    });
+    const sourceApprovalQueue = createRegulatorySourceApprovalQueue(sourceReview, {
+      generatedAt: "2026-10-01T00:00:00.000Z"
+    });
+
+    const markdown = buildMarkdownCounselPack(
+      graphProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      graph,
+      undefined,
+      undefined,
+      sourceReview,
+      sourceApprovalQueue
+    );
+
+    expect(markdown).toContain("## Source Update Approval Queue");
+    expect(markdown).toContain("Not legal advice. Source update approvals are audit preparation workflow metadata only.");
+    expect(markdown).toContain("Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.");
+    expect(markdown).toContain("- Queue status: needs-approval");
+    expect(markdown).toContain("- Approval required:");
+    expect(markdown).toContain("approval-required");
+    expect(markdown).toContain("Refresh and approve");
+    expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
 
   it("includes a data boundary report and does not leak blocked export materials", async () => {

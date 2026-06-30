@@ -423,7 +423,8 @@ export default function App() {
         regulatoryGraph,
         selectedCounselPackTemplate,
         dataBoundaryReport,
-        regulatorySourceReview
+        regulatorySourceReview,
+        regulatorySourceApprovalQueue
       );
     },
     [
@@ -437,6 +438,7 @@ export default function App() {
       modelIntakeSummary,
       project,
       regulatoryGraph,
+      regulatorySourceApprovalQueue,
       regulatorySourceReview,
       selectedCounselPackTemplate
     ]

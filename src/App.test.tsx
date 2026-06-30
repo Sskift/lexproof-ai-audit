@@ -177,6 +177,30 @@ describe("App", () => {
     }
   });
 
+  it("includes the Source Update Approval Queue in the Counsel Pack Markdown preview when approvals are open", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+      const memo = await screen.findByText(/## Source Update Approval Queue/i);
+
+      expect(memo).toHaveClass("memo");
+      expect(memo).toHaveTextContent(/Not legal advice. Source update approvals are audit preparation workflow metadata only./i);
+      expect(memo).toHaveTextContent(
+        /Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata./i
+      );
+      expect(memo).toHaveTextContent(/- Queue status: needs-approval/i);
+      expect(memo.textContent ?? "").not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("loads a judge-ready demo scenario from the seeded scenario library", async () => {
     render(<App />);
 

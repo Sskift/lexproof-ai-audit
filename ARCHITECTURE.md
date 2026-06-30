@@ -160,7 +160,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createWorkspaceActionQueue(project validation, source graph, source review, human review, security, data boundary, manifest/export status)
   -> createSimulatedAnchorReceipt(manifest)
   -> recommendCounselPackTemplate(project, audit)
-  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate, dataBoundaryReport, regulatorySourceReview)
+  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate, dataBoundaryReport, regulatorySourceReview, regulatorySourceApprovalQueue)
   -> buildPrintableCounselPackHtml(title, markdown)
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
@@ -542,7 +542,7 @@ The contracts are executable design artifacts. They do not start a server, add b
 
 Owns export behavior:
 
-- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph, exportTemplate, dataBoundaryReport, regulatorySourceReview)` generates audit preparation Markdown with the non-advice boundary, optional export-template agenda, Export Safety Gate summary, regulatory source graph, Source Review Ledger freshness metadata, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
+- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph, exportTemplate, dataBoundaryReport, regulatorySourceReview, regulatorySourceApprovalQueue)` generates audit preparation Markdown with the non-advice boundary, optional export-template agenda, Export Safety Gate summary, regulatory source graph, Source Review Ledger freshness metadata, Source Update Approval Queue gates, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
@@ -839,7 +839,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
-- regulatory source review freshness, review-due actions, reviewer notes, and non-advice boundary
+- regulatory source review freshness, source update approval gates, review-due actions, reviewer notes, and non-advice boundary
 
 UI tests cover:
 

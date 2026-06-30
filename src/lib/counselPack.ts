@@ -7,6 +7,7 @@ import type { EvidenceManifest } from "./evidenceManifest";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
+import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
 
 export type CounselPackModelIntake = {
@@ -25,7 +26,8 @@ export function buildMarkdownCounselPack(
   regulatoryGraph?: RegulatoryGraph,
   exportTemplate?: CounselPackTemplate,
   dataBoundaryReport?: DataBoundaryReport,
-  regulatorySourceReview?: RegulatorySourceReview
+  regulatorySourceReview?: RegulatorySourceReview,
+  regulatorySourceApprovalQueue?: RegulatorySourceApprovalQueue
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -39,6 +41,10 @@ export function buildMarkdownCounselPack(
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
   const sourceReviewSection = regulatorySourceReview ? formatRegulatorySourceReviewSection(regulatorySourceReview) : "";
+  const sourceApprovalSection =
+    regulatorySourceApprovalQueue && regulatorySourceApprovalQueue.totalItemCount > 0
+      ? formatRegulatorySourceApprovalQueueSection(regulatorySourceApprovalQueue)
+      : "";
   const exportTemplateSection = exportTemplate ? formatExportTemplateSection(exportTemplate) : "";
   const dataBoundarySection = dataBoundaryReport ? summarizeDataBoundaryForExport(dataBoundaryReport) : "";
   const sources = audit.sourcePack.map((source) => `- ${safe(source.title)}: ${source.url}`).join("\n");
@@ -77,6 +83,7 @@ export function buildMarkdownCounselPack(
     "",
     ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
+    ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
     ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
     remediation,
@@ -89,6 +96,31 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatRegulatorySourceApprovalQueueSection(queue: RegulatorySourceApprovalQueue): string {
+  const approvalGate =
+    queue.items[0]?.approvalGate ??
+    "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.";
+  const items = queue.items
+    .map(
+      (item) =>
+        `- ${item.priority} ${item.approvalStatus} ${safe(item.jurisdiction)} [${safe(item.citation)}] ${safe(item.nextAction)} ${safe(item.approvalGate)} Last reviewed ${safe(item.lastReviewedAt)}; next review ${safe(item.nextReviewDueAt)}. Source: ${item.sourceUrl}`
+    )
+    .join("\n");
+
+  return [
+    queue.notLegalAdviceBoundary,
+    `- Queue status: ${queue.status}`,
+    `- Approval required: ${queue.approvalRequiredCount}`,
+    `- Metadata required: ${queue.metadataRequiredCount}`,
+    `- Open gates: ${queue.totalItemCount}`,
+    `- Generated at: ${queue.generatedAt}`,
+    `- Approval gate: ${safe(approvalGate)}`,
+    "",
+    "### Source Approval Actions",
+    items || "- No source update approval actions are open."
   ].join("\n");
 }
 

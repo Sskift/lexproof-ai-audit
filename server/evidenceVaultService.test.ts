@@ -20,6 +20,7 @@ describe("Phase 2 evidence vault service", () => {
       owner: "Compliance",
       sourceNote: "Board approval memo for counsel review.",
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["CONTROL-EU-MICA-TITLE-II-WHITE-PAPER", "control-eu-mica-title-ii-white-paper"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-29T10:00:00.000Z"
     });
@@ -38,6 +39,7 @@ describe("Phase 2 evidence vault service", () => {
       sourceNote: "Board approval memo for counsel review.",
       version: 1,
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
       containsRawKycOrPersonalData: false,
       parentEvidenceId: undefined,
       supersededByEvidenceId: undefined,
@@ -58,6 +60,7 @@ describe("Phase 2 evidence vault service", () => {
         owner: "Founder",
         sourceNote: "Passport scan",
         linkedRiskFlagIds: ["kyc"],
+        linkedControlIds: ["control-kyc"],
         containsRawKycOrPersonalData: true,
         createdAt: "2026-06-29T10:00:00.000Z"
       })
@@ -74,6 +77,7 @@ describe("Phase 2 evidence vault service", () => {
         owner: "Compliance",
         sourceNote: `Do not persist API key ${apiKey}, private key ${privateKey}, or raw KYC packet.`,
         linkedRiskFlagIds: ["governance"],
+        linkedControlIds: ["control-governance"],
         containsRawKycOrPersonalData: false,
         createdAt: "2026-06-29T10:00:00.000Z"
       })
@@ -88,6 +92,7 @@ describe("Phase 2 evidence vault service", () => {
         owner: "Compliance",
         sourceNote: `Do not persist API key ${apiKey}, private key ${privateKey}, or raw KYC packet.`,
         linkedRiskFlagIds: ["governance"],
+        linkedControlIds: ["control-governance"],
         containsRawKycOrPersonalData: false,
         createdAt: "2026-06-29T10:00:00.000Z"
       });
@@ -108,6 +113,7 @@ describe("Phase 2 evidence vault service", () => {
       owner: "Compliance",
       sourceNote: "Original memo.",
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["control-governance"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-29T10:00:00.000Z"
     });
@@ -120,6 +126,7 @@ describe("Phase 2 evidence vault service", () => {
       owner: "Compliance",
       sourceNote: "Replacement memo.",
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["control-governance"],
       containsRawKycOrPersonalData: false,
       parentEvidenceId: rejected.id,
       replacementReason: "Reviewer rejected the first memo as incomplete.",
@@ -158,6 +165,7 @@ describe("Phase 2 evidence vault service", () => {
       owner: "Compliance",
       sourceNote: "Existing memo.",
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["control-governance"],
       containsRawKycOrPersonalData: false
     });
     const duplicate = createEvidenceVaultRecordFromUpload({
@@ -168,6 +176,7 @@ describe("Phase 2 evidence vault service", () => {
       owner: "Compliance",
       sourceNote: "Duplicate memo.",
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["control-governance"],
       containsRawKycOrPersonalData: false
     });
 

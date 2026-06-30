@@ -13,7 +13,7 @@ const evidenceItem: EvidenceItem = {
   id: "launch-approval",
   label: "Launch approval memo",
   kind: "Markdown",
-  source: "risk evidence requirement: governance-approval",
+  source: "risk evidence requirement: governance-approval; regulatory control: control-eu-mica-title-ii-white-paper",
   status: "verified",
   owner: "Compliance",
   content: "Confidential board approval text that must stay local."
@@ -31,6 +31,7 @@ describe("evidence vault client", () => {
     expect(snapshot.snapshotVersion).toBe("lexproof-evidence-vault-snapshot-v1");
     expect(snapshot.localContentHash).toMatch(/^[a-f0-9]{64}$/);
     expect(changedSnapshot.localContentHash).not.toBe(snapshot.localContentHash);
+    expect(snapshot.linkedControlIds).toEqual(["control-eu-mica-title-ii-white-paper"]);
     expect(snapshot.notLegalAdviceBoundary).toContain("Not legal advice");
     expect(serialized).not.toContain("Confidential board approval text");
   });
@@ -60,6 +61,7 @@ describe("evidence vault client", () => {
       sourceNote: "Metadata-only sync",
       version: 1,
       linkedRiskFlagIds: ["governance-approval"],
+      linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-30T00:00:00.000Z",
       updatedAt: "2026-06-30T00:00:00.000Z"
@@ -72,6 +74,13 @@ describe("evidence vault client", () => {
       }
 
       if (path.endsWith("/evidence-vault-1") && init?.method === "PATCH") {
+        expect(JSON.parse(String(init.body))).toEqual(
+          expect.objectContaining({
+            status: "verified",
+            linkedRiskFlagIds: ["governance-approval"],
+            linkedControlIds: ["control-eu-mica-title-ii-white-paper"]
+          })
+        );
         return jsonResponse({ ...vaultRecord, status: "verified", version: 2 }, 200);
       }
 
@@ -103,7 +112,9 @@ describe("evidence vault client", () => {
     const uploadedPayload = await readBlobText(uploadedFile);
     expect(uploadedPayload).toContain("localContentHash");
     expect(uploadedPayload).toContain("governance-approval");
+    expect(uploadedPayload).toContain("control-eu-mica-title-ii-white-paper");
     expect(uploadedPayload).not.toContain("Confidential board approval text");
+    expect(uploadedForms[0].get("linkedControlIds")).toBe("control-eu-mica-title-ii-white-paper");
     expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
   });
 
@@ -164,6 +175,7 @@ describe("evidence vault client", () => {
       sourceNote: "Rejected memo.",
       version: 3,
       linkedRiskFlagIds: ["governance-approval"],
+      linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
       containsRawKycOrPersonalData: false,
       supersededByEvidenceId: "evidence-vault-replacement",
       replacementReason: "Reviewer requested corrected approval scope.",
@@ -221,6 +233,8 @@ describe("evidence vault client", () => {
     const uploadedFile = uploadedForms[0].get("file") as Blob;
     const uploadedPayload = await readBlobText(uploadedFile);
     expect(uploadedPayload).toContain("localContentHash");
+    expect(uploadedPayload).toContain("control-eu-mica-title-ii-white-paper");
+    expect(uploadedForms[0].get("linkedControlIds")).toBe("control-eu-mica-title-ii-white-paper");
     expect(uploadedPayload).not.toContain("Corrected confidential board approval text");
   });
 });

@@ -316,6 +316,7 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
       "sourceNote" TEXT NOT NULL,
       "version" INTEGER NOT NULL,
       "linkedRiskFlagIdsJson" TEXT NOT NULL,
+      "linkedControlIdsJson" TEXT NOT NULL DEFAULT '[]',
       "containsRawKycOrPersonalData" BOOLEAN NOT NULL,
       "parentEvidenceId" TEXT,
       "supersededByEvidenceId" TEXT,
@@ -327,6 +328,7 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
   await addColumnIfMissing(prisma, "EvidenceVaultRecord", "parentEvidenceId", "TEXT");
   await addColumnIfMissing(prisma, "EvidenceVaultRecord", "supersededByEvidenceId", "TEXT");
   await addColumnIfMissing(prisma, "EvidenceVaultRecord", "replacementReason", "TEXT");
+  await addColumnIfMissing(prisma, "EvidenceVaultRecord", "linkedControlIdsJson", "TEXT NOT NULL DEFAULT '[]'");
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "EvidenceVaultRecord_workspaceId_idx" ON "EvidenceVaultRecord"("workspaceId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "EvidenceVaultRecord_parentEvidenceId_idx" ON "EvidenceVaultRecord"("parentEvidenceId");`);
 
@@ -487,6 +489,7 @@ function serializeEvidenceVaultRecord(record: EvidenceVaultRecord) {
     sourceNote: record.sourceNote,
     version: record.version,
     linkedRiskFlagIdsJson: JSON.stringify(record.linkedRiskFlagIds),
+    linkedControlIdsJson: JSON.stringify(record.linkedControlIds),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
     parentEvidenceId: record.parentEvidenceId ?? null,
     supersededByEvidenceId: record.supersededByEvidenceId ?? null,
@@ -509,6 +512,7 @@ type PersistedEvidenceVaultRecord = {
   sourceNote: string;
   version: number;
   linkedRiskFlagIdsJson: string;
+  linkedControlIdsJson?: string | null;
   containsRawKycOrPersonalData: boolean;
   parentEvidenceId: string | null;
   supersededByEvidenceId: string | null;
@@ -532,6 +536,7 @@ function deserializeEvidenceVaultRecord(record: PersistedEvidenceVaultRecord): E
     sourceNote: record.sourceNote,
     version: record.version,
     linkedRiskFlagIds: parseStringArray(record.linkedRiskFlagIdsJson),
+    linkedControlIds: parseStringArray(record.linkedControlIdsJson ?? "[]"),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
     parentEvidenceId: record.parentEvidenceId ?? undefined,
     supersededByEvidenceId: record.supersededByEvidenceId ?? undefined,

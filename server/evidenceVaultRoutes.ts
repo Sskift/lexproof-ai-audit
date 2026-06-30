@@ -35,6 +35,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
         owner: getMultipartFieldValue(upload, "owner", "Unassigned"),
         sourceNote: getMultipartFieldValue(upload, "sourceNote", ""),
         linkedRiskFlagIds: parseCsv(getMultipartFieldValue(upload, "linkedRiskFlagIds", "")),
+        linkedControlIds: parseCsv(getMultipartFieldValue(upload, "linkedControlIds", "")),
         containsRawKycOrPersonalData: parseBooleanField(getMultipartFieldValue(upload, "containsRawKycOrPersonalData", "false"))
       });
       const duplicate = findDuplicateEvidenceVaultRecord(await repository.listEvidenceVaultRecords(request.params.workspaceId), evidence);
@@ -197,6 +198,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
           owner: getMultipartFieldValue(upload, "owner", existing.owner),
           sourceNote: getMultipartFieldValue(upload, "sourceNote", ""),
           linkedRiskFlagIds: parseCsv(getMultipartFieldValue(upload, "linkedRiskFlagIds", existing.linkedRiskFlagIds.join(","))),
+          linkedControlIds: parseCsv(getMultipartFieldValue(upload, "linkedControlIds", existing.linkedControlIds.join(","))),
           containsRawKycOrPersonalData: parseBooleanField(getMultipartFieldValue(upload, "containsRawKycOrPersonalData", "false")),
           parentEvidenceId: existing.id,
           replacementReason,
@@ -274,6 +276,7 @@ type UpdateEvidenceRequestBody = {
   owner?: string;
   sourceNote?: string;
   linkedRiskFlagIds?: string[] | string;
+  linkedControlIds?: string[] | string;
 };
 
 type MultipartField = {
@@ -297,6 +300,7 @@ function updateEvidenceVaultRecord(record: EvidenceVaultRecord, input: UpdateEvi
     owner: input.owner?.trim() || record.owner,
     sourceNote: input.sourceNote?.trim() ?? record.sourceNote,
     linkedRiskFlagIds: normalizeRiskFlagIds(input.linkedRiskFlagIds) ?? record.linkedRiskFlagIds,
+    linkedControlIds: normalizeControlIds(input.linkedControlIds) ?? record.linkedControlIds,
     version: record.version + 1,
     updatedAt: new Date().toISOString()
   };
@@ -330,6 +334,18 @@ function parseBooleanField(value: string): boolean {
 }
 
 function normalizeRiskFlagIds(value: UpdateEvidenceRequestBody["linkedRiskFlagIds"]): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    return Array.from(new Set(value.map((item) => item.trim().toLowerCase()).filter(Boolean)));
+  }
+
+  return Array.from(new Set(parseCsv(value).map((item) => item.toLowerCase())));
+}
+
+function normalizeControlIds(value: UpdateEvidenceRequestBody["linkedControlIds"]): string[] | undefined {
   if (value === undefined) {
     return undefined;
   }

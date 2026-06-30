@@ -98,6 +98,7 @@ describe("Phase 2 secure review workspace types", () => {
       sourceNote: "Contains raw passport scans.",
       version: 1,
       linkedRiskFlagIds: ["custody"],
+      linkedControlIds: [],
       containsRawKycOrPersonalData: true,
       createdAt: "2026-06-29T10:00:00.000Z",
       updatedAt: "2026-06-29T10:00:00.000Z"

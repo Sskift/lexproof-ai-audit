@@ -106,6 +106,7 @@ describe("secure review journey", () => {
           sourceNote: "Metadata-only sync",
           version: 1,
           linkedRiskFlagIds: ["governance-approval"],
+          linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
           containsRawKycOrPersonalData: false,
           createdAt: "2026-06-30T00:00:00.000Z",
           updatedAt: "2026-06-30T00:00:00.000Z"
@@ -238,6 +239,7 @@ describe("secure review journey", () => {
           sourceNote: "Metadata-only sync",
           version: 1,
           linkedRiskFlagIds: ["governance-approval"],
+          linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
           containsRawKycOrPersonalData: false,
           createdAt: "2026-06-30T00:00:00.000Z",
           updatedAt: "2026-06-30T00:00:00.000Z"

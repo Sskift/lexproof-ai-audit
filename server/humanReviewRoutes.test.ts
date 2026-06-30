@@ -19,6 +19,7 @@ describe("Human Review route module", () => {
       owner: "Ops",
       sourceNote: "Initial custody control packet",
       linkedRiskFlagIds: ["custody-controls"],
+      linkedControlIds: ["control-custody-controls"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-30T00:00:00.000Z"
     });
@@ -307,6 +308,7 @@ describe("Human Review route module", () => {
       owner: "Ops",
       sourceNote: "Rejected evidence should require replacement.",
       linkedRiskFlagIds: ["custody-controls"],
+      linkedControlIds: ["control-custody-controls"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-30T00:00:00.000Z"
     });

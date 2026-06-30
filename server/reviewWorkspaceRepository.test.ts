@@ -97,6 +97,7 @@ describe("Prisma review workspace repository", () => {
       owner: "Compliance",
       sourceNote: "Board approval memo for counsel review.",
       linkedRiskFlagIds: ["governance", "custody"],
+      linkedControlIds: ["control-governance", "control-custody"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-29T10:05:00.000Z"
     });

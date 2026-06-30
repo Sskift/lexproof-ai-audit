@@ -301,7 +301,7 @@ The module does not delete user-entered ledger content, perform KYC, store files
 
 Owns server Evidence Vault metadata boundary behavior:
 
-- `validateEvidenceMetadataBoundary(input)` scans filenames, owners, source notes, linked risk IDs, and replacement reasons for private-key-like material, credential-like tokens, and raw KYC references before an Evidence Vault record is created.
+- `validateEvidenceMetadataBoundary(input)` scans filenames, owners, source notes, linked risk IDs, linked control IDs, and replacement reasons for private-key-like material, credential-like tokens, and raw KYC references before an Evidence Vault record is created.
 - The result returns deterministic blocked classes, sanitized error messages, and the Not legal advice boundary.
 - Clean metadata can mention the absence of raw KYC without being blocked.
 
@@ -479,7 +479,7 @@ The first-stage manifest is local and simulated. It is not a real chain write or
 
 Owns server Evidence Vault manifest behavior for persisted metadata:
 
-- `createEvidenceVaultManifest({ workspaceId, records })` sorts persisted Evidence Vault records, projects metadata-only manifest items, and hashes status, version, lineage, owner, linked-risk, and file-hash metadata.
+- `createEvidenceVaultManifest({ workspaceId, records })` sorts persisted Evidence Vault records, projects metadata-only manifest items, and hashes status, version, lineage, owner, linked-risk, linked-control, and file-hash metadata.
 - `exportEvidenceVaultManifestJson(manifest)` returns readable JSON for route responses or future downloads.
 - The hash payload excludes `generatedAt`, source-note body text, and raw file bytes, so repeated generation is stable while status, version, and lineage changes still alter the bundle hash.
 
@@ -699,7 +699,7 @@ The gateway must keep model output as draft audit preparation. It must not chang
 - accept file upload metadata or external evidence references
 - compute and store server-side file hashes
 - keep raw file bytes out of Counsel Pack exports by default
-- track owner, source notes, linked risk flags, evidence status, version, replacement lineage, and timestamps
+- track owner, source notes, linked risk flags, linked regulatory control IDs, evidence status, version, replacement lineage, and timestamps
 - enforce evidence status transitions before updating persisted records
 - block active duplicate hashes before storing a second evidence record
 - let rejected records be superseded by replacement metadata while preserving parent/child relationships and replacement reasons

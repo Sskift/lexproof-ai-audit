@@ -11,6 +11,7 @@ export type EvidenceVaultUploadInput = {
   owner: string;
   sourceNote: string;
   linkedRiskFlagIds: string[];
+  linkedControlIds: string[];
   containsRawKycOrPersonalData: boolean;
   parentEvidenceId?: string;
   replacementReason?: string;
@@ -20,11 +21,13 @@ export type EvidenceVaultUploadInput = {
 
 export function createEvidenceVaultRecordFromUpload(input: EvidenceVaultUploadInput): EvidenceVaultRecord {
   const fileHash = createHash("sha256").update(input.bytes).digest("hex");
+  const linkedControlIds = normalizeControlIds(input.linkedControlIds);
   const metadataBoundary = validateEvidenceMetadataBoundary({
     filename: input.filename,
     owner: input.owner,
     sourceNote: input.sourceNote,
     linkedRiskFlagIds: input.linkedRiskFlagIds,
+    linkedControlIds,
     replacementReason: input.replacementReason
   });
   const validation = validateEvidenceUploadBoundary({
@@ -61,6 +64,7 @@ export function createEvidenceVaultRecordFromUpload(input: EvidenceVaultUploadIn
     sourceNote: input.sourceNote.trim(),
     version: input.baseVersion ? input.baseVersion + 1 : 1,
     linkedRiskFlagIds: [...input.linkedRiskFlagIds],
+    linkedControlIds,
     containsRawKycOrPersonalData: false,
     parentEvidenceId: normalizeOptional(input.parentEvidenceId),
     supersededByEvidenceId: undefined,
@@ -97,4 +101,8 @@ export function findDuplicateEvidenceVaultRecord(
 function normalizeOptional(value: string | undefined): string | undefined {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function normalizeControlIds(values: string[]): string[] {
+  return Array.from(new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean)));
 }

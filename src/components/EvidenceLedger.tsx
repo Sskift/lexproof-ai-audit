@@ -415,6 +415,7 @@ export function EvidenceLedger({
                   {record.status} · {record.owner} · v{record.version}
                 </span>
                 {record.sourceNote ? <small>{record.sourceNote}</small> : null}
+                {(record.linkedControlIds ?? []).length > 0 ? <small>Controls: {record.linkedControlIds.join(", ")}</small> : null}
                 {record.parentEvidenceId ? <small>Parent evidence: {record.parentEvidenceId}</small> : null}
                 {record.supersededByEvidenceId ? <small>Superseded by: {record.supersededByEvidenceId}</small> : null}
                 {record.replacementReason ? <small>Replacement reason: {record.replacementReason}</small> : null}

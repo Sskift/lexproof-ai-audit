@@ -15,6 +15,7 @@ export type EvidenceVaultRecordResponse = {
   sourceNote: string;
   version: number;
   linkedRiskFlagIds: string[];
+  linkedControlIds: string[];
   containsRawKycOrPersonalData: boolean;
   parentEvidenceId?: string;
   supersededByEvidenceId?: string;
@@ -40,6 +41,7 @@ export type EvidenceVaultManifestResponse = {
     owner: string;
     version: number;
     linkedRiskFlagIds: string[];
+    linkedControlIds: string[];
     containsRawKycOrPersonalData: boolean;
     parentEvidenceId?: string;
     supersededByEvidenceId?: string;
@@ -58,6 +60,7 @@ export type EvidenceVaultSnapshot = {
   status: string;
   owner: string;
   linkedRiskFlagIds: string[];
+  linkedControlIds: string[];
   localContentHash: string;
   contentPolicy: "metadata-only; raw evidence content excluded";
   notLegalAdviceBoundary: "Not legal advice. Evidence Vault snapshots are audit preparation metadata only.";
@@ -143,6 +146,7 @@ export async function createEvidenceVaultSnapshot(item: EvidenceItem): Promise<E
     status: item.status ?? "draft",
     owner: item.owner ?? "Founder",
     linkedRiskFlagIds: extractLinkedRiskFlagIds(item),
+    linkedControlIds: extractLinkedControlIds(item),
     localContentHash,
     contentPolicy: "metadata-only; raw evidence content excluded",
     notLegalAdviceBoundary: "Not legal advice. Evidence Vault snapshots are audit preparation metadata only."
@@ -167,7 +171,12 @@ export async function syncEvidenceLedgerToVault(input: EvidenceVaultSyncInput): 
     const uploaded = await readJsonResponse<EvidenceVaultRecordResponse>(uploadResponse, "Evidence Vault upload failed.");
     const desiredStatus = mapLedgerStatusToVaultStatus(item.status);
 
-    if (uploaded.status !== desiredStatus || uploaded.owner !== snapshot.owner || uploaded.linkedRiskFlagIds.join(",") !== snapshot.linkedRiskFlagIds.join(",")) {
+    if (
+      uploaded.status !== desiredStatus ||
+      uploaded.owner !== snapshot.owner ||
+      uploaded.linkedRiskFlagIds.join(",") !== snapshot.linkedRiskFlagIds.join(",") ||
+      (uploaded.linkedControlIds ?? []).join(",") !== snapshot.linkedControlIds.join(",")
+    ) {
       const patchResponse = await fetcher(buildEvidenceVaultUrl(input.apiBaseUrl, workspaceId, `evidence/${encodeURIComponent(uploaded.id)}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -175,7 +184,8 @@ export async function syncEvidenceLedgerToVault(input: EvidenceVaultSyncInput): 
           status: desiredStatus,
           owner: snapshot.owner,
           sourceNote: createSourceNote(snapshot),
-          linkedRiskFlagIds: snapshot.linkedRiskFlagIds
+          linkedRiskFlagIds: snapshot.linkedRiskFlagIds,
+          linkedControlIds: snapshot.linkedControlIds
         })
       });
       records.push(await readJsonResponse<EvidenceVaultRecordResponse>(patchResponse, "Evidence Vault status update failed."));
@@ -245,6 +255,7 @@ function createVaultUploadFormData(snapshot: EvidenceVaultSnapshot, replacementR
   formData.append("owner", snapshot.owner);
   formData.append("sourceNote", createSourceNote(snapshot));
   formData.append("linkedRiskFlagIds", snapshot.linkedRiskFlagIds.join(","));
+  formData.append("linkedControlIds", snapshot.linkedControlIds.join(","));
   formData.append("containsRawKycOrPersonalData", "false");
   if (replacementReason) {
     formData.append("replacementReason", replacementReason.trim());
@@ -265,6 +276,13 @@ function extractLinkedRiskFlagIds(item: EvidenceItem): string[] {
   const source = item.source ?? "";
   const match = source.match(/risk evidence requirement:\s*([a-z0-9-]+)/i);
   return match ? [match[1]] : [];
+}
+
+function extractLinkedControlIds(item: EvidenceItem): string[] {
+  const text = [item.source, item.label, item.kind].filter(Boolean).join(" ");
+  const controlMatches = Array.from(text.matchAll(/regulatory control:\s*(control-[a-z0-9-]+)/gi)).map((match) => match[1]);
+  const clauseMatches = Array.from(text.matchAll(/regulatory clause:\s*([a-z0-9-]+)/gi)).map((match) => `control-${match[1]}`);
+  return unique([...controlMatches, ...clauseMatches]);
 }
 
 function mapLedgerStatusToVaultStatus(status: EvidenceItem["status"]): EvidenceVaultRecordResponse["status"] {
@@ -335,6 +353,10 @@ function slug(value: string): string {
       .replace(/^-|-$/g, "")
       .slice(0, 72) || "evidence"
   );
+}
+
+function unique(values: string[]): string[] {
+  return Array.from(new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean)));
 }
 
 function stableStringify(value: unknown): string {

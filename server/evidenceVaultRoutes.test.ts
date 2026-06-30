@@ -22,6 +22,7 @@ describe("Evidence Vault route module", () => {
     uploadForm.append("owner", "Compliance");
     uploadForm.append("sourceNote", "Board approval memo for counsel review.");
     uploadForm.append("linkedRiskFlagIds", "governance,custody");
+    uploadForm.append("linkedControlIds", "control-eu-mica-title-ii-white-paper,control-us-sec-cftc-crypto-asset-interpretation");
     uploadForm.append("containsRawKycOrPersonalData", "false");
 
     const uploadResponse = await server.inject({
@@ -42,6 +43,7 @@ describe("Evidence Vault route module", () => {
         status: "received",
         owner: "Compliance",
         linkedRiskFlagIds: ["governance", "custody"],
+        linkedControlIds: ["control-eu-mica-title-ii-white-paper", "control-us-sec-cftc-crypto-asset-interpretation"],
         containsRawKycOrPersonalData: false
       })
     );
@@ -77,7 +79,8 @@ describe("Evidence Vault route module", () => {
       expect.objectContaining({
         evidenceId: evidence.id,
         status: "verified",
-        version: 2
+        version: 2,
+        linkedControlIds: ["control-eu-mica-title-ii-white-paper", "control-us-sec-cftc-crypto-asset-interpretation"]
       })
     );
 
@@ -214,6 +217,7 @@ describe("Evidence Vault route module", () => {
     replacementForm.append("owner", "Compliance");
     replacementForm.append("sourceNote", "Replacement memo with corrected approval scope.");
     replacementForm.append("linkedRiskFlagIds", "governance");
+    replacementForm.append("linkedControlIds", "control-eu-mica-title-ii-white-paper");
     replacementForm.append("replacementReason", "Reviewer rejected the first memo because approval scope was incomplete.");
     replacementForm.append("containsRawKycOrPersonalData", "false");
 
@@ -234,6 +238,7 @@ describe("Evidence Vault route module", () => {
         replacement: expect.objectContaining({
           parentEvidenceId: original.id,
           status: "received",
+          linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
           replacementReason: "Reviewer rejected the first memo because approval scope was incomplete."
         }),
         notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only."

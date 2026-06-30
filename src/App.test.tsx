@@ -486,6 +486,7 @@ describe("App", () => {
       sourceNote: "Metadata-only sync",
       version: 1,
       linkedRiskFlagIds: ["governance-approval"],
+      linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
       containsRawKycOrPersonalData: false,
       createdAt: "2026-06-30T00:00:00.000Z",
       updatedAt: "2026-06-30T00:00:00.000Z"
@@ -498,6 +499,13 @@ describe("App", () => {
       }
 
       if (path.endsWith("/evidence/evidence-vault-ui") && init?.method === "PATCH") {
+        expect(JSON.parse(String(init.body))).toEqual(
+          expect.objectContaining({
+            status: "verified",
+            linkedRiskFlagIds: ["governance-approval"],
+            linkedControlIds: ["control-eu-mica-title-ii-white-paper"]
+          })
+        );
         return appJsonResponse({ ...vaultRecord, status: "verified", version: 2 }, 200);
       }
 
@@ -527,7 +535,11 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
       fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Vault approval memo" } });
       fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
-      fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: "risk evidence requirement: governance-approval" } });
+      fireEvent.change(screen.getByLabelText(/Source reference/i), {
+        target: {
+          value: "risk evidence requirement: governance-approval; regulatory control: control-eu-mica-title-ii-white-paper"
+        }
+      });
       fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "verified" } });
       fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
       fireEvent.change(screen.getByLabelText(/Evidence content/i), {
@@ -544,12 +556,15 @@ describe("App", () => {
       expect(screen.getByText("a".repeat(64))).toBeInTheDocument();
       expect(screen.getByText(/vault-approval-memo.metadata.json/i)).toBeInTheDocument();
       expect(screen.getByText(/verified · Compliance · v2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Controls: control-eu-mica-title-ii-white-paper/i)).toBeInTheDocument();
 
       const uploadedFile = uploadedForms[0].get("file") as Blob;
       const uploadedPayload = await readAppBlobText(uploadedFile);
       expect(uploadedPayload).toContain("localContentHash");
       expect(uploadedPayload).toContain("governance-approval");
+      expect(uploadedPayload).toContain("control-eu-mica-title-ii-white-paper");
       expect(uploadedPayload).not.toContain("Raw board approval facts stay local");
+      expect(uploadedForms[0].get("linkedControlIds")).toBe("control-eu-mica-title-ii-white-paper");
       expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
     } finally {
       vi.unstubAllGlobals();

@@ -30,6 +30,7 @@ describe("createEvidenceVaultManifest", () => {
       owner: "Compliance",
       version: 1,
       linkedRiskFlagIds: ["governance"],
+      linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
       containsRawKycOrPersonalData: false
     });
     expect(second.bundleHash).toBe(first.bundleHash);
@@ -69,6 +70,21 @@ describe("createEvidenceVaultManifest", () => {
     expect(reviewed.bundleHash).not.toBe(original.bundleHash);
   });
 
+  it("changes the bundle hash when linked regulatory controls change", async () => {
+    const original = await createEvidenceVaultManifest({
+      workspaceId: "workspace-vault-manifest",
+      records: [record({ id: "evidence-a", linkedControlIds: ["control-eu-mica-title-ii-white-paper"] })]
+    });
+    const relinked = await createEvidenceVaultManifest({
+      workspaceId: "workspace-vault-manifest",
+      records: [record({ id: "evidence-a", linkedControlIds: ["control-sg-psa-dpt-aml-cft"] })]
+    });
+
+    expect(original.items[0].linkedControlIds).toEqual(["control-eu-mica-title-ii-white-paper"]);
+    expect(relinked.items[0].linkedControlIds).toEqual(["control-sg-psa-dpt-aml-cft"]);
+    expect(relinked.bundleHash).not.toBe(original.bundleHash);
+  });
+
   it("uses a stable record order so repository ordering does not alter the bundle hash", async () => {
     const records = [
       record({ id: "evidence-b", filename: "b.txt", fileHash: "b".repeat(64), createdAt: "2026-06-30T02:00:00.000Z" }),
@@ -99,6 +115,7 @@ function record(overrides: Partial<EvidenceVaultRecord> = {}): EvidenceVaultReco
     sourceNote: "Metadata-only source note.",
     version: 1,
     linkedRiskFlagIds: ["governance"],
+    linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
     containsRawKycOrPersonalData: false,
     createdAt: "2026-06-30T00:00:00.000Z",
     updatedAt: "2026-06-30T00:00:00.000Z",

@@ -10,6 +10,7 @@ export type EvidenceMetadataBoundaryInput = {
   owner: string;
   sourceNote: string;
   linkedRiskFlagIds: string[];
+  linkedControlIds?: string[];
   replacementReason?: string;
 };
 
@@ -37,6 +38,7 @@ export function validateEvidenceMetadataBoundary(input: EvidenceMetadataBoundary
       input.owner,
       input.sourceNote,
       input.linkedRiskFlagIds.join(" "),
+      input.linkedControlIds?.join(" ") ?? "",
       input.replacementReason ?? ""
     ].join(" ")
   );

@@ -199,6 +199,7 @@ model EvidenceVaultRecord {
   sourceNote                   String
   version                      Int
   linkedRiskFlagIdsJson        String
+  linkedControlIdsJson         String
   containsRawKycOrPersonalData Boolean
   parentEvidenceId             String?
   supersededByEvidenceId       String?

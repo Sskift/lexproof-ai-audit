@@ -59,6 +59,7 @@ describe("Phase 2 workspace and evidence routes", () => {
     form.append("owner", "Compliance");
     form.append("sourceNote", "Board approval memo for counsel review.");
     form.append("linkedRiskFlagIds", "governance,custody");
+    form.append("linkedControlIds", "control-governance,control-custody");
     form.append("containsRawKycOrPersonalData", "false");
 
     const uploadResponse = await server.inject({
@@ -82,6 +83,7 @@ describe("Phase 2 workspace and evidence routes", () => {
         owner: "Compliance",
         sourceNote: "Board approval memo for counsel review.",
         linkedRiskFlagIds: ["governance", "custody"],
+        linkedControlIds: ["control-governance", "control-custody"],
         containsRawKycOrPersonalData: false
       })
     );
@@ -116,7 +118,8 @@ describe("Phase 2 workspace and evidence routes", () => {
       expect.objectContaining({
         evidenceId: evidence.id,
         fileHash: evidence.fileHash,
-        status: "verified"
+        status: "verified",
+        linkedControlIds: ["control-custody", "control-governance"]
       })
     );
 

@@ -12,6 +12,7 @@ export type EvidenceVaultManifestItem = {
   owner: string;
   version: number;
   linkedRiskFlagIds: string[];
+  linkedControlIds: string[];
   containsRawKycOrPersonalData: boolean;
   parentEvidenceId?: string;
   supersededByEvidenceId?: string;
@@ -72,6 +73,7 @@ function createManifestItem(record: EvidenceVaultRecord, index: number): Evidenc
     owner: record.owner,
     version: record.version,
     linkedRiskFlagIds: [...record.linkedRiskFlagIds].sort((left, right) => left.localeCompare(right)),
+    linkedControlIds: [...record.linkedControlIds].sort((left, right) => left.localeCompare(right)),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
     ...(record.parentEvidenceId ? { parentEvidenceId: record.parentEvidenceId } : {}),
     ...(record.supersededByEvidenceId ? { supersededByEvidenceId: record.supersededByEvidenceId } : {}),

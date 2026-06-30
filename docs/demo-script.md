@@ -50,6 +50,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 3. **Select or upload evidence**
    - Open **Evidence Ledger**.
    - Apply the **tokenized yield / RWA** evidence template, or add one local synthetic evidence item.
+   - Include a source reference such as `regulatory control: control-eu-mica-title-ii-white-paper`, sync to the local Evidence Vault API, and show the vault record's **Controls:** line plus manifest hash. Not legal advice.
    - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
    - Show **Evidence Retention Readiness** and confirm normal demo evidence is metadata-only or needs human confirmation before vault sync. Not legal advice.
    - Screenshot: `docs/assets/screenshots/demo-02-evidence-ledger.png`.

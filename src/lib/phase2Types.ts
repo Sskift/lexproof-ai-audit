@@ -34,6 +34,7 @@ export type EvidenceVaultRecord = {
   sourceNote: string;
   version: number;
   linkedRiskFlagIds: string[];
+  linkedControlIds: string[];
   containsRawKycOrPersonalData: boolean;
   parentEvidenceId?: string;
   supersededByEvidenceId?: string;

@@ -73,8 +73,13 @@ import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTick
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
   createModelGatewayProviderPolicyReport,
-  defaultModelGatewayProviderAdapters
+  defaultModelGatewayProviderAdapters,
+  type ModelGatewayProviderPolicyReport
 } from "./lib/modelGatewayProviderPolicy";
+import {
+  fetchModelGatewayProviderPolicy,
+  ModelGatewayProviderPolicyClientError
+} from "./lib/modelGatewayProviderPolicyClient";
 import {
   createHumanReviewDecision,
   createHumanReviewQueue,
@@ -181,6 +186,11 @@ export default function App() {
   const [humanReviewDecisions, setHumanReviewDecisions] = useState<HumanReviewDecision[]>(() => loadStoredHumanReviewDecisions());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
+  const [providerPolicyApiBaseUrl, setProviderPolicyApiBaseUrl] = useState("");
+  const [serverProviderPolicyReport, setServerProviderPolicyReport] = useState<ModelGatewayProviderPolicyReport | null>(null);
+  const [providerPolicySyncStatus, setProviderPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [providerPolicySyncError, setProviderPolicySyncError] = useState("");
+  const [providerPolicySyncRecoveryAction, setProviderPolicySyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -322,6 +332,7 @@ export default function App() {
       }),
     [modelConnectReceipt]
   );
+  const activeModelGatewayProviderPolicyReport = serverProviderPolicyReport ?? modelGatewayProviderPolicyReport;
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -846,6 +857,29 @@ export default function App() {
     setCounselPackServerExports((current) => [record, ...current].slice(0, 120));
   };
 
+  const refreshProviderPolicyReport = async () => {
+    setProviderPolicySyncStatus("syncing");
+    setProviderPolicySyncError("");
+    setProviderPolicySyncRecoveryAction("");
+
+    try {
+      const report = await fetchModelGatewayProviderPolicy({
+        apiBaseUrl: providerPolicyApiBaseUrl
+      });
+      setServerProviderPolicyReport(report);
+      setProviderPolicySyncStatus("synced");
+    } catch (error) {
+      setProviderPolicySyncStatus("error");
+      if (error instanceof ModelGatewayProviderPolicyClientError) {
+        setProviderPolicySyncError(error.message);
+        setProviderPolicySyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setProviderPolicySyncError(error instanceof Error ? error.message : "Provider policy refresh failed.");
+      setProviderPolicySyncRecoveryAction("Start the Phase 2 API and retry provider policy refresh.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -956,7 +990,14 @@ export default function App() {
 
           <IntegrationReadinessPanel
             registry={integrationReadinessRegistry}
-            providerPolicyReport={modelGatewayProviderPolicyReport}
+            providerPolicyReport={activeModelGatewayProviderPolicyReport}
+            providerPolicySource={serverProviderPolicyReport ? "server" : "local"}
+            providerPolicyApiBaseUrl={providerPolicyApiBaseUrl}
+            providerPolicySyncStatus={providerPolicySyncStatus}
+            providerPolicySyncError={providerPolicySyncError}
+            providerPolicySyncRecoveryAction={providerPolicySyncRecoveryAction}
+            onProviderPolicyApiBaseUrlChange={setProviderPolicyApiBaseUrl}
+            onRefreshProviderPolicy={refreshProviderPolicyReport}
             onNavigate={setActiveTab}
           />
 

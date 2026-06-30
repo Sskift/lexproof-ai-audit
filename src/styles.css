@@ -1948,6 +1948,56 @@ textarea {
   font-size: 1.15rem;
 }
 
+.provider-policy-sync {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 8px 10px;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.provider-policy-sync > small,
+.provider-policy-sync > .save-state,
+.provider-policy-error {
+  grid-column: 1 / -1;
+}
+
+.provider-policy-sync > small {
+  color: #53616f;
+  line-height: 1.42;
+}
+
+.provider-policy-sync.synced {
+  border-color: #b8d8c8;
+  background: #f8fffb;
+}
+
+.provider-policy-sync.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.provider-policy-error {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid #e2a7a1;
+  border-radius: 8px;
+  background: #fffdfb;
+}
+
+.provider-policy-error strong,
+.provider-policy-error span,
+.provider-policy-error small {
+  margin: 0;
+  color: #7a2f2a;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
 .provider-policy-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -5460,6 +5510,7 @@ textarea {
   .evaluation-facts,
   .integration-adapter-grid,
   .provider-policy-summary,
+  .provider-policy-sync,
   .provider-policy-grid,
   .provider-control-list,
   .grc-ticket-list,

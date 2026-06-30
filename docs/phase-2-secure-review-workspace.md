@@ -156,6 +156,7 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - returns the server-side provider registry policy report
   - exposes enabled/disabled provider status, required controls, next actions, and Not legal advice boundary
   - does not accept credentials, call external providers, or enable external provider proxying
+  - can be refreshed from the Integration Readiness Registry so users see server sync and failure recovery states before any future provider enablement
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate

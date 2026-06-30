@@ -1,4 +1,4 @@
-import { Bot, ClipboardList, DatabaseZap, Download, FileText, Link2, PlugZap, ShieldCheck } from "lucide-react";
+import { Bot, ClipboardList, DatabaseZap, Download, FileText, Link2, PlugZap, RefreshCcw, ShieldCheck } from "lucide-react";
 import type {
   IntegrationAdapterCategory,
   IntegrationAdapterId,
@@ -14,6 +14,13 @@ import {
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
   providerPolicyReport: ModelGatewayProviderPolicyReport;
+  providerPolicySource: "local" | "server";
+  providerPolicyApiBaseUrl: string;
+  providerPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  providerPolicySyncError: string;
+  providerPolicySyncRecoveryAction: string;
+  onProviderPolicyApiBaseUrlChange: (value: string) => void;
+  onRefreshProviderPolicy: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -27,7 +34,18 @@ const categoryIcons: Record<IntegrationAdapterCategory, typeof PlugZap> = {
   "workflow-export": ClipboardList
 };
 
-export function IntegrationReadinessPanel({ registry, providerPolicyReport, onNavigate }: IntegrationReadinessPanelProps) {
+export function IntegrationReadinessPanel({
+  registry,
+  providerPolicyReport,
+  providerPolicySource,
+  providerPolicyApiBaseUrl,
+  providerPolicySyncStatus,
+  providerPolicySyncError,
+  providerPolicySyncRecoveryAction,
+  onProviderPolicyApiBaseUrlChange,
+  onRefreshProviderPolicy,
+  onNavigate
+}: IntegrationReadinessPanelProps) {
   return (
     <section className={`integration-readiness-panel ${registry.overallStatus}`} aria-label="Integration Readiness Registry">
       <div className="split-title compact-title">
@@ -49,7 +67,16 @@ export function IntegrationReadinessPanel({ registry, providerPolicyReport, onNa
           <IntegrationAdapterCard key={adapter.id} adapter={adapter} onNavigate={onNavigate} />
         ))}
       </div>
-      <ModelGatewayProviderPolicyPanel report={providerPolicyReport} />
+      <ModelGatewayProviderPolicyPanel
+        report={providerPolicyReport}
+        source={providerPolicySource}
+        apiBaseUrl={providerPolicyApiBaseUrl}
+        syncStatus={providerPolicySyncStatus}
+        syncError={providerPolicySyncError}
+        syncRecoveryAction={providerPolicySyncRecoveryAction}
+        onApiBaseUrlChange={onProviderPolicyApiBaseUrlChange}
+        onRefresh={onRefreshProviderPolicy}
+      />
       <div className="integration-next-actions">
         <strong>Adapter recovery path</strong>
         <ul>
@@ -62,7 +89,25 @@ export function IntegrationReadinessPanel({ registry, providerPolicyReport, onNa
   );
 }
 
-function ModelGatewayProviderPolicyPanel({ report }: { report: ModelGatewayProviderPolicyReport }) {
+function ModelGatewayProviderPolicyPanel({
+  report,
+  source,
+  apiBaseUrl,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onApiBaseUrlChange,
+  onRefresh
+}: {
+  report: ModelGatewayProviderPolicyReport;
+  source: "local" | "server";
+  apiBaseUrl: string;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onRefresh: () => Promise<void> | void;
+}) {
   return (
     <section className={`model-gateway-provider-policy ${report.overallStatus}`} aria-label="Model Gateway Provider Policy">
       <div className="split-title compact-title">
@@ -77,6 +122,32 @@ function ModelGatewayProviderPolicyPanel({ report }: { report: ModelGatewayProvi
         <ProviderPolicyFact label="Enabled providers" value={String(report.enabledProviderCount)} />
         <ProviderPolicyFact label="Deferred providers" value={String(report.deferredProviderCount)} />
         <ProviderPolicyFact label="Provider controls" value={String(report.controls.length)} />
+      </div>
+      <div className={`provider-policy-sync ${syncStatus}`}>
+        <label className="editor-field">
+          <span>Provider Policy API base URL</span>
+          <input
+            type="url"
+            value={apiBaseUrl}
+            placeholder="http://127.0.0.1:8787"
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+          />
+        </label>
+        <button type="button" className="secondary" onClick={onRefresh} disabled={syncStatus === "syncing"}>
+          <RefreshCcw size={16} aria-hidden="true" />
+          {syncStatus === "syncing" ? "Refreshing Server Provider Policy" : "Refresh Server Provider Policy"}
+        </button>
+        <small>
+          {source === "server" ? "Server provider policy active" : "Local draft provider policy active"}; no credentials are collected.
+        </small>
+        {syncStatus === "synced" ? <span className="save-state">Server provider policy synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. Provider policy refresh is audit preparation metadata only.</small>
+          </div>
+        ) : null}
       </div>
       <div className="provider-policy-grid">
         {report.adapters.map((adapter) => (

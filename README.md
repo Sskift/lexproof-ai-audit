@@ -37,7 +37,7 @@ Key evidence:
 - Shared data classification and redaction rules for private keys, API keys, raw KYC, personal-data references, and confidentiality labels across Model Connect settings metadata, Export Safety Gate, and Evidence Vault metadata checks.
 - Export Safety Gate before Counsel Pack handoff, with data-boundary findings for private keys, API keys, raw KYC, personal-data references, and confidentiality labels.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
-- Server Model Gateway provider policy API, receipts, Model Gateway Evaluation artifacts, and Audit Log Export artifacts with payload hash, response hash, source evidence hash, provider policy metadata, human-review status, retry/error state, audit actions, before/after hashes, and remediation steps without returning raw payloads or credentials.
+- Server Model Gateway provider policy API, workbench refresh flow, receipts, Model Gateway Evaluation artifacts, and Audit Log Export artifacts with payload hash, response hash, source evidence hash, provider policy metadata, human-review status, retry/error state, audit actions, before/after hashes, and remediation steps without returning raw payloads or credentials.
 - Security Review Checklist for model provider, evidence storage, and anchor integration readiness before real external adapters, object storage, or chain writes are enabled.
 - Integration Readiness Registry for server model providers, object storage, chain anchors, document parser/OCR, and GRC ticket export adapters with ready, needs-policy, blocked, and disabled states before any real external integration is enabled.
 - GRC Ticket Export from Risk Audit for metadata-only remediation tickets, gated by Integration Readiness and downloadable as JSON without creating real external tickets.
@@ -128,9 +128,11 @@ Integration Readiness Registry maps those gates into adapter-level status for mo
 
 ![Integration Readiness Registry](docs/assets/screenshots/integration-readiness-registry.png)
 
-Model Gateway Provider Policy makes disabled external model adapters and required controls visible before any server-side provider proxy is enabled. It is also exposed by a read-only server API, exports metadata-only JSON, and keeps external providers disabled until secret policy, provider allowlist, egress logging, Redaction Gate, and human-review controls are approved. Not legal advice.
+Model Gateway Provider Policy makes disabled external model adapters and required controls visible before any server-side provider proxy is enabled. The workbench can refresh the metadata-only policy from `GET /api/model-gateway/provider-policy`, shows server sync and failure recovery states, exports metadata-only JSON, and keeps external providers disabled until secret policy, provider allowlist, egress logging, Redaction Gate, and human-review controls are approved. Not legal advice.
 
 ![Model Gateway Provider Policy](docs/assets/screenshots/model-gateway-provider-policy.png)
+
+![Model Gateway Provider Policy server refresh](docs/assets/screenshots/model-gateway-provider-policy-server-refresh.png)
 
 Risk Audit can export the remediation queue as a metadata-only GRC ticket bundle after the GRC adapter readiness gate is clear. It does not create external Jira/Linear/ServiceNow tickets. Not legal advice.
 

@@ -213,7 +213,7 @@ Goal: move BYOM/BYOK model access behind a server policy boundary with review re
 
 Build:
 
-- Server-side provider registry with disabled-by-default adapters. The registry is exposed through `GET /api/model-gateway/adapters` and a metadata-only `GET /api/model-gateway/provider-policy` report with required controls, next actions, and Not legal advice boundary; it does not accept credentials or call external providers.
+- Server-side provider registry with disabled-by-default adapters. The registry is exposed through `GET /api/model-gateway/adapters` and a metadata-only `GET /api/model-gateway/provider-policy` report with required controls, next actions, and Not legal advice boundary; the workbench can refresh this report and show sync/failure recovery states without accepting credentials or calling external providers.
 - Secret handling policy before real external model calls.
 - Model Gateway route that enforces Redaction Gate, allowed data classes, purpose, reviewer, and final-decision blockers.
 - Safe Model Gateway failure receipts with run ID, retry state, error code, and remediation steps.
@@ -365,7 +365,7 @@ Goal: connect to useful external systems only after boundaries are explicit.
 
 Implemented first slice:
 
-- Integration Readiness Registry in `src/lib/integrationReadiness.ts` and `IntegrationReadinessPanel`: maps security-review gates into adapter-level ready, needs-policy, blocked, and disabled states for server model providers, object storage, chain anchors, document parser/OCR, and GRC ticket export. It exposes sanitized validation errors and recovery actions without enabling external providers, raw uploads, OCR, ticket creation, or chain writes.
+- Integration Readiness Registry in `src/lib/integrationReadiness.ts` and `IntegrationReadinessPanel`: maps security-review gates into adapter-level ready, needs-policy, blocked, and disabled states for server model providers, object storage, chain anchors, document parser/OCR, and GRC ticket export. It exposes sanitized validation errors, provider-policy API refresh, and recovery actions without enabling external providers, raw uploads, OCR, ticket creation, or chain writes.
 - Metadata-only GRC Ticket Export in `src/lib/grcTicketExport.ts` and `GrcTicketExportPanel`: turns the Risk Audit remediation queue into downloadable ticket JSON only when the GRC adapter readiness gate is clear. Blocked adapter states produce sanitized blockers and no ticket payload. It does not create real external Jira, Linear, ServiceNow, or GRC records.
 
 Build candidates:

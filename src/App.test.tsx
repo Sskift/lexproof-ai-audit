@@ -347,6 +347,107 @@ describe("App", () => {
     expect(policy.getByText(/Not legal advice. Model Gateway provider policy is audit preparation metadata only./i)).toBeInTheDocument();
   });
 
+  it("refreshes Model Gateway provider policy from the server API without collecting credentials", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/model-gateway/provider-policy");
+      expect(init).toEqual({ method: "GET" });
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-model-gateway-provider-policy-v1",
+          generatedAt: "2026-06-30T00:00:00.000Z",
+          overallStatus: "needs-policy",
+          enabledProviderCount: 1,
+          deferredProviderCount: 2,
+          adapters: [
+            {
+              provider: "mock",
+              label: "Mock local reviewer gateway",
+              enabled: true,
+              mode: "local-mock",
+              credentialPolicy: "no credentials accepted",
+              status: "ready",
+              readinessEvidence: "Mock local reviewer gateway is enabled for metadata-only mock review.",
+              requiredControls: ["redaction-gate", "human-review-enforcement"]
+            },
+            {
+              provider: "openai-compatible",
+              label: "OpenAI-compatible gateway",
+              enabled: false,
+              mode: "external-provider-placeholder",
+              credentialPolicy: "deferred until server-side secret policy is approved",
+              status: "disabled",
+              readinessEvidence: "OpenAI-compatible gateway remains disabled until policy approval.",
+              requiredControls: [
+                "server-side-secret-policy",
+                "provider-allowlist",
+                "egress-logging",
+                "redaction-gate",
+                "human-review-enforcement"
+              ],
+              disabledReason: "External provider proxying is disabled until controls are approved."
+            }
+          ],
+          controls: [
+            {
+              id: "server-side-secret-policy",
+              label: "Server-side secret policy",
+              status: "needs-policy",
+              evidence: "No KMS-backed provider credential storage or secret rotation policy is approved yet.",
+              recoveryAction: "Approve KMS-backed secret storage before external provider proxying."
+            }
+          ],
+          nextActions: ["Keep external provider proxying disabled until provider allowlist and egress logging are reviewed."],
+          notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const policy = within(registry.getByRole("region", { name: /Model Gateway Provider Policy/i }));
+
+    fireEvent.change(policy.getByLabelText(/Provider Policy API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.click(policy.getByRole("button", { name: /Refresh Server Provider Policy/i }));
+
+    expect(await policy.findByText(/Server provider policy synced/i)).toBeInTheDocument();
+    expect(policy.getAllByText(/Server-side secret policy/i).length).toBeGreaterThan(0);
+    expect(policy.getByText(/Not legal advice. Model Gateway provider policy is audit preparation metadata only./i)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
+    const fetchMock = vi.fn(async () =>
+      appJsonResponse(
+        {
+          error: "Provider policy API is unavailable.",
+          code: "MODEL_GATEWAY_POLICY_UNAVAILABLE",
+          recoveryAction: "Start the Phase 2 API and retry provider policy refresh.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        },
+        503
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const policy = within(registry.getByRole("region", { name: /Model Gateway Provider Policy/i }));
+
+    fireEvent.click(policy.getByRole("button", { name: /Refresh Server Provider Policy/i }));
+
+    expect(await policy.findByText(/Provider policy API is unavailable./i)).toBeInTheDocument();
+    expect(policy.getByText(/Start the Phase 2 API and retry provider policy refresh./i)).toBeInTheDocument();
+    expect(policy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+  });
+
   it("creates a custom project, updates the risk audit, and displays editable evidence in the ledger", async () => {
     render(<App />);
 

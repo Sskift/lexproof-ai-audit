@@ -28,6 +28,10 @@ import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditPro
 import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
 import {
+  createCounselPackVersionRecord,
+  type CounselPackVersionRecord
+} from "./lib/counselPackVersions";
+import {
   createDefaultCounselReviewItems,
   mergeCounselReviewQueues,
   type CounselReviewItem
@@ -95,6 +99,7 @@ const COUNSEL_QUESTIONS_KEY = "lexproof.counselQuestions.v1";
 const COUNSEL_REVIEWS_KEY = "lexproof.counselReviews.v1";
 const EVIDENCE_AUDIT_TRAIL_KEY = "lexproof.evidenceAuditTrail.v1";
 const HUMAN_REVIEW_DECISIONS_KEY = "lexproof.humanReviewDecisions.v1";
+const COUNSEL_PACK_VERSIONS_KEY = "lexproof.counselPackVersions.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
@@ -123,6 +128,9 @@ export default function App() {
   const [aiReviewRuns, setAIReviewRuns] = useState<ModelReviewRun[]>(() => loadStoredModelReviewRuns());
   const [counselQuestions, setCounselQuestions] = useState<CounselQuestion[]>(() => loadStoredCounselQuestions());
   const [counselReviews, setCounselReviews] = useState<CounselReviewItem[]>(() => loadStoredCounselReviews());
+  const [counselPackVersions, setCounselPackVersions] = useState<CounselPackVersionRecord[]>(() =>
+    loadStoredCounselPackVersions()
+  );
   const [evidenceAuditEvents, setEvidenceAuditEvents] = useState<EvidenceAuditEvent[]>(() => loadStoredEvidenceAuditEvents());
   const [humanReviewDecisions, setHumanReviewDecisions] = useState<HumanReviewDecision[]>(() => loadStoredHumanReviewDecisions());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
@@ -151,6 +159,10 @@ export default function App() {
   const currentCounselReviews = useMemo(
     () => counselReviews.filter((review) => review.projectId === project.id),
     [counselReviews, project.id]
+  );
+  const currentCounselPackVersions = useMemo(
+    () => counselPackVersions.filter((record) => record.projectId === project.id).sort((left, right) => right.version - left.version),
+    [counselPackVersions, project.id]
   );
   const currentEvidenceAuditEvents = useMemo(
     () => evidenceAuditEvents.filter((event) => event.projectId === project.id),
@@ -274,6 +286,10 @@ export default function App() {
   useEffect(() => {
     safeStorage()?.setItem(COUNSEL_REVIEWS_KEY, JSON.stringify(counselReviews.slice(0, 80)));
   }, [counselReviews]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(COUNSEL_PACK_VERSIONS_KEY, JSON.stringify(counselPackVersions.slice(0, 120)));
+  }, [counselPackVersions]);
 
   useEffect(() => {
     safeStorage()?.setItem(EVIDENCE_AUDIT_TRAIL_KEY, JSON.stringify(evidenceAuditEvents.slice(0, 120)));
@@ -487,6 +503,23 @@ export default function App() {
     );
   };
 
+  const saveCounselPackVersion = async () => {
+    if (!manifest) {
+      throw new Error("Evidence manifest is still calculating.");
+    }
+
+    const record = await createCounselPackVersionRecord({
+      project,
+      audit,
+      manifest,
+      markdown,
+      counselReviews: currentCounselReviews,
+      previousVersions: currentCounselPackVersions
+    });
+
+    setCounselPackVersions((current) => [record, ...current].slice(0, 120));
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -658,10 +691,12 @@ export default function App() {
               markdown={markdown}
               counselQuestions={currentCounselQuestions}
               counselReviews={currentCounselReviews}
+              counselPackVersions={currentCounselPackVersions}
               onAddQuestion={addCounselQuestion}
               onUpdateQuestion={updateCounselQuestion}
               onRemoveQuestion={removeCounselQuestion}
               onUpdateReview={updateCounselReview}
+              onSaveVersion={saveCounselPackVersion}
             />
           ) : null}
           {activeTab === "sources" ? <SourcesPanel audit={audit} /> : null}
@@ -1006,6 +1041,27 @@ function loadStoredCounselReviews(): CounselReviewItem[] {
     const parsed = JSON.parse(raw) as CounselReviewItem[];
     return Array.isArray(parsed)
       ? parsed.filter((review) => review.notLegalAdviceBoundary === "Not legal advice. Counsel review status is audit preparation workflow only.")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadStoredCounselPackVersions(): CounselPackVersionRecord[] {
+  const raw = safeStorage()?.getItem(COUNSEL_PACK_VERSIONS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as CounselPackVersionRecord[];
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (record) =>
+            record.recordVersion === "lexproof-counsel-pack-version-v1" &&
+            record.notLegalAdviceBoundary ===
+              "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
+        )
       : [];
   } catch {
     return [];

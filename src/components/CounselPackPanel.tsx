@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Anchor, CheckCircle2, Download, FileText, Printer } from "lucide-react";
+import { Anchor, CheckCircle2, Download, FileText, History, Printer, Save } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   createSimulatedAnchorReceipt,
@@ -8,6 +8,10 @@ import {
 } from "../lib/anchorReceipt";
 import { CounselQuestionsPanel } from "./CounselQuestionsPanel";
 import { downloadMarkdownFile, printCounselPackPdf } from "../lib/counselPack";
+import {
+  downloadCounselPackVersionJson,
+  type CounselPackVersionRecord
+} from "../lib/counselPackVersions";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
 import type { CounselQuestion } from "../lib/counselQuestions";
 import type { SubmissionFit } from "../lib/auditEngine";
@@ -20,10 +24,12 @@ type CounselPackPanelProps = {
   markdown: string;
   counselQuestions: CounselQuestion[];
   counselReviews: CounselReviewItem[];
+  counselPackVersions: CounselPackVersionRecord[];
   onAddQuestion: () => void;
   onUpdateQuestion: (id: string, updates: Partial<CounselQuestion>) => void;
   onRemoveQuestion: (id: string) => void;
   onUpdateReview: (id: string, updates: Partial<CounselReviewItem>) => void;
+  onSaveVersion: () => Promise<void> | void;
 };
 
 export function CounselPackPanel({
@@ -33,13 +39,17 @@ export function CounselPackPanel({
   markdown,
   counselQuestions,
   counselReviews,
+  counselPackVersions,
   onAddQuestion,
   onUpdateQuestion,
   onRemoveQuestion,
-  onUpdateReview
+  onUpdateReview,
+  onSaveVersion
 }: CounselPackPanelProps) {
   const [receipt, setReceipt] = useState<SimulatedAnchorReceipt | null>(null);
   const [printError, setPrintError] = useState("");
+  const [versionError, setVersionError] = useState("");
+  const [isSavingVersion, setIsSavingVersion] = useState(false);
 
   const createReceipt = () => {
     if (!manifest) {
@@ -54,6 +64,18 @@ export function CounselPackPanel({
       printCounselPackPdf(`${projectName} Counsel Pack`, markdown);
     } catch (error) {
       setPrintError(error instanceof Error ? error.message : "Unable to open counsel pack print window.");
+    }
+  };
+
+  const saveVersion = async () => {
+    setVersionError("");
+    setIsSavingVersion(true);
+    try {
+      await onSaveVersion();
+    } catch (error) {
+      setVersionError(error instanceof Error ? error.message : "Unable to save Counsel Pack version.");
+    } finally {
+      setIsSavingVersion(false);
     }
   };
 
@@ -110,9 +132,16 @@ export function CounselPackPanel({
             <Anchor size={16} aria-hidden="true" />
             {!manifest ? "Calculating Anchor Receipt" : receipt ? "Refresh Receipt" : "Create Simulated Anchor Receipt"}
           </button>
+          <button type="button" className="secondary" disabled={!manifest || isSavingVersion} onClick={saveVersion}>
+            <Save size={16} aria-hidden="true" />
+            {isSavingVersion ? "Saving Version" : "Save Pack Version"}
+          </button>
         </div>
         {printError ? <p className="save-state">{printError}</p> : null}
+        {versionError ? <p className="save-state">{versionError}</p> : null}
       </div>
+
+      <CounselPackVersionsPanel projectName={projectName} versions={counselPackVersions} />
 
       {receipt ? (
         <section className="anchor-receipt">
@@ -140,6 +169,65 @@ export function CounselPackPanel({
       ) : null}
 
       <pre className="memo">{markdown}</pre>
+    </section>
+  );
+}
+
+function CounselPackVersionsPanel({
+  projectName,
+  versions
+}: {
+  projectName: string;
+  versions: CounselPackVersionRecord[];
+}) {
+  const visibleVersions = versions.slice(0, 5);
+
+  return (
+    <section className="counsel-version-panel">
+      <div className="panel-title compact-title">
+        <History size={17} aria-hidden="true" />
+        <h3>Counsel Pack Versions</h3>
+      </div>
+      <p className="section-note">
+        Save export metadata before external handoff. Not legal advice; version records are audit preparation metadata only.
+      </p>
+      {visibleVersions.length === 0 ? (
+        <p className="empty-state">No Counsel Pack version records saved for {projectName || "this project"} yet.</p>
+      ) : (
+        <div className="counsel-version-list">
+          {visibleVersions.map((record) => (
+            <article key={record.id} className="counsel-version-row">
+              <header>
+                <span>Version {record.version}</span>
+                <div>
+                  <strong>{record.title}</strong>
+                  <small>
+                    {formatDateTime(record.exportedAt)} · {record.riskLevel} risk · {record.reviewSummary.open} open review items
+                  </small>
+                </div>
+              </header>
+              <div className="counsel-version-facts">
+                <VersionFact label="Manifest" value={shortHash(record.manifestHash)} />
+                <VersionFact label="Markdown" value={shortHash(record.markdownHash)} />
+                <VersionFact label="Sources" value={String(record.sourcePack.length)} />
+                <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
+              </div>
+              <p className="counsel-version-diff">
+                {record.diffFromPrevious?.summary ?? "Baseline export. No previous version diff."}
+              </p>
+              <small>{record.notLegalAdviceBoundary}</small>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => downloadCounselPackVersionJson(`${slug(projectName)}-counsel-pack-v${record.version}.json`, record)}
+              >
+                <Download size={16} aria-hidden="true" />
+                Download Version JSON
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -228,6 +316,32 @@ function ReceiptFact({ label, value, wide = false }: { label: string; value: str
       <code>{value}</code>
     </div>
   );
+}
+
+function VersionFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <code>{value}</code>
+    </div>
+  );
+}
+
+function shortHash(value: string): string {
+  return value.length > 16 ? `${value.slice(0, 12)}...${value.slice(-4)}` : value;
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
 function slug(value: string): string {

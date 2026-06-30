@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
@@ -14,6 +14,7 @@ describe("App", () => {
     window.localStorage?.removeItem?.("lexproof.counselReviews.v1");
     window.localStorage?.removeItem?.("lexproof.evidenceAuditTrail.v1");
     window.localStorage?.removeItem?.("lexproof.humanReviewDecisions.v1");
+    window.localStorage?.removeItem?.("lexproof.counselPackVersions.v1");
   });
 
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
@@ -1043,6 +1044,49 @@ describe("App", () => {
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Reviewed offering and disclosure assumptions with counsel.")).toBeInTheDocument();
     expect(await screen.findByText(/P0 reviewed \[asset-yield\] Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+  });
+
+  it("saves Counsel Pack versions and shows a diff between exports", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:counsel-pack-version");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      const saveButton = await screen.findByRole("button", { name: /Save Pack Version/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+
+      expect(await screen.findByRole("heading", { name: /Counsel Pack Versions/i })).toBeInTheDocument();
+      expect(await screen.findByText(/Version 1/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Not legal advice. Counsel Pack version records are audit preparation export metadata only./i)
+      ).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Status for review 1/i), { target: { value: "reviewed" } });
+      fireEvent.change(screen.getByLabelText(/Reviewer for review 1/i), { target: { value: "Outside counsel" } });
+      fireEvent.click(saveButton);
+
+      expect(await screen.findByText(/Version 2/i)).toBeInTheDocument();
+      expect(screen.getByText(/1 review status changed/i)).toBeInTheDocument();
+      expect(screen.getByText(/Markdown changed/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getAllByRole("button", { name: /Download Version JSON/i })[0]);
+
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-version");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
   });
 
   it("shows jurisdiction-specific audit preparation checklist items", async () => {

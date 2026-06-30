@@ -60,7 +60,8 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 6. **Export counsel pack**
    - Open **Counsel Pack**.
    - Show Regulatory Source Graph, Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, and source pack.
-   - Click **Download Markdown**. Optionally click **Download Manifest JSON** and **Create Simulated Anchor Receipt**.
+   - Click **Save Pack Version**, update one counsel review status, then click **Save Pack Version** again to show the export diff and version JSON action.
+   - Click **Download Markdown**. Optionally click **Download Version JSON**, **Download Manifest JSON**, and **Create Simulated Anchor Receipt**.
    - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
 
 ## Error-State Checks

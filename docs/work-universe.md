@@ -24,9 +24,9 @@ The repository already has:
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
 - Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, and Audit Log listing.
 - Local Human Review operations with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable timeline JSON with audit log IDs.
-- Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, and Counsel Pack export.
+- Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export, and local Counsel Pack version history with manifest/Markdown hashes and diff metadata.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
-- Demo script, screenshots, and integration tests for the full secure review journey.
+- Demo script, screenshots, and integration tests for the full secure review journey and Counsel Pack version-history export path.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
 

@@ -61,6 +61,7 @@ lexproof-ai-audit/
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       counselPack.ts         # Markdown pack and browser download helper
+      counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
@@ -103,7 +104,8 @@ sampleProfiles or blank project
   -> createSimulatedAnchorReceipt(manifest)
   -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph)
   -> buildPrintableCounselPackHtml(title, markdown)
-  -> tabbed UI surfaces, Markdown download, and browser Print / Save PDF
+  -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
+  -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
 
 The UI does not own legal scoring, hashing, validation, or export rules. It renders output from `src/lib` modules and owns only browser interaction state.
@@ -374,6 +376,16 @@ Owns export behavior:
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
 
+### `src/lib/counselPackVersions.ts`
+
+Owns Counsel Pack export version metadata:
+
+- `createCounselPackVersionRecord(project, audit, manifest, markdown, counselReviews, previousVersions)` stores export metadata with manifest hash, Markdown hash, review-status snapshot, source snapshot, export timestamp, and Not legal advice boundary.
+- `createCounselPackDiff(previous, next)` compares manifest hash, Markdown hash, source changes, and review-status changes between saved exports.
+- `exportCounselPackVersionJson(record)` and `downloadCounselPackVersionJson(filename, record)` export metadata-only JSON.
+
+Version records intentionally do not store raw Markdown content, credentials, raw KYC, personal data, or legal conclusions. They are audit preparation export metadata only.
+
 ### `src/data/sampleProfiles.ts`
 
 Owns seeded demo scenarios. Each scenario should represent a realistic legal/compliance posture:
@@ -414,7 +426,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, and exposes recent local evidence audit trail events plus JSON export.
-- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, and exports manifest JSON and simulated anchor receipt JSON.
+- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -525,6 +537,7 @@ Domain tests live next to the audit engine and cover:
 - model review run JSON export
 - counsel pack Markdown content
 - Markdown browser download behavior
+- counsel pack version record hashing, diffing, and metadata-only JSON download behavior
 - printable counsel pack HTML and browser print behavior
 - redaction report warnings and blockers
 - jurisdiction checklist generation
@@ -561,6 +574,7 @@ UI tests cover:
 - AI Review Run Ledger visibility
 - editable counsel questions in Counsel Pack
 - editable counsel review statuses in Counsel Pack
+- Counsel Pack version save, diff visibility, and version JSON download action
 - Jurisdiction Checklist tab with policy controls and local-counsel routing
 - source-linked Risk Audit trigger explanations
 - evidence template application

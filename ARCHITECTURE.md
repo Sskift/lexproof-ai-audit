@@ -9,13 +9,15 @@ For future feature placement and anti-drift rules, use [docs/architecture-guardr
 ```text
 lexproof-ai-audit/
   server/
-    app.ts                   # Fastify app and Phase 2 health endpoint
+    app.ts                   # Fastify app composition, shared hooks, and Phase 2 health endpoint
     index.ts                 # API process entry point
+    modelGatewayRoutes.ts    # Model Gateway adapter, run, lookup, and summary routes
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
     modelGatewayService.ts   # Mock Model Gateway success/failure receipts and boundary checks
     humanReviewService.ts    # Human review record helpers
     counselPackExportService.ts # Metadata-only Counsel Pack export record helper
     reviewWorkspaceRepository.ts # Memory and Prisma/SQLite repository adapters
+    routeHash.ts             # Server-side SHA-256 and stable JSON hashing helper
   prisma/
     schema.prisma            # Phase 2 SQLite/Prisma persistence schema
   src/
@@ -517,7 +519,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/modelGatewayRoutes.ts` is the first W7 domain route module split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -531,7 +533,7 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. The route persists successful and failed run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 

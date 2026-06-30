@@ -1,8 +1,8 @@
-import { createHash } from "node:crypto";
 import multipart from "@fastify/multipart";
 import Fastify from "fastify";
 import { createCounselPackExportRecord } from "./counselPackExportService.js";
-import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
+import { registerModelGatewayRoutes } from "./modelGatewayRoutes.js";
+import { sha256Hex, stableStringify } from "./routeHash.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
 import {
   createEvidenceVaultStatusEffectFromHumanReview,
@@ -12,7 +12,6 @@ import { createServerHumanReviewQueueView, type ServerHumanReviewQueueFilters } 
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
   createAuditLogRecord,
-  createModelGatewayRunSummary,
   type CounselPackExportRecord,
   type EvidenceVaultRecord,
   type HumanReviewRecord,
@@ -61,7 +60,7 @@ export function buildServer(options: BuildServerOptions = {}) {
     notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
   }));
 
-  server.get("/api/model-gateway/adapters", async () => listModelGatewayAdapters());
+  registerModelGatewayRoutes(server, { repository });
 
   server.post<{ Body: CreateWorkspaceRequestBody }>("/api/workspaces", async (request, reply) => {
     try {
@@ -393,87 +392,6 @@ export function buildServer(options: BuildServerOptions = {}) {
     }
   );
 
-  server.post<{ Params: { workspaceId: string }; Body: ModelGatewayRequestBody }>(
-    "/api/workspaces/:workspaceId/model-runs",
-    async (request, reply) => {
-      const result = createModelGatewayRun({
-        workspaceId: request.params.workspaceId,
-        provider: request.body.provider,
-        model: request.body.model,
-        purpose: request.body.purpose,
-        redactionStatus: request.body.redactionStatus,
-        includesCredentialMaterial: request.body.includesCredentialMaterial,
-        includesRawKycOrPersonalData: request.body.includesRawKycOrPersonalData,
-        humanReviewOwner: request.body.humanReviewOwner,
-        allowedDataClasses: request.body.allowedDataClasses ?? [],
-        payload: request.body.payload
-      });
-
-      if (!result.valid) {
-        await repository.saveModelGatewayRun(result.failureRun);
-        await repository.appendAuditLogRecord(
-          createAuditLogRecord({
-            workspaceId: request.params.workspaceId,
-            actorId: "system",
-            action: result.failureRun.status === "blocked" ? "model.run.blocked" : "model.run.failed",
-            targetType: "model-run",
-            targetId: result.failureRun.id,
-            beforeHash: "",
-            afterHash: sha256Hex(
-              stableStringify({
-                id: result.failureRun.id,
-                status: result.failureRun.status,
-                errorCode: result.failureRun.errorCode,
-                retryState: result.failureRun.retryState
-              })
-            ),
-            summary: "Recorded Model Gateway failure receipt for audit preparation remediation.",
-            createdAt: result.failureRun.createdAt
-          })
-        );
-        return reply.status(400).send({
-          error: "Model Gateway boundary failed.",
-          errors: result.errors,
-          runId: result.failureRun.id,
-          retryState: result.failureRun.retryState,
-          remediationSteps: result.failureRun.remediationSteps,
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
-      }
-
-      await repository.saveModelGatewayRun(result.run);
-      await repository.appendAuditLogRecord(
-        createAuditLogRecord({
-          workspaceId: request.params.workspaceId,
-          actorId: "system",
-          action: "model.run.created",
-          targetType: "model-run",
-          targetId: result.run.id,
-          beforeHash: "",
-          afterHash: result.run.responseHash,
-          summary: "Created mock model gateway run for audit preparation.",
-          createdAt: result.run.createdAt
-        })
-      );
-      return reply.status(201).send(result.run);
-    }
-  );
-
-  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/model-runs", async (request) =>
-    (await repository.listModelGatewayRuns(request.params.workspaceId)).map(createModelGatewayRunSummary)
-  );
-
-  server.get<{ Params: { workspaceId: string; runId: string } }>(
-    "/api/workspaces/:workspaceId/model-runs/:runId",
-    async (request, reply) => {
-      const run = await repository.findModelGatewayRun(request.params.workspaceId, request.params.runId);
-      if (!run) {
-        return reply.status(404).send({ error: "Model Gateway run not found." });
-      }
-      return run;
-    }
-  );
-
   server.post<{ Params: { workspaceId: string }; Body: HumanReviewRequestBody }>(
     "/api/workspaces/:workspaceId/reviews",
     async (request, reply) => {
@@ -704,18 +622,6 @@ export function buildServer(options: BuildServerOptions = {}) {
   return server;
 }
 
-type ModelGatewayRequestBody = {
-  provider: "mock" | "openai-compatible" | "enterprise-proxy";
-  model: string;
-  purpose: string;
-  redactionStatus: "clean" | "needs-review" | "blocked";
-  includesCredentialMaterial: boolean;
-  includesRawKycOrPersonalData: boolean;
-  humanReviewOwner: string;
-  allowedDataClasses?: string[];
-  payload: unknown;
-};
-
 type HumanReviewRequestBody = {
   targetType: HumanReviewRecord["targetType"];
   targetId: string;
@@ -934,23 +840,4 @@ function assertEvidenceVaultStatus(status: string): asserts status is EvidenceVa
   if (!["draft", "requested", "received", "submitted", "under-review", "verified", "rejected", "superseded"].includes(status)) {
     throw new Error("Evidence status must be draft, requested, received, submitted, under-review, verified, rejected, or superseded.");
   }
-}
-
-function sha256Hex(payload: string | Uint8Array): string {
-  return createHash("sha256").update(payload).digest("hex");
-}
-
-function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
-  }
-
-  if (value && typeof value === "object") {
-    return `{${Object.entries(value)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
-      .join(",")}}`;
-  }
-
-  return JSON.stringify(value);
 }

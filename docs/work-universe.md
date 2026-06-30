@@ -187,7 +187,7 @@ Goal: turn the Phase 2 API skeleton into a maintainable service boundary.
 
 Build:
 
-- Fastify route modules split by domain: workspaces, evidence vault, model gateway, human review, audit log, exports.
+- Fastify route modules split by domain: workspaces, evidence vault, model gateway, human review, audit log, exports. The first W7 split is implemented for Model Gateway routes in `server/modelGatewayRoutes.ts`; continue extracting the remaining domains without changing route contracts.
 - Repository interfaces with Prisma implementations and memory implementations for tests.
 - Request validation, typed error responses, and consistent audit logging.
 - Optional background jobs for export rendering and long-running model calls.

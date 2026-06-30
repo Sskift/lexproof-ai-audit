@@ -884,6 +884,58 @@ describe("App", () => {
     expect(screen.getByText(/covered by Signer control note/i)).toBeInTheDocument();
   });
 
+  it("downloads a metadata-only GRC ticket export from the remediation queue", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn(() => "blob:grc-ticket-export");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+      await waitFor(() => expect(screen.queryByText(/calculating/i)).not.toBeInTheDocument());
+
+      fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+      expect(await screen.findByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
+      expect(screen.getByText(/metadata-only remediation tickets/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Download GRC Tickets JSON/i }));
+
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("GRC ticket export did not create a blob.");
+      }
+      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          bundleVersion: "lexproof-grc-ticket-export-v1",
+          exportAllowed: true,
+          adapterStatus: "ready",
+          notLegalAdviceBoundary: "Not legal advice. GRC ticket exports are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.tickets.length).toBeGreaterThan(0);
+      expect(payload).not.toContain("Yield terms, target users, redemption policy");
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:grc-ticket-export");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("requests missing risk evidence into the Evidence Ledger as an in-progress item", async () => {
     render(<App />);
 

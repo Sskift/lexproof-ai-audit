@@ -2362,6 +2362,99 @@ textarea {
   color: #445361;
 }
 
+.grc-ticket-export {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.grc-ticket-export.ready {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.grc-ticket-export.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.grc-ticket-export .section-note {
+  margin: 0;
+}
+
+.grc-ticket-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grc-ticket-summary span {
+  border-radius: 999px;
+  border: 1px solid #d9e2e8;
+  background: #ffffff;
+  padding: 6px 8px;
+  color: #43515e;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grc-ticket-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grc-ticket-list article {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.grc-ticket-list strong,
+.grc-ticket-list p,
+.grc-ticket-list small {
+  display: block;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.grc-ticket-list strong {
+  color: #172431;
+}
+
+.grc-ticket-list p,
+.grc-ticket-list small,
+.grc-ticket-export .inline-actions span {
+  color: #53616f;
+  line-height: 1.42;
+}
+
+.grc-ticket-list p {
+  margin-top: 4px;
+  font-size: 0.84rem;
+}
+
+.grc-ticket-list small {
+  margin-top: 5px;
+}
+
+.grc-ticket-blockers {
+  margin: 0;
+  padding-left: 18px;
+  color: #7a2d25;
+  line-height: 1.45;
+}
+
 .hash-banner {
   display: flex;
   gap: 12px;
@@ -3923,6 +4016,7 @@ textarea {
   .audit-log-facts,
   .evaluation-facts,
   .integration-adapter-grid,
+  .grc-ticket-list,
   .retention-grid,
   .vault-sync-grid,
   .secure-journey-controls {

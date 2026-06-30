@@ -239,6 +239,7 @@ Goal: connect to useful external systems only after boundaries are explicit.
 Implemented first slice:
 
 - Integration Readiness Registry in `src/lib/integrationReadiness.ts` and `IntegrationReadinessPanel`: maps security-review gates into adapter-level ready, needs-policy, blocked, and disabled states for server model providers, object storage, chain anchors, document parser/OCR, and GRC ticket export. It exposes sanitized validation errors and recovery actions without enabling external providers, raw uploads, OCR, ticket creation, or chain writes.
+- Metadata-only GRC Ticket Export in `src/lib/grcTicketExport.ts` and `GrcTicketExportPanel`: turns the Risk Audit remediation queue into downloadable ticket JSON only when the GRC adapter readiness gate is clear. Blocked adapter states produce sanitized blockers and no ticket payload. It does not create real external Jira, Linear, ServiceNow, or GRC records.
 
 Build candidates:
 
@@ -246,7 +247,7 @@ Build candidates:
 - Object storage adapter after retention policy approval.
 - Optional wallet/on-chain anchor adapter after signing and privacy boundaries are documented.
 - Document parser/OCR adapter after raw-document handling is approved.
-- GRC/ticket export for remediation queues.
+- Real GRC/ticket system adapter after destination mapping, authentication, and export redaction policies are approved.
 
 Acceptance:
 

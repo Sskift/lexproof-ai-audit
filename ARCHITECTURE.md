@@ -39,6 +39,7 @@ lexproof-ai-audit/
       RegulatoryCommandCenter.tsx # Source-backed jurisdiction graph and evidence gap cockpit
       SecurityReviewChecklistPanel.tsx # Security readiness gates for integrations
       IntegrationReadinessPanel.tsx # Adapter-level readiness registry for external integration gates
+      GrcTicketExportPanel.tsx # Metadata-only remediation ticket export from Risk Audit
       CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
@@ -86,6 +87,7 @@ lexproof-ai-audit/
       auditLogFilters.ts    # Server audit-log query normalization and filtering
       securityReviewChecklist.ts # Integration security readiness checklist
       integrationReadiness.ts # Adapter readiness registry for model, storage, anchor, OCR, and GRC integrations
+      grcTicketExport.ts    # Metadata-only GRC/ticket remediation export bundle
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
@@ -478,6 +480,16 @@ Owns W9 adapter readiness behavior:
 
 The registry is audit preparation metadata only. It does not call external providers, persist secrets, upload raw files, run OCR, create GRC tickets, write chain transactions, or change deterministic audit scoring.
 
+### `src/lib/grcTicketExport.ts`
+
+Owns the first W9 GRC export artifact:
+
+- `createGrcTicketExport(input)` turns deterministic remediation items into metadata-only ticket records with owner, priority, action, linked risk flag IDs, source titles, adapter status, blockers, and the Not legal advice boundary.
+- The export is gated by `IntegrationReadinessRegistry`. If the GRC adapter is blocked or disabled, the bundle contains sanitized blockers and no tickets.
+- `exportGrcTicketExportJson()` and `downloadGrcTicketExportJson()` serialize and download the local JSON bundle for review handoff.
+
+The bundle is audit preparation workflow metadata only. It does not create Jira, Linear, ServiceNow, GRC, or other external system records, and it does not include raw evidence content.
+
 ### `src/lib/counselPackTemplates.ts`
 
 Owns Counsel Pack export template behavior:
@@ -678,6 +690,7 @@ Domain tests live next to the audit engine and cover:
 - data boundary report classification, blocker handling, redacted snippets, and export Markdown summary
 - security review checklist status, sanitized blockers, session-model review state, and simulated-anchor requirements
 - integration readiness registry status, disabled adapters, policy blockers, safe GRC readiness, and sanitized unsafe evidence blockers
+- GRC ticket export bundle gating, metadata-only remediation records, JSON serialization, and browser download
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export

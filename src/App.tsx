@@ -17,6 +17,7 @@ import { AIReviewPanel } from "./components/AIReviewPanel";
 import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
+import { GrcTicketExportPanel } from "./components/GrcTicketExportPanel";
 import { HumanReviewPanel } from "./components/HumanReviewPanel";
 import { IntegrationReadinessPanel } from "./components/IntegrationReadinessPanel";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
@@ -62,6 +63,7 @@ import {
 } from "./lib/evidenceAuditTrail";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
+import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
   createHumanReviewDecision,
@@ -256,6 +258,15 @@ export default function App() {
       project.evidenceItems.length,
       securityReviewChecklist
     ]
+  );
+  const grcTicketExport = useMemo(
+    () =>
+      createGrcTicketExport({
+        project,
+        audit,
+        integrationReadinessRegistry
+      }),
+    [audit, integrationReadinessRegistry, project]
   );
   const markdown = useMemo(
     () => {
@@ -779,6 +790,7 @@ export default function App() {
             <RiskAuditPanel
               project={project}
               audit={audit}
+              grcTicketExport={grcTicketExport}
               onRequestEvidence={(requirement) => addEvidence(createEvidenceRequestFromRequirement(requirement))}
             />
           ) : null}
@@ -829,10 +841,12 @@ export default function App() {
 function RiskAuditPanel({
   project,
   audit,
+  grcTicketExport,
   onRequestEvidence
 }: {
   project: ProjectProfile;
   audit: ReturnType<typeof analyzeAuditProfile>;
+  grcTicketExport: GrcTicketExportBundle;
   onRequestEvidence: (requirement: RiskEvidenceRequirement) => void;
 }) {
   const issueCards = createRiskIssueCards(project, audit);
@@ -877,6 +891,7 @@ function RiskAuditPanel({
           <RemediationRow key={`${item.owner}-${item.action}`} item={item} />
         ))}
       </div>
+      <GrcTicketExportPanel bundle={grcTicketExport} />
     </section>
   );
 }

@@ -205,6 +205,195 @@ describe("App", () => {
     }
   });
 
+  it("runs the full Secure Review Workspace journey across evidence vault, model gateway, and human review", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/api/workspaces") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-workspace-record-v1",
+            id: "project-ui",
+            name: "Full Journey Desk",
+            organizationName: "Startup issuer",
+            ownerId: "Compliance",
+            status: "active",
+            createdAt: "2026-06-30T00:00:00.000Z",
+            updatedAt: "2026-06-30T00:00:00.000Z",
+            notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only."
+          },
+          201
+        );
+      }
+
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-evidence-vault-record-v1",
+            id: "evidence-vault-full",
+            workspaceId: "project-ui",
+            filename: "journey-approval-memo.metadata.json",
+            mimeType: "application/json",
+            byteSize: 512,
+            fileHash: "b".repeat(64),
+            storageMode: "server-vault",
+            status: "submitted",
+            owner: "Compliance",
+            sourceNote: "Metadata-only sync",
+            version: 1,
+            linkedRiskFlagIds: ["governance-approval"],
+            containsRawKycOrPersonalData: false,
+            createdAt: "2026-06-30T00:00:00.000Z",
+            updatedAt: "2026-06-30T00:00:00.000Z"
+          },
+          201
+        );
+      }
+
+      if (path.endsWith("/evidence/evidence-vault-full") && init?.method === "PATCH") {
+        return appJsonResponse({ id: "evidence-vault-full", status: "verified", version: 2 }, 200);
+      }
+
+      if (path.endsWith("/evidence-manifest") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            manifestVersion: "lexproof-evidence-vault-manifest-v1",
+            workspaceId: "project-ui",
+            generatedAt: "2026-06-30T00:00:00.000Z",
+            itemCount: 1,
+            items: [],
+            bundleHash: "a".repeat(64),
+            notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+          },
+          200
+        );
+      }
+
+      if (path.endsWith("/model-runs") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        expect(body.provider).toBe("mock");
+        expect(body.includesCredentialMaterial).toBe(false);
+        expect(body.includesRawKycOrPersonalData).toBe(false);
+        expect(JSON.stringify(body)).toContain("Model Connect validates audit-prep routing only");
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-model-gateway-run-v1",
+            id: "model-gateway-run-full",
+            workspaceId: "project-ui",
+            provider: "mock",
+            providerLabel: "Mock local reviewer gateway",
+            model: "lexproof-mock",
+            purpose: "Create server-side model gateway receipt for audit preparation and human review.",
+            status: "completed",
+            redactionStatus: "clean",
+            payloadHash: "c".repeat(64),
+            responseHash: "d".repeat(64),
+            humanReviewStatus: "needs-review",
+            createdAt: "2026-06-30T00:00:00.000Z",
+            completedAt: "2026-06-30T00:00:00.000Z",
+            notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
+          },
+          201
+        );
+      }
+
+      if (path.endsWith("/reviews") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-human-review-record-v1",
+            id: "human-review-full",
+            workspaceId: "project-ui",
+            targetType: "model-run",
+            targetId: "model-gateway-run-full",
+            reviewerId: "Compliance",
+            status: "requested",
+            comment: "Review Model Gateway run before counsel pack reliance.",
+            createdAt: "2026-06-30T00:00:00.000Z",
+            updatedAt: "2026-06-30T00:00:00.000Z",
+            notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+          },
+          201
+        );
+      }
+
+      if (path.endsWith("/audit-log") && init?.method === "GET") {
+        return appJsonResponse(
+          [
+            { action: "workspace.created" },
+            { action: "evidence.created" },
+            { action: "model.run.created" },
+            { action: "human-review.created" }
+          ],
+          200
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Full Journey Desk" } });
+      fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
+      fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States" } });
+      fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
+      fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Accredited investors" } });
+      fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+      fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "Policy metadata only" } });
+      fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "AI drafts audit-prep questions" } });
+      fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "Simulated evidence anchor" } });
+      fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Private beta" } });
+
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Journey approval memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: "risk evidence requirement: governance-approval" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "verified" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: { value: "Approval summary represented by metadata hash for backend review." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+      expect(await screen.findByText(/Model Connect receipt/i)).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Secure Review API base URL/i), { target: { value: "https://api.lexproof.test" } });
+      fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
+
+      expect(await screen.findByText(/Secure review journey complete/i)).toBeInTheDocument();
+      expect(screen.getByText(/Vault manifest aaaaaaaaaaaa/i)).toBeInTheDocument();
+      expect(screen.getByText(/Model Gateway response dddddddddddd/i)).toBeInTheDocument();
+      expect(screen.getByText(/Human review request human-review-full/i)).toBeInTheDocument();
+      expect(screen.getByText(/Audit log events 4/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("shows Secure Review Journey blockers for empty evidence and missing Model Connect", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
+
+    expect(await screen.findByText(/Add at least one evidence item before running the secure review journey/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Journey blocker memo" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), { target: { value: "Evidence summary exists now." } });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
+
+    expect(await screen.findByText(/Validate Model Connect before running the secure review journey/i)).toBeInTheDocument();
+  });
+
   it("shows per-risk evidence workflow coverage and updates it from ledger evidence", async () => {
     render(<App />);
 
@@ -343,6 +532,47 @@ describe("App", () => {
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
   });
 
+  it("handles returned and rejected Human Review decisions as audit-prep workflow states", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Returned review memo" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "received" } });
+    fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: "Evidence summary for counsel workflow testing." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+
+    expect(await screen.findByText("Returned review memo")).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Human review decisions track audit preparation workflow status only./i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status for Returned review memo/i), { target: { value: "needs-more-evidence" } });
+    fireEvent.change(screen.getByLabelText(/Decision note for Returned review memo/i), {
+      target: { value: "Return for missing supporting memo." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save decision for Returned review memo/i }));
+
+    expect(await screen.findByText(/Human review decision saved for Returned review memo/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("requested");
+
+    fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+    fireEvent.change(screen.getByLabelText(/Status for Returned review memo/i), { target: { value: "rejected" } });
+    fireEvent.change(screen.getByLabelText(/Decision note for Returned review memo/i), {
+      target: { value: "Rejected as stale audit-prep evidence." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save decision for Returned review memo/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("draft");
+  });
+
   it("runs the Secure Review Workspace model-connect flow with a user OpenAI-compatible model", async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true,
@@ -372,7 +602,7 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
       fireEvent.change(screen.getByLabelText(/^Provider$/i), { target: { value: "openai-compatible" } });
       fireEvent.change(screen.getByLabelText(/Model name/i), { target: { value: "gpt-audit-review" } });
-      fireEvent.change(screen.getByLabelText(/Base URL/i), { target: { value: "https://models.example.test/v1" } });
+      fireEvent.change(screen.getByLabelText(/^Base URL$/i), { target: { value: "https://models.example.test/v1" } });
       fireEvent.change(screen.getByLabelText(/API key/i), { target: { value: "sk-session-only" } });
 
       fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));

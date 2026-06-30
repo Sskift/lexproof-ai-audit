@@ -469,6 +469,57 @@ textarea {
   font-size: 0.78rem;
 }
 
+.secure-journey-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.secure-journey-panel.complete {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.secure-journey-panel.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.secure-journey-panel p {
+  margin-bottom: 0;
+  color: #445361;
+  line-height: 1.45;
+}
+
+.secure-journey-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.secure-journey-result {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #b8d8c8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.secure-journey-result > strong {
+  color: #176b52;
+}
+
+.secure-journey-result small {
+  color: #53616f;
+  line-height: 1.4;
+}
+
 .tabs button {
   border: 1px solid #c9d5de;
   background: #ffffff;
@@ -2528,7 +2579,8 @@ textarea {
   .human-review-card header,
   .human-review-grid,
   .template-grid,
-  .vault-sync-grid {
+  .vault-sync-grid,
+  .secure-journey-controls {
     grid-template-columns: 1fr;
   }
 

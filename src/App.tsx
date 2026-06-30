@@ -555,11 +555,14 @@ export default function App() {
 
         <section className="main-stage">
           <SecureReviewWorkspace
+            project={project}
+            audit={audit}
             projectReady={validation.valid}
             evidenceCount={project.evidenceItems.length}
             auditRiskLevel={audit.riskLevel}
             modelConnectReceipt={modelConnectReceipt}
             humanReviewOpenCount={humanReviewQueue.summary.openCount + humanReviewQueue.summary.blockedCount}
+            humanReviewOwner={modelIntakeProfile.humanReviewOwner}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />

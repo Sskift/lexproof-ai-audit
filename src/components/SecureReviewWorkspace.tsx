@@ -1,29 +1,63 @@
-import { Bot, CheckCircle2, ClipboardList, DatabaseZap, FileText, ShieldCheck, UserCheck } from "lucide-react";
+import { useState } from "react";
+import { Bot, CheckCircle2, ClipboardList, DatabaseZap, FileText, PlayCircle, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
 import type { ModelConnectReceipt } from "../lib/modelConnect";
+import type { ProjectProfile } from "../lib/projectModel";
+import { runSecureReviewJourney, type SecureReviewJourneyResult } from "../lib/secureReviewJourney";
 
 type SecureReviewWorkspaceProps = {
+  project: ProjectProfile;
+  audit: AuditResult;
   projectReady: boolean;
   evidenceCount: number;
   auditRiskLevel: AuditResult["riskLevel"];
   modelConnectReceipt: ModelConnectReceipt | null;
   humanReviewOpenCount: number;
+  humanReviewOwner: string;
   manifestHash?: string;
   onNavigate: (target: "wizard" | "ai" | "model" | "review" | "evidence" | "counsel") => void;
 };
 
 export function SecureReviewWorkspace({
+  project,
+  audit,
   projectReady,
   evidenceCount,
   auditRiskLevel,
   modelConnectReceipt,
   humanReviewOpenCount,
+  humanReviewOwner,
   manifestHash,
   onNavigate
 }: SecureReviewWorkspaceProps) {
+  const [apiBaseUrl, setApiBaseUrl] = useState("");
+  const [journeyStatus, setJourneyStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
+  const [journeyError, setJourneyError] = useState("");
+  const [journeyResult, setJourneyResult] = useState<SecureReviewJourneyResult | null>(null);
   const modelReady = modelConnectReceipt?.status === "ready";
   const manifestReady = Boolean(manifestHash);
   const reviewReady = humanReviewOpenCount === 0;
+
+  const runJourney = async () => {
+    setJourneyStatus("running");
+    setJourneyError("");
+
+    try {
+      const result = await runSecureReviewJourney({
+        project,
+        audit,
+        evidenceItems: project.evidenceItems,
+        modelConnectReceipt,
+        apiBaseUrl,
+        humanReviewOwner
+      });
+      setJourneyResult(result);
+      setJourneyStatus("complete");
+    } catch (error) {
+      setJourneyStatus("error");
+      setJourneyError(error instanceof Error ? error.message : "Secure review journey failed.");
+    }
+  };
 
   return (
     <section className="secure-workspace-panel" aria-label="Secure Review Workspace">
@@ -81,6 +115,39 @@ export function SecureReviewWorkspace({
           onAction={() => onNavigate("counsel")}
         />
       </div>
+
+      <section className={`secure-journey-panel ${journeyStatus}`}>
+        <div className="split-title compact-title">
+          <div>
+            <ServerCog size={17} aria-hidden="true" />
+            <h3>Secure Review Journey</h3>
+          </div>
+          <span className={`workflow-status ${journeyStatus}`}>{journeyStatus}</span>
+        </div>
+        <p>
+          Create a backend workspace, sync metadata-only evidence vault records, create a Model Gateway run receipt, and open a
+          human review request. Not legal advice.
+        </p>
+        <div className="secure-journey-controls">
+          <div>
+            <label className="field-label" htmlFor="secure-review-api-base">
+              Secure Review API base URL
+            </label>
+            <input
+              id="secure-review-api-base"
+              value={apiBaseUrl}
+              onChange={(event) => setApiBaseUrl(event.target.value)}
+              placeholder="/api on same host, or http://127.0.0.1:8787"
+            />
+          </div>
+          <button type="button" disabled={journeyStatus === "running"} onClick={() => void runJourney()}>
+            <PlayCircle size={16} aria-hidden="true" />
+            {journeyStatus === "running" ? "Running Secure Review Journey" : "Run Secure Review Journey"}
+          </button>
+        </div>
+        {journeyError ? <p className="error-text">{journeyError}</p> : null}
+        {journeyResult ? <SecureJourneyResult result={journeyResult} /> : null}
+      </section>
     </section>
   );
 }
@@ -121,4 +188,33 @@ function statusLabel(status: WorkflowStepProps["status"]): string {
   }
 
   return "needs input";
+}
+
+function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) {
+  return (
+    <div className="secure-journey-result">
+      <strong>Secure review journey complete</strong>
+      <div className="run-facts">
+        <JourneyFact label="Vault manifest" value={shortHash(result.evidenceVault.manifest.bundleHash)} />
+        <JourneyFact label="Model Gateway response" value={shortHash(result.modelGatewayRun.responseHash)} />
+        <JourneyFact label="Human review request" value={result.humanReview.id} />
+        <JourneyFact label="Audit log events" value={String(result.auditLogRecords.length)} />
+      </div>
+      <small>{result.notLegalAdviceBoundary}</small>
+    </div>
+  );
+}
+
+function JourneyFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <code>
+        {label} {value}
+      </code>
+    </div>
+  );
+}
+
+function shortHash(value: string): string {
+  return value.length > 12 ? value.slice(0, 12) : value;
 }

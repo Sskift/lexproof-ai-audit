@@ -229,6 +229,24 @@ describe("App", () => {
     expect(screen.getByText(/AI events are audit-prep records for human review. Not legal advice/i)).toBeInTheDocument();
   });
 
+  it("starts the Brazil VASP scenario in the source graph with official-source gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Brazil VASP source review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Brazil VASP Launch Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      (await screen.findAllByText(/Law No. 14,478\/2022 and Banco Central virtual asset service regulation/i)).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/CVM Guidance Opinion 40, 11 October 2022/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Brazil virtual asset service scope and authorization intake/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Brazil crypto-security classification and disclosure evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("shows judge demo readiness and checks the Phase 2 API without private credentials", async () => {
     const fetchMock = vi.fn(async () =>
       new Response(

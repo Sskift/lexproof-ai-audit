@@ -74,6 +74,30 @@ describe("validateDemoScenarioLibrary", () => {
     );
     expect(aiWorkflowScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
+
+  it("keeps a seeded Brazil VASP path for jurisdiction source graph demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const brazilScenario = findDemoScenarioById(demoScenarios, "brazil-vasp-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(brazilScenario).toEqual(
+      expect.objectContaining({
+        title: "Brazil VASP source review",
+        projectName: "Brazil VASP Launch Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Brazil", "VASP", "Source graph"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(brazilScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Brazil source graph",
+        "Review VASP authorization evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(brazilScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });
 
 describe("findDemoScenarioById", () => {

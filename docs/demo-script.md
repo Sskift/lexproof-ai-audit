@@ -31,9 +31,11 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
    - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, EU AI Act / UK ICO AI data protection source controls, and counsel export.
+   - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
+   - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
 
 1. **Review command center**
    - Start on the **Regulatory Command Center** at the top of the workbench.
@@ -47,6 +49,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Screenshot: `docs/assets/screenshots/source-review-packet.png`.
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
+   - Optional Brazil path screenshot after **Start Brazil VASP source review**: `docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 
 2. **Connect model**

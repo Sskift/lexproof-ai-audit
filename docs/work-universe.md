@@ -399,7 +399,7 @@ Goal: keep the repository always demoable.
 
 Implemented first slice:
 
-- Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The seeded set now includes RWA launch, DAO review, public-source review, and AI legal workflow review paths. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
+- Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The seeded set now includes RWA launch, DAO review, public-source review, AI legal workflow review, and Brazil VASP source review paths. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
 - Submission Pack artifact in `src/lib/submissionPack.ts` and `SubmissionPackPanel`: generates a metadata-only judge packet with stable pack hash, manifest/source-pack hashes, demo readiness, required assets, hackathon mapping, known limitations, and JSON download.
 
 Build:

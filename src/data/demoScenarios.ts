@@ -73,5 +73,22 @@ export const demoScenarios: DemoScenario[] = [
     expectedArtifacts: ["Model Intake JSON", "Human Review Timeline", "Counsel Pack Markdown"],
     focusTags: ["AI legal workflow", "Model governance", "Counsel handoff"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
+    id: "brazil-vasp-source-path",
+    projectName: "Brazil VASP Launch Review",
+    title: "Brazil VASP source review",
+    summary: "Brazil virtual asset service, CVM crypto-security, AML/CFT, custody, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Brazil source graph",
+      "Review VASP authorization evidence gaps",
+      "Check crypto-security disclosure gaps",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Brazil", "VASP", "Source graph"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   }
 ];

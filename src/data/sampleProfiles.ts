@@ -67,5 +67,22 @@ export const sampleProfiles: AuditProfile[] = [
       { label: "Matter intake schema", kind: "JSON", content: "Synthetic intake fields, evidence metadata, reviewer assignment states" },
       { label: "Source review log", kind: "CSV", content: "Official-source citation, review date, reviewer notes, next review date" }
     ]
+  },
+  {
+    projectName: "Brazil VASP Launch Review",
+    entityType: "Virtual asset service provider",
+    jurisdictions: ["Brazil"],
+    assetModel: "Tokenized private credit note with yield and public token distribution",
+    userType: "Retail users and qualified investors in Brazil",
+    custodyModel: "Platform controls omnibus wallet and virtual asset transfer approvals",
+    dataSensitivity: "KYC metadata, sanctions-screening status summaries, and wallet transaction history excluded from demo evidence",
+    aiUsage: "AI drafts audit-prep evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only counsel handoff",
+    operatingStage: "Planned public launch before Brazil counsel review",
+    evidenceItems: [
+      { label: "Brazil launch fact sheet", kind: "Markdown", content: "Synthetic launch facts, product assumptions, review owner, and source references only." },
+      { label: "Wallet governance summary", kind: "Runbook", content: "Synthetic wallet roles, escalation contacts, and transfer-review checkpoints without secrets." },
+      { label: "Counsel source review log", kind: "CSV", content: "Official-source citation, review date, reviewer notes, and next review date." }
+    ]
   }
 ];

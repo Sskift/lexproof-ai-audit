@@ -39,6 +39,40 @@ describe("App", () => {
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
   });
 
+  it("shows the Security Review Checklist and updates model and evidence gates from workflow state", async () => {
+    render(<App />);
+
+    const securityHeading = await screen.findByRole("heading", { name: /Security Review Checklist/i });
+    const securityPanel = securityHeading.closest("section");
+
+    expect(securityPanel).not.toBeNull();
+    const security = within(securityPanel as HTMLElement);
+    expect(security.getByText(/Not legal advice. Security review checklist output is audit preparation metadata only./i)).toBeInTheDocument();
+    expect(security.getByText(/Model provider blocked/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+    expect(await security.findByText(/Model provider ready/i)).toBeInTheDocument();
+    expect(security.getByText(/Mock local reviewer/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe security packet" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: {
+        value:
+          "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
+      }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await security.findByText(/Evidence storage blocked/i)).toBeInTheDocument();
+    expect(security.getAllByText(/Remove blocked materials before Evidence Vault sync or export handoff./i).length).toBeGreaterThan(0);
+    expect(security.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
+    expect(security.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+  });
+
   it("creates a custom project, updates the risk audit, and displays editable evidence in the ledger", async () => {
     render(<App />);
 

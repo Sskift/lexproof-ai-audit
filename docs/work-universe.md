@@ -214,7 +214,7 @@ Build:
 - Secret scanning in model settings, evidence notes, Evidence Vault upload metadata, and export payloads. The first export-side classifier is implemented in `src/lib/dataBoundary.ts` for private-key-like values, API-key-like credentials, raw KYC references, personal-data references, and confidentiality labels. The first server Evidence Vault metadata boundary is implemented in `src/lib/evidenceUploadBoundary.ts` and blocks credential material, private-key-like values, and raw KYC references before record creation.
 - Retention and deletion policy before storing raw files. The first Evidence Ledger retention gate is implemented in `src/lib/retentionPolicy.ts` and `EvidenceLedger`: it blocks Evidence Vault sync for private-key-like material, API-key-like credentials, and raw KYC references, shows recoverable remediation, and exports metadata-only retention policy JSON.
 - Audit log export with actor, action, target, timestamp, before/after hashes, and non-secret summaries. The first Secure Review Audit Log Export is implemented in `src/lib/auditLogExport.ts` and `SecureReviewWorkspace` with metadata-only JSON download.
-- Security review checklist for model providers, evidence storage, and anchor integrations.
+- Security review checklist for model providers, evidence storage, and anchor integrations. The first checklist is implemented in `src/lib/securityReviewChecklist.ts` and `SecurityReviewChecklistPanel`: it combines Model Connect, Evidence Retention Readiness, Export Safety Gate, manifest, and evidence state into ready/needs-review/blocked gates with recovery actions before real providers, object storage, or chain writes are enabled.
 
 Acceptance:
 
@@ -223,6 +223,7 @@ Acceptance:
 - Evidence Vault sync cannot run while retention blockers are present.
 - Evidence Vault API uploads reject unsafe metadata without echoing secrets or raw KYC snippets.
 - Secure Review audit logs can be exported without raw secrets, raw KYC, or legal conclusions.
+- Security Review Checklist surfaces model provider, evidence storage, and anchor integration blockers before W9 adapters are enabled.
 - Tests cover boundary validators and redaction blockers.
 
 Do not build:

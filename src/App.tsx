@@ -23,6 +23,7 @@ import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { RegulatoryCommandCenter } from "./components/RegulatoryCommandCenter";
 import { SecureReviewWorkspace } from "./components/SecureReviewWorkspace";
+import { SecurityReviewChecklistPanel } from "./components/SecurityReviewChecklistPanel";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
 import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
@@ -88,6 +89,7 @@ import {
   type ModelIntakeSummary
 } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
+import { createRetentionPolicyReport } from "./lib/retentionPolicy";
 import type { CounselPackExportRecord } from "./lib/phase2Types";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
@@ -96,6 +98,7 @@ import {
   type RiskEvidenceCoverage,
   type RiskEvidenceRequirement
 } from "./lib/riskEvidence";
+import { createSecurityReviewChecklist } from "./lib/securityReviewChecklist";
 
 type TabId = "wizard" | "ai" | "model" | "review" | "jurisdiction" | "risk" | "evidence" | "counsel" | "sources";
 
@@ -217,6 +220,21 @@ export default function App() {
         aiEvents: currentAIEvents
       }),
     [currentAIEvents, currentCounselQuestions, currentCounselReviews, project]
+  );
+  const retentionPolicyReport = useMemo(
+    () => createRetentionPolicyReport({ workspaceId: project.id, evidenceItems: project.evidenceItems }),
+    [project.evidenceItems, project.id]
+  );
+  const securityReviewChecklist = useMemo(
+    () =>
+      createSecurityReviewChecklist({
+        modelConnectReceipt,
+        retentionPolicyReport,
+        dataBoundaryReport,
+        manifestHash: manifest?.bundleHash,
+        evidenceCount: project.evidenceItems.length
+      }),
+    [dataBoundaryReport, manifest?.bundleHash, modelConnectReceipt, project.evidenceItems.length, retentionPolicyReport]
   );
   const markdown = useMemo(
     () => {
@@ -682,6 +700,8 @@ export default function App() {
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />
+
+          <SecurityReviewChecklistPanel report={securityReviewChecklist} onNavigate={setActiveTab} />
 
           <nav className="tabs" aria-label="Workbench tabs">
             {tabs.map((tab) => {

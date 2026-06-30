@@ -37,6 +37,7 @@ Key evidence:
 - Export Safety Gate before Counsel Pack handoff, with data-boundary findings for private keys, API keys, raw KYC, personal-data references, and confidentiality labels.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Server Model Gateway receipts, Model Gateway Evaluation artifacts, and Audit Log Export artifacts with payload hash, response hash, source evidence hash, provider policy metadata, human-review status, retry/error state, audit actions, before/after hashes, and remediation steps without returning raw payloads or credentials.
+- Security Review Checklist for model provider, evidence storage, and anchor integration readiness before real external adapters, object storage, or chain writes are enabled.
 - Human Review queue with reviewer assignment, due dates, saved status history, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
@@ -87,6 +88,10 @@ Evidence Ledger records local evidence creation, template application, edits, an
 Evidence Retention Readiness blocks Evidence Vault sync when evidence contains private-key-like material, API-key-like credentials, or raw KYC references, and exports metadata-only retention policy JSON. Not legal advice.
 
 ![Evidence Retention Readiness](docs/assets/screenshots/evidence-retention-readiness.png)
+
+Security Review Checklist turns Model Connect, retention, Export Safety Gate, manifest, and anchor state into real integration gates for model providers, evidence storage, and anchoring. Not legal advice.
+
+![Security Review Checklist](docs/assets/screenshots/security-review-checklist.png)
 
 Evidence Vault recovery preserves rejected evidence as superseded metadata and creates a received replacement record with parent lineage and a replacement reason.
 

@@ -37,6 +37,7 @@ lexproof-ai-audit/
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
       ModelIntakePanel.tsx   # Model connection profile and AI event intake records
       RegulatoryCommandCenter.tsx # Source-backed jurisdiction graph and evidence gap cockpit
+      SecurityReviewChecklistPanel.tsx # Security readiness gates for integrations
       CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
@@ -82,6 +83,7 @@ lexproof-ai-audit/
       counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
       counselPackExportClient.ts # Browser client for Phase 2 Counsel Pack export records
       auditLogFilters.ts    # Server audit-log query normalization and filtering
+      securityReviewChecklist.ts # Integration security readiness checklist
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
@@ -125,6 +127,7 @@ sampleProfiles or blank project
   -> merge edits into editable CounselReviewItem queue
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
+  -> createSecurityReviewChecklist(model connect, retention report, data boundary report, manifest hash)
   -> createSimulatedAnchorReceipt(manifest)
   -> recommendCounselPackTemplate(project, audit)
   -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate, dataBoundaryReport)
@@ -453,6 +456,16 @@ Owns export data-boundary behavior:
 
 Blocked findings disable Counsel Pack Markdown download, browser Print / Save PDF, manifest JSON, simulated anchor receipt, Pack Version save, and server export-record creation in `CounselPackPanel`. Warnings keep export available but visible for human confirmation. The module is audit preparation data classification only; it does not perform legal review or KYC.
 
+### `src/lib/securityReviewChecklist.ts`
+
+Owns integration security readiness behavior:
+
+- `createSecurityReviewChecklist(input)` combines Model Connect status, Evidence Retention Readiness, Export Safety Gate state, evidence count, and manifest readiness into model-provider, evidence-storage, and anchor-integration gates.
+- The checklist returns ready, needs-review, or blocked status with sanitized evidence, recovery actions, and requirements before real external model providers, raw object storage, or chain writes can be enabled.
+- Simulated manifest receipts can be marked ready for audit-prep handoff while still requiring wallet signing, privacy, transaction logging, and consent review before real chain writes.
+
+The checklist is audit preparation metadata only. It does not store credentials, persist raw files, call model providers, write to a blockchain, or create legal conclusions.
+
 ### `src/lib/counselPackTemplates.ts`
 
 Owns Counsel Pack export template behavior:
@@ -503,10 +516,11 @@ Owns UI state and composition:
 - async evidence manifest state
 - current regulatory source graph derived from project facts, audit flags, and evidence items
 - current Export Safety Gate report derived from project facts, evidence, counsel queues, and AI event records
+- current Security Review Checklist derived from Model Connect, retention, export boundary, manifest, and evidence state
 - local server export-record cache filtered by current workspace ID
 - selected Counsel Pack export template
 
-The component calls library modules and renders the workbench surfaces: Regulatory Command Center, Secure Review Workspace, Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+The component calls library modules and renders the workbench surfaces: Regulatory Command Center, Secure Review Workspace, Security Review Checklist, Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ### `src/components/*`
 
@@ -519,6 +533,7 @@ Components are intentionally presentational and interaction-focused:
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
 - `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
+- `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -649,6 +664,7 @@ Domain tests live next to the audit engine and cover:
 - AI Review run conversion into Model Intake events
 - AI event reviewer and review-status editing
 - data boundary report classification, blocker handling, redacted snippets, and export Markdown summary
+- security review checklist status, sanitized blockers, session-model review state, and simulated-anchor requirements
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export
@@ -694,6 +710,7 @@ UI tests cover:
 - manifest bundle hash visibility
 - Model Gateway Evaluation visibility and JSON download action
 - Audit Log Export visibility and JSON download action
+- Security Review Checklist visibility and gate updates from Model Connect and evidence blockers
 - AI Review mock workflow
 - Model Access Workflow visibility in AI Review
 - Model Intake profile and AI event workflow

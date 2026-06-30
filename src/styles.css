@@ -832,6 +832,144 @@ textarea {
   color: #53616f;
 }
 
+.security-review-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(31, 48, 65, 0.05);
+}
+
+.security-review-panel.ready {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.security-review-panel.needs-review {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.security-review-panel.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.security-review-panel .section-note {
+  margin: 0;
+}
+
+.security-review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.security-review-summary span {
+  border-radius: 999px;
+  border: 1px solid #d9e2e8;
+  background: #ffffff;
+  padding: 6px 8px;
+  color: #43515e;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.security-review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.security-review-item {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.security-review-item.ready {
+  border-color: #b8d8c8;
+  background: #ffffff;
+}
+
+.security-review-item.needs-review {
+  border-color: #e9bd87;
+  background: #fffdf8;
+}
+
+.security-review-item.blocked {
+  border-color: #e2a7a1;
+  background: #ffffff;
+}
+
+.security-review-item header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.security-review-item header svg {
+  flex: 0 0 auto;
+  color: #0c7b7b;
+}
+
+.security-review-item header strong {
+  color: #172431;
+  line-height: 1.25;
+}
+
+.security-review-item p,
+.security-review-item small,
+.security-review-item span {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.security-review-item p {
+  color: #354351;
+  font-size: 0.82rem;
+}
+
+.security-review-item .inline-actions {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.security-review-item .inline-actions button {
+  justify-self: start;
+}
+
+.security-review-actions {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.security-review-actions strong {
+  color: #172431;
+}
+
+.security-review-actions ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #53616f;
+  line-height: 1.45;
+}
+
 .audit-log-export,
 .model-gateway-evaluation {
   display: grid;
@@ -1237,6 +1375,7 @@ textarea {
   text-transform: uppercase;
 }
 
+.workflow-status.ready,
 .workflow-status.ready-to-run,
 .workflow-status.complete {
   color: #176b52;

@@ -283,6 +283,7 @@ describe("Phase 2 workspace and evidence routes", () => {
     expect(invalidTransitionResponse.statusCode).toBe(409);
     expect(invalidTransitionResponse.json()).toEqual({
       error: "Rejected Evidence Vault records cannot be directly moved to verified.",
+      code: "EVIDENCE_STATUS_TRANSITION_BLOCKED",
       recoveryAction: "Upload a replacement from the rejected evidence recovery flow so parent/child lineage is preserved.",
       notLegalAdviceBoundary: "Not legal advice. Evidence status transitions are audit preparation workflow metadata only."
     });

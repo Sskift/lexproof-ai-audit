@@ -97,8 +97,10 @@ describe("Evidence Vault route module", () => {
     expect(duplicateResponse.json()).toEqual(
       expect.objectContaining({
         error: "Duplicate evidence hash already exists in this workspace.",
+        code: "EVIDENCE_DUPLICATE_HASH",
         duplicateEvidenceId: evidence.id,
         duplicateStatus: "verified",
+        recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash.",
         notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
       })
     );
@@ -158,6 +160,7 @@ describe("Evidence Vault route module", () => {
     expect(invalidTransitionResponse.statusCode).toBe(409);
     expect(invalidTransitionResponse.json()).toEqual({
       error: "Rejected Evidence Vault records cannot be directly moved to verified.",
+      code: "EVIDENCE_STATUS_TRANSITION_BLOCKED",
       recoveryAction: "Upload a replacement from the rejected evidence recovery flow so parent/child lineage is preserved.",
       notLegalAdviceBoundary: "Not legal advice. Evidence status transitions are audit preparation workflow metadata only."
     });
@@ -210,6 +213,121 @@ describe("Evidence Vault route module", () => {
         expect.objectContaining({ action: "evidence.replacement.created", targetId: replacementResponse.json().replacement.id })
       ])
     );
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("returns typed audit-prep errors for missing update, invalid status, and invalid replacement flows", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await server.register(multipart);
+    registerEvidenceVaultRoutes(server, { repository });
+
+    const missingUpdateResponse = await server.inject({
+      method: "PATCH",
+      url: "/api/workspaces/workspace-evidence-errors/evidence/missing-evidence",
+      payload: {
+        status: "verified"
+      }
+    });
+
+    expect(missingUpdateResponse.statusCode).toBe(404);
+    expect(missingUpdateResponse.json()).toEqual({
+      error: "Evidence vault record not found.",
+      code: "EVIDENCE_NOT_FOUND",
+      recoveryAction: "Upload the evidence record before updating it or verify the evidence ID.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", Buffer.from("evidence for typed errors"), {
+      filename: "typed-errors.txt",
+      contentType: "text/plain"
+    });
+    uploadForm.append("owner", "Compliance");
+    uploadForm.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-errors/evidence",
+      headers: uploadForm.getHeaders(),
+      payload: uploadForm
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const evidence = uploadResponse.json();
+
+    const invalidStatusResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-evidence-errors/evidence/${evidence.id}`,
+      payload: {
+        status: "approved"
+      }
+    });
+
+    expect(invalidStatusResponse.statusCode).toBe(400);
+    expect(invalidStatusResponse.json()).toEqual({
+      error: "Evidence status must be draft, requested, received, submitted, under-review, verified, rejected, or superseded.",
+      code: "EVIDENCE_UPDATE_FAILED",
+      recoveryAction: "Use a supported Evidence Vault status and keep review decisions as audit-prep workflow metadata.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+    expect(await repository.findEvidenceVaultRecord("workspace-evidence-errors", evidence.id)).toEqual(
+      expect.objectContaining({ id: evidence.id, status: "received" })
+    );
+
+    const notRejectedReplacementForm = new FormData();
+    notRejectedReplacementForm.append("file", Buffer.from("replacement before rejection"), {
+      filename: "replacement-before-rejection.txt",
+      contentType: "text/plain"
+    });
+    notRejectedReplacementForm.append("replacementReason", "Trying to replace before review rejection.");
+
+    const notRejectedReplacementResponse = await server.inject({
+      method: "POST",
+      url: `/api/workspaces/workspace-evidence-errors/evidence/${evidence.id}/replacement`,
+      headers: notRejectedReplacementForm.getHeaders(),
+      payload: notRejectedReplacementForm
+    });
+
+    expect(notRejectedReplacementResponse.statusCode).toBe(400);
+    expect(notRejectedReplacementResponse.json()).toEqual({
+      error: "Only rejected evidence vault records can be replaced from this recovery flow.",
+      code: "EVIDENCE_REPLACEMENT_NOT_ALLOWED",
+      recoveryAction: "Mark the record rejected after review, or update the existing record status instead.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    const rejectedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-evidence-errors/evidence/${evidence.id}`,
+      payload: {
+        status: "rejected",
+        sourceNote: "Reviewer rejected this evidence."
+      }
+    });
+    expect(rejectedResponse.statusCode).toBe(200);
+
+    const missingReasonForm = new FormData();
+    missingReasonForm.append("file", Buffer.from("replacement without reason"), {
+      filename: "replacement-without-reason.txt",
+      contentType: "text/plain"
+    });
+
+    const missingReasonResponse = await server.inject({
+      method: "POST",
+      url: `/api/workspaces/workspace-evidence-errors/evidence/${evidence.id}/replacement`,
+      headers: missingReasonForm.getHeaders(),
+      payload: missingReasonForm
+    });
+
+    expect(missingReasonResponse.statusCode).toBe(400);
+    expect(missingReasonResponse.json()).toEqual({
+      error: "Replacement reason is required.",
+      code: "EVIDENCE_REPLACEMENT_REASON_REQUIRED",
+      recoveryAction: "Add a replacement reason so rejected evidence lineage remains reviewable.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
 
     await server.close();
     await repository.close();

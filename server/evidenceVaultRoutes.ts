@@ -6,6 +6,7 @@ import {
   findDuplicateEvidenceVaultRecord,
   supersedeEvidenceVaultRecord
 } from "./evidenceVaultService.js";
+import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 
@@ -21,7 +22,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
       const upload = await readMultipartFile(request);
 
       if (!upload) {
-        return reply.status(400).send({ error: "Evidence file is required." });
+        return reply.status(400).send(createEvidenceFileRequiredError());
       }
 
       const bytes = new Uint8Array(await upload.toBuffer());
@@ -52,11 +53,14 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
           })
         );
         return reply.status(409).send({
-          error: "Duplicate evidence hash already exists in this workspace.",
+          ...createApiErrorResponse({
+            error: new Error("Duplicate evidence hash already exists in this workspace."),
+            code: "EVIDENCE_DUPLICATE_HASH",
+            fallbackMessage: "Duplicate evidence hash already exists in this workspace.",
+            recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash."
+          }),
           duplicateEvidenceId: duplicate.id,
-          duplicateStatus: duplicate.status,
-          recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          duplicateStatus: duplicate.status
         });
       }
 
@@ -76,10 +80,14 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
       );
       return reply.status(201).send(evidence);
     } catch (error) {
-      return reply.status(400).send({
-        error: error instanceof Error ? error.message : "Evidence upload failed.",
-        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-      });
+      return reply.status(400).send(
+        createApiErrorResponse({
+          error,
+          code: "EVIDENCE_UPLOAD_FAILED",
+          fallbackMessage: "Evidence upload failed.",
+          recoveryAction: "Retry with a multipart evidence file and metadata-only fields."
+        })
+      );
     }
   });
 
@@ -129,7 +137,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
       const existing = await repository.findEvidenceVaultRecord(request.params.workspaceId, request.params.evidenceId);
 
       if (!existing) {
-        return reply.status(404).send({ error: "Evidence vault record not found." });
+        return reply.status(404).send(createEvidenceNotFoundError("Upload the evidence record before updating it or verify the evidence ID."));
       }
 
       try {
@@ -138,11 +146,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
         const transition = validateEvidenceVaultStatusTransition(existing.status, nextStatus);
 
         if (!transition.valid) {
-          return reply.status(409).send({
-            error: transition.error,
-            recoveryAction: transition.recoveryAction,
-            notLegalAdviceBoundary: transition.notLegalAdviceBoundary
-          });
+          return reply.status(409).send(createEvidenceStatusTransitionError(transition));
         }
 
         const updated = updateEvidenceVaultRecord(existing, request.body);
@@ -162,10 +166,14 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
         );
         return updated;
       } catch (error) {
-        return reply.status(400).send({
-          error: error instanceof Error ? error.message : "Evidence update failed.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "EVIDENCE_UPDATE_FAILED",
+            fallbackMessage: "Evidence update failed.",
+            recoveryAction: "Use a supported Evidence Vault status and keep review decisions as audit-prep workflow metadata."
+          })
+        );
       }
     }
   );
@@ -176,31 +184,38 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
       const existing = await repository.findEvidenceVaultRecord(request.params.workspaceId, request.params.evidenceId);
 
       if (!existing) {
-        return reply.status(404).send({ error: "Evidence vault record not found." });
+        return reply.status(404).send(createEvidenceNotFoundError("Upload the evidence record before replacing it or verify the evidence ID."));
       }
 
       if (existing.status !== "rejected") {
-        return reply.status(400).send({
-          error: "Only rejected evidence vault records can be replaced from this recovery flow.",
-          recoveryAction: "Mark the record rejected after review, or update the existing record status instead.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error: new Error("Only rejected evidence vault records can be replaced from this recovery flow."),
+            code: "EVIDENCE_REPLACEMENT_NOT_ALLOWED",
+            fallbackMessage: "Only rejected evidence vault records can be replaced from this recovery flow.",
+            recoveryAction: "Mark the record rejected after review, or update the existing record status instead."
+          })
+        );
       }
 
       try {
         const upload = await readMultipartFile(request);
 
         if (!upload) {
-          return reply.status(400).send({ error: "Replacement evidence file is required." });
+          return reply.status(400).send(createReplacementEvidenceFileRequiredError());
         }
 
         const replacementReason = getMultipartFieldValue(upload, "replacementReason", "").trim();
 
         if (!replacementReason) {
-          return reply.status(400).send({
-            error: "Replacement reason is required.",
-            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-          });
+          return reply.status(400).send(
+            createApiErrorResponse({
+              error: new Error("Replacement reason is required."),
+              code: "EVIDENCE_REPLACEMENT_REASON_REQUIRED",
+              fallbackMessage: "Replacement reason is required.",
+              recoveryAction: "Add a replacement reason so rejected evidence lineage remains reviewable."
+            })
+          );
         }
 
         const bytes = new Uint8Array(await upload.toBuffer());
@@ -221,14 +236,18 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
 
         if (duplicate) {
           return reply.status(409).send({
-            error:
-              duplicate.id === existing.id
-                ? "Replacement evidence must use a new metadata hash from the rejected record."
-                : "Duplicate evidence hash already exists in this workspace.",
+            ...createApiErrorResponse({
+              error: new Error(
+                duplicate.id === existing.id
+                  ? "Replacement evidence must use a new metadata hash from the rejected record."
+                  : "Duplicate evidence hash already exists in this workspace."
+              ),
+              code: "EVIDENCE_REPLACEMENT_DUPLICATE_HASH",
+              fallbackMessage: "Duplicate evidence hash already exists in this workspace.",
+              recoveryAction: "Change the replacement evidence metadata or use the existing vault record."
+            }),
             duplicateEvidenceId: duplicate.id,
-            duplicateStatus: duplicate.status,
-            recoveryAction: "Change the replacement evidence metadata or use the existing vault record.",
-            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+            duplicateStatus: duplicate.status
           });
         }
 
@@ -267,10 +286,14 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
           notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only."
         });
       } catch (error) {
-        return reply.status(400).send({
-          error: error instanceof Error ? error.message : "Evidence replacement failed.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "EVIDENCE_REPLACEMENT_FAILED",
+            fallbackMessage: "Evidence replacement failed.",
+            recoveryAction: "Retry with a replacement file, metadata-only fields, and a lineage reason."
+          })
+        );
       }
     }
   );
@@ -352,4 +375,47 @@ function assertEvidenceVaultStatus(status: string): asserts status is EvidenceVa
   if (!["draft", "requested", "received", "submitted", "under-review", "verified", "rejected", "superseded"].includes(status)) {
     throw new Error("Evidence status must be draft, requested, received, submitted, under-review, verified, rejected, or superseded.");
   }
+}
+
+function createEvidenceFileRequiredError() {
+  return createApiErrorResponse({
+    error: new Error("Evidence file is required."),
+    code: "EVIDENCE_FILE_REQUIRED",
+    fallbackMessage: "Evidence file is required.",
+    recoveryAction: "Attach a metadata-only evidence file before uploading."
+  });
+}
+
+function createReplacementEvidenceFileRequiredError() {
+  return createApiErrorResponse({
+    error: new Error("Replacement evidence file is required."),
+    code: "EVIDENCE_REPLACEMENT_FILE_REQUIRED",
+    fallbackMessage: "Replacement evidence file is required.",
+    recoveryAction: "Attach a replacement file before creating rejected evidence lineage."
+  });
+}
+
+function createEvidenceNotFoundError(recoveryAction: string) {
+  return createApiErrorResponse({
+    error: new Error("Evidence vault record not found."),
+    code: "EVIDENCE_NOT_FOUND",
+    fallbackMessage: "Evidence vault record not found.",
+    recoveryAction
+  });
+}
+
+function createEvidenceStatusTransitionError(transition: {
+  error: string;
+  recoveryAction: string;
+  notLegalAdviceBoundary: string;
+}) {
+  return {
+    ...createApiErrorResponse({
+      error: new Error(transition.error),
+      code: "EVIDENCE_STATUS_TRANSITION_BLOCKED",
+      fallbackMessage: "Evidence status transition failed.",
+      recoveryAction: transition.recoveryAction
+    }),
+    notLegalAdviceBoundary: transition.notLegalAdviceBoundary
+  };
 }

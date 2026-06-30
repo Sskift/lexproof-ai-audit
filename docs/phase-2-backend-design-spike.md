@@ -143,7 +143,7 @@ The first Evidence Vault routes are implemented in `server/evidenceVaultRoutes.t
 - `POST /api/workspaces/:workspaceId/evidence/:evidenceId/replacement`
 - `GET /api/workspaces/:workspaceId/evidence-manifest`
 
-The upload route accepts multipart files, computes SHA-256 server-side, persists metadata-only records, and appends audit-log records. Duplicate active hashes are rejected with an actionable recovery message before a second record is stored. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records. The replacement route lets rejected evidence create a child metadata record with `parentEvidenceId` and `replacementReason`, while the rejected parent remains visible as `superseded` with `supersededByEvidenceId`. The manifest route returns current evidence versions, parent/superseded lineage when present, item hashes, and a bundle hash.
+The upload route accepts multipart files, computes SHA-256 server-side, persists metadata-only records, and appends audit-log records. Duplicate active hashes are rejected with a typed error code and actionable recovery message before a second record is stored. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records; missing records, invalid statuses, and blocked status transitions return typed errors before mutation. The replacement route lets rejected evidence create a child metadata record with `parentEvidenceId` and `replacementReason`, while the rejected parent remains visible as `superseded` with `supersededByEvidenceId`; invalid replacement attempts return typed recovery guidance. The manifest route returns current evidence versions, parent/superseded lineage when present, item hashes, and a bundle hash.
 
 ## Model Gateway Routes
 
@@ -222,7 +222,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Workspace route-module registration independently from the full app composition
-- Shared typed API error helper plus Workspace, Model Gateway, Human Review, and Counsel Pack export error code responses
+- Shared typed API error helper plus Workspace, Evidence Vault, Model Gateway, Human Review, and Counsel Pack export error code responses
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition

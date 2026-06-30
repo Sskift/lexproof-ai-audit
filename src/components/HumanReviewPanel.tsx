@@ -1,18 +1,34 @@
 import { useState } from "react";
-import { ClipboardCheck, ShieldAlert, UserCheck } from "lucide-react";
+import { ClipboardCheck, Download, History, ShieldAlert, UserCheck } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
-import type { HumanReviewDecisionUpdate, HumanReviewQueue, HumanReviewQueueItem, HumanReviewStatus } from "../lib/humanReviewWorkflow";
+import {
+  createHumanReviewTimeline,
+  downloadHumanReviewTimelineJson,
+  type HumanReviewDecision,
+  type HumanReviewDecisionUpdate,
+  type HumanReviewQueue,
+  type HumanReviewQueueItem,
+  type HumanReviewStatus,
+  type HumanReviewTimelineEntry
+} from "../lib/humanReviewWorkflow";
 
 type HumanReviewPanelProps = {
   queue: HumanReviewQueue;
+  decisions: HumanReviewDecision[];
   onSaveDecision: (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => void;
 };
 
 const statuses: HumanReviewStatus[] = ["needs-review", "in-review", "needs-more-evidence", "reviewed", "rejected"];
 
-export function HumanReviewPanel({ queue, onSaveDecision }: HumanReviewPanelProps) {
+export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanReviewPanelProps) {
   const [savedTitle, setSavedTitle] = useState("");
   const [saveGuidance, setSaveGuidance] = useState("");
+  const timeline = createHumanReviewTimeline({
+    projectId: queue.items[0]?.projectId ?? "",
+    queue,
+    decisions
+  });
+  const savedDecisionCount = decisions.length;
 
   const saveDecision = (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => {
     onSaveDecision(item, update);
@@ -39,6 +55,8 @@ export function HumanReviewPanel({ queue, onSaveDecision }: HumanReviewPanelProp
         <SummaryStat label="Reviewed items" value={queue.summary.reviewedCount} />
         <SummaryStat label="Rejected or blocked" value={queue.summary.blockedCount} />
       </div>
+
+      <HumanReviewTimelinePanel timeline={timeline} savedDecisionCount={savedDecisionCount} />
 
       {savedTitle ? (
         <p className="save-state">
@@ -77,6 +95,7 @@ function HumanReviewCard({
   const [status, setStatus] = useState<HumanReviewStatus>(item.status);
   const [reviewer, setReviewer] = useState(item.reviewer);
   const [decisionNote, setDecisionNote] = useState(item.decisionNote);
+  const [dueDate, setDueDate] = useState(toDateInputValue(item.dueAt));
   const fieldLabel = item.title || `review item ${sequence}`;
 
   return (
@@ -86,7 +105,7 @@ function HumanReviewCard({
         <div>
           <strong>{item.title}</strong>
           <small>
-            {labelForTarget(item.targetType)} · {item.summary}
+            {labelForTarget(item.targetType)} · Due {formatDate(item.dueAt)} · {item.summary}
           </small>
         </div>
         <span className={`redaction-pill ${status}`}>{status}</span>
@@ -118,6 +137,16 @@ function HumanReviewCard({
             placeholder="Counsel, compliance, or review owner"
           />
         </label>
+        <label className="editor-field" htmlFor={`human-review-${sequence}-due`}>
+          <span className="field-label">Due date</span>
+          <input
+            id={`human-review-${sequence}-due`}
+            aria-label={`Due date for ${fieldLabel}`}
+            type="date"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+          />
+        </label>
         <label className="editor-field review-note-field" htmlFor={`human-review-${sequence}-note`}>
           <span className="field-label">Decision note</span>
           <textarea
@@ -135,7 +164,7 @@ function HumanReviewCard({
         <button
           type="button"
           className="secondary"
-          onClick={() => onSave(item, { status, reviewer, decisionNote })}
+          onClick={() => onSave(item, { status, reviewer, decisionNote, dueAt: fromDateInputValue(dueDate, item.dueAt) })}
           aria-label={`Save decision for ${fieldLabel}`}
         >
           <ClipboardCheck size={16} aria-hidden="true" />
@@ -143,6 +172,56 @@ function HumanReviewCard({
         </button>
       </div>
     </article>
+  );
+}
+
+function HumanReviewTimelinePanel({
+  timeline,
+  savedDecisionCount
+}: {
+  timeline: HumanReviewTimelineEntry[];
+  savedDecisionCount: number;
+}) {
+  const decisionEntries = timeline.filter((entry) => entry.action === "review.decision.saved").slice(-4).reverse();
+
+  return (
+    <section className="human-review-timeline">
+      <div className="split-title compact-title">
+        <div>
+          <History size={17} aria-hidden="true" />
+          <h3>Human Review Timeline</h3>
+        </div>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadHumanReviewTimelineJson("human-review-timeline.json", timeline)}
+        >
+          <Download size={15} aria-hidden="true" />
+          Download Review Timeline JSON
+        </button>
+      </div>
+      <p>
+        {savedDecisionCount} saved decisions · {timeline.length} timeline entries with audit log IDs. Not legal advice.
+      </p>
+      {decisionEntries.length === 0 ? (
+        <p className="empty-state">No saved review decisions yet.</p>
+      ) : (
+        <div className="timeline-list">
+          {decisionEntries.map((entry) => (
+            <div key={entry.id} className="timeline-row">
+              <span className={`redaction-pill ${entry.status}`}>{entry.status}</span>
+              <div>
+                <strong>{entry.title}</strong>
+                <small>
+                  {entry.reviewer || "Unassigned"} · Due {formatDate(entry.dueAt)} · {entry.auditLogId}
+                </small>
+                {entry.decisionNote ? <p>{entry.decisionNote}</p> : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -154,6 +233,22 @@ function labelForTarget(targetType: HumanReviewQueueItem["targetType"]): string 
     return "AI event";
   }
   return "Evidence";
+}
+
+function formatDate(value: string): string {
+  return value.slice(0, 10);
+}
+
+function toDateInputValue(value: string): string {
+  return value.slice(0, 10);
+}
+
+function fromDateInputValue(value: string, fallback: string): string {
+  if (!value.trim()) {
+    return fallback;
+  }
+
+  return `${value}T00:00:00.000Z`;
 }
 
 function reviewDecisionGuidance(item: HumanReviewQueueItem, status: HumanReviewStatus): string {

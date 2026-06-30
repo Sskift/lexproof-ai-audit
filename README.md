@@ -36,6 +36,7 @@ Key evidence:
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Server Model Gateway receipts with source evidence hashes, allowed data-class policy, safe failure receipts, retry state, and remediation steps without returning raw payloads or credentials.
+- Human Review queue with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Regulatory Command Center first screen with jurisdiction readiness, source-backed clause triggers, evidence gaps, manifest readiness, and counsel handoff status.
@@ -82,6 +83,10 @@ Evidence Vault recovery preserves rejected evidence as superseded metadata and c
 
 ![Evidence Vault rejected evidence recovery](docs/assets/screenshots/evidence-vault-recovery.png)
 
+Human Review records reviewer due dates, saved status history, audit log IDs, and a downloadable review timeline.
+
+![Human Review timeline](docs/assets/screenshots/human-review-timeline.png)
+
 The Phase 2 secure review journey connects Model Connect, metadata-only Evidence Vault sync, Model Gateway receipts, Human Review, audit log records, and Counsel Pack handoff. If the server gateway blocks a run, the UI shows the persisted failure receipt run ID, retry state, remediation steps, and the Not legal advice boundary.
 
 ![Secure Review Journey](docs/assets/screenshots/secure-review-journey.png)
@@ -99,7 +104,7 @@ The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.
 1. Model Connect validation with the mock local reviewer.
 2. Evidence selection or local metadata-only evidence intake.
 3. Deterministic Risk Audit with source-linked issue cards.
-4. Human Review return flow that moves linked evidence back to `requested`.
+4. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
 5. Secure Review Journey across Evidence Vault, Model Gateway, Human Review, and audit log routes.
 6. Counsel Pack Markdown export, Manifest JSON, and simulated anchor receipt.
 
@@ -147,8 +152,9 @@ Model output is draft audit preparation only. It does not change deterministic r
 7. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 8. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
 9. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256, while the Evidence Audit Trail records local evidence creation, template application, edits, removals, and a JSON export.
-10. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.
-11. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
+10. Open **Human Review** to assign reviewers, adjust due dates, save returned/reviewed/rejected decisions, and download the Human Review timeline JSON for status history with audit log IDs.
+11. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.
+12. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
 
 Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, and audit-log records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Model Gateway receipts, and model-run ledger exports store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 

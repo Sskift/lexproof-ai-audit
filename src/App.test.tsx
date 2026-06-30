@@ -854,6 +854,50 @@ describe("App", () => {
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("draft");
   });
 
+  it("shows and downloads a Human Review timeline with saved status history", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:human-review-timeline");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Review timeline desk" } });
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Timeline memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), { target: { value: "Evidence summary for review timeline." } });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+      fireEvent.change(screen.getAllByLabelText(/^Status for /i)[0], { target: { value: "in-review" } });
+      fireEvent.change(screen.getAllByLabelText(/^Decision note for /i)[0], { target: { value: "Started source review." } });
+      fireEvent.click(screen.getAllByRole("button", { name: /Save decision for /i })[0]);
+      fireEvent.change(screen.getAllByLabelText(/^Status for /i)[0], { target: { value: "reviewed" } });
+      fireEvent.change(screen.getAllByLabelText(/^Decision note for /i)[0], { target: { value: "Reviewed for audit-prep handoff." } });
+      fireEvent.click(screen.getAllByRole("button", { name: /Save decision for /i })[0]);
+
+      expect(await screen.findByText(/Human Review Timeline/i)).toBeInTheDocument();
+      expect(screen.getByText(/2 saved decisions/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Reviewed for audit-prep handoff/i).length).toBeGreaterThan(0);
+
+      fireEvent.click(screen.getByRole("button", { name: /Download Review Timeline JSON/i }));
+
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:human-review-timeline");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("runs the Secure Review Workspace model-connect flow with a user OpenAI-compatible model", async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true,

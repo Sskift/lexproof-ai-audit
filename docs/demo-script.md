@@ -45,7 +45,8 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 
 4. **Route human review**
    - Open **Human Review**.
-   - Set one evidence item to `needs-more-evidence`, save the decision, and show the return message.
+   - Set one evidence item to `needs-more-evidence`, adjust the due date if useful for narration, save the decision, and show the return message.
+   - Show **Human Review Timeline** with the saved decision, audit log ID, and **Download Review Timeline JSON**.
    - Return to **Evidence Ledger** and show the linked evidence status moved back to `requested`.
    - Screenshot: `docs/assets/screenshots/demo-04-human-review-return.png`.
 
@@ -67,9 +68,9 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 - **Model connection failure:** choose **OpenAI-compatible**, leave Base URL/model/API key incomplete, click **Validate Model Connect**, then run **Secure Review Journey**. The workspace should show a recoverable **Fix Model Connect** action. No API key is persisted.
 - **Evidence missing:** start a new project and click **Run Secure Review Journey** before adding evidence. The workspace should direct the user to add metadata-only evidence first.
 - **Model Gateway policy failure:** with a server test fixture or API client, submit a Model Gateway request that fails Redaction Gate or allowed data-class policy. The API should persist a safe failure receipt and return a run ID, retry state, and remediation steps without raw payloads or credentials. The UI should show the Model Gateway remediation state when the Secure Review Journey receives that response.
-- **Review returned:** save a Human Review decision as `needs-more-evidence`; linked evidence should move to `requested` for rework.
+- **Review returned:** save a Human Review decision as `needs-more-evidence`; linked evidence should move to `requested` for rework and the review timeline should record the decision with an audit log ID.
 - **Rejected vault evidence:** refresh **Evidence Vault Sync** after the backend has a rejected vault record, edit the replacement reason, and click **Replace rejected evidence**. The old record should remain visible as `superseded`, the new record should show `received`, and the manifest hash should update. Not legal advice.
 
 ## Closing Line
 
-LexProof's trust layer is the structured workspace: deterministic risk rules, source-linked issue cards, metadata-only evidence vault sync, duplicate-hash checks, rejected-evidence replacement lineage, model-run hash receipts, human review decisions, manifest hashes, and counsel-pack export. Every output remains audit preparation material. Not legal advice.
+LexProof's trust layer is the structured workspace: deterministic risk rules, source-linked issue cards, metadata-only evidence vault sync, duplicate-hash checks, rejected-evidence replacement lineage, model-run hash receipts, human review timelines, manifest hashes, and counsel-pack export. Every output remains audit preparation material. Not legal advice.

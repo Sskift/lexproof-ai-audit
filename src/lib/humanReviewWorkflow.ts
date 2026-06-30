@@ -19,6 +19,7 @@ export type HumanReviewQueueItem = {
   status: HumanReviewStatus;
   reviewer: string;
   decisionNote: string;
+  dueAt: string;
   updatedAt: string;
   notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only.";
 };
@@ -33,8 +34,28 @@ export type HumanReviewDecision = {
   status: HumanReviewStatus;
   reviewer: string;
   decisionNote: string;
+  dueAt: string;
   updatedAt: string;
   notLegalAdviceBoundary: "Not legal advice. Human review decisions track audit preparation workflow status only.";
+};
+
+export type HumanReviewTimelineAction = "review.requested" | "review.decision.saved";
+
+export type HumanReviewTimelineEntry = {
+  timelineEntryVersion: "lexproof-human-review-timeline-entry-v1";
+  id: string;
+  projectId: string;
+  targetType: HumanReviewTargetType;
+  targetId: string;
+  title: string;
+  action: HumanReviewTimelineAction;
+  status: HumanReviewStatus;
+  reviewer: string;
+  decisionNote: string;
+  dueAt: string;
+  updatedAt: string;
+  auditLogId: string;
+  notLegalAdviceBoundary: "Not legal advice. Human review timeline entries are audit preparation metadata only.";
 };
 
 export type HumanReviewWorkflowSummary = {
@@ -59,10 +80,18 @@ export type CreateHumanReviewQueueInput = {
   decisions?: HumanReviewDecision[];
 };
 
-export type HumanReviewDecisionUpdate = Pick<HumanReviewDecision, "status" | "reviewer" | "decisionNote">;
+export type HumanReviewDecisionUpdate = Pick<HumanReviewDecision, "status" | "reviewer" | "decisionNote"> & {
+  dueAt?: string;
+};
+
+export type CreateHumanReviewTimelineInput = {
+  projectId: string;
+  queue: HumanReviewQueue;
+  decisions?: HumanReviewDecision[];
+};
 
 export function createHumanReviewQueue(input: CreateHumanReviewQueueInput): HumanReviewQueue {
-  const decisionsById = new Map((input.decisions ?? []).map((decision) => [decision.id, decision]));
+  const decisionsById = createLatestDecisionMap(input.decisions ?? []);
   const items = [
     ...input.counselReviews.map((review) => applyDecision(createRiskReviewQueueItem(review), decisionsById)),
     ...input.aiEvents.map((event) => applyDecision(createAIEventQueueItem(event), decisionsById)),
@@ -91,9 +120,64 @@ export function createHumanReviewDecision(
     status: update.status,
     reviewer: update.reviewer.trim(),
     decisionNote: update.decisionNote.trim(),
+    dueAt: update.dueAt?.trim() || item.dueAt,
     updatedAt,
     notLegalAdviceBoundary: "Not legal advice. Human review decisions track audit preparation workflow status only."
   };
+}
+
+export function createHumanReviewTimeline(input: CreateHumanReviewTimelineInput): HumanReviewTimelineEntry[] {
+  const requestEntries = input.queue.items.map((item) =>
+    createTimelineEntry({
+      projectId: input.projectId,
+      targetType: item.targetType,
+      targetId: item.targetId,
+      title: item.title,
+      action: "review.requested",
+      status: item.status,
+      reviewer: item.reviewer,
+      decisionNote: item.decisionNote,
+      dueAt: item.dueAt,
+      updatedAt: item.updatedAt || item.dueAt
+    })
+  );
+  const itemsByTarget = new Map(input.queue.items.map((item) => [decisionId(item.targetType, item.targetId), item]));
+  const decisionEntries = [...(input.decisions ?? [])]
+    .sort((left, right) => left.updatedAt.localeCompare(right.updatedAt))
+    .map((decision) => {
+      const item = itemsByTarget.get(decisionId(decision.targetType, decision.targetId));
+      return createTimelineEntry({
+        projectId: decision.projectId,
+        targetType: decision.targetType,
+        targetId: decision.targetId,
+        title: item?.title ?? decision.title,
+        action: "review.decision.saved",
+        status: decision.status,
+        reviewer: decision.reviewer,
+        decisionNote: decision.decisionNote,
+        dueAt: decision.dueAt,
+        updatedAt: decision.updatedAt
+      });
+    });
+
+  return [...requestEntries, ...decisionEntries].sort((left, right) => left.updatedAt.localeCompare(right.updatedAt));
+}
+
+export function exportHumanReviewTimelineJson(entries: HumanReviewTimelineEntry[]): string {
+  return `${JSON.stringify({ timelineVersion: "lexproof-human-review-timeline-v1", entries }, null, 2)}\n`;
+}
+
+export function downloadHumanReviewTimelineJson(filename: string, entries: HumanReviewTimelineEntry[]): void {
+  const blob = new Blob([exportHumanReviewTimelineJson(entries)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export function humanReviewStatusToAIEventStatus(status: HumanReviewStatus): AIEventReviewStatus {
@@ -146,6 +230,7 @@ function createRiskReviewQueueItem(review: CounselReviewItem): HumanReviewQueueI
     status: statusFromCounselReview(review.status),
     reviewer: review.reviewer,
     decisionNote: review.reviewerNote,
+    dueAt: createDueAt(review.updatedAt, review.priority),
     updatedAt: review.updatedAt,
     notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
   };
@@ -165,6 +250,7 @@ function createAIEventQueueItem(event: AIEventRecord): HumanReviewQueueItem {
     status: statusFromAIEvent(event.reviewStatus),
     reviewer: event.humanReviewer,
     decisionNote: "",
+    dueAt: createDueAt(event.updatedAt ?? event.createdAt, "P1"),
     updatedAt: event.updatedAt ?? event.createdAt,
     notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
   };
@@ -187,6 +273,7 @@ function createEvidenceQueueItem(projectId: string, item: EvidenceItem, index: n
     status: statusFromEvidence(status),
     reviewer: item.owner ?? "Compliance",
     decisionNote: "",
+    dueAt: createDueAt(item.updatedAt ?? item.addedAt ?? "", status === "requested" || status === "draft" ? "P1" : "P2"),
     updatedAt: item.updatedAt ?? item.addedAt ?? "",
     notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
   };
@@ -203,8 +290,21 @@ function applyDecision(item: HumanReviewQueueItem, decisionsById: Map<string, Hu
     status: decision.status,
     reviewer: decision.reviewer,
     decisionNote: decision.decisionNote,
+    dueAt: decision.dueAt,
     updatedAt: decision.updatedAt
   };
+}
+
+function createLatestDecisionMap(decisions: HumanReviewDecision[]): Map<string, HumanReviewDecision> {
+  const decisionsById = new Map<string, HumanReviewDecision>();
+
+  [...decisions]
+    .sort((left, right) => left.updatedAt.localeCompare(right.updatedAt))
+    .forEach((decision) => {
+      decisionsById.set(decisionId(decision.targetType, decision.targetId), decision);
+    });
+
+  return decisionsById;
 }
 
 function createSummary(items: HumanReviewQueueItem[]): HumanReviewWorkflowSummary {
@@ -256,4 +356,45 @@ function queueItemId(targetType: HumanReviewTargetType, targetId: string): strin
 
 function decisionId(targetType: HumanReviewTargetType, targetId: string): string {
   return `human-review-${targetType}-${targetId}`;
+}
+
+function createDueAt(baseDate: string, priority: HumanReviewQueueItem["priority"]): string {
+  const base = Number.isNaN(Date.parse(baseDate)) ? new Date() : new Date(baseDate);
+  const dueDate = new Date(base);
+  const days = priority === "P0" ? 2 : priority === "P1" ? 5 : 10;
+  dueDate.setUTCDate(dueDate.getUTCDate() + days);
+  return dueDate.toISOString();
+}
+
+function createTimelineEntry(input: Omit<HumanReviewTimelineEntry, "timelineEntryVersion" | "id" | "auditLogId" | "notLegalAdviceBoundary">): HumanReviewTimelineEntry {
+  const hashParts = [
+    input.projectId,
+    input.targetType,
+    input.targetId,
+    input.action,
+    input.status,
+    input.reviewer,
+    input.decisionNote,
+    input.updatedAt
+  ];
+
+  return {
+    timelineEntryVersion: "lexproof-human-review-timeline-entry-v1",
+    id: `human-review-timeline-${hashId(hashParts)}`,
+    ...input,
+    auditLogId: `human-review-audit-${hashId([...hashParts, input.dueAt])}`,
+    notLegalAdviceBoundary: "Not legal advice. Human review timeline entries are audit preparation metadata only."
+  };
+}
+
+function hashId(parts: string[]): string {
+  let hash = 0xcbf29ce484222325n;
+  const payload = parts.map((part) => part.trim()).join("|");
+
+  for (let index = 0; index < payload.length; index += 1) {
+    hash ^= BigInt(payload.charCodeAt(index));
+    hash = (hash * 0x100000001b3n) & 0xffffffffffffffffn;
+  }
+
+  return hash.toString(16).padStart(16, "0").slice(0, 12);
 }

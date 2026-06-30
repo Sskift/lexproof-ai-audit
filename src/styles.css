@@ -1044,9 +1044,57 @@ textarea {
 
 .human-review-grid {
   display: grid;
-  grid-template-columns: minmax(140px, 0.7fr) minmax(180px, 1fr) minmax(240px, 1.3fr);
+  grid-template-columns: minmax(140px, 0.7fr) minmax(180px, 1fr) minmax(150px, 0.7fr) minmax(240px, 1.3fr);
   gap: 10px;
   align-items: stretch;
+}
+
+.human-review-timeline {
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.human-review-timeline > p {
+  margin: 0 0 10px;
+  color: #53616f;
+  line-height: 1.45;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 8px;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.timeline-row strong,
+.timeline-row small,
+.timeline-row p {
+  display: block;
+}
+
+.timeline-row small {
+  margin-top: 3px;
+  color: #53616f;
+  line-height: 1.4;
+}
+
+.timeline-row p {
+  margin: 6px 0 0;
+  color: #22313f;
+  line-height: 1.45;
 }
 
 .compact-title {

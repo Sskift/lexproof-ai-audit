@@ -460,12 +460,13 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 - create review requests for deterministic risk flags, evidence records, model runs, and counsel packs
 - let reviewers mark items as `under-review`, `reviewed`, `rejected`, or `needs-more-evidence`
-- preserve comments and reviewer identity as workflow metadata
+- preserve comments, reviewer identity, due dates, status history, and audit-log IDs as workflow metadata
+- export a review timeline JSON for counsel/compliance handoff
 - include human-review status in exports
 
 Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
 
-`server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository and appends audit-log records.
+`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository and appends audit-log records.
 
 ### Audit Log Responsibilities
 

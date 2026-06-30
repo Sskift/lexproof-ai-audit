@@ -497,7 +497,7 @@ export default function App() {
 
   const saveHumanReviewDecision = (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => {
     const decision = createHumanReviewDecision(item, update);
-    setHumanReviewDecisions((current) => [decision, ...current.filter((record) => record.id !== decision.id)].slice(0, 120));
+    setHumanReviewDecisions((current) => [decision, ...current].slice(0, 120));
 
     if (item.targetType === "ai-event") {
       updateAIEvent(item.targetId, {
@@ -625,7 +625,9 @@ export default function App() {
               onUpdateEvent={updateAIEvent}
             />
           ) : null}
-          {activeTab === "review" ? <HumanReviewPanel queue={humanReviewQueue} onSaveDecision={saveHumanReviewDecision} /> : null}
+          {activeTab === "review" ? (
+            <HumanReviewPanel queue={humanReviewQueue} decisions={currentHumanReviewDecisions} onSaveDecision={saveHumanReviewDecision} />
+          ) : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
           {activeTab === "risk" ? (
             <RiskAuditPanel

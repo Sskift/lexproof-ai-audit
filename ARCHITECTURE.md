@@ -45,7 +45,7 @@ lexproof-ai-audit/
       CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
-      CounselPackPanel.tsx   # Markdown, manifest, and simulated receipt export
+      CounselPackPanel.tsx   # Markdown, manifest, source pack, and simulated receipt export
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
       demoScenarios.ts       # Judge-ready paths mapped to seed profiles
@@ -345,7 +345,7 @@ This module tracks source lineage and review freshness. It does not decide wheth
 Owns standalone source-pack handoff artifacts:
 
 - `createRegulatorySourcePack({ graph, sourceReview })` projects the Regulatory Source Graph and Source Review Ledger into metadata-only clauses, evidence gaps, jurisdiction summaries, counsel questions, source review status, and a stable SHA-256 pack hash.
-- `exportRegulatorySourcePackJson(pack)` produces readable JSON for future UI download or server export records.
+- `exportRegulatorySourcePackJson(pack)` and `downloadRegulatorySourcePackJson(filename, pack)` produce a readable local JSON handoff.
 - The pack hash excludes `generatedAt`, raw evidence bodies, and legal conclusions so counsel can compare source/gap lineage across exports.
 
 Source packs are audit preparation materials only. They do not determine legal status, certify source currency, or replace local counsel review.
@@ -650,7 +650,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` renders Evidence Intake Guidance when a project has no evidence, applies scenario templates, pre-fills requested evidence rows, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, exposes recent local evidence audit trail events plus JSON export, renders Evidence Retention Readiness, exports retention policy JSON, and blocks Evidence Vault sync when retention blockers are present.
-- `CounselPackPanel` selects an export template, renders the Export Safety Gate, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
+- `CounselPackPanel` selects an export template, renders the Export Safety Gate, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, Regulatory Source Pack JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 

@@ -19,11 +19,16 @@ import type { DataBoundaryReport } from "../lib/dataBoundary";
 import type { SubmissionFit } from "../lib/auditEngine";
 import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
 import type { CounselPackExportRecord } from "../lib/phase2Types";
+import {
+  downloadRegulatorySourcePackJson,
+  type RegulatorySourcePack
+} from "../lib/regulatorySourcePack";
 
 type CounselPackPanelProps = {
   projectName: string;
   fit: SubmissionFit;
   manifest: EvidenceManifest | null;
+  regulatorySourcePack: RegulatorySourcePack | null;
   markdown: string;
   counselQuestions: CounselQuestion[];
   counselReviews: CounselReviewItem[];
@@ -46,6 +51,7 @@ export function CounselPackPanel({
   projectName,
   fit,
   manifest,
+  regulatorySourcePack,
   markdown,
   counselQuestions,
   counselReviews,
@@ -153,6 +159,10 @@ export function CounselPackPanel({
           <span>Manifest bundle SHA-256</span>
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
+        <div>
+          <span>Source pack SHA-256</span>
+          <code>{regulatorySourcePack?.packHash ?? "calculating"}</code>
+        </div>
         <div className="export-buttons">
           <button
             type="button"
@@ -174,6 +184,18 @@ export function CounselPackPanel({
           >
             <Download size={16} aria-hidden="true" />
             Download Manifest JSON
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!regulatorySourcePack || exportBlocked}
+            onClick={() =>
+              regulatorySourcePack &&
+              downloadRegulatorySourcePackJson(`${slug(projectName)}-regulatory-source-pack.json`, regulatorySourcePack)
+            }
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Source Pack JSON
           </button>
           <button type="button" className="secondary" disabled={!manifest || exportBlocked} onClick={createReceipt}>
             <Anchor size={16} aria-hidden="true" />

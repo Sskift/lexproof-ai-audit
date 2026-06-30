@@ -107,6 +107,19 @@ export function exportRegulatorySourcePackJson(pack: RegulatorySourcePack): stri
   return `${JSON.stringify(pack, null, 2)}\n`;
 }
 
+export function downloadRegulatorySourcePackJson(filename: string, pack: RegulatorySourcePack): void {
+  const blob = new Blob([exportRegulatorySourcePackJson(pack)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function createClausePackItem(clause: MatchedRegulatoryClause): RegulatorySourcePackClause {
   return {
     clauseId: clause.clauseId,

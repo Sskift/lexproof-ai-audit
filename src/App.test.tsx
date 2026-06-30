@@ -1396,6 +1396,69 @@ describe("App", () => {
     expect(screen.getAllByText(/Not legal advice. Export templates are audit preparation routing aids only./i).length).toBeGreaterThan(0);
   });
 
+  it("downloads a metadata-only Regulatory Source Pack JSON from the Counsel Pack", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:regulatory-source-pack");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      const sourcePackButton = await screen.findByRole("button", { name: /Download Source Pack JSON/i });
+      await waitFor(() => expect(sourcePackButton).not.toBeDisabled());
+      fireEvent.click(sourcePackButton);
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:regulatory-source-pack");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Source Pack JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          packVersion: "lexproof-regulatory-source-pack-v1",
+          packHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          notLegalAdviceBoundary: "Not legal advice. Regulatory source packs are audit preparation materials only."
+        })
+      );
+      expect(parsed.clauses).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            clauseId: "eu-mica-title-ii-white-paper",
+            sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng"
+          })
+        ])
+      );
+      expect(parsed.sourceReview).toEqual(
+        expect.objectContaining({
+          status: "current",
+          reviewWindowDays: 90,
+          notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only."
+        })
+      );
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("saves Counsel Pack versions and shows a diff between exports", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

@@ -46,7 +46,7 @@ Key evidence:
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Regulatory Command Center first screen with a Workspace Action Queue, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
 - Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, UK FCA, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
-- Metadata-only Regulatory Source Pack JSON builder with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash for future counsel handoff surfaces.
+- Downloadable metadata-only Regulatory Source Pack JSON from Counsel Pack with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
@@ -152,6 +152,10 @@ Counsel Pack export templates route the same project facts into launch, RWA/toke
 The Counsel Pack Markdown preview now carries the Source Review Ledger from the Regulatory Command Center, including reviewed source counts, next review dates, reviewer notes, and refresh actions. It repeats the Not legal advice boundary because source freshness is audit-prep lineage only.
 
 ![Counsel Pack Source Review Ledger](docs/assets/screenshots/counsel-pack-source-review-ledger.png)
+
+The Counsel Pack export surface now includes a metadata-only Regulatory Source Pack JSON download with its own stable SHA-256 hash, source URLs, evidence gaps, and Not legal advice boundary.
+
+![Counsel Pack Source Pack JSON download](docs/assets/screenshots/counsel-pack-source-pack-download.png)
 
 The Export Safety Gate scans the current project, evidence ledger, counsel questions, review notes, and AI event records before export. It shows blocked/warning findings and keeps raw KYC, credentials, and private-key-like material out of export actions.
 

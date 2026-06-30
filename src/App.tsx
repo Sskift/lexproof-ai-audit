@@ -99,6 +99,10 @@ import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
 import type { CounselPackExportRecord } from "./lib/phase2Types";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
+import {
+  createRegulatorySourcePack,
+  type RegulatorySourcePack
+} from "./lib/regulatorySourcePack";
 import { createRegulatorySourceReview } from "./lib/regulatorySourceReview";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
@@ -141,6 +145,7 @@ export default function App() {
   const [showValidation, setShowValidation] = useState(false);
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
+  const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
@@ -371,6 +376,19 @@ export default function App() {
       live = false;
     };
   }, [audit, project]);
+
+  useEffect(() => {
+    let live = true;
+    setRegulatorySourcePack(null);
+    createRegulatorySourcePack({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }).then((nextPack) => {
+      if (live) {
+        setRegulatorySourcePack(nextPack);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [regulatoryGraph, regulatorySourceReview]);
 
   useEffect(() => {
     let live = true;
@@ -882,6 +900,7 @@ export default function App() {
               projectName={project.projectName}
               fit={fit}
               manifest={manifest}
+              regulatorySourcePack={regulatorySourcePack}
               markdown={markdown}
               counselQuestions={currentCounselQuestions}
               counselReviews={currentCounselReviews}

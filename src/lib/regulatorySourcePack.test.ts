@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { createRegulatoryGraph } from "./regulatoryGraph";
-import { createRegulatorySourcePack, exportRegulatorySourcePackJson } from "./regulatorySourcePack";
+import {
+  createRegulatorySourcePack,
+  downloadRegulatorySourcePackJson,
+  exportRegulatorySourcePackJson
+} from "./regulatorySourcePack";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import type { ProjectProfile } from "./projectModel";
 
@@ -85,5 +89,31 @@ describe("createRegulatorySourcePack", () => {
     expect(json).toContain("Not legal advice");
     expect(json).not.toContain(rawEvidenceBody);
     expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("downloads the regulatory source pack as JSON through a browser Blob", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:source-pack");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, { asOf: "2026-07-01", reviewWindowDays: 90 });
+    const pack = await createRegulatorySourcePack({ graph, sourceReview });
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      downloadRegulatorySourcePackJson("source-pack", pack);
+
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:source-pack");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
   });
 });

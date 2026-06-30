@@ -4,6 +4,7 @@ import Fastify from "fastify";
 import { createCounselPackExportRecord } from "./counselPackExportService.js";
 import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
+import { createServerHumanReviewQueueView, type ServerHumanReviewQueueFilters } from "../src/lib/serverHumanReviewQueue.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
   createAuditLogRecord,
@@ -504,6 +505,25 @@ export function buildServer(options: BuildServerOptions = {}) {
     }
   );
 
+  server.get<{ Params: { workspaceId: string }; Querystring: HumanReviewQueueQuery }>(
+    "/api/workspaces/:workspaceId/reviews/queue",
+    async (request, reply) => {
+      try {
+        const records = await repository.listHumanReviewRecords(request.params.workspaceId);
+        return createServerHumanReviewQueueView({
+          workspaceId: request.params.workspaceId,
+          records,
+          filters: createHumanReviewQueueFilters(request.query)
+        });
+      } catch (error) {
+        return reply.status(400).send({
+          error: error instanceof Error ? error.message : "Human Review queue lookup failed.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        });
+      }
+    }
+  );
+
   server.patch<{ Params: { workspaceId: string; reviewId: string }; Body: HumanReviewUpdateBody }>(
     "/api/workspaces/:workspaceId/reviews/:reviewId",
     async (request, reply) => {
@@ -636,6 +656,12 @@ type HumanReviewRequestBody = {
 type HumanReviewUpdateBody = {
   status?: HumanReviewRecord["status"];
   comment?: string;
+  reviewerId?: string;
+};
+
+type HumanReviewQueueQuery = {
+  targetType?: string;
+  status?: string;
   reviewerId?: string;
 };
 
@@ -793,9 +819,44 @@ function normalizeRiskFlagIds(value: UpdateEvidenceRequestBody["linkedRiskFlagId
   return parseCsv(value);
 }
 
+function createHumanReviewQueueFilters(query: HumanReviewQueueQuery): ServerHumanReviewQueueFilters {
+  const filters: ServerHumanReviewQueueFilters = {};
+  const targetType = query.targetType?.trim();
+  const status = query.status?.trim();
+  const reviewerId = query.reviewerId?.trim();
+
+  if (targetType) {
+    assertHumanReviewTargetType(targetType);
+    filters.targetType = targetType;
+  }
+
+  if (status) {
+    assertHumanReviewStatus(status);
+    filters.status = status;
+  }
+
+  if (reviewerId) {
+    filters.reviewerId = reviewerId;
+  }
+
+  return filters;
+}
+
 function assertWorkspaceStatus(status: string): asserts status is WorkspaceRecord["status"] {
   if (!["draft", "active", "archived"].includes(status)) {
     throw new Error("Workspace status must be draft, active, or archived.");
+  }
+}
+
+function assertHumanReviewTargetType(targetType: string): asserts targetType is HumanReviewRecord["targetType"] {
+  if (!["risk-flag", "evidence", "model-run", "counsel-pack"].includes(targetType)) {
+    throw new Error("Human review target type must be risk-flag, evidence, model-run, or counsel-pack.");
+  }
+}
+
+function assertHumanReviewStatus(status: string): asserts status is HumanReviewRecord["status"] {
+  if (!["requested", "under-review", "reviewed", "rejected", "needs-more-evidence"].includes(status)) {
+    throw new Error("Human review status must be requested, under-review, reviewed, rejected, or needs-more-evidence.");
   }
 }
 

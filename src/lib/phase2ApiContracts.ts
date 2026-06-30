@@ -75,6 +75,7 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),
     createRoute("POST", "/api/workspaces/:workspaceId/reviews", "human-review", "CreateHumanReviewRequest", "HumanReviewRecord", true),
+    createRoute("GET", "/api/workspaces/:workspaceId/reviews/queue", "human-review", "HumanReviewQueueRequest", "ServerHumanReviewQueueView", true),
     createRoute("PATCH", "/api/workspaces/:workspaceId/reviews/:reviewId", "human-review", "UpdateHumanReviewRequest", "HumanReviewRecord", true),
     createRoute("GET", "/api/workspaces/:workspaceId/reviews", "human-review", "HumanReviewListRequest", "HumanReviewRecord[]", true),
     createRoute(

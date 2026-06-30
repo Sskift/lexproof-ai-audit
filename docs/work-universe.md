@@ -113,7 +113,7 @@ Goal: make review status operational instead of decorative.
 
 Build:
 
-- Review queues by target type: evidence, model run, risk flag, clause match, counsel pack.
+- Review queues by target type: evidence, model run, risk flag, clause match, counsel pack. The first server queue view is implemented in `src/lib/serverHumanReviewQueue.ts` and `GET /api/workspaces/:workspaceId/reviews/queue`, with target/status/reviewer filters and next actions.
 - Reviewer assignment, due date, status history, decision reason, and linked evidence changes.
 - Return-to-evidence flow when a reviewer requests more support.
 - Rejection flow that preserves the rejected item and opens a replacement action.
@@ -123,6 +123,7 @@ Acceptance:
 
 - Review actions update the affected evidence/control/export readiness.
 - Rejected and returned items are visible and recoverable.
+- Human Review queue views can be filtered by target type, status, and reviewer without treating review as legal approval.
 - Counsel Pack includes review status without representing it as legal approval.
 
 Do not build:

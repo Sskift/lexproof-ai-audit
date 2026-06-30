@@ -43,7 +43,7 @@ It defines route metadata for:
 | Workspaces | `POST /api/workspaces`, `GET /api/workspaces/:workspaceId`, `PATCH /api/workspaces/:workspaceId` |
 | Evidence Vault | `POST /api/workspaces/:workspaceId/evidence`, `GET /api/workspaces/:workspaceId/evidence`, `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`, `POST /api/workspaces/:workspaceId/evidence/:evidenceId/replacement`, `GET /api/workspaces/:workspaceId/evidence-manifest` |
 | Model Gateway | `GET /api/model-gateway/adapters`, `POST /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs/:runId` |
-| Human Review | `POST /api/workspaces/:workspaceId/reviews`, `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`, `GET /api/workspaces/:workspaceId/reviews` |
+| Human Review | `POST /api/workspaces/:workspaceId/reviews`, `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`, `GET /api/workspaces/:workspaceId/reviews`, `GET /api/workspaces/:workspaceId/reviews/queue` |
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
@@ -165,8 +165,9 @@ The first Human Review routes are implemented in `server/app.ts` and backed by `
 - `POST /api/workspaces/:workspaceId/reviews`
 - `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`
 - `GET /api/workspaces/:workspaceId/reviews`
+- `GET /api/workspaces/:workspaceId/reviews/queue`
 
-The current routes support create, update, and list behavior and persist records through the repository. Review decisions remain workflow metadata, not signed legal approvals.
+The current routes support create, update, list, and filtered queue-view behavior and persist records through the repository. The queue view groups review records by target type, status, and reviewer, then returns operational next actions for evidence, model-run, risk-flag, and counsel-pack review triage. Review decisions remain workflow metadata, not signed legal approvals.
 
 ## Counsel Pack Export Record Routes
 
@@ -215,7 +216,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - raw KYC/personal-data blocking before evidence vault record creation
 - duplicate evidence hash blocking and rejected-evidence replacement lineage
 - mock Model Gateway route creation, listing, safe failure receipts, and boundary blocking
-- Human Review route creation, status update, and listing
+- Human Review route creation, status update, listing, and filtered queue summary
 - Counsel Pack export-record creation, listing, lookup, metadata-only validation, and audit-log creation
 - Workspace create/read/update routes
 - multipart Evidence Vault upload/list/update/manifest routes
@@ -230,6 +231,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - deterministic mock gateway receipts
 - model gateway boundary failures with retry state and remediation steps
 - deterministic human review records
+- server-side Human Review queue summaries
 - human review status updates and validation errors
 
 `server/counselPackExportService.test.ts` covers:

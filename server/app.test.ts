@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildServer } from "./app";
+import type { HumanReviewRecord } from "../src/lib/phase2Types";
 
 describe("Phase 2 backend app", () => {
   it("serves a no-op health endpoint with explicit audit-prep boundaries", async () => {
@@ -277,6 +278,79 @@ describe("Phase 2 backend app", () => {
     await server.close();
   });
 
+  it("returns a filtered human review queue view with workflow summary", async () => {
+    const server = buildServer();
+
+    await createReviewRequest(server, {
+      targetType: "model-run",
+      targetId: "model-run-queue",
+      reviewerId: "Compliance",
+      comment: "Review model output before handoff."
+    });
+    const evidenceReview = await createReviewRequest(server, {
+      targetType: "evidence",
+      targetId: "evidence-queue",
+      reviewerId: "Counsel",
+      comment: "Need stronger evidence support."
+    });
+    const counselPackReview = await createReviewRequest(server, {
+      targetType: "counsel-pack",
+      targetId: "counsel-pack-v1",
+      reviewerId: "Counsel",
+      comment: "Review export readiness."
+    });
+    await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-queue/reviews/${evidenceReview.id}`,
+      payload: {
+        status: "needs-more-evidence",
+        comment: "Evidence is not sufficient for counsel handoff."
+      }
+    });
+    await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-queue/reviews/${counselPackReview.id}`,
+      payload: {
+        status: "reviewed",
+        comment: "Reviewed as audit-prep packet, not legal approval."
+      }
+    });
+
+    const queueResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-queue/reviews/queue?targetType=evidence&reviewerId=Counsel"
+    });
+
+    expect(queueResponse.statusCode).toBe(200);
+    expect(queueResponse.json()).toEqual({
+      queueVersion: "lexproof-server-human-review-queue-v1",
+      workspaceId: "workspace-queue",
+      filters: {
+        targetType: "evidence",
+        reviewerId: "Counsel"
+      },
+      totalCount: 1,
+      openCount: 1,
+      reviewedCount: 0,
+      blockedCount: 0,
+      targetTypeCounts: {
+        evidence: 1
+      },
+      statusCounts: {
+        "needs-more-evidence": 1
+      },
+      reviewerCounts: {
+        Counsel: 1
+      },
+      nextActions: ["1 review item needs more evidence before counsel handoff."],
+      items: [expect.objectContaining({ id: evidenceReview.id, targetType: "evidence", status: "needs-more-evidence" })],
+      notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+    });
+    expect(queueResponse.body.toLowerCase()).not.toContain("legal approval");
+
+    await server.close();
+  });
+
   it("creates and reads metadata-only Counsel Pack export records with audit logs", async () => {
     const server = buildServer();
 
@@ -400,3 +474,21 @@ describe("Phase 2 backend app", () => {
     await server.close();
   });
 });
+
+async function createReviewRequest(
+  server: ReturnType<typeof buildServer>,
+  payload: {
+    targetType: HumanReviewRecord["targetType"];
+    targetId: string;
+    reviewerId: string;
+    comment: string;
+  }
+): Promise<HumanReviewRecord> {
+  const response = await server.inject({
+    method: "POST",
+    url: "/api/workspaces/workspace-queue/reviews",
+    payload
+  });
+  expect(response.statusCode).toBe(201);
+  return response.json() as HumanReviewRecord;
+}

@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { EvidenceVaultRecord } from "./phase2Types";
 import { createEvidenceVaultManifest, exportEvidenceVaultManifestJson } from "./evidenceVaultManifest";
+import { downloadEvidenceVaultManifestJson } from "./evidenceVaultManifestDownload";
 
 describe("createEvidenceVaultManifest", () => {
   it("creates a deterministic metadata-only manifest for persisted Evidence Vault records", async () => {
@@ -98,6 +99,44 @@ describe("createEvidenceVaultManifest", () => {
     expect(second.items.map((item) => item.evidenceId)).toEqual(["evidence-a", "evidence-b"]);
     expect(second.bundleHash).toBe(first.bundleHash);
   });
+
+  it("downloads the server Evidence Vault manifest as metadata-only JSON", async () => {
+    const manifest = await createEvidenceVaultManifest({
+      workspaceId: "workspace-vault-manifest",
+      records: [record({ sourceNote: "Raw source notes must not leave the vault manifest." })]
+    });
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:evidence-vault-manifest";
+    });
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      downloadEvidenceVaultManifestJson("vault-manifest", manifest);
+
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:evidence-vault-manifest");
+      const payload = await readBlobText(capturedBlobs[0]);
+      expect(payload).toContain("\"manifestVersion\": \"lexproof-evidence-vault-manifest-v1\"");
+      expect(payload).toContain(manifest.bundleHash);
+      expect(payload).toContain("Not legal advice. Evidence manifests summarize audit preparation metadata only.");
+      expect(payload).not.toContain("Raw source notes must not leave");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
 });
 
 function record(overrides: Partial<EvidenceVaultRecord> = {}): EvidenceVaultRecord {
@@ -121,4 +160,13 @@ function record(overrides: Partial<EvidenceVaultRecord> = {}): EvidenceVaultReco
     updatedAt: "2026-06-30T00:00:00.000Z",
     ...overrides
   };
+}
+
+function readBlobText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(reader.error ?? new Error("Unable to read blob"));
+    reader.readAsText(blob);
+  });
 }

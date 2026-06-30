@@ -767,6 +767,12 @@ describe("App", () => {
 
   it("syncs Evidence Ledger metadata to the backend Evidence Vault and displays the vault manifest hash", async () => {
     const uploadedForms: FormData[] = [];
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:evidence-vault-manifest");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
     const vaultRecord = {
       recordVersion: "lexproof-evidence-vault-record-v1",
       id: "evidence-vault-ui",
@@ -786,6 +792,13 @@ describe("App", () => {
       createdAt: "2026-06-30T00:00:00.000Z",
       updatedAt: "2026-06-30T00:00:00.000Z"
     };
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
       if (path.endsWith("/evidence") && init?.method === "POST") {
@@ -862,7 +875,25 @@ describe("App", () => {
       expect(uploadedPayload).not.toContain("Raw board approval facts stay local");
       expect(uploadedForms[0].get("linkedControlIds")).toBe("control-eu-mica-title-ii-white-paper");
       expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
+
+      fireEvent.click(screen.getByRole("button", { name: /Download Vault Manifest JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:evidence-vault-manifest");
+      const manifestPayload = await readAppBlobText(capturedBlobs[0]);
+      const parsedManifest = JSON.parse(manifestPayload);
+      expect(parsedManifest).toEqual(
+        expect.objectContaining({
+          manifestVersion: "lexproof-evidence-vault-manifest-v1",
+          bundleHash: "a".repeat(64),
+          notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+        })
+      );
+      expect(manifestPayload).not.toContain("Raw board approval facts stay local");
     } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
       vi.unstubAllGlobals();
     }
   });

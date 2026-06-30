@@ -4,6 +4,7 @@ import { SectionHeader } from "./AuditWizard";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
 import type { EvidenceIntakeGuidance, EvidenceIntakeGuidanceAction } from "../lib/evidenceIntakeGuidance";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
+import { downloadEvidenceVaultManifestJson } from "../lib/evidenceVaultManifestDownload";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import {
   EvidenceVaultClientError,
@@ -413,6 +414,15 @@ export function EvidenceLedger({
           <button type="button" className="secondary" disabled={!projectId.trim() || vaultStatus === "syncing"} onClick={() => void refreshVaultManifest()}>
             <RefreshCcw size={16} aria-hidden="true" />
             Refresh Vault Manifest
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!vaultManifest}
+            onClick={() => vaultManifest && downloadEvidenceVaultManifestJson("evidence-vault-manifest.json", vaultManifest)}
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Vault Manifest JSON
           </button>
         </div>
         {!retentionReport.vaultSyncAllowed && evidenceItems.length > 0 ? (

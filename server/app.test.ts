@@ -86,6 +86,7 @@ describe("Phase 2 backend app", () => {
         humanReviewOwner: "Compliance",
         includesCredentialMaterial: false,
         includesRawKycOrPersonalData: false,
+        allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
         payload: {
           projectName: "YieldPassport",
           privatePromptText: "raw model prompt should not be returned"
@@ -107,6 +108,9 @@ describe("Phase 2 backend app", () => {
         humanReviewStatus: "needs-review",
         payloadHash: expect.stringMatching(/^[a-f0-9]{64}$/),
         responseHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        sourceEvidenceHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        retryState: "not-needed",
+        remediationSteps: [],
         notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
       })
     );
@@ -152,22 +156,50 @@ describe("Phase 2 backend app", () => {
         humanReviewOwner: "",
         includesCredentialMaterial: true,
         includesRawKycOrPersonalData: true,
+        allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
         payload: { projectName: "YieldPassport" }
       }
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json()).toEqual({
-      error: "Model Gateway boundary failed.",
-      errors: [
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        error: "Model Gateway boundary failed.",
+        errors: [
         "Model Gateway request must pass the Redaction Gate before provider calls.",
         "Model Gateway requests must not include API keys, private keys, or credential material.",
         "Raw KYC or personal data cannot be sent through the Model Gateway draft.",
         "Model Gateway purpose cannot request final legal decisions.",
         "Human review owner is required before external reliance on model output."
-      ],
-      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-    });
+        ],
+        runId: expect.stringMatching(/^model-gateway-run-[a-f0-9]{16}$/),
+        retryState: "blocked-until-remediated",
+        remediationSteps: expect.arrayContaining([
+          "Pass the Redaction Gate before creating a server Model Gateway run.",
+          "Remove API keys, private keys, credentials, raw KYC, and personal data from the request metadata."
+        ]),
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+    expect(response.body.toLowerCase()).not.toContain("api_key");
+
+    const runsResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/model-runs" });
+    expect(runsResponse.json()).toEqual([
+      expect.objectContaining({
+        status: "blocked",
+        retryState: "blocked-until-remediated",
+        requiresHumanReview: true
+      })
+    ]);
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-1/audit-log" });
+    expect(auditResponse.json()).toEqual([
+      expect.objectContaining({
+        action: "model.run.blocked",
+        targetType: "model-run",
+        targetId: response.json().runId
+      })
+    ]);
 
     await server.close();
   });

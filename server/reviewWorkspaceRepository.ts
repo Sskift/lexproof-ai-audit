@@ -296,12 +296,33 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
       "redactionStatus" TEXT NOT NULL,
       "payloadHash" TEXT NOT NULL,
       "responseHash" TEXT NOT NULL,
+      "sourceEvidenceHash" TEXT NOT NULL,
+      "providerMetadataJson" TEXT NOT NULL,
       "humanReviewStatus" TEXT NOT NULL,
+      "attempt" INTEGER NOT NULL,
+      "maxAttempts" INTEGER NOT NULL,
+      "retryState" TEXT NOT NULL,
+      "errorCode" TEXT,
+      "errorMessage" TEXT,
+      "remediationStepsJson" TEXT NOT NULL,
       "createdAt" DATETIME NOT NULL,
       "completedAt" DATETIME,
       "notLegalAdviceBoundary" TEXT NOT NULL
     );
   `);
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "sourceEvidenceHash", "TEXT NOT NULL DEFAULT ''");
+  await addColumnIfMissing(
+    prisma,
+    "ModelGatewayRun",
+    "providerMetadataJson",
+    `TEXT NOT NULL DEFAULT '{"adapterMode":"external-provider-placeholder","credentialPolicy":"deferred until server-side secret policy is approved","secretPolicy":"No model provider secrets are accepted or persisted by the server gateway.","allowedDataClasses":[]}'`
+  );
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "attempt", "INTEGER NOT NULL DEFAULT 1");
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "maxAttempts", "INTEGER NOT NULL DEFAULT 1");
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "retryState", "TEXT NOT NULL DEFAULT 'not-needed'");
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "errorCode", "TEXT");
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "errorMessage", "TEXT");
+  await addColumnIfMissing(prisma, "ModelGatewayRun", "remediationStepsJson", "TEXT NOT NULL DEFAULT '[]'");
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "ModelGatewayRun_workspaceId_idx" ON "ModelGatewayRun"("workspaceId");`);
 
   await prisma.$executeRawUnsafe(`
@@ -473,7 +494,15 @@ function serializeModelGatewayRun(run: ModelGatewayRun) {
     redactionStatus: run.redactionStatus,
     payloadHash: run.payloadHash,
     responseHash: run.responseHash,
+    sourceEvidenceHash: run.sourceEvidenceHash,
+    providerMetadataJson: JSON.stringify(run.providerMetadata),
     humanReviewStatus: run.humanReviewStatus,
+    attempt: run.attempt,
+    maxAttempts: run.maxAttempts,
+    retryState: run.retryState,
+    errorCode: run.errorCode ?? null,
+    errorMessage: run.errorMessage ?? null,
+    remediationStepsJson: JSON.stringify(run.remediationSteps),
     createdAt: new Date(run.createdAt),
     completedAt: run.completedAt ? new Date(run.completedAt) : null,
     notLegalAdviceBoundary: run.notLegalAdviceBoundary
@@ -491,7 +520,15 @@ type PersistedModelGatewayRun = {
   redactionStatus: string;
   payloadHash: string;
   responseHash: string;
+  sourceEvidenceHash: string;
+  providerMetadataJson: string;
   humanReviewStatus: string;
+  attempt: number;
+  maxAttempts: number;
+  retryState: string;
+  errorCode: string | null;
+  errorMessage: string | null;
+  remediationStepsJson: string;
   createdAt: Date;
   completedAt: Date | null;
   notLegalAdviceBoundary: string;
@@ -510,11 +547,45 @@ function deserializeModelGatewayRun(run: PersistedModelGatewayRun): ModelGateway
     redactionStatus: run.redactionStatus as ModelGatewayRun["redactionStatus"],
     payloadHash: run.payloadHash,
     responseHash: run.responseHash,
+    sourceEvidenceHash: run.sourceEvidenceHash,
+    providerMetadata: parseModelGatewayProviderMetadata(run.providerMetadataJson),
     humanReviewStatus: run.humanReviewStatus as ModelGatewayRun["humanReviewStatus"],
+    attempt: run.attempt,
+    maxAttempts: run.maxAttempts,
+    retryState: run.retryState as ModelGatewayRun["retryState"],
+    ...(run.errorCode ? { errorCode: run.errorCode } : {}),
+    ...(run.errorMessage ? { errorMessage: run.errorMessage } : {}),
+    remediationSteps: parseStringArray(run.remediationStepsJson),
     createdAt: run.createdAt.toISOString(),
     completedAt: run.completedAt?.toISOString(),
     notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
   };
+}
+
+function parseModelGatewayProviderMetadata(payload: string): ModelGatewayRun["providerMetadata"] {
+  const fallback: ModelGatewayRun["providerMetadata"] = {
+    adapterMode: "external-provider-placeholder",
+    credentialPolicy: "deferred until server-side secret policy is approved",
+    secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
+    allowedDataClasses: []
+  };
+
+  try {
+    const parsed = JSON.parse(payload) as Partial<ModelGatewayRun["providerMetadata"]>;
+    return {
+      adapterMode: parsed.adapterMode === "local-mock" ? "local-mock" : "external-provider-placeholder",
+      credentialPolicy:
+        parsed.credentialPolicy === "no credentials accepted"
+          ? "no credentials accepted"
+          : "deferred until server-side secret policy is approved",
+      secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
+      allowedDataClasses: Array.isArray(parsed.allowedDataClasses)
+        ? parsed.allowedDataClasses.filter((item): item is string => typeof item === "string")
+        : []
+    };
+  } catch {
+    return fallback;
+  }
 }
 
 function serializeHumanReviewRecord(record: HumanReviewRecord) {

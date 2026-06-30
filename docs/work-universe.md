@@ -22,7 +22,7 @@ The repository already has:
 - Local-first project workspace and synthetic sample profiles.
 - Deterministic risk audit, issue explainers, source links, remediation queue, and risk evidence coverage.
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
-- Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway receipts, Human Review, and Audit Log listing.
+- Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, and Audit Log listing.
 - Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, and Counsel Pack export.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
 - Demo script, screenshots, and integration tests for the full secure review journey.
@@ -88,12 +88,13 @@ Build:
 - Server-side provider registry with disabled-by-default adapters.
 - Secret handling policy before real external model calls.
 - Model Gateway route that enforces Redaction Gate, allowed data classes, purpose, reviewer, and final-decision blockers.
+- Safe Model Gateway failure receipts with run ID, retry state, error code, and remediation steps.
 - Model run evaluation records: payload hash, response hash, source evidence hash, provider metadata, human-review status, and retry/error state.
 - Admin-visible model connection failures with remediation steps.
 
 Acceptance:
 
-- A model connection failure returns a user-actionable error without leaking secrets.
+- A model connection or gateway policy failure returns a user-actionable error without leaking secrets or raw model payloads.
 - Every model output that enters the workspace creates a human-review-required event.
 - Deterministic risk scoring never depends on model output.
 

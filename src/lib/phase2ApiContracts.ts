@@ -26,6 +26,7 @@ export type ModelGatewayBoundaryInput = {
   includesCredentialMaterial: boolean;
   includesRawKycOrPersonalData: boolean;
   humanReviewOwner: string;
+  allowedDataClasses: string[];
 };
 
 export type EvidenceUploadBoundaryInput = {
@@ -103,6 +104,16 @@ export function validateModelGatewayBoundary(input: ModelGatewayBoundaryInput): 
 
   if (!input.humanReviewOwner.trim()) {
     errors.push("Human review owner is required before external reliance on model output.");
+  }
+
+  if (!Array.isArray(input.allowedDataClasses) || input.allowedDataClasses.length === 0) {
+    errors.push("Allowed data classes are required before Model Gateway runs.");
+  }
+
+  if (!allowedDataClassesAreSafe(input.allowedDataClasses ?? [])) {
+    errors.push(
+      "Allowed data classes must be limited to audit-prep metadata, evidence hashes, risk flag summaries, regulatory source references, or model receipts."
+    );
   }
 
   return { valid: errors.length === 0, errors };
@@ -194,7 +205,15 @@ model ModelGatewayRun {
   redactionStatus        String
   payloadHash            String
   responseHash           String
+  sourceEvidenceHash     String
+  providerMetadataJson   String
   humanReviewStatus      String
+  attempt                Int
+  maxAttempts            Int
+  retryState             String
+  errorCode              String?
+  errorMessage           String?
+  remediationStepsJson   String
   createdAt              DateTime
   completedAt            DateTime?
   notLegalAdviceBoundary String
@@ -252,6 +271,18 @@ function createRoute(
     implemented,
     notLegalAdviceBoundary
   };
+}
+
+function allowedDataClassesAreSafe(classes: string[]): boolean {
+  const allowed = new Set([
+    "audit-prep metadata",
+    "evidence hashes",
+    "risk flag summaries",
+    "regulatory source references",
+    "model receipts"
+  ]);
+
+  return classes.length > 0 && classes.every((item) => allowed.has(item.trim().toLowerCase()));
 }
 
 function requestsFinalLegalDecision(purpose: string): boolean {

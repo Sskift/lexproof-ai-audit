@@ -89,7 +89,8 @@ describe("Phase 2 backend API contracts", () => {
       redactionStatus: "blocked",
       includesCredentialMaterial: true,
       includesRawKycOrPersonalData: true,
-      humanReviewOwner: ""
+      humanReviewOwner: "",
+      allowedDataClasses: []
     };
 
     expect(validateModelGatewayBoundary(request)).toEqual({
@@ -99,7 +100,9 @@ describe("Phase 2 backend API contracts", () => {
         "Model Gateway requests must not include API keys, private keys, or credential material.",
         "Raw KYC or personal data cannot be sent through the Model Gateway draft.",
         "Model Gateway purpose cannot request final legal decisions.",
-        "Human review owner is required before external reliance on model output."
+        "Human review owner is required before external reliance on model output.",
+        "Allowed data classes are required before Model Gateway runs.",
+        "Allowed data classes must be limited to audit-prep metadata, evidence hashes, risk flag summaries, regulatory source references, or model receipts."
       ]
     });
   });
@@ -133,6 +136,10 @@ describe("Phase 2 backend API contracts", () => {
     expect(schema).toContain("supersededByEvidenceId");
     expect(schema).toContain("replacementReason");
     expect(schema).toContain("model ModelGatewayRun");
+    expect(schema).toContain("sourceEvidenceHash");
+    expect(schema).toContain("providerMetadataJson");
+    expect(schema).toContain("retryState");
+    expect(schema).toContain("remediationStepsJson");
     expect(schema).toContain("model HumanReviewRecord");
     expect(schema).toContain("model AuditLogRecord");
     expect(schema).toContain('provider = "sqlite"');

@@ -53,7 +53,15 @@ model ModelGatewayRun {
   redactionStatus        String
   payloadHash            String
   responseHash           String
+  sourceEvidenceHash     String
+  providerMetadataJson   String
   humanReviewStatus      String
+  attempt                Int
+  maxAttempts            Int
+  retryState             String
+  errorCode              String?
+  errorMessage           String?
+  remediationStepsJson   String
   createdAt              DateTime
   completedAt            DateTime?
   notLegalAdviceBoundary String

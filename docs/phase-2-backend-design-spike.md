@@ -1,6 +1,6 @@
 # Phase 2 Backend Design Spike
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 This spike completes the Week 2 design slice from the Secure Review Workspace plan and starts the first backend implementation step. It keeps the current React + TypeScript + Vite MVP stable and does not introduce real file persistence, credential persistence, OCR, KYC processing, legal advice, or real chain writes.
 
@@ -41,13 +41,13 @@ It defines route metadata for:
 | Domain | Routes |
 | --- | --- |
 | Workspaces | `POST /api/workspaces`, `GET /api/workspaces/:workspaceId`, `PATCH /api/workspaces/:workspaceId` |
-| Evidence Vault | `POST /api/workspaces/:workspaceId/evidence`, `GET /api/workspaces/:workspaceId/evidence`, `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`, `GET /api/workspaces/:workspaceId/evidence-manifest` |
+| Evidence Vault | `POST /api/workspaces/:workspaceId/evidence`, `GET /api/workspaces/:workspaceId/evidence`, `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`, `POST /api/workspaces/:workspaceId/evidence/:evidenceId/replacement`, `GET /api/workspaces/:workspaceId/evidence-manifest` |
 | Model Gateway | `GET /api/model-gateway/adapters`, `POST /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs/:runId` |
 | Human Review | `POST /api/workspaces/:workspaceId/reviews`, `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`, `GET /api/workspaces/:workspaceId/reviews` |
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
-Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log routes are now marked `implemented: true`. Exports remain marked `implemented: false`. Model Gateway exposes adapter readiness but enables only the mock adapter until provider proxy and server-side secret policy are added. Evidence Vault persists metadata only, not uploaded file bytes.
+Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log routes are now marked `implemented: true`. Exports remain marked `implemented: false`. Model Gateway exposes adapter readiness, successful run receipts, and safe failure receipts, but enables only the mock adapter until provider proxy and server-side secret policy are added. Evidence Vault persists metadata only, not uploaded file bytes.
 
 ## Persistence Contract Source
 
@@ -72,6 +72,7 @@ It intentionally does not define KYC, legal-decision, wallet-signing, or chain-t
 - raw KYC or personal data is marked for model routing
 - the purpose asks for final legal decisions, launch approval, adjudication, or legal conclusions
 - no human-review owner is assigned
+- allowed data classes are missing or exceed audit-prep metadata, evidence hashes, risk flag summaries, regulatory source references, or model receipts
 
 Allowed model output remains draft audit preparation only. Deterministic risk scoring remains outside model output.
 
@@ -152,7 +153,9 @@ The first Model Gateway routes are implemented in `server/app.ts` and backed by 
 - `GET /api/workspaces/:workspaceId/model-runs`
 - `GET /api/workspaces/:workspaceId/model-runs/:runId`
 
-The adapters route returns provider readiness without credentials. The POST route validates Redaction Gate status, credential material, raw KYC/personal-data markers, final-legal-decision purposes, human-review owner, and provider adapter availability. It creates a mock run receipt with payload and response hashes, persists that receipt through the repository, and appends an audit-log record. It does not call external providers or persist credentials.
+The adapters route returns provider readiness without credentials. The POST route validates Redaction Gate status, allowed data classes, credential material, raw KYC/personal-data markers, final-legal-decision purposes, human-review owner, and provider adapter availability.
+
+Successful mock runs persist a receipt with payload hash, response hash, source evidence hash, provider metadata, attempt count, retry state, human-review status, and the non-advice boundary. Boundary failures and disabled adapter attempts persist a safe failure receipt with run ID, status, error code, retry state, and remediation steps, then return a 400 response that omits raw payloads and credential material. Both success and failure paths append audit-log records. The route does not call external providers or persist credentials.
 
 ## Human Review Routes
 
@@ -170,7 +173,7 @@ The first Audit Log route is implemented in `server/app.ts` and backed by `serve
 
 - `GET /api/workspaces/:workspaceId/audit-log`
 
-Workspace creation/update, Evidence Vault upload/update, Model Gateway run creation, Human Review creation, and Human Review updates append audit-log records. Audit logs are metadata-only records and are not real chain anchors or signed approvals.
+Workspace creation/update, Evidence Vault upload/update/replacement, Model Gateway run creation/blocking/failure, Human Review creation, and Human Review updates append audit-log records. Audit logs are metadata-only records and are not real chain anchors or signed approvals.
 
 ## Prisma Repository
 
@@ -188,6 +191,7 @@ Workspace creation/update, Evidence Vault upload/update, Model Gateway run creat
 
 - all Week 2 API domains are present
 - model gateway boundary blockers
+- allowed data-class blockers
 - evidence upload boundary blockers
 - Prisma schema draft contains the five allowed models and avoids KYC/legal-decision/chain-transaction models
 
@@ -198,7 +202,7 @@ Workspace creation/update, Evidence Vault upload/update, Model Gateway run creat
 - server-side SHA-256 evidence metadata hashing
 - raw KYC/personal-data blocking before evidence vault record creation
 - duplicate evidence hash blocking and rejected-evidence replacement lineage
-- mock Model Gateway route creation, listing, and boundary blocking
+- mock Model Gateway route creation, listing, safe failure receipts, and boundary blocking
 - Human Review route creation, status update, and listing
 - Workspace create/read/update routes
 - multipart Evidence Vault upload/list/update/manifest routes
@@ -211,7 +215,7 @@ Workspace creation/update, Evidence Vault upload/update, Model Gateway run creat
 `server/modelGatewayService.test.ts` and `server/humanReviewService.test.ts` cover:
 
 - deterministic mock gateway receipts
-- model gateway boundary failures
+- model gateway boundary failures with retry state and remediation steps
 - deterministic human review records
 - human review status updates and validation errors
 

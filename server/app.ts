@@ -384,13 +384,38 @@ export function buildServer(options: BuildServerOptions = {}) {
         includesCredentialMaterial: request.body.includesCredentialMaterial,
         includesRawKycOrPersonalData: request.body.includesRawKycOrPersonalData,
         humanReviewOwner: request.body.humanReviewOwner,
+        allowedDataClasses: request.body.allowedDataClasses ?? [],
         payload: request.body.payload
       });
 
       if (!result.valid) {
+        await repository.saveModelGatewayRun(result.failureRun);
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: "system",
+            action: result.failureRun.status === "blocked" ? "model.run.blocked" : "model.run.failed",
+            targetType: "model-run",
+            targetId: result.failureRun.id,
+            beforeHash: "",
+            afterHash: sha256Hex(
+              stableStringify({
+                id: result.failureRun.id,
+                status: result.failureRun.status,
+                errorCode: result.failureRun.errorCode,
+                retryState: result.failureRun.retryState
+              })
+            ),
+            summary: "Recorded Model Gateway failure receipt for audit preparation remediation.",
+            createdAt: result.failureRun.createdAt
+          })
+        );
         return reply.status(400).send({
           error: "Model Gateway boundary failed.",
           errors: result.errors,
+          runId: result.failureRun.id,
+          retryState: result.failureRun.retryState,
+          remediationSteps: result.failureRun.remediationSteps,
           notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
         });
       }
@@ -515,6 +540,7 @@ type ModelGatewayRequestBody = {
   includesCredentialMaterial: boolean;
   includesRawKycOrPersonalData: boolean;
   humanReviewOwner: string;
+  allowedDataClasses?: string[];
   payload: unknown;
 };
 

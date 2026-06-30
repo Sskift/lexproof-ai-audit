@@ -62,6 +62,7 @@ describe("Secure Review Journey routes", () => {
         includesCredentialMaterial: false,
         includesRawKycOrPersonalData: false,
         humanReviewOwner: "Compliance",
+        allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
         payload: {
           boundary: "Not legal advice. Server Model Gateway receipts support audit preparation and human review only.",
           evidenceVaultBundleHash: manifestResponse.json().bundleHash,

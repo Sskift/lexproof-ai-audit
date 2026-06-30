@@ -508,6 +508,126 @@ describe("App", () => {
     }
   });
 
+  it("shows Model Gateway failure receipts with remediation steps in the secure journey error state", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/api/workspaces") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-workspace-record-v1",
+            id: "project-ui",
+            name: "Gateway Failure Desk",
+            organizationName: "Startup issuer",
+            ownerId: "Compliance",
+            status: "active",
+            createdAt: "2026-06-30T00:00:00.000Z",
+            updatedAt: "2026-06-30T00:00:00.000Z",
+            notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only."
+          },
+          201
+        );
+      }
+
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-evidence-vault-record-v1",
+            id: "evidence-vault-failure",
+            workspaceId: "project-ui",
+            filename: "gateway-failure-memo.metadata.json",
+            mimeType: "application/json",
+            byteSize: 512,
+            fileHash: "b".repeat(64),
+            storageMode: "server-vault",
+            status: "received",
+            owner: "Compliance",
+            sourceNote: "Metadata-only sync",
+            version: 1,
+            linkedRiskFlagIds: ["governance-approval"],
+            containsRawKycOrPersonalData: false,
+            createdAt: "2026-06-30T00:00:00.000Z",
+            updatedAt: "2026-06-30T00:00:00.000Z"
+          },
+          201
+        );
+      }
+
+      if (path.endsWith("/evidence/evidence-vault-failure") && init?.method === "PATCH") {
+        return appJsonResponse({ id: "evidence-vault-failure", status: "received", version: 2 }, 200);
+      }
+
+      if (path.endsWith("/evidence-manifest") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            manifestVersion: "lexproof-evidence-vault-manifest-v1",
+            workspaceId: "project-ui",
+            generatedAt: "2026-06-30T00:00:00.000Z",
+            itemCount: 1,
+            items: [],
+            bundleHash: "a".repeat(64),
+            notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+          },
+          200
+        );
+      }
+
+      if (path.endsWith("/model-runs") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            error: "Model Gateway boundary failed.",
+            errors: ["Model Gateway request must pass the Redaction Gate before provider calls."],
+            runId: "model-gateway-run-blocked-ui",
+            retryState: "blocked-until-remediated",
+            remediationSteps: ["Pass the Redaction Gate before creating a server Model Gateway run."],
+            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          },
+          400
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Gateway Failure Desk" } });
+      fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
+      fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States" } });
+      fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
+      fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Accredited investors" } });
+      fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+      fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "Policy metadata only" } });
+      fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "AI drafts audit-prep questions" } });
+      fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "Simulated evidence anchor" } });
+      fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Private beta" } });
+
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Gateway failure memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "received" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), { target: { value: "Evidence summary for model gateway failure receipt." } });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+      expect(await screen.findByText(/Model Connect receipt/i)).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Secure Review API base URL/i), { target: { value: "https://api.lexproof.test" } });
+      fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
+
+      expect(await screen.findByText(/Secure Review Journey cannot run until Model Gateway remediation is complete/i)).toBeInTheDocument();
+      expect(screen.getByText(/model-gateway-run-blocked-ui/i)).toBeInTheDocument();
+      expect(screen.getByText(/Pass the Redaction Gate before creating a server Model Gateway run/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("shows Secure Review Journey blockers for empty evidence and missing Model Connect", async () => {
     render(<App />);
 

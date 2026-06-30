@@ -200,8 +200,91 @@ describe("secure review journey", () => {
     const modelRunBody = requestBodies.find((request) => request.url.endsWith("/model-runs"))?.body as Record<string, unknown>;
     expect(modelRunBody.provider).toBe("mock");
     expect(modelRunBody).toEqual(expect.objectContaining({ includesCredentialMaterial: false, includesRawKycOrPersonalData: false }));
+    expect(modelRunBody.allowedDataClasses).toEqual(["audit-prep metadata", "evidence hashes", "risk flag summaries"]);
     expect(JSON.stringify(modelRunBody)).toContain("Model Connect validates audit-prep routing only");
     expect(JSON.stringify(modelRunBody).toLowerCase()).not.toContain("api_key");
+  });
+
+  it("preserves Model Gateway failure receipt remediation when the server blocks a run", async () => {
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+
+      if (path.endsWith("/api/workspaces") && init?.method === "POST") {
+        return jsonResponse({
+          recordVersion: "lexproof-workspace-record-v1",
+          id: project.id,
+          name: project.projectName,
+          organizationName: project.entityType,
+          ownerId: "Compliance",
+          status: "active",
+          createdAt: "2026-06-30T00:00:00.000Z",
+          updatedAt: "2026-06-30T00:00:00.000Z",
+          notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only."
+        }, 201);
+      }
+
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        return jsonResponse({
+          recordVersion: "lexproof-evidence-vault-record-v1",
+          id: "evidence-vault-secure",
+          workspaceId: project.id,
+          filename: "board-approval.metadata.json",
+          mimeType: "application/json",
+          byteSize: 256,
+          fileHash: "b".repeat(64),
+          storageMode: "server-vault",
+          status: "received",
+          owner: "Compliance",
+          sourceNote: "Metadata-only sync",
+          version: 1,
+          linkedRiskFlagIds: ["governance-approval"],
+          containsRawKycOrPersonalData: false,
+          createdAt: "2026-06-30T00:00:00.000Z",
+          updatedAt: "2026-06-30T00:00:00.000Z"
+        }, 201);
+      }
+
+      if (path.endsWith("/evidence/evidence-vault-secure") && init?.method === "PATCH") {
+        return jsonResponse({ id: "evidence-vault-secure", status: "verified", version: 2 }, 200);
+      }
+
+      if (path.endsWith("/evidence-manifest") && init?.method === "GET") {
+        return jsonResponse({
+          manifestVersion: "lexproof-evidence-vault-manifest-v1",
+          workspaceId: project.id,
+          generatedAt: "2026-06-30T00:00:00.000Z",
+          itemCount: 1,
+          items: [],
+          bundleHash: "a".repeat(64),
+          notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+        }, 200);
+      }
+
+      if (path.endsWith("/model-runs") && init?.method === "POST") {
+        return jsonResponse({
+          error: "Model Gateway boundary failed.",
+          errors: ["Model Gateway request must pass the Redaction Gate before provider calls."],
+          runId: "model-gateway-run-blocked",
+          retryState: "blocked-until-remediated",
+          remediationSteps: ["Pass the Redaction Gate before creating a server Model Gateway run."],
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        }, 400);
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+
+    await expect(
+      runSecureReviewJourney({
+        project,
+        audit: analyzeAuditProfile(project),
+        evidenceItems: project.evidenceItems,
+        modelConnectReceipt,
+        apiBaseUrl: "https://api.lexproof.test",
+        humanReviewOwner: "Compliance",
+        fetcher
+      })
+    ).rejects.toThrow(/model-gateway-run-blocked.*Pass the Redaction Gate/i);
   });
 });
 

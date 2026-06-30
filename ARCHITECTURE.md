@@ -12,7 +12,7 @@ lexproof-ai-audit/
     app.ts                   # Fastify app and Phase 2 health endpoint
     index.ts                 # API process entry point
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
-    modelGatewayService.ts   # Mock Model Gateway run receipts and boundary checks
+    modelGatewayService.ts   # Mock Model Gateway success/failure receipts and boundary checks
     humanReviewService.ts    # Human review record helpers
     reviewWorkspaceRepository.ts # Memory and Prisma/SQLite repository adapters
   prisma/
@@ -344,7 +344,7 @@ Owns Phase 2 backend-boundary contracts:
 
 - `WorkspaceRecord` describes a durable secure review workspace.
 - `EvidenceVaultRecord` describes uploaded-file or external-reference metadata for a future evidence vault.
-- `ModelGatewayRun` describes server-mediated model-run receipts without credentials.
+- `ModelGatewayRun` describes server-mediated model-run receipts, source evidence hashes, retry state, provider metadata, and safe failure remediation without credentials.
 - `HumanReviewRecord` describes reviewer workflow metadata for risk flags, evidence, model runs, and exports.
 - `AuditLogRecord` describes append-only operation metadata for workspace actions.
 - `createAuditLogRecord()` creates deterministic local audit-log IDs from material metadata.
@@ -359,7 +359,7 @@ This module is a contract draft only. It does not create a backend, upload files
 Owns the Phase 2 backend design-spike contracts:
 
 - `listPhase2ApiRoutes()` returns the review workspace API route table for workspaces, evidence vault, model gateway, human review, exports, and audit log domains.
-- `validateModelGatewayBoundary()` blocks model gateway requests that bypass Redaction Gate, include credential material, include raw KYC/personal data, request final legal decisions, or lack a human-review owner.
+- `validateModelGatewayBoundary()` blocks model gateway requests that bypass Redaction Gate, include credential material, include raw KYC/personal data, request final legal decisions, lack a human-review owner, or route data classes outside the approved audit-prep metadata boundary.
 - `validateEvidenceUploadBoundary()` blocks evidence upload metadata that embeds raw document content, raw KYC/personal data, missing hashes, or missing file metadata.
 - `createPhase2PrismaSchemaDraft()` returns the SQLite/Prisma persistence draft for `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`.
 
@@ -426,19 +426,21 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Backend exports, raw file persistence, OCR, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Backend exports, raw file persistence, OCR, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
 - proxy model calls through a server-side policy boundary
 - apply Redaction Gate checks before provider calls
+- enforce allowed data classes before run creation
 - keep provider credentials out of React state and exports
-- record provider label, model, purpose, payload hash, response hash, status, and redaction status
+- record provider label, model, purpose, payload hash, response hash, source evidence hash, status, redaction status, retry state, and provider policy metadata
+- persist blocked/failed run receipts with error codes and remediation steps
 - create human-review-required receipts for material AI outputs
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload and response hashes. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. The route persists run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. The route persists successful and failed run receipts through the repository and appends audit-log records. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 
@@ -480,7 +482,7 @@ Audit logs are review metadata. They are not real chain anchors, signed approval
 These capabilities remain simulated or local in the current codebase:
 
 - API keys for live model calls are browser-session only and are not persisted.
-- The Phase 2 Model Gateway creates mock receipts only; it does not call external providers or store provider credentials.
+- The Phase 2 Model Gateway creates mock success receipts and safe failure receipts only; it does not call external providers or store provider credentials.
 - OpenAI-compatible and enterprise-proxy Model Gateway adapters are visible as disabled readiness records only.
 - Evidence files are hashed locally in the browser or uploaded through the Phase 2 multipart route for server-side metadata hashing.
 - The Phase 2 server computes evidence hashes in memory for metadata records and persists evidence metadata, but does not persist uploaded file bytes.

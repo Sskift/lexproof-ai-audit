@@ -35,6 +35,7 @@ Key evidence:
 - AI Review with mock and OpenAI-compatible model settings, Model Access Workflow, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
+- Server Model Gateway receipts with source evidence hashes, allowed data-class policy, safe failure receipts, retry state, and remediation steps without returning raw payloads or credentials.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Regulatory Command Center first screen with jurisdiction readiness, source-backed clause triggers, evidence gaps, manifest readiness, and counsel handoff status.
@@ -81,9 +82,11 @@ Evidence Vault recovery preserves rejected evidence as superseded metadata and c
 
 ![Evidence Vault rejected evidence recovery](docs/assets/screenshots/evidence-vault-recovery.png)
 
-The Phase 2 secure review journey connects Model Connect, metadata-only Evidence Vault sync, Model Gateway receipts, Human Review, audit log records, and Counsel Pack handoff.
+The Phase 2 secure review journey connects Model Connect, metadata-only Evidence Vault sync, Model Gateway receipts, Human Review, audit log records, and Counsel Pack handoff. If the server gateway blocks a run, the UI shows the persisted failure receipt run ID, retry state, remediation steps, and the Not legal advice boundary.
 
 ![Secure Review Journey](docs/assets/screenshots/secure-review-journey.png)
+
+![Model Gateway failure receipt remediation](docs/assets/screenshots/model-gateway-failure-receipt.png)
 
 Counsel Pack exports Markdown, browser Print / Save PDF output, Model Intake summary, AI event hashes, manifest JSON, and a simulated anchor receipt without claiming a real chain write. Model Intake can also download its own profile, event ledger, readiness checklist, and event hashes as JSON.
 
@@ -128,7 +131,8 @@ LexProof uses a controlled BYOM/BYOK model workflow:
 6. Review the **Redaction Gate** payload summary before running the model.
 7. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
 8. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt. The same run is also recorded in **Model Intake** as a needs-review AI event.
-9. Mark AI events reviewed or rejected in **Model Intake** after human review, download **Model Intake JSON** for the model-event audit trail, then open **Counsel Pack** to export the Model Intake Summary, readiness status, human-review owner, review statuses, and AI event hashes with the review packet.
+9. Run **Secure Review Journey** against the Phase 2 API to create a backend workspace, sync metadata-only evidence, create a server Model Gateway receipt, open Human Review, and fetch audit log records. The server request is limited to audit-prep metadata, evidence hashes, and risk flag summaries.
+10. Mark AI events reviewed or rejected in **Model Intake** after human review, download **Model Intake JSON** for the model-event audit trail, then open **Counsel Pack** to export the Model Intake Summary, readiness status, human-review owner, review statuses, and AI event hashes with the review packet.
 
 Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review. Model Intake records are local audit-prep metadata, not final adjudication.
 
@@ -143,9 +147,10 @@ Model output is draft audit preparation only. It does not change deterministic r
 7. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 8. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, and missing evidence request actions.
 9. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256, while the Evidence Audit Trail records local evidence creation, template application, edits, removals, and a JSON export.
-10. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
+10. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.
+11. Open **Counsel Pack** to edit the counsel question queue, update review status for each risk flag, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
 
-Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The MVP does not upload evidence, perform real KYC, or write to a blockchain. API keys for live model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, and model-run ledger exports store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, and audit-log records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Model Gateway receipts, and model-run ledger exports store hashes and metadata, not credentials. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 
@@ -187,7 +192,7 @@ npm run build:server
 npm run start:api
 ```
 
-The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. Duplicate evidence hashes are blocked with recoverable errors, and rejected vault records can be superseded by replacement metadata with parent lineage and a replacement reason. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders until server-side secret policy is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
+The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. Duplicate evidence hashes are blocked with recoverable errors, and rejected vault records can be superseded by replacement metadata with parent lineage and a replacement reason. Model Gateway runs enforce Redaction Gate status, allowed data classes, purpose, human-review owner, credential/KYC blockers, and adapter policy. Successful runs persist payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Failed or blocked runs persist safe failure receipts with run IDs, retry state, error codes, and remediation steps without returning raw payloads. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders until server-side secret policy is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
 
 For the scripted hackathon demo, use a disposable SQLite file:
 

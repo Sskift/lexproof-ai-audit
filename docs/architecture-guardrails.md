@@ -76,6 +76,7 @@ Use `modelConnect.ts`, `modelIntake.ts`, `modelProvider.ts`, `modelConnectionRea
 - Client-side API keys are session-only and must not be persisted.
 - Server-side external provider calls require a documented secret policy first.
 - Redaction Gate and human-review owner are mandatory before model output can enter review workflows.
+- Model Gateway success and failure receipts must stay credential-free, include allowed data-class context, and expose remediation through typed receipt fields rather than ad hoc UI strings.
 - Model output is draft audit preparation.
 
 ### Human Review

@@ -241,6 +241,19 @@ function recoveryForJourneyError(message: string): {
   const normalized = message.toLowerCase();
 
   if (
+    normalized.includes("model gateway boundary") ||
+    normalized.includes("model-gateway-run-") ||
+    normalized.includes("retry state:")
+  ) {
+    return {
+      title: "Secure Review Journey cannot run until Model Gateway remediation is complete",
+      detail: "Review the server failure receipt, complete the remediation steps, then rerun the secure review journey.",
+      actionLabel: "Fix Model Gateway inputs",
+      target: "ai"
+    };
+  }
+
+  if (
     normalized.includes("model connect") ||
     normalized.includes("model name") ||
     normalized.includes("base url") ||

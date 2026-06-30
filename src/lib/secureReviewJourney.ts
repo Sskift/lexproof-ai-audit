@@ -35,6 +35,9 @@ type SecureReviewFetch = (input: RequestInfo | URL, init?: RequestInit) => Promi
 type ErrorResponse = {
   error?: string;
   errors?: string[];
+  runId?: string;
+  retryState?: string;
+  remediationSteps?: string[];
 };
 
 export async function runSecureReviewJourney(input: RunSecureReviewJourneyInput): Promise<SecureReviewJourneyResult> {
@@ -124,6 +127,7 @@ async function createModelGatewayRun(
       includesCredentialMaterial: false,
       includesRawKycOrPersonalData: false,
       humanReviewOwner,
+      allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
       payload: createModelGatewayPayload(input, evidenceVault)
     })
   });
@@ -211,7 +215,14 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
 
   if (!response.ok) {
     const errorPayload = payload as ErrorResponse;
-    const details = errorPayload.errors?.join(" ") || errorPayload.error || fallbackMessage;
+    const details = [
+      errorPayload.errors?.join(" ") || errorPayload.error || fallbackMessage,
+      errorPayload.runId ? `Run ${errorPayload.runId}.` : "",
+      errorPayload.retryState ? `Retry state: ${errorPayload.retryState}.` : "",
+      ...(errorPayload.remediationSteps ?? [])
+    ]
+      .filter(Boolean)
+      .join(" ");
     throw new Error(details);
   }
 

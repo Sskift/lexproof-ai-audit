@@ -95,7 +95,7 @@ Week 2 design-spike artifacts:
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
 - `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Human Review, and Audit Log workflows.
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
-- `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock run receipts behind redaction, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
+- `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock success/failure receipts behind redaction, allowed-data-class, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
 - `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.
 
@@ -155,8 +155,9 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate
-  - creates mock run receipts only after policy checks
-  - returns `ModelGatewayRun` metadata and hashes
+  - creates mock success receipts only after policy checks
+  - persists safe blocked/failed receipts with retry state and remediation steps when policy checks fail
+  - returns `ModelGatewayRun` metadata, source evidence hashes, and response hashes without raw payloads
 - `GET /api/workspaces/:workspaceId/model-runs`
   - returns model run summaries
 - `GET /api/workspaces/:workspaceId/model-runs/:runId`
@@ -195,7 +196,7 @@ Durable evidence metadata for uploaded files or external references. Stores file
 
 ### `ModelGatewayRun`
 
-Durable model-run receipt. Stores provider label, model, purpose, redaction status, payload hash, response hash, status, and human-review status. It does not store API keys or raw credentials.
+Durable model-run receipt. Stores provider label, model, purpose, redaction status, payload hash, response hash, source evidence hash, provider metadata, status, retry state, remediation steps, and human-review status. It does not store API keys, raw credentials, or raw model payloads.
 
 ### `HumanReviewRecord`
 
@@ -218,8 +219,9 @@ Near-term tests:
 - tests that model gateway summaries do not expose credentials
 - audit-log tests for deterministic IDs
 - API route-contract tests for all Week 2 backend domains
-- tests that Model Gateway requests cannot bypass Redaction Gate, credentials, KYC, or human-review boundaries
+- tests that Model Gateway requests cannot bypass Redaction Gate, allowed data classes, credentials, KYC, purpose, or human-review boundaries
 - tests that non-mock Model Gateway adapters are blocked until provider proxy policy exists
+- tests that Model Gateway failure receipts preserve retry state and remediation steps without leaking secrets
 - tests that Evidence Upload requests cannot embed raw document content or raw KYC/personal data in the Phase 2 draft
 - tests that the Prisma schema draft contains only the expected Phase 2 persistence models
 - route tests for Workspace create/read/update and multipart Evidence Vault upload/list/update/manifest behavior

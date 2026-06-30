@@ -44,6 +44,19 @@ export type EvidenceVaultRecord = {
 
 export type ModelGatewayRunStatus = "queued" | "blocked" | "completed" | "failed";
 
+export type ModelGatewayRetryState =
+  | "not-needed"
+  | "retry-available"
+  | "blocked-until-remediated"
+  | "blocked-until-policy-change";
+
+export type ModelGatewayProviderMetadata = {
+  adapterMode: "local-mock" | "external-provider-placeholder";
+  credentialPolicy: "no credentials accepted" | "deferred until server-side secret policy is approved";
+  secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.";
+  allowedDataClasses: string[];
+};
+
 export type ModelGatewayRun = {
   recordVersion: "lexproof-model-gateway-run-v1";
   id: string;
@@ -56,7 +69,15 @@ export type ModelGatewayRun = {
   redactionStatus: "clean" | "needs-review" | "blocked";
   payloadHash: string;
   responseHash: string;
+  sourceEvidenceHash: string;
+  providerMetadata: ModelGatewayProviderMetadata;
   humanReviewStatus: "not-required" | "needs-review" | "reviewed" | "rejected";
+  attempt: number;
+  maxAttempts: number;
+  retryState: ModelGatewayRetryState;
+  errorCode?: string;
+  errorMessage?: string;
+  remediationSteps: string[];
   createdAt: string;
   completedAt?: string;
   notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice.";
@@ -71,6 +92,11 @@ export type ModelGatewayRunSummary = {
   humanReviewStatus: ModelGatewayRun["humanReviewStatus"];
   payloadHash: string;
   responseHash: string;
+  sourceEvidenceHash: string;
+  retryState: ModelGatewayRetryState;
+  errorCode?: string;
+  errorMessage?: string;
+  remediationSteps: string[];
   requiresHumanReview: boolean;
   boundary: ModelGatewayRun["notLegalAdviceBoundary"];
 };
@@ -139,6 +165,11 @@ export function createModelGatewayRunSummary(run: ModelGatewayRun): ModelGateway
     humanReviewStatus: run.humanReviewStatus,
     payloadHash: run.payloadHash,
     responseHash: run.responseHash,
+    sourceEvidenceHash: run.sourceEvidenceHash,
+    retryState: run.retryState,
+    ...(run.errorCode ? { errorCode: run.errorCode } : {}),
+    ...(run.errorMessage ? { errorMessage: run.errorMessage } : {}),
+    remediationSteps: [...run.remediationSteps],
     requiresHumanReview: run.humanReviewStatus === "needs-review",
     boundary: run.notLegalAdviceBoundary
   };

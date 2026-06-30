@@ -45,7 +45,18 @@ describe("Phase 2 secure review workspace types", () => {
       redactionStatus: "clean",
       payloadHash: "payload-sha-256",
       responseHash: "response-sha-256",
+      sourceEvidenceHash: "source-evidence-sha-256",
       humanReviewStatus: "needs-review",
+      providerMetadata: {
+        adapterMode: "external-provider-placeholder",
+        credentialPolicy: "deferred until server-side secret policy is approved",
+        secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
+        allowedDataClasses: ["audit-prep metadata"]
+      },
+      attempt: 1,
+      maxAttempts: 1,
+      retryState: "not-needed",
+      remediationSteps: [],
       createdAt: "2026-06-29T10:00:00.000Z",
       completedAt: "2026-06-29T10:00:12.000Z",
       notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
@@ -62,6 +73,9 @@ describe("Phase 2 secure review workspace types", () => {
       humanReviewStatus: "needs-review",
       payloadHash: "payload-sha-256",
       responseHash: "response-sha-256",
+      sourceEvidenceHash: "source-evidence-sha-256",
+      retryState: "not-needed",
+      remediationSteps: [],
       requiresHumanReview: true,
       boundary: "AI-assisted draft for audit preparation only. Not legal advice."
     });

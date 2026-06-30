@@ -241,4 +241,60 @@ describe("Phase 2 workspace and evidence routes", () => {
 
     await server.close();
   });
+
+  it("blocks direct reactivation of rejected evidence and preserves the recovery path", async () => {
+    const server = buildServer();
+    const form = new FormData();
+    form.append("file", Buffer.from("review evidence that needs replacement"), {
+      filename: "needs-replacement.txt",
+      contentType: "text/plain"
+    });
+    form.append("owner", "Compliance");
+    form.append("sourceNote", "Evidence pending review.");
+    form.append("linkedRiskFlagIds", "governance");
+    form.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-state/evidence",
+      headers: form.getHeaders(),
+      payload: form
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const evidence = uploadResponse.json();
+
+    const rejectedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-state/evidence/${evidence.id}`,
+      payload: {
+        status: "rejected",
+        sourceNote: "Reviewer rejected this evidence and needs a replacement."
+      }
+    });
+    expect(rejectedResponse.statusCode).toBe(200);
+
+    const invalidTransitionResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-state/evidence/${evidence.id}`,
+      payload: {
+        status: "verified"
+      }
+    });
+    expect(invalidTransitionResponse.statusCode).toBe(409);
+    expect(invalidTransitionResponse.json()).toEqual({
+      error: "Rejected Evidence Vault records cannot be directly moved to verified.",
+      recoveryAction: "Upload a replacement from the rejected evidence recovery flow so parent/child lineage is preserved.",
+      notLegalAdviceBoundary: "Not legal advice. Evidence status transitions are audit preparation workflow metadata only."
+    });
+
+    const recordsResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-state/evidence" });
+    expect(recordsResponse.json()).toEqual([expect.objectContaining({ id: evidence.id, status: "rejected" })]);
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-state/audit-log" });
+    const updateEvents = auditResponse.json().filter((record: { action: string }) => record.action === "evidence.updated");
+    expect(updateEvents).toHaveLength(1);
+    expect(updateEvents[0]).toEqual(expect.objectContaining({ summary: "Updated evidence status to rejected." }));
+
+    await server.close();
+  });
 });

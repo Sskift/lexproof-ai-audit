@@ -64,7 +64,7 @@ Build:
 
 - Versioned Evidence Vault records with parent/child relationships, replacement reason, owner, source notes, and linked risk/control IDs.
 - Server-side manifest generation from persisted evidence metadata.
-- Evidence state machine: `draft`, `requested`, `received`, `under-review`, `verified`, `rejected`, `superseded`.
+- Evidence state machine: `draft`, `requested`, `received`, `under-review`, `verified`, `rejected`, `superseded`. The first server-enforced transition guard is implemented in `src/lib/evidenceVaultWorkflow.ts` and the Evidence Vault PATCH route; rejected or superseded records cannot be directly reactivated outside replacement recovery.
 - Evidence empty states, invalid upload errors, duplicate hash detection, and rejected-evidence recovery flows.
 - Optional object storage adapter only after retention, privacy, and access policy are documented.
 
@@ -73,6 +73,7 @@ Acceptance:
 - Adding, replacing, rejecting, and verifying evidence changes the manifest bundle hash.
 - Raw evidence bytes are not included in Counsel Pack or manifest JSON by default.
 - Empty evidence journeys tell the user exactly what to add next.
+- Invalid Evidence Vault status transitions return actionable recovery guidance before any record or audit log mutation.
 
 Do not build:
 

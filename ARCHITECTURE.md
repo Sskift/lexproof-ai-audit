@@ -54,6 +54,7 @@ lexproof-ai-audit/
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
       evidenceAuditTrail.ts  # Local evidence change events and JSON export
       retentionPolicy.ts     # Evidence retention readiness, vault-sync blockers, and JSON export
+      evidenceVaultWorkflow.ts # Evidence Vault status transition guardrails
       missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
@@ -536,13 +537,14 @@ The gateway must keep model output as draft audit preparation. It must not chang
 - compute and store server-side file hashes
 - keep raw file bytes out of Counsel Pack exports by default
 - track owner, source notes, linked risk flags, evidence status, version, replacement lineage, and timestamps
+- enforce evidence status transitions before updating persisted records
 - block active duplicate hashes before storing a second evidence record
 - let rejected records be superseded by replacement metadata while preserving parent/child relationships and replacement reasons
 - feed the Evidence Manifest with stable server-side evidence versions
 
 The Phase 2 draft must not store raw KYC or personal data. Secure document parsing and OCR should be added only after privacy and retention boundaries are documented.
 
-`server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
+`src/lib/evidenceVaultWorkflow.ts` owns the shared Evidence Vault status machine. `server/app.ts` uses it before PATCH writes so rejected evidence cannot be directly reactivated and superseded records stay historical; users must use the replacement endpoint to preserve parent/child lineage. `server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
 
 ### Human Review Workflow Responsibilities
 
@@ -638,6 +640,7 @@ Domain tests live next to the audit engine and cover:
 - local file SHA-256 hashing and metadata-only evidence creation
 - evidence audit trail create/update/remove events and JSON export
 - evidence retention policy classification, redaction, vault-sync blocker status, and JSON export
+- Evidence Vault status transition guardrails and rejected/superseded recovery errors
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing

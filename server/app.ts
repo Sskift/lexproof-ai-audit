@@ -3,6 +3,7 @@ import multipart from "@fastify/multipart";
 import Fastify from "fastify";
 import { createCounselPackExportRecord } from "./counselPackExportService.js";
 import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
+import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
   createAuditLogRecord,
@@ -245,6 +246,18 @@ export function buildServer(options: BuildServerOptions = {}) {
       }
 
       try {
+        const nextStatus = request.body.status ?? existing.status;
+        assertEvidenceVaultStatus(nextStatus);
+        const transition = validateEvidenceVaultStatusTransition(existing.status, nextStatus);
+
+        if (!transition.valid) {
+          return reply.status(409).send({
+            error: transition.error,
+            recoveryAction: transition.recoveryAction,
+            notLegalAdviceBoundary: transition.notLegalAdviceBoundary
+          });
+        }
+
         const updated = updateEvidenceVaultRecord(existing, request.body);
         await repository.updateEvidenceVaultRecord(updated);
         await repository.appendAuditLogRecord(

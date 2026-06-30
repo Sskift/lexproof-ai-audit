@@ -1,5 +1,6 @@
 import multipart from "@fastify/multipart";
 import Fastify from "fastify";
+import { registerAuditLogRoutes } from "./auditLogRoutes.js";
 import { registerCounselPackExportRoutes } from "./counselPackExportRoutes.js";
 import { registerEvidenceVaultRoutes } from "./evidenceVaultRoutes.js";
 import { registerHumanReviewRoutes } from "./humanReviewRoutes.js";
@@ -48,10 +49,7 @@ export function buildServer(options: BuildServerOptions = {}) {
   registerHumanReviewRoutes(server, { repository });
   registerEvidenceVaultRoutes(server, { repository });
   registerWorkspaceRoutes(server, { repository });
-
-  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/audit-log", async (request) =>
-    repository.listAuditLogRecords(request.params.workspaceId)
-  );
+  registerAuditLogRoutes(server, { repository });
 
   return server;
 }

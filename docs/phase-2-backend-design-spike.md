@@ -181,7 +181,7 @@ The POST route creates a metadata-only server record from the latest local Couns
 
 ## Audit Log Route
 
-The first Audit Log route is implemented in `server/app.ts` and backed by `server/reviewWorkspaceRepository.ts`:
+The first Audit Log route is implemented in `server/auditLogRoutes.ts` and backed by `server/reviewWorkspaceRepository.ts`:
 
 - `GET /api/workspaces/:workspaceId/audit-log`
 
@@ -226,6 +226,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition
 - Evidence Vault route-module registration independently from the full app composition
+- Audit Log route-module registration independently from the full app composition
 
 `server/reviewWorkspaceRepository.test.ts` covers:
 

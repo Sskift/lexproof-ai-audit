@@ -16,6 +16,7 @@ lexproof-ai-audit/
     humanReviewRoutes.ts     # Human Review create/list/queue/update and linked target sync routes
     evidenceVaultRoutes.ts   # Evidence Vault upload/list/update/replacement/manifest routes
     workspaceRoutes.ts       # Workspace create/read/update routes
+    auditLogRoutes.ts        # Audit Log listing routes
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
     modelGatewayService.ts   # Mock Model Gateway success/failure receipts and boundary checks
     humanReviewService.ts    # Human review record helpers
@@ -523,7 +524,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, and `server/evidenceVaultRoutes.ts` are the first W7 domain route modules split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, `server/evidenceVaultRoutes.ts`, and `server/auditLogRoutes.ts` are W7 domain route modules split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -584,6 +585,8 @@ Human review records are not signed legal opinions. They track audit preparation
 - support export and review of process integrity without storing raw secrets
 
 Audit logs are review metadata. They are not real chain anchors, signed approvals, or legal conclusions.
+
+`server/auditLogRoutes.ts` lists persisted audit-log records for a workspace through the repository. Audit-log export shaping stays in `src/lib/auditLogExport.ts`; the route returns stored metadata records and does not expose raw evidence, raw model payloads, credentials, or legal conclusions.
 
 `server/reviewWorkspaceRepository.ts` provides both an in-memory adapter for tests and a Prisma/SQLite adapter for the API process. The Prisma schema covers only `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, `CounselPackExportRecord`, and `AuditLogRecord`.
 
@@ -655,7 +658,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace route-module registration, Evidence Vault route-module registration, and server-side Evidence Vault metadata hashing
 - Phase 2 Model Gateway adapter readiness, mock run routes, Human Review route-module registration, persisted review routes, filtered server-side review queue views, and linked evidence/model-run review status sync
-- Phase 2 Counsel Pack export-record creation, route validation, repository persistence, and audit-log creation
+- Phase 2 Counsel Pack export-record creation, route validation, repository persistence, audit-log route-module registration, and audit-log creation
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage

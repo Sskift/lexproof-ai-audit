@@ -832,6 +832,7 @@ textarea {
   color: #53616f;
 }
 
+.audit-log-export,
 .model-gateway-evaluation {
   display: grid;
   gap: 10px;
@@ -839,6 +840,11 @@ textarea {
   border: 1px solid #d9e2e8;
   border-radius: 8px;
   background: #fbfdfe;
+}
+
+.audit-log-export {
+  border-color: #c9d5de;
+  background: #ffffff;
 }
 
 .model-gateway-evaluation.completed {
@@ -852,10 +858,12 @@ textarea {
   background: #fff8f6;
 }
 
+.audit-log-export .section-note,
 .model-gateway-evaluation .section-note {
   margin: 0;
 }
 
+.audit-log-facts,
 .evaluation-facts {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -3614,6 +3622,7 @@ textarea {
   .human-review-card header,
   .human-review-grid,
   .template-grid,
+  .audit-log-facts,
   .evaluation-facts,
   .retention-grid,
   .vault-sync-grid,

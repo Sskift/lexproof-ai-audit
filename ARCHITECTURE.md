@@ -46,6 +46,7 @@ lexproof-ai-audit/
       modelIntake.ts         # Model connection profile validation and AI event hashes
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
       modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
+      auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
       counselReview.ts       # Counsel/compliance review status queue helpers
@@ -104,6 +105,7 @@ sampleProfiles or blank project
   -> create local ModelReviewRun with payload and response hashes
   -> createAIReviewEventFromRun(run, result, humanReviewer)
   -> createModelGatewayEvaluationRecord(server model run) after Secure Review Journey
+  -> createAuditLogExport(server audit log records) after Secure Review Journey
   -> merge AI draft questions into editable CounselQuestion queue
   -> createDefaultCounselQuestions(project, audit)
   -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
@@ -350,6 +352,16 @@ Owns metadata-only Model Gateway evaluation artifacts:
 
 The evaluation record is audit preparation metadata only. It does not store raw prompts, raw model output, provider credentials, KYC data, legal conclusions, or proof that a model response is correct.
 
+### `src/lib/auditLogExport.ts`
+
+Owns metadata-only Secure Review audit-log exports:
+
+- `createAuditLogExport({ workspaceId, records })` sorts server audit-log records, summarizes event counts, first/last event time, actors, target types, and action counts.
+- `exportAuditLogJson(record)` and `downloadAuditLogJson(filename, record)` export the audit timeline as local JSON.
+- Audit actors, target IDs, summaries, and before/after hashes pass through the shared data-boundary redactor before export.
+
+Audit Log Export records are review workspace metadata only. They are not legal conclusions, signed approvals, chain anchors, or evidence of external timestamping.
+
 ### `src/lib/evidenceManifest.ts`
 
 Owns deterministic manifest behavior:
@@ -483,7 +495,7 @@ Components are intentionally presentational and interaction-focused:
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
 - `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`.
-- `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, and audit log status without exposing raw model payloads or credentials.
+- `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -611,6 +623,7 @@ Domain tests live next to the audit engine and cover:
 - model review run payload and response hashing
 - model review run JSON export
 - Model Gateway evaluation record generation, redaction, and JSON export
+- Audit Log Export record generation, redaction, sorting, counts, and JSON export
 - counsel pack Markdown content
 - counsel pack template recommendation and template-specific Markdown agenda behavior
 - Markdown browser download behavior
@@ -648,6 +661,7 @@ UI tests cover:
 - long evidence record editing with visible field labels
 - manifest bundle hash visibility
 - Model Gateway Evaluation visibility and JSON download action
+- Audit Log Export visibility and JSON download action
 - AI Review mock workflow
 - Model Access Workflow visibility in AI Review
 - Model Intake profile and AI event workflow

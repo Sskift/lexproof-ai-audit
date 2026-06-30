@@ -55,7 +55,7 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
    - Open the **Secure Review Workspace** panel at the top of the app.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.
-   - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, Human Review request ID, audit log count, JSON download action, and Not legal advice boundary.
+   - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
 
 6. **Export counsel pack**

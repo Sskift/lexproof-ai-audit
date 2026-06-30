@@ -521,10 +521,34 @@ describe("App", () => {
       if (path.endsWith("/audit-log") && init?.method === "GET") {
         return appJsonResponse(
           [
-            { action: "workspace.created" },
-            { action: "evidence.created" },
-            { action: "model.run.created" },
-            { action: "human-review.created" }
+            createAppAuditLogRecord({
+              id: "audit-log-workspace",
+              action: "workspace.created",
+              targetType: "workspace",
+              targetId: "project-ui",
+              createdAt: "2026-06-30T00:00:01.000Z"
+            }),
+            createAppAuditLogRecord({
+              id: "audit-log-evidence",
+              action: "evidence.created",
+              targetType: "evidence",
+              targetId: "evidence-vault-full",
+              createdAt: "2026-06-30T00:00:02.000Z"
+            }),
+            createAppAuditLogRecord({
+              id: "audit-log-model",
+              action: "model.run.created",
+              targetType: "model-run",
+              targetId: "model-gateway-run-full",
+              createdAt: "2026-06-30T00:00:03.000Z"
+            }),
+            createAppAuditLogRecord({
+              id: "audit-log-review",
+              action: "human-review.created",
+              targetType: "human-review",
+              targetId: "human-review-full",
+              createdAt: "2026-06-30T00:00:04.000Z"
+            })
           ],
           200
         );
@@ -572,6 +596,10 @@ describe("App", () => {
       expect(screen.getByText(/Model Gateway response dddddddddddd/i)).toBeInTheDocument();
       expect(screen.getByText(/Human review request human-review-full/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit log events 4/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /Audit Log Export/i })).toBeInTheDocument();
+      expect(screen.getByText(/Last audit action human-review.created/i)).toBeInTheDocument();
+      expect(screen.getByText(/Audit actors Compliance/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Download Audit Log JSON/i })).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /Model Gateway Evaluation/i })).toBeInTheDocument();
       expect(screen.getByText(/Payload hash cccccccccccc/i)).toBeInTheDocument();
       expect(screen.getByText(/Source evidence eeeeeeeeeeee/i)).toBeInTheDocument();
@@ -1349,6 +1377,24 @@ function appJsonResponse(payload: unknown, status = 200): Response {
     status,
     json: async () => payload
   } as Response;
+}
+
+function createAppAuditLogRecord(overrides: Record<string, string>) {
+  return {
+    recordVersion: "lexproof-audit-log-record-v1",
+    id: "audit-log-ui",
+    workspaceId: "project-ui",
+    actorId: "Compliance",
+    action: "workspace.created",
+    targetType: "workspace",
+    targetId: "project-ui",
+    beforeHash: "",
+    afterHash: "f".repeat(64),
+    summary: "Created secure review workspace.",
+    createdAt: "2026-06-30T00:00:00.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata.",
+    ...overrides
+  };
 }
 
 function readAppBlobText(blob: Blob): Promise<string> {

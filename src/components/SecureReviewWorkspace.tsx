@@ -2,6 +2,11 @@ import { useState } from "react";
 import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
 import {
+  createAuditLogExport,
+  downloadAuditLogJson,
+  type AuditLogExportRecord
+} from "../lib/auditLogExport";
+import {
   createModelGatewayEvaluationRecord,
   downloadModelGatewayEvaluationJson,
   type ModelGatewayEvaluationRecord
@@ -200,6 +205,10 @@ function statusLabel(status: WorkflowStepProps["status"]): string {
 
 function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) {
   const evaluation = createModelGatewayEvaluationRecord(result.modelGatewayRun);
+  const auditLogExport = createAuditLogExport({
+    workspaceId: result.workspace.id,
+    records: result.auditLogRecords
+  });
 
   return (
     <div className="secure-journey-result">
@@ -211,8 +220,43 @@ function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) 
         <JourneyFact label="Audit log events" value={String(result.auditLogRecords.length)} />
       </div>
       <small>{result.notLegalAdviceBoundary}</small>
+      <AuditLogExportPanel exportRecord={auditLogExport} />
       <ModelGatewayEvaluationPanel evaluation={evaluation} />
     </div>
+  );
+}
+
+function AuditLogExportPanel({ exportRecord }: { exportRecord: AuditLogExportRecord }) {
+  const latestAction = exportRecord.events.at(-1)?.action ?? "none";
+
+  return (
+    <section className="audit-log-export">
+      <div className="split-title compact-title">
+        <div>
+          <ClipboardList size={17} aria-hidden="true" />
+          <h3>Audit Log Export</h3>
+        </div>
+        <span className="workflow-status complete">{exportRecord.eventCount} events</span>
+      </div>
+      <p className="section-note">{exportRecord.notLegalAdviceBoundary}</p>
+      <div className="run-facts audit-log-facts">
+        <JourneyFact label="Audit events" value={String(exportRecord.eventCount)} />
+        <JourneyFact label="Last audit action" value={latestAction} />
+        <JourneyFact label="Audit actors" value={exportRecord.actors.join(", ") || "none"} />
+        <JourneyFact label="Target types" value={exportRecord.targetTypes.join(", ") || "none"} />
+      </div>
+      <div className="model-evaluation-actions">
+        <span>Export includes action counts, before/after hashes, targets, and non-secret summaries.</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadAuditLogJson("secure-review-audit-log.json", exportRecord)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Audit Log JSON
+        </button>
+      </div>
+    </section>
   );
 }
 

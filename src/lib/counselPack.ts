@@ -4,6 +4,7 @@ import type { CounselQuestion } from "./counselQuestions";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
+import type { RegulatoryGraph } from "./regulatoryGraph";
 
 export type CounselPackModelIntake = {
   profile: ModelConnectionProfile;
@@ -17,7 +18,8 @@ export function buildMarkdownCounselPack(
   manifest: EvidenceManifest,
   counselQuestions: CounselQuestion[] = [],
   counselReviews: CounselReviewItem[] = [],
-  modelIntake?: CounselPackModelIntake
+  modelIntake?: CounselPackModelIntake,
+  regulatoryGraph?: RegulatoryGraph
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${flag.title}: ${flag.rationale}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${item.owner}: ${item.action}`).join("\n");
@@ -29,6 +31,7 @@ export function buildMarkdownCounselPack(
     .join("\n");
   const reviews = counselReviews.map(formatReviewItem).join("\n");
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
+  const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
   const sources = audit.sourcePack.map((source) => `- ${source.title}: ${source.url}`).join("\n");
 
   return [
@@ -61,6 +64,7 @@ export function buildMarkdownCounselPack(
     "## Counsel Review Status",
     reviews || "- No counsel review statuses have been generated yet.",
     "",
+    ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
     ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
     remediation,
@@ -73,6 +77,44 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatRegulatoryGraphSection(graph: RegulatoryGraph): string {
+  const summaries = graph.jurisdictionSummaries
+    .map(
+      (summary) =>
+        `- ${summary.jurisdiction}: ${summary.readiness}; ${summary.matchedClauseCount} source triggers; ${summary.missingEvidenceCount} Evidence gaps; local counsel: ${summary.localCounselRole}`
+    )
+    .join("\n");
+  const clauses = graph.matchedClauses
+    .map(
+      (clause) =>
+        `- ${clause.jurisdiction} ${clause.coverageStatus} [${clause.citation}] ${clause.summary} Source: ${clause.sourceUrl}`
+    )
+    .join("\n");
+  const gaps = graph.evidenceGaps
+    .map((gap) => `- ${gap.priority} ${gap.jurisdiction} [${gap.citation}] ${gap.title}: ${gap.reason}`)
+    .join("\n");
+  const actions = graph.topActions.map((action) => `- ${action.priority} ${action.jurisdiction}: ${action.action}`).join("\n");
+
+  return [
+    graph.notLegalAdviceBoundary,
+    `- Graph version: ${graph.graphVersion}`,
+    `- Matched source triggers: ${graph.matchedClauses.length}`,
+    `- Evidence gaps: ${graph.evidenceGaps.length}`,
+    "",
+    "### Jurisdiction Readiness",
+    summaries || "- No jurisdiction summaries generated.",
+    "",
+    "### Matched Source Clauses",
+    clauses || "- No regulatory source triggers matched current facts.",
+    "",
+    "### Evidence gaps",
+    gaps || "- No regulatory source evidence gaps currently open.",
+    "",
+    "### Regulatory Action Queue",
+    actions || "- No regulatory source actions currently open."
   ].join("\n");
 }
 

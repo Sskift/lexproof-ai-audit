@@ -11,6 +11,7 @@ import { createEvidenceManifest } from "./evidenceManifest";
 import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
 import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile } from "./modelIntake";
+import { createRegulatoryGraph } from "./regulatoryGraph";
 
 const project: ProjectProfile = {
   id: "project-counsel",
@@ -126,6 +127,27 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain(summary.eventHashes[0].hash);
     expect(markdown).toContain("- needs-review Evidence review: Drafted missing evidence question for wallet authority");
     expect(markdown).toContain("Not legal advice");
+  });
+
+  it("includes regulatory source graph clauses, evidence gaps, and non-advice boundary when provided", async () => {
+    const graphProject: ProjectProfile = {
+      ...project,
+      jurisdictions: ["European Union", "United Kingdom"],
+      assetModel: "Tokenized private credit note with yield",
+      userType: "Retail users",
+      operatingStage: "Planned public launch",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(graphProject);
+    const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
+    const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
+    const markdown = buildMarkdownCounselPack(graphProject, audit, manifest, [], [], undefined, graph);
+
+    expect(markdown).toContain("## Regulatory Source Graph");
+    expect(markdown).toContain("Regulation (EU) 2023/1114, Title II");
+    expect(markdown).toContain("FCA PS23/6 and FG23/3");
+    expect(markdown).toContain("Evidence gaps");
+    expect(markdown).toContain("Not legal advice. Regulatory graph output is audit preparation material only.");
   });
 });
 

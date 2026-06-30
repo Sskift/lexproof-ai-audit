@@ -20,6 +20,11 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 
 ## End-To-End Demo Path
 
+0. **Review command center**
+   - Start on the **Regulatory Command Center** at the top of the workbench.
+   - Show jurisdiction readiness, official-source clause triggers, evidence gap queue, manifest status, and the Not legal advice boundary.
+   - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
+
 1. **Connect model**
    - Open **AI Review**.
    - Keep **Mock local reviewer** selected for the live demo, then click **Validate Model Connect**.
@@ -53,7 +58,7 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 
 6. **Export counsel pack**
    - Open **Counsel Pack**.
-   - Show Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, and source pack.
+   - Show Regulatory Source Graph, Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, and source pack.
    - Click **Download Markdown**. Optionally click **Download Manifest JSON** and **Create Simulated Anchor Receipt**.
    - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
 

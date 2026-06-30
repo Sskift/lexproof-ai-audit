@@ -27,6 +27,7 @@ lexproof-ai-audit/
       AIReviewPanel.tsx      # Controlled model-assisted audit preparation
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
       ModelIntakePanel.tsx   # Model connection profile and AI event intake records
+      RegulatoryCommandCenter.tsx # Source-backed jurisdiction graph and evidence gap cockpit
       CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
@@ -34,6 +35,7 @@ lexproof-ai-audit/
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
       evidenceTemplates.ts   # Seed evidence request templates
+      regulatoryClauses.ts   # Reviewed official-source regulatory clause references
     lib/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
@@ -57,6 +59,7 @@ lexproof-ai-audit/
       phase2ApiContracts.ts  # Phase 2 API route, boundary, and Prisma schema draft contracts
       jurisdictionChecklist.ts # Jurisdiction checklist generation
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
+      regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       counselPack.ts         # Markdown pack and browser download helper
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
@@ -81,6 +84,7 @@ sampleProfiles or blank project
   -> createEvidenceAuditEvent(...) for local ledger create/update/remove metadata
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
+  -> createRegulatoryGraph(project, audit, evidenceItems)
   -> recommendEvidenceTemplates(project)
   -> validateModelConnectionProfile(modelIntakeProfile)
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
@@ -97,7 +101,7 @@ sampleProfiles or blank project
   -> merge edits into editable CounselReviewItem queue
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
-  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake)
+  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph)
   -> buildPrintableCounselPackHtml(title, markdown)
   -> tabbed UI surfaces, Markdown download, and browser Print / Save PDF
 ```
@@ -234,6 +238,30 @@ Owns jurisdiction pack behavior:
 
 Packs are audit preparation routing aids only. They do not determine legal status or compliance.
 
+### `src/lib/regulatoryGraph.ts`
+
+Owns official-source regulatory graph behavior:
+
+- `createRegulatoryGraph(project, audit, evidenceItems)` matches current project facts, deterministic risk flags, jurisdictions, and evidence records against reviewed source references from `src/data/regulatoryClauses.ts`.
+- Matched clauses include jurisdiction, regulator, source name, URL, citation, topic, trigger facts, evidence request status, local counsel role, and non-advice boundary.
+- Evidence coverage distinguishes `missing`, `partial`, and `covered` source controls. Only received or verified evidence counts as covered.
+- The graph returns jurisdiction readiness, an evidence gap queue, and top actions for the Command Center and Counsel Pack.
+
+Regulatory graph output is audit preparation material only. It does not classify legality, determine compliance, or replace local counsel review.
+
+### `src/data/regulatoryClauses.ts`
+
+Owns reviewed official-source reference seeds for the Regulatory Source Graph:
+
+- US SEC/CFTC crypto asset interpretation.
+- EU MiCA Regulation (EU) 2023/1114.
+- UK FCA PS23/6 and FG23/3 cryptoasset financial promotions materials.
+- Singapore MAS PSN02 digital payment token AML/CFT materials.
+- Swiss FINMA ICO/token classification guidance.
+- UAE VARA virtual asset regulations and compliance/risk management rulebook.
+
+This file contains static source metadata, trigger keywords, evidence requests, and counsel questions. It must not contain legal conclusions, scraped user data, credentials, or scoring logic.
+
 ### `src/lib/modelProvider.ts`
 
 Owns model connection boundaries:
@@ -340,7 +368,7 @@ The contracts are executable design artifacts. They do not start a server, add b
 
 Owns export behavior:
 
-- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake)` generates audit preparation Markdown with the non-advice boundary, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
+- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph)` generates audit preparation Markdown with the non-advice boundary, regulatory source graph, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
@@ -365,8 +393,9 @@ Owns UI state and composition:
 - local evidence audit trail events
 - active tab
 - async evidence manifest state
+- current regulatory source graph derived from project facts, audit flags, and evidence items
 
-The component calls library modules and renders the workbench surfaces: Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
+The component calls library modules and renders the workbench surfaces: Regulatory Command Center, Secure Review Workspace, Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ### `src/components/*`
 
@@ -377,6 +406,7 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
+- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.

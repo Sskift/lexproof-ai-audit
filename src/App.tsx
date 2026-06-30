@@ -21,6 +21,7 @@ import { HumanReviewPanel } from "./components/HumanReviewPanel";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
 import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
+import { RegulatoryCommandCenter } from "./components/RegulatoryCommandCenter";
 import { SecureReviewWorkspace } from "./components/SecureReviewWorkspace";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
@@ -75,6 +76,7 @@ import {
   type ModelIntakeSummary
 } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
+import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
   createRiskEvidenceCoverage,
@@ -128,6 +130,7 @@ export default function App() {
 
   const audit = useMemo(() => analyzeAuditProfile(project), [project]);
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
+  const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const evidenceTemplates = useMemo(() => listEvidenceTemplates(), []);
   const recommendedEvidenceTemplateIds = useMemo(
@@ -188,7 +191,8 @@ export default function App() {
         manifest,
         currentCounselQuestions,
         currentCounselReviews,
-        modelIntakeExport
+        modelIntakeExport,
+        regulatoryGraph
       );
     },
     [
@@ -199,7 +203,8 @@ export default function App() {
       manifest,
       modelIntakeProfile,
       modelIntakeSummary,
-      project
+      project,
+      regulatoryGraph
     ]
   );
 
@@ -554,6 +559,14 @@ export default function App() {
         />
 
         <section className="main-stage">
+          <RegulatoryCommandCenter
+            project={project}
+            audit={audit}
+            graph={regulatoryGraph}
+            manifestHash={manifest?.bundleHash}
+            onNavigate={setActiveTab}
+          />
+
           <SecureReviewWorkspace
             project={project}
             audit={audit}

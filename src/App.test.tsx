@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
@@ -1232,6 +1232,46 @@ describe("App", () => {
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     } finally {
       vi.unstubAllGlobals();
+    }
+  });
+
+  it("routes due regulatory source review actions into Human Review as clause-match items", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-15T00:00:00.000Z"));
+
+    try {
+      render(<App />);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+
+      const humanReviewHeading = screen.getByRole("heading", { level: 2, name: "Human Review" });
+      const humanReviewPanel = humanReviewHeading.closest("section");
+
+      expect(humanReviewPanel).not.toBeNull();
+      const humanReview = within(humanReviewPanel as HTMLElement);
+      expect(humanReview.getAllByText(/Clause match/i).length).toBeGreaterThan(0);
+      expect(humanReview.getAllByText(/Regulation \(EU\) 2023\/1114, Title II/i).length).toBeGreaterThan(0);
+      expect(humanReview.getAllByText(/Refresh Regulation \(EU\) 2023\/1114, Title II source metadata before counsel handoff/i).length).toBeGreaterThan(0);
+      expect(humanReview.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+
+      fireEvent.change(humanReview.getByLabelText(/Status for Regulation \(EU\) 2023\/1114, Title II/i), {
+        target: { value: "reviewed" }
+      });
+      fireEvent.change(humanReview.getByLabelText(/Reviewer for Regulation \(EU\) 2023\/1114, Title II/i), {
+        target: { value: "EU counsel" }
+      });
+      fireEvent.change(humanReview.getByLabelText(/Decision note for Regulation \(EU\) 2023\/1114, Title II/i), {
+        target: { value: "Source refresh reviewed for audit-prep handoff." }
+      });
+      fireEvent.click(humanReview.getByRole("button", { name: /Save decision for Regulation \(EU\) 2023\/1114, Title II/i }));
+
+      expect(humanReview.getByText(/Human review decision saved for Regulation \(EU\) 2023\/1114, Title II/i)).toBeInTheDocument();
+      expect(humanReview.getByText(/Not legal advice; this is an audit preparation workflow status/i)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
     }
   });
 

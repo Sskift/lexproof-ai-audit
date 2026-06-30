@@ -41,7 +41,7 @@ export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanRevi
       <SectionHeader
         icon={UserCheck}
         title="Human Review"
-        subtitle="Route risk flags, evidence records, and AI event outputs through named reviewer decisions before external reliance."
+        subtitle="Route risk flags, source clause matches, evidence records, and AI event outputs through named reviewer decisions before external reliance."
       />
 
       <div className="notice-banner">
@@ -231,6 +231,9 @@ function labelForTarget(targetType: HumanReviewQueueItem["targetType"]): string 
   }
   if (targetType === "ai-event") {
     return "AI event";
+  }
+  if (targetType === "clause-match") {
+    return "Clause match";
   }
   return "Evidence";
 }

@@ -105,7 +105,7 @@ export type HumanReviewRecord = {
   recordVersion: "lexproof-human-review-record-v1";
   id: string;
   workspaceId: string;
-  targetType: "risk-flag" | "evidence" | "model-run" | "counsel-pack";
+  targetType: "risk-flag" | "evidence" | "model-run" | "clause-match" | "counsel-pack";
   targetId: string;
   reviewerId: string;
   status: "requested" | "under-review" | "reviewed" | "rejected" | "needs-more-evidence";

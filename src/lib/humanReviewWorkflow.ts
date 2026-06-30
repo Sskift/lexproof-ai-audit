@@ -1,8 +1,9 @@
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import type { AIEventRecord, AIEventReviewStatus } from "./modelIntake";
 import type { EvidenceItem, EvidenceStatus } from "./projectModel";
+import type { RegulatorySourceReview, RegulatorySourceReviewAction } from "./regulatorySourceReview";
 
-export type HumanReviewTargetType = "risk-flag" | "ai-event" | "evidence";
+export type HumanReviewTargetType = "risk-flag" | "ai-event" | "evidence" | "clause-match";
 
 export type HumanReviewStatus = "needs-review" | "in-review" | "needs-more-evidence" | "reviewed" | "rejected";
 
@@ -77,6 +78,8 @@ export type CreateHumanReviewQueueInput = {
   counselReviews: CounselReviewItem[];
   evidenceItems: EvidenceItem[];
   aiEvents: AIEventRecord[];
+  sourceReview?: RegulatorySourceReview;
+  sourceReviewUpdatedAt?: string;
   decisions?: HumanReviewDecision[];
 };
 
@@ -94,6 +97,7 @@ export function createHumanReviewQueue(input: CreateHumanReviewQueueInput): Huma
   const decisionsById = createLatestDecisionMap(input.decisions ?? []);
   const items = [
     ...input.counselReviews.map((review) => applyDecision(createRiskReviewQueueItem(review), decisionsById)),
+    ...createSourceReviewQueueItems(input.projectId, input.sourceReview, input.sourceReviewUpdatedAt).map((item) => applyDecision(item, decisionsById)),
     ...input.aiEvents.map((event) => applyDecision(createAIEventQueueItem(event), decisionsById)),
     ...input.evidenceItems.map((item, index) => applyDecision(createEvidenceQueueItem(input.projectId, item, index), decisionsById))
   ];
@@ -252,6 +256,51 @@ function createAIEventQueueItem(event: AIEventRecord): HumanReviewQueueItem {
     decisionNote: "",
     dueAt: createDueAt(event.updatedAt ?? event.createdAt, "P1"),
     updatedAt: event.updatedAt ?? event.createdAt,
+    notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
+  };
+}
+
+function createSourceReviewQueueItems(
+  projectId: string,
+  sourceReview: RegulatorySourceReview | undefined,
+  updatedAt = new Date().toISOString()
+): HumanReviewQueueItem[] {
+  if (!sourceReview) {
+    return [];
+  }
+
+  const reviewItemsByClauseId = new Map(sourceReview.items.map((item) => [item.clauseId, item]));
+
+  return sourceReview.actions.map((action) => {
+    const sourceItem = reviewItemsByClauseId.get(action.clauseId);
+
+    return createSourceReviewQueueItem(projectId, action, {
+      title: sourceItem?.citation ?? action.clauseId,
+      updatedAt
+    });
+  });
+}
+
+function createSourceReviewQueueItem(
+  projectId: string,
+  action: RegulatorySourceReviewAction,
+  input: { title: string; updatedAt: string }
+): HumanReviewQueueItem {
+  return {
+    queueVersion: "lexproof-human-review-queue-item-v1",
+    id: queueItemId("clause-match", action.id),
+    projectId,
+    targetType: "clause-match",
+    targetId: action.id,
+    sourceId: action.clauseId,
+    title: input.title,
+    summary: `${action.action} Source: ${action.sourceUrl}`,
+    priority: action.priority,
+    status: "needs-review",
+    reviewer: "Local counsel",
+    decisionNote: "Not legal advice. Source review metadata is audit preparation lineage only.",
+    dueAt: createDueAt(input.updatedAt, action.priority),
+    updatedAt: input.updatedAt,
     notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
   };
 }

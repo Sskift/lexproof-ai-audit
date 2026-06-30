@@ -169,11 +169,58 @@ describe("Human Review route module", () => {
     });
     expect(invalidQueueResponse.statusCode).toBe(400);
     expect(invalidQueueResponse.json()).toEqual({
-      error: "Human review target type must be risk-flag, evidence, model-run, or counsel-pack.",
+      error: "Human review target type must be risk-flag, evidence, model-run, clause-match, or counsel-pack.",
       code: "HUMAN_REVIEW_QUEUE_FAILED",
-      recoveryAction: "Use targetType risk-flag, evidence, model-run, or counsel-pack and a supported review status.",
+      recoveryAction: "Use targetType risk-flag, evidence, model-run, clause-match, or counsel-pack and a supported review status.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("creates and filters clause-match review records without treating source review as legal advice", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerHumanReviewRoutes(server, { repository });
+
+    const createResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-clause-review-routes/reviews",
+      payload: {
+        targetType: "clause-match",
+        targetId: "source-review-eu-mica-title-ii-white-paper",
+        reviewerId: "Local counsel",
+        comment: "Refresh source metadata before counsel handoff. Not legal advice."
+      }
+    });
+
+    expect(createResponse.statusCode).toBe(201);
+    expect(createResponse.json()).toEqual(
+      expect.objectContaining({
+        targetType: "clause-match",
+        targetId: "source-review-eu-mica-title-ii-white-paper",
+        reviewerId: "Local counsel",
+        status: "requested",
+        notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+      })
+    );
+
+    const queueResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-clause-review-routes/reviews/queue?targetType=clause-match&reviewerId=Local%20counsel"
+    });
+
+    expect(queueResponse.statusCode).toBe(200);
+    expect(queueResponse.json()).toEqual(
+      expect.objectContaining({
+        filters: { targetType: "clause-match", reviewerId: "Local counsel" },
+        totalCount: 1,
+        openCount: 1,
+        targetTypeCounts: { "clause-match": 1 },
+        notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+      })
+    );
 
     await server.close();
     await repository.close();
@@ -197,7 +244,7 @@ describe("Human Review route module", () => {
 
     expect(invalidCreateResponse.statusCode).toBe(400);
     expect(invalidCreateResponse.json()).toEqual({
-      error: "Human review target type must be risk-flag, evidence, model-run, or counsel-pack.",
+      error: "Human review target type must be risk-flag, evidence, model-run, clause-match, or counsel-pack.",
       code: "HUMAN_REVIEW_CREATE_FAILED",
       recoveryAction: "Provide a supported review target, reviewer, and audit-prep comment before creating a review.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."

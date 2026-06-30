@@ -74,7 +74,7 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
             error,
             code: "HUMAN_REVIEW_QUEUE_FAILED",
             fallbackMessage: "Human Review queue lookup failed.",
-            recoveryAction: "Use targetType risk-flag, evidence, model-run, or counsel-pack and a supported review status."
+            recoveryAction: "Use targetType risk-flag, evidence, model-run, clause-match, or counsel-pack and a supported review status."
           })
         );
       }
@@ -252,8 +252,8 @@ function createHumanReviewQueueFilters(query: HumanReviewQueueQuery): ServerHuma
 }
 
 function assertHumanReviewTargetType(targetType: string): asserts targetType is HumanReviewRecord["targetType"] {
-  if (!["risk-flag", "evidence", "model-run", "counsel-pack"].includes(targetType)) {
-    throw new Error("Human review target type must be risk-flag, evidence, model-run, or counsel-pack.");
+  if (!["risk-flag", "evidence", "model-run", "clause-match", "counsel-pack"].includes(targetType)) {
+    throw new Error("Human review target type must be risk-flag, evidence, model-run, clause-match, or counsel-pack.");
   }
 }
 

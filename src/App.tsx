@@ -227,9 +227,10 @@ export default function App() {
         counselReviews: currentCounselReviews,
         evidenceItems: project.evidenceItems,
         aiEvents: currentAIEvents,
+        sourceReview: regulatorySourceReview,
         decisions: currentHumanReviewDecisions
       }),
-    [currentAIEvents, currentCounselReviews, currentHumanReviewDecisions, project.evidenceItems, project.id]
+    [currentAIEvents, currentCounselReviews, currentHumanReviewDecisions, project.evidenceItems, project.id, regulatorySourceReview]
   );
   const dataBoundaryReport = useMemo(
     () =>
@@ -699,6 +700,10 @@ export default function App() {
         reviewer: decision.reviewer,
         reviewerNote: decision.decisionNote
       });
+      return;
+    }
+
+    if (item.targetType === "clause-match") {
       return;
     }
 

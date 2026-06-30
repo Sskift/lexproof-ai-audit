@@ -136,6 +136,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createDefaultCounselQuestions(project, audit)
   -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
   -> merge edits into editable CounselReviewItem queue
+  -> createHumanReviewQueue(project, reviews, evidence, AI events, regulatorySourceReview)
   -> createEvidenceIntakeGuidance(project, evidenceItems, riskEvidenceCoverage, recommended templates)
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
@@ -651,7 +652,7 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 ### Human Review Workflow Responsibilities
 
-- create review requests for deterministic risk flags, evidence records, model runs, and counsel packs
+- create review requests for deterministic risk flags, source clause matches, evidence records, model runs, and counsel packs
 - expose queue views filtered by target type, status, and reviewer for operational triage
 - let reviewers mark items as `under-review`, `reviewed`, `rejected`, or `needs-more-evidence`
 - sync evidence-target and model-run-target review decisions back to linked workflow metadata

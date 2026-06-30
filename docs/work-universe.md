@@ -23,7 +23,7 @@ The repository already has:
 - Deterministic risk audit, issue explainers, source links, remediation queue, and risk evidence coverage.
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
 - Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, server-side Counsel Pack export metadata records, and Audit Log listing.
-- Local Human Review operations with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable timeline JSON with audit log IDs.
+- Local Human Review operations with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence updates, and downloadable timeline JSON with audit log IDs.
 - Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
 - Demo script, screenshots, Demo Scenario Library launcher, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, and seeded judge paths.
@@ -113,7 +113,7 @@ Goal: make review status operational instead of decorative.
 
 Build:
 
-- Review queues by target type: evidence, model run, risk flag, clause match, counsel pack. The first server queue view is implemented in `src/lib/serverHumanReviewQueue.ts` and `GET /api/workspaces/:workspaceId/reviews/queue`, with target/status/reviewer filters and next actions.
+- Review queues by target type: evidence, model run, risk flag, clause match, counsel pack. Clause-match source review actions now enter the local Human Review queue from `regulatorySourceReview.ts`, and the server queue view in `src/lib/serverHumanReviewQueue.ts` plus `GET /api/workspaces/:workspaceId/reviews/queue` accepts `clause-match` filters with target/status/reviewer next actions.
 - Reviewer assignment, due date, status history, decision reason, and linked evidence/model-run changes. Server review updates now sync Evidence Vault status and Model Gateway `humanReviewStatus` through `src/lib/serverHumanReviewEffects.ts` and append metadata-only audit-log records.
 - Return-to-evidence flow when a reviewer requests more support.
 - Rejection flow that preserves the rejected item and opens a replacement action.

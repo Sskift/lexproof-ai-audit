@@ -8,6 +8,7 @@ import {
 } from "./humanReviewWorkflow";
 import type { AIEventRecord } from "./modelIntake";
 import type { EvidenceItem } from "./projectModel";
+import type { RegulatorySourceReview } from "./regulatorySourceReview";
 
 const counselReview: CounselReviewItem = {
   id: "project-1-review-asset-yield",
@@ -48,6 +49,40 @@ const aiEvent: AIEventRecord = {
   updatedAt: "2026-06-30T00:00:00.000Z"
 };
 
+const sourceReview: RegulatorySourceReview = {
+  status: "review-due",
+  totalSourceCount: 1,
+  currentSourceCount: 0,
+  reviewDueCount: 1,
+  metadataMissingCount: 0,
+  reviewWindowDays: 90,
+  items: [
+    {
+      clauseId: "eu-mica-title-ii-white-paper",
+      jurisdiction: "European Union",
+      regulator: "European Union",
+      citation: "Regulation (EU) 2023/1114, Title II",
+      sourceName: "Regulation (EU) 2023/1114 on markets in crypto-assets",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+      effectiveAsOf: "2024-12-30",
+      lastReviewedAt: "2026-01-01",
+      nextReviewDueAt: "2026-04-01",
+      reviewStatus: "review-due",
+      reviewerNotes: "Route interpretation to local counsel."
+    }
+  ],
+  actions: [
+    {
+      id: "source-review-eu-mica-title-ii-white-paper",
+      priority: "P1",
+      action: "Refresh Regulation (EU) 2023/1114, Title II source metadata before counsel handoff.",
+      clauseId: "eu-mica-title-ii-white-paper",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng"
+    }
+  ],
+  notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only."
+};
+
 describe("human review workflow", () => {
   it("builds a single review queue across risk flags, evidence, and AI events", () => {
     const queue = createHumanReviewQueue({
@@ -75,6 +110,42 @@ describe("human review workflow", () => {
         status: "needs-review",
         reviewer: "Compliance",
         notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
+      })
+    );
+  });
+
+  it("queues source review refresh actions as clause-match human review records", () => {
+    const queue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [],
+      aiEvents: [],
+      sourceReview,
+      sourceReviewUpdatedAt: "2026-06-30T00:00:00.000Z"
+    });
+
+    expect(queue.summary).toEqual({
+      totalCount: 1,
+      openCount: 1,
+      reviewedCount: 0,
+      blockedCount: 0,
+      notLegalAdviceBoundary: "Not legal advice. Human review workflow status is audit preparation workflow only."
+    });
+    expect(queue.items[0]).toEqual(
+      expect.objectContaining({
+        id: "human-review-queue-clause-match-source-review-eu-mica-title-ii-white-paper",
+        targetType: "clause-match",
+        targetId: "source-review-eu-mica-title-ii-white-paper",
+        sourceId: "eu-mica-title-ii-white-paper",
+        title: "Regulation (EU) 2023/1114, Title II",
+        summary:
+          "Refresh Regulation (EU) 2023/1114, Title II source metadata before counsel handoff. Source: https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+        priority: "P1",
+        status: "needs-review",
+        reviewer: "Local counsel",
+        decisionNote: "Not legal advice. Source review metadata is audit preparation lineage only.",
+        dueAt: "2026-07-05T00:00:00.000Z",
+        updatedAt: "2026-06-30T00:00:00.000Z"
       })
     );
   });

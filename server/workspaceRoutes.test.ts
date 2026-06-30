@@ -92,12 +92,18 @@ describe("Workspace route module", () => {
     expect(invalidCreateResponse.statusCode).toBe(400);
     expect(invalidCreateResponse.json()).toEqual({
       error: "Workspace name is required.",
+      code: "WORKSPACE_CREATE_FAILED",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
 
     const missingResponse = await server.inject({ method: "GET", url: "/api/workspaces/missing-workspace" });
     expect(missingResponse.statusCode).toBe(404);
-    expect(missingResponse.json()).toEqual({ error: "Workspace record not found." });
+    expect(missingResponse.json()).toEqual({
+      error: "Workspace record not found.",
+      code: "WORKSPACE_NOT_FOUND",
+      recoveryAction: "Create the workspace before reading or updating it.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
 
     const createResponse = await server.inject({
       method: "POST",
@@ -119,6 +125,7 @@ describe("Workspace route module", () => {
     expect(invalidUpdateResponse.statusCode).toBe(400);
     expect(invalidUpdateResponse.json()).toEqual({
       error: "Workspace status must be draft, active, or archived.",
+      code: "WORKSPACE_UPDATE_FAILED",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
 

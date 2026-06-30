@@ -131,7 +131,7 @@ The first Workspace routes are implemented in `server/workspaceRoutes.ts` and ba
 - `GET /api/workspaces/:workspaceId`
 - `PATCH /api/workspaces/:workspaceId`
 
-The routes create, read, and update durable workspace metadata with a visible non-advice boundary. Workspace create and update actions append audit-log records.
+The routes create, read, and update durable workspace metadata with a visible non-advice boundary. Workspace create and update actions append audit-log records. Workspace create/read/update failures use the shared typed error response helper in `server/apiError.ts`, returning stable error codes, the audit-prep boundary, and recovery guidance for missing workspaces.
 
 ## Evidence Vault Routes
 
@@ -222,6 +222,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Workspace route-module registration independently from the full app composition
+- Shared typed API error helper and Workspace create/read/update error code responses
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition

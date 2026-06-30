@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createAuditLogRecord, type WorkspaceRecord } from "../src/lib/phase2Types.js";
+import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 
@@ -29,10 +30,13 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
       );
       return reply.status(201).send(workspace);
     } catch (error) {
-      return reply.status(400).send({
-        error: error instanceof Error ? error.message : "Workspace creation failed.",
-        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-      });
+      return reply.status(400).send(
+        createApiErrorResponse({
+          error,
+          code: "WORKSPACE_CREATE_FAILED",
+          fallbackMessage: "Workspace creation failed."
+        })
+      );
     }
   });
 
@@ -40,7 +44,7 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
     const workspace = await repository.findWorkspaceRecord(request.params.workspaceId);
 
     if (!workspace) {
-      return reply.status(404).send({ error: "Workspace record not found." });
+      return reply.status(404).send(createWorkspaceNotFoundError());
     }
 
     return workspace;
@@ -52,7 +56,7 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
       const existing = await repository.findWorkspaceRecord(request.params.workspaceId);
 
       if (!existing) {
-        return reply.status(404).send({ error: "Workspace record not found." });
+        return reply.status(404).send(createWorkspaceNotFoundError());
       }
 
       try {
@@ -73,10 +77,13 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
         );
         return updated;
       } catch (error) {
-        return reply.status(400).send({
-          error: error instanceof Error ? error.message : "Workspace update failed.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "WORKSPACE_UPDATE_FAILED",
+            fallbackMessage: "Workspace update failed."
+          })
+        );
       }
     }
   );
@@ -149,4 +156,13 @@ function assertWorkspaceStatus(status: string): asserts status is WorkspaceRecor
   if (!["draft", "active", "archived"].includes(status)) {
     throw new Error("Workspace status must be draft, active, or archived.");
   }
+}
+
+function createWorkspaceNotFoundError() {
+  return createApiErrorResponse({
+    error: new Error("Workspace record not found."),
+    code: "WORKSPACE_NOT_FOUND",
+    fallbackMessage: "Workspace record not found.",
+    recoveryAction: "Create the workspace before reading or updating it."
+  });
 }

@@ -39,6 +39,46 @@ Do not stage unrelated files. If unrelated local changes exist, leave them out o
 | Model, evidence, or export boundary | targeted lib + server tests for validators and receipts | `npm run verify` |
 | UI layout redesign | App tests, manual desktop/mobile smoke, screenshot | `npm run verify` |
 
+### Exact Test Launch Recipes
+
+Use the narrowest command that proves the changed behavior before running the full gate.
+
+Pure library slice:
+
+```bash
+npm test -- src/lib/<feature>.test.ts
+```
+
+React workflow slice:
+
+```bash
+npm test -- src/App.test.tsx
+```
+
+Server route or service slice:
+
+```bash
+npm test -- server/<feature>.test.ts
+```
+
+Multiple related tests:
+
+```bash
+npm test -- src/lib/<feature>.test.ts server/<feature>.test.ts src/App.test.tsx
+```
+
+Server build after backend or shared-contract changes:
+
+```bash
+npm run build:server
+```
+
+Full gate before push:
+
+```bash
+npm run verify
+```
+
 Use full verification before every commit that will be pushed:
 
 ```bash
@@ -136,6 +176,33 @@ Avoid:
 
 Every new core function needs a focused test. A "core function" is any function that scores, validates, hashes, matches sources, changes workflow status, builds exports, talks to the API, or enforces a boundary.
 
+### No-Useless-Test Rule
+
+Do not add a test just because a file changed. Add a test only when it would catch a plausible regression.
+
+Use one primary test layer for each behavior:
+
+- `src/lib` test for deterministic business logic, hashing, validation, source matching, export generation, and data-boundary decisions.
+- `server` test for HTTP status codes, request validation, persistence effects, audit-log writes, and metadata-only response guarantees.
+- `src/App.test.tsx` or component-level test for user-visible state changes, disabled buttons, empty states, recovery actions, and tab journeys.
+
+Do not test the same sentence of copy in both a library test and a UI test unless the UI behavior depends on exact wording. Prefer stable labels, status chips, hashes, action availability, and structured fields over paragraph text.
+
+If a feature has no new core logic and only rearranges docs or copy, do not add tests. Run the full gate before push because `main` must remain runnable.
+
+### Regression Budget
+
+Keep the test suite useful:
+
+- One focused test file per new domain module.
+- One App workflow test per new user journey or important error state.
+- One server route test per route family or policy failure path.
+- No broad snapshots.
+- No generated fixture dumps larger than the behavior under test.
+- Remove or update obsolete tests when behavior intentionally changes.
+
+If a proposed test would still pass while the user journey is broken, rewrite it or do not add it.
+
 ## Commit and Push Gate
 
 Before staging:
@@ -143,6 +210,7 @@ Before staging:
 ```bash
 git status -sb
 git diff --stat
+git diff --check
 ```
 
 Run:
@@ -205,6 +273,50 @@ If a branch is used, keep the same verification gate before merging back.
 - Keep docs, screenshots, tests, and source changes in the same commit only when they describe the same user-visible slice.
 - Fix forward on `main` if a pushed change breaks the app.
 - Do not run destructive git reset/checkout commands to hide uncertainty.
+
+### Staging Rules
+
+- Stage explicit files, not `git add .`, unless the diff has been fully inspected and every file belongs to the same slice.
+- Run `git diff --cached --stat` before commit.
+- Do not include local databases, downloaded artifacts, throwaway screenshots, or generated build output.
+- If a screenshot is required, name it after the workflow state and store it under `docs/assets/screenshots/`.
+- If unrelated user changes exist, leave them unstaged and mention that in the final handoff.
+
+### Dirty Worktree Recovery
+
+Use inspection before action:
+
+```bash
+git status -sb
+git diff --stat
+git diff -- <path>
+```
+
+Allowed cleanup:
+
+- Remove generated files you created during the current slice.
+- Restore local edits you made during the current slice only when you are intentionally abandoning them.
+
+Not allowed without explicit user instruction:
+
+- `git reset --hard`
+- `git checkout -- .`
+- force-pushing `main`
+- deleting user-created files because they are unrelated to the current task
+
+### Documentation Update Rules
+
+Update docs when a user-visible workflow, API boundary, architecture rule, or demo path changes.
+
+Use existing docs first:
+
+- Backlog and product direction: `docs/work-universe.md`.
+- Feature placement and anti-drift: `docs/architecture-guardrails.md`.
+- Test commands, screenshot policy, and cleanliness: `docs/engineering-workflow.md`.
+- Public runnable overview: `README.md`.
+- Demo path: `docs/demo-script.md`.
+
+Do not create a new plan document when one of these files is the correct home. New docs need a durable audience and must be linked from README or an existing docs index.
 
 ## Agent Prompt Contract
 

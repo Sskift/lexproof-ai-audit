@@ -30,6 +30,68 @@ The repository already has:
 
 Future work should extend these capabilities, not create parallel demo-only paths.
 
+## Market Bar And Product Ambition
+
+Reviewed on 2026-07-01. The competitive bar is no longer "chatbot plus memo." Strong products around this space provide focused work surfaces:
+
+- Legal AI platforms such as [Harvey](https://www.harvey.ai/), [Legora](https://legora.com/), [Thomson Reuters CoCounsel Legal](https://legal.thomsonreuters.com/en/products/cocounsel-legal), and [Spellbook](https://spellbook.com/) emphasize matter workflows, drafting/review, trusted source context, collaboration, and secure data handling.
+- Crypto compliance platforms such as [Chainalysis KYT](https://www.chainalysis.com/product/kyt/), [TRM wallet screening](https://www.trmlabs.com/blockchain-intelligence-platform/wallet-screening), and [Elliptic screening](https://www.elliptic.co/solutions/screening) emphasize wallet/transaction risk, configurable rules, audit trails, and compliance operations.
+- GRC and regulatory-intelligence platforms such as [Regology](https://regology.com/), [Vanta](https://www.vanta.com/), and [Diligent](https://www.diligent.com/) emphasize continuous controls, regulatory change intake, issue management, audit evidence, and board/compliance reporting.
+- Web3 operations tools such as [OpenZeppelin Defender](https://docs.openzeppelin.com/defender) show that serious blockchain products expose monitoring, transaction proposals, automation, and operational evidence rather than vague "on-chain" claims.
+
+LexProof should not copy any one category. The 10x direction is to combine:
+
+- AI legal-work assistance with human review and hashed receipts.
+- Web3 evidence provenance with metadata-only manifests and optional anchors.
+- RegTech source/control mapping with jurisdiction routing and review freshness.
+- GRC-style issue ownership, evidence requests, approvals, and export history.
+
+The differentiator is a counsel-ready audit preparation workspace for AI and Web3 launch risk. It must stay sharper than a generic legal AI assistant, safer than an unaudited model workflow, and more reviewable than a normal compliance checklist.
+
+## Complete Build Universe
+
+This is the full scope boundary. New work should fit one of these capabilities or explicitly amend this file before implementation.
+
+| Capability area | Product outcome | Frontend surface | Domain/backend owner | Required proof |
+| --- | --- | --- | --- | --- |
+| Project intake and scenarios | Teams can start from blank, sample, or scenario templates with clear assumptions | Project Workspace, Demo Scenario Library, Audit Wizard | `src/lib/projectModel.ts`, `src/data/sampleProfiles.ts`, `src/data/demoScenarios.ts` | Profile validation tests, scenario validation tests, screenshot for new scenario UI |
+| Regulatory source/control graph | Jurisdiction and source triggers become reviewable controls, not legal conclusions | Regulatory Command Center, Jurisdiction Checklist, Source Review Ledger | `src/data/regulatoryClauses.ts`, `src/lib/regulatoryGraph.ts`, `src/lib/regulatorySourceReview.ts` | Clause matching tests, source freshness tests, Not legal advice copy |
+| Deterministic risk audit | Risk flags are reproducible, source-linked, and evidence-dependent | Risk Audit, issue cards, remediation queue, GRC export | `src/lib/auditEngine.ts`, `src/lib/riskExplainers.ts`, `src/lib/riskEvidence.ts`, `src/lib/grcTicketExport.ts` | Trigger/non-trigger tests, coverage tests, export boundary tests |
+| Model connect and AI governance | Users can bring models through a policy gate without storing secrets or relying on AI as final judgment | Model Intake, Model Settings, AI Review, Model Gateway Evaluation | `src/lib/modelConnect.ts`, `src/lib/modelIntake.ts`, `src/lib/modelProvider.ts`, server model gateway services | Validation tests, receipt hash tests, failure-state route tests |
+| Evidence ledger and vault | Evidence is editable, versioned, metadata-first, recoverable, and hashable | Evidence Ledger, Evidence Retention, Evidence Vault sync/recovery | `src/lib/evidenceManifest.ts`, `src/lib/evidenceVaultWorkflow.ts`, `server/evidenceVaultService.ts` | Stable hash tests, status transition tests, duplicate/replacement tests |
+| Human review and approvals | Reviewers can return, reject, or mark items reviewed while preserving history | Human Review queue, review timeline, linked status updates | `src/lib/humanReviewWorkflow.ts`, `src/lib/serverHumanReviewEffects.ts`, server human review routes | Queue tests, linked evidence/model status tests, timeline export tests |
+| Counsel pack and submission artifacts | Counsel and judges can export a single packet with assumptions, hashes, source lineage, and limitations | Counsel Pack, Sources, Submission Pack, Print/Save PDF | `src/lib/counselPack.ts`, `src/lib/counselPackVersions.ts`, `src/lib/regulatorySourcePack.ts` | Markdown content tests, version diff tests, export safety tests |
+| Secure review backend | The SPA has a real API boundary for workspace, evidence, model runs, review, exports, and audit logs | Secure Review Workspace, server-backed export panels | `server/*Routes.ts`, `server/*Service.ts`, `server/reviewWorkspaceRepository.ts` | Route tests, service tests, memory repository tests, `npm run build:server` |
+| Security and privacy operations | Unsafe data classes are blocked or redacted before model calls, vault sync, and exports | Redaction Gate, Export Safety Gate, Security Review Checklist, Integration Readiness | `src/lib/dataClassification.ts`, `src/lib/dataBoundary.ts`, `src/lib/retentionPolicy.ts` | Blocker tests, redaction tests, no-secret payload tests |
+| Integrations | External systems are added only behind disabled-by-default readiness gates | Integration Readiness Registry, adapter-specific panels | `src/lib/integrationReadiness.ts`, future focused client/service modules | Adapter disabled-state tests, failure recovery tests, no real call by default |
+| Frontend workbench quality | The app feels like a dense professional audit cockpit, not a marketing page | Tabs, panels, status chips, empty/error/recovery states, responsive layout | `src/components/*`, `src/App.tsx`, `src/styles.css` | App tests for workflow state, screenshot for visible demo surfaces |
+| Demo and judge readiness | A clean clone can run the whole story without secrets | README, demo script, screenshots, readiness preflight | `src/lib/demoScenarioLibrary.ts`, `src/lib/demoReadiness.ts`, docs | Scenario/readiness tests, screenshot set, documented commands |
+
+## Build Horizon
+
+Use this horizon to pick the next slice. Avoid starting later-stage infrastructure before the earlier user journey is stable.
+
+### Horizon A: Hackathon-grade operating system
+
+- Make the judge path impossible to misunderstand: one start point, one full journey, one export story.
+- Deepen regulatory source/control mapping for the strongest Web3 scenarios: RWA/tokenized credit, DAO governance, custody, marketing claims, AI legal workflow.
+- Expand error/empty/recovery states for model failure, unsafe evidence, review rejection, source freshness, and export blockers.
+- Keep all real external integrations disabled by default while showing exactly what would be required to enable them.
+
+### Horizon B: Pilot-grade workspace
+
+- Add accounts, organizations, roles, reviewer assignment, and workspace sharing after the single-user flow stays stable.
+- Add secure document intake with explicit retention, deletion, access log, and redaction policy before raw files are persisted.
+- Move live model access behind the server gateway with secret storage, egress logging, provider allowlist, cost controls, and audit receipts.
+- Add regulatory change review queues where source updates must be approved before they affect matching behavior.
+
+### Horizon C: Production-grade platform
+
+- Add real object storage, OCR/document parsing, ticket-system sync, and optional wallet/anchor adapters after readiness gates are approved.
+- Add continuous control monitoring and evidence recertification for ongoing compliance programs.
+- Add enterprise reporting for counsel, compliance, investor diligence, and board-level risk summaries.
+- Add organization-level policy packs and custom control libraries without weakening the Not legal advice boundary.
+
 ## Workstreams
 
 ### W1. Regulatory Source Graph

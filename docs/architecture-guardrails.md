@@ -15,6 +15,8 @@ React Workbench (src/App.tsx, src/components)
   -> persistence adapter (server/reviewWorkspaceRepository.ts, prisma/schema.prisma)
 ```
 
+The intended shape is a modular monolith for the hackathon and early pilot phase. Add focused modules inside the existing folders before adding new top-level packages. A new top-level directory needs a clear runtime boundary, such as a worker, CLI, or independent package that cannot live cleanly in `src`, `server`, `docs`, or `prisma`.
+
 ## Dependency Rules
 
 - `src/components` may import from `src/lib`, `src/data`, React, and UI libraries. Components must not contain scoring, hashing, source matching, manifest, model policy, or evidence validation rules.
@@ -23,6 +25,14 @@ React Workbench (src/App.tsx, src/components)
 - `server` owns Fastify routes, services, repository interfaces, server-side validation, audit logging, and persistence boundaries. It must not import React or browser-only helpers.
 - `prisma/schema.prisma` owns durable server schema only. UI code must not depend on Prisma models directly.
 - Shared contracts belong in `src/lib/*Types.ts` or focused contract modules. Server and UI can both use these contracts when they do not import browser or React APIs.
+
+Forbidden dependency directions:
+
+- `src/lib` must not import from `src/components`, `src/App.tsx`, or `server`.
+- `src/data` must not import from `src/lib`, `src/components`, or `server`.
+- `server` must not import browser-only helpers that touch `window`, `document`, `localStorage`, downloads, print, or React state.
+- React components must not import Prisma types directly.
+- Tests may import across layers only to verify a real integration boundary; they must not make production code depend on test helpers.
 
 ## Feature Placement Pattern
 
@@ -37,6 +47,44 @@ Add new capabilities in this order:
 7. README/docs update only for user-visible behavior changes.
 
 Do not start with UI state and then backfill domain logic.
+
+## Feature Routing Table
+
+Use this table before creating files.
+
+| New thing | Put it here | Do not put it here | Why |
+| --- | --- | --- | --- |
+| Risk scoring, flags, source-linked issue rationale | `src/lib/auditEngine.ts`, `src/lib/riskExplainers.ts`, `src/lib/riskEvidence.ts` | React components or server routes | Risk must stay deterministic and testable without UI/API state |
+| Regulatory clauses or reviewed source references | `src/data/regulatoryClauses.ts` | `src/lib` hard-coded arrays or JSX | Data can be reviewed independently from matching logic |
+| Regulatory matching, source freshness, evidence gaps | `src/lib/regulatoryGraph.ts`, `src/lib/regulatorySourceReview.ts` | Components | Matching needs focused tests and stable export behavior |
+| Model provider settings, readiness, receipts | `src/lib/model*.ts`, server model gateway service/routes | Local component state only | Model governance must stay consistent across UI and backend |
+| Evidence status, hashing, vault workflow | `src/lib/evidence*.ts`, `server/evidenceVault*.ts` | Counsel Pack UI or generic helpers | Evidence changes affect manifests, retention, review, and exports |
+| Review queues and status effects | `src/lib/humanReviewWorkflow.ts`, `src/lib/serverHumanReviewEffects.ts`, server review routes | Counsel Pack-only state | Review decisions must update linked evidence/model/export readiness |
+| Export builders and artifact hashes | `src/lib/counselPack*.ts`, `src/lib/regulatorySourcePack.ts` | JSX string assembly | Exports need deterministic tests and no hidden UI-only behavior |
+| API calls from the browser | `src/lib/<feature>Client.ts` | Direct `fetch` calls inside multiple components | Clients centralize typed responses and error recovery |
+| API route behavior | `server/<feature>Routes.ts`, `server/<feature>Service.ts` | `server/app.ts` | Routes stay composable and service behavior stays testable |
+| Demo fixtures | `src/data/*` and docs screenshots | `src/lib` or server seed state | Fixtures must be synthetic and easy to audit |
+| Visual-only panel state | `src/components/<FeaturePanel>.tsx` | `src/lib` | UI state belongs in UI when it has no domain meaning |
+
+If a feature touches more than three rows, split it into incremental slices. Each slice should produce one demonstrable behavior and one focused verification path.
+
+## State Ownership
+
+- Browser `localStorage` is for the current single-user project snapshot and demo continuity only.
+- Session-only values such as API keys stay in React state and must not be serialized into project, evidence, export, or review records.
+- Server persistence owns workspace, evidence metadata, model-run receipts, human-review records, export metadata, and audit logs when the Phase 2 API is running.
+- Exported artifacts should be rebuildable from explicit inputs. Do not hide material state in UI-only refs or temporary globals.
+- When the same concept appears in client and server, define the stable contract in `src/lib` and have both sides use it if it is runtime-safe for Node and browser.
+
+## File Size And Split Rules
+
+Avoid splitting files just to look organized, but split when a file starts carrying unrelated responsibilities.
+
+- A React panel should have one workflow purpose. Extract a child component when a panel mixes independent surfaces such as settings, ledger rows, export history, and error recovery.
+- A `src/lib` module should own one domain concept. Create a new module when new functions would import only a small part of the old one or require a different test fixture set.
+- Server route modules should map to one URL family. Shared validation and hashing belong in services or helpers, not repeated across routes.
+- Prefer small typed helpers over generic utility files. A helper named `utils.ts` is a warning sign unless it is already established and narrowly scoped.
+- Do not reorganize broad folders in the same commit as a feature unless the reorganization directly removes duplicate behavior needed by that feature.
 
 ## Domain Boundaries
 

@@ -5,6 +5,7 @@ import { registerCounselPackExportRoutes } from "./counselPackExportRoutes.js";
 import { registerEvidenceVaultRoutes } from "./evidenceVaultRoutes.js";
 import { registerHumanReviewRoutes } from "./humanReviewRoutes.js";
 import { registerModelGatewayRoutes } from "./modelGatewayRoutes.js";
+import { registerSystemRoutes } from "./systemRoutes.js";
 import { registerWorkspaceRoutes } from "./workspaceRoutes.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 
@@ -28,22 +29,7 @@ export function buildServer(options: BuildServerOptions = {}) {
     await repository.close();
   });
 
-  server.options("/api/*", async (_request, reply) => reply.status(204).send());
-
-  server.get("/api/health", async () => ({
-    status: "ok",
-    service: "lexproof-secure-review-workspace-api",
-    version: "lexproof-phase-2-backend-v1",
-    capabilities: {
-      modelGateway: "mock-run-ready",
-      evidenceVault: "metadata-versioning-ready",
-      humanReview: "repository-ready",
-      exports: "metadata-records-ready",
-      auditLog: "repository-ready"
-    },
-    notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-  }));
-
+  registerSystemRoutes(server);
   registerModelGatewayRoutes(server, { repository });
   registerCounselPackExportRoutes(server, { repository });
   registerHumanReviewRoutes(server, { repository });

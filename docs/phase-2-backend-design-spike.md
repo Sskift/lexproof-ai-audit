@@ -125,7 +125,7 @@ It:
 
 ## Workspace Routes
 
-The first Workspace routes are implemented in `server/app.ts` and backed by `server/reviewWorkspaceRepository.ts`:
+The first Workspace routes are implemented in `server/workspaceRoutes.ts` and backed by `server/reviewWorkspaceRepository.ts`:
 
 - `POST /api/workspaces`
 - `GET /api/workspaces/:workspaceId`
@@ -221,6 +221,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - Workspace create/read/update routes
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
+- Workspace route-module registration independently from the full app composition
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition

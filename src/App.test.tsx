@@ -1047,6 +1047,26 @@ describe("App", () => {
     expect(await screen.findByText(/P0 reviewed \[asset-yield\] Yield-bearing or investment-like asset/i)).toBeInTheDocument();
   });
 
+  it("switches Counsel Pack export templates and updates the Markdown agenda", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    expect(screen.getByLabelText(/Export template/i)).toHaveValue("rwa-tokenized-asset");
+    expect(screen.getByText(/Recommended for current project/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Tokenized Asset \/ RWA Review/i).length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText(/Export template/i), { target: { value: "ai-governance" } });
+
+    expect(screen.getByLabelText(/Export template/i)).toHaveValue("ai-governance");
+    expect((await screen.findAllByText(/AI Governance Review/i)).length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByText(/Template Review Agenda/i)).toBeInTheDocument());
+    expect(
+      screen.getAllByText(/Confirm model purpose, allowed data classes, redaction status, and human review owner./i).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Not legal advice. Export templates are audit preparation routing aids only./i).length).toBeGreaterThan(0);
+  });
+
   it("saves Counsel Pack versions and shows a diff between exports", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

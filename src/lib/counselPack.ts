@@ -1,6 +1,7 @@
 import type { AuditResult } from "./auditEngine";
 import type { CounselReviewItem } from "./counselReview";
 import type { CounselQuestion } from "./counselQuestions";
+import type { CounselPackTemplate } from "./counselPackTemplates";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
@@ -19,7 +20,8 @@ export function buildMarkdownCounselPack(
   counselQuestions: CounselQuestion[] = [],
   counselReviews: CounselReviewItem[] = [],
   modelIntake?: CounselPackModelIntake,
-  regulatoryGraph?: RegulatoryGraph
+  regulatoryGraph?: RegulatoryGraph,
+  exportTemplate?: CounselPackTemplate
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${flag.title}: ${flag.rationale}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${item.owner}: ${item.action}`).join("\n");
@@ -32,6 +34,7 @@ export function buildMarkdownCounselPack(
   const reviews = counselReviews.map(formatReviewItem).join("\n");
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
+  const exportTemplateSection = exportTemplate ? formatExportTemplateSection(exportTemplate) : "";
   const sources = audit.sourcePack.map((source) => `- ${source.title}: ${source.url}`).join("\n");
 
   return [
@@ -55,6 +58,7 @@ export function buildMarkdownCounselPack(
     `- Risk score: ${audit.score}/100`,
     `- Manifest bundle SHA-256: ${manifest.bundleHash}`,
     "",
+    ...(exportTemplateSection ? ["## Export Template", exportTemplateSection, ""] : []),
     "## Risk Flags",
     flags || "- No material flags detected in the current facts.",
     "",
@@ -77,6 +81,27 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatExportTemplateSection(template: CounselPackTemplate): string {
+  const agenda = template.reviewAgenda.map((item) => `- ${item}`).join("\n");
+  const evidenceFocus = template.evidenceFocus.map((item) => `- ${item}`).join("\n");
+  const assumptionChecks = template.assumptionChecks.map((item) => `- ${item}`).join("\n");
+
+  return [
+    template.notLegalAdviceBoundary,
+    `- Template: ${template.title}`,
+    `- Focus: ${template.summary}`,
+    "",
+    "### Template Review Agenda",
+    agenda,
+    "",
+    "### Template Evidence Focus",
+    evidenceFocus,
+    "",
+    "### Template Assumption Checks",
+    assumptionChecks
   ].join("\n");
 }
 

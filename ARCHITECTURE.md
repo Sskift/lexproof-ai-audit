@@ -62,6 +62,7 @@ lexproof-ai-audit/
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       counselPack.ts         # Markdown pack and browser download helper
+      counselPackTemplates.ts # Counsel Pack template definitions and recommendation logic
       counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
       counselPackExportClient.ts # Browser client for Phase 2 Counsel Pack export records
       auditEngine.test.ts    # Domain tests
@@ -104,7 +105,8 @@ sampleProfiles or blank project
   -> merge edits into editable CounselReviewItem queue
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createSimulatedAnchorReceipt(manifest)
-  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph)
+  -> recommendCounselPackTemplate(project, audit)
+  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate)
   -> buildPrintableCounselPackHtml(title, markdown)
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
@@ -375,10 +377,20 @@ The contracts are executable design artifacts. They do not start a server, add b
 
 Owns export behavior:
 
-- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph)` generates audit preparation Markdown with the non-advice boundary, regulatory source graph, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
+- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph, exportTemplate)` generates audit preparation Markdown with the non-advice boundary, optional export-template agenda, regulatory source graph, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
+
+### `src/lib/counselPackTemplates.ts`
+
+Owns Counsel Pack export template behavior:
+
+- `counselPackTemplates` defines the initial launch readiness, RWA/tokenized asset, AI governance, custody controls, and marketing claims review templates.
+- `recommendCounselPackTemplate(project, audit)` recommends a template from project facts without changing deterministic risk scoring.
+- `getCounselPackTemplateById(id)` returns a stable template for UI selection and Markdown export.
+
+Templates are audit-preparation routing aids only. They must not hide missing evidence, create legal conclusions, or change risk scoring.
 
 ### `src/lib/counselPackVersions.ts`
 
@@ -420,6 +432,7 @@ Owns UI state and composition:
 - async evidence manifest state
 - current regulatory source graph derived from project facts, audit flags, and evidence items
 - local server export-record cache filtered by current workspace ID
+- selected Counsel Pack export template
 
 The component calls library modules and renders the workbench surfaces: Regulatory Command Center, Secure Review Workspace, Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
@@ -439,7 +452,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, and exposes recent local evidence audit trail events plus JSON export.
-- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
+- `CounselPackPanel` selects an export template, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -559,6 +572,7 @@ Domain tests live next to the audit engine and cover:
 - model review run payload and response hashing
 - model review run JSON export
 - counsel pack Markdown content
+- counsel pack template recommendation and template-specific Markdown agenda behavior
 - Markdown browser download behavior
 - counsel pack version record hashing, diffing, and metadata-only JSON download behavior
 - server Counsel Pack export-record client mapping and metadata-only API behavior
@@ -599,6 +613,7 @@ UI tests cover:
 - AI Review Run Ledger visibility
 - editable counsel questions in Counsel Pack
 - editable counsel review statuses in Counsel Pack
+- Counsel Pack export template switching and Markdown agenda update
 - Counsel Pack version save, diff visibility, and version JSON download action
 - Counsel Pack server export-record creation from saved Pack Version metadata
 - Jurisdiction Checklist tab with policy controls and local-counsel routing

@@ -12,6 +12,7 @@ import {
   downloadCounselPackVersionJson,
   type CounselPackVersionRecord
 } from "../lib/counselPackVersions";
+import type { CounselPackTemplate, CounselPackTemplateId } from "../lib/counselPackTemplates";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
 import type { CounselQuestion } from "../lib/counselQuestions";
 import type { SubmissionFit } from "../lib/auditEngine";
@@ -25,8 +26,12 @@ type CounselPackPanelProps = {
   markdown: string;
   counselQuestions: CounselQuestion[];
   counselReviews: CounselReviewItem[];
+  exportTemplates: CounselPackTemplate[];
+  selectedExportTemplate: CounselPackTemplate;
+  recommendedExportTemplateId: CounselPackTemplateId;
   counselPackVersions: CounselPackVersionRecord[];
   serverExportRecords: CounselPackExportRecord[];
+  onSelectExportTemplate: (id: CounselPackTemplateId) => void;
   onAddQuestion: () => void;
   onUpdateQuestion: (id: string, updates: Partial<CounselQuestion>) => void;
   onRemoveQuestion: (id: string) => void;
@@ -42,8 +47,12 @@ export function CounselPackPanel({
   markdown,
   counselQuestions,
   counselReviews,
+  exportTemplates,
+  selectedExportTemplate,
+  recommendedExportTemplateId,
   counselPackVersions,
   serverExportRecords,
+  onSelectExportTemplate,
   onAddQuestion,
   onUpdateQuestion,
   onRemoveQuestion,
@@ -115,6 +124,13 @@ export function CounselPackPanel({
           </span>
         ))}
       </div>
+
+      <ExportTemplatePanel
+        templates={exportTemplates}
+        selectedTemplate={selectedExportTemplate}
+        recommendedTemplateId={recommendedExportTemplateId}
+        onSelectTemplate={onSelectExportTemplate}
+      />
 
       <CounselQuestionsPanel
         questions={counselQuestions}
@@ -199,6 +215,64 @@ export function CounselPackPanel({
 
       <pre className="memo">{markdown}</pre>
     </section>
+  );
+}
+
+function ExportTemplatePanel({
+  templates,
+  selectedTemplate,
+  recommendedTemplateId,
+  onSelectTemplate
+}: {
+  templates: CounselPackTemplate[];
+  selectedTemplate: CounselPackTemplate;
+  recommendedTemplateId: CounselPackTemplateId;
+  onSelectTemplate: (id: CounselPackTemplateId) => void;
+}) {
+  return (
+    <section className="export-template-panel">
+      <div className="export-template-header">
+        <label className="editor-field" htmlFor="counsel-pack-export-template">
+          <span className="field-label">Export template</span>
+          <select
+            id="counsel-pack-export-template"
+            value={selectedTemplate.id}
+            onChange={(event) => onSelectTemplate(event.target.value as CounselPackTemplateId)}
+          >
+            {templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="export-template-summary">
+          <div>
+            <strong>{selectedTemplate.title}</strong>
+            {selectedTemplate.id === recommendedTemplateId ? <span>Recommended for current project</span> : null}
+          </div>
+          <p>{selectedTemplate.summary}</p>
+          <small>{selectedTemplate.notLegalAdviceBoundary}</small>
+        </div>
+      </div>
+      <div className="export-template-grid">
+        <TemplateList title="Review agenda" items={selectedTemplate.reviewAgenda} />
+        <TemplateList title="Evidence focus" items={selectedTemplate.evidenceFocus} />
+      </div>
+    </section>
+  );
+}
+
+function TemplateList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <span>{title}</span>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

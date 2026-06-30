@@ -29,6 +29,12 @@ import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
 import { createServerCounselPackExportRecord } from "./lib/counselPackExportClient";
 import {
+  counselPackTemplates,
+  getCounselPackTemplateById,
+  recommendCounselPackTemplate,
+  type CounselPackTemplateId
+} from "./lib/counselPackTemplates";
+import {
   createCounselPackVersionRecord,
   type CounselPackVersionRecord
 } from "./lib/counselPackVersions";
@@ -141,8 +147,15 @@ export default function App() {
   const [humanReviewDecisions, setHumanReviewDecisions] = useState<HumanReviewDecision[]>(() => loadStoredHumanReviewDecisions());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
+  const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
+    useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
   const audit = useMemo(() => analyzeAuditProfile(project), [project]);
+  const recommendedCounselPackTemplate = useMemo(() => recommendCounselPackTemplate(project, audit), [audit, project]);
+  const selectedCounselPackTemplate = useMemo(
+    () => getCounselPackTemplateById(selectedCounselPackTemplateId),
+    [selectedCounselPackTemplateId]
+  );
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
   const fit = useMemo(() => createSubmissionFit(), []);
@@ -214,7 +227,8 @@ export default function App() {
         currentCounselQuestions,
         currentCounselReviews,
         modelIntakeExport,
-        regulatoryGraph
+        regulatoryGraph,
+        selectedCounselPackTemplate
       );
     },
     [
@@ -226,9 +240,14 @@ export default function App() {
       modelIntakeProfile,
       modelIntakeSummary,
       project,
-      regulatoryGraph
+      regulatoryGraph,
+      selectedCounselPackTemplate
     ]
   );
+
+  useEffect(() => {
+    setSelectedCounselPackTemplateId(recommendedCounselPackTemplate.id);
+  }, [project.id, recommendedCounselPackTemplate.id]);
 
   useEffect(() => {
     let live = true;
@@ -721,8 +740,12 @@ export default function App() {
               markdown={markdown}
               counselQuestions={currentCounselQuestions}
               counselReviews={currentCounselReviews}
+              exportTemplates={counselPackTemplates}
+              selectedExportTemplate={selectedCounselPackTemplate}
+              recommendedExportTemplateId={recommendedCounselPackTemplate.id}
               counselPackVersions={currentCounselPackVersions}
               serverExportRecords={currentCounselPackServerExports}
+              onSelectExportTemplate={setSelectedCounselPackTemplateId}
               onAddQuestion={addCounselQuestion}
               onUpdateQuestion={updateCounselQuestion}
               onRemoveQuestion={removeCounselQuestion}

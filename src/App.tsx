@@ -308,7 +308,8 @@ export default function App() {
         modelIntakeExport,
         regulatoryGraph,
         selectedCounselPackTemplate,
-        dataBoundaryReport
+        dataBoundaryReport,
+        regulatorySourceReview
       );
     },
     [
@@ -322,6 +323,7 @@ export default function App() {
       modelIntakeSummary,
       project,
       regulatoryGraph,
+      regulatorySourceReview,
       selectedCounselPackTemplate
     ]
   );

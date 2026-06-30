@@ -25,7 +25,9 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Regulatory Command Center/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Source Review Ledger/i })).toBeInTheDocument();
-    expect(screen.getByText(/Not legal advice. Source review metadata is audit preparation lineage only./i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Not legal advice. Source review metadata is audit preparation lineage only./i).length
+    ).toBeGreaterThan(0);
     expect(screen.getByText(/Reviewed sources/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Regulation \(EU\) 2023\/1114, Title II/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Evidence gap queue/i)).toBeInTheDocument();
@@ -1326,6 +1328,10 @@ describe("App", () => {
     expect(screen.getByLabelText(/Export template/i)).toHaveValue("rwa-tokenized-asset");
     expect(screen.getByText(/Recommended for current project/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Tokenized Asset \/ RWA Review/i).length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByText(/## Source Review Ledger/i)).toBeInTheDocument());
+    expect(
+      screen.getAllByText(/Not legal advice. Source review metadata is audit preparation lineage only./i).length
+    ).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/Export template/i), { target: { value: "ai-governance" } });
 

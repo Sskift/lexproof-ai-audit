@@ -7,6 +7,7 @@ import type { EvidenceManifest } from "./evidenceManifest";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
+import type { RegulatorySourceReview } from "./regulatorySourceReview";
 
 export type CounselPackModelIntake = {
   profile: ModelConnectionProfile;
@@ -23,7 +24,8 @@ export function buildMarkdownCounselPack(
   modelIntake?: CounselPackModelIntake,
   regulatoryGraph?: RegulatoryGraph,
   exportTemplate?: CounselPackTemplate,
-  dataBoundaryReport?: DataBoundaryReport
+  dataBoundaryReport?: DataBoundaryReport,
+  regulatorySourceReview?: RegulatorySourceReview
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -36,6 +38,7 @@ export function buildMarkdownCounselPack(
   const reviews = counselReviews.map(formatReviewItem).join("\n");
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
+  const sourceReviewSection = regulatorySourceReview ? formatRegulatorySourceReviewSection(regulatorySourceReview) : "";
   const exportTemplateSection = exportTemplate ? formatExportTemplateSection(exportTemplate) : "";
   const dataBoundarySection = dataBoundaryReport ? summarizeDataBoundaryForExport(dataBoundaryReport) : "";
   const sources = audit.sourcePack.map((source) => `- ${safe(source.title)}: ${source.url}`).join("\n");
@@ -73,6 +76,7 @@ export function buildMarkdownCounselPack(
     reviews || "- No counsel review statuses have been generated yet.",
     "",
     ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
+    ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
     ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
     remediation,
@@ -106,6 +110,33 @@ function formatExportTemplateSection(template: CounselPackTemplate): string {
     "",
     "### Template Assumption Checks",
     assumptionChecks
+  ].join("\n");
+}
+
+function formatRegulatorySourceReviewSection(review: RegulatorySourceReview): string {
+  const items = review.items
+    .map(
+      (item) =>
+        `- ${item.reviewStatus} ${safe(item.jurisdiction)} [${safe(item.citation)}] last reviewed ${safe(item.lastReviewedAt)}; next review ${safe(item.nextReviewDueAt)}; Source: ${item.sourceUrl}; notes: ${safe(item.reviewerNotes)}`
+    )
+    .join("\n");
+  const actions = review.actions
+    .map((action) => `- ${action.priority} [${safe(action.clauseId)}] ${safe(action.action)} Source: ${action.sourceUrl}`)
+    .join("\n");
+
+  return [
+    review.notLegalAdviceBoundary,
+    `- Review status: ${review.status}`,
+    `- Review cadence: ${review.reviewWindowDays} days`,
+    `- Reviewed sources: ${review.currentSourceCount}/${review.totalSourceCount}`,
+    `- Review due: ${review.reviewDueCount}`,
+    `- Metadata gaps: ${review.metadataMissingCount}`,
+    "",
+    "### Source Review Records",
+    items || "- No source review records matched current facts.",
+    "",
+    "### Source Refresh Actions",
+    actions || "- No source metadata refresh actions currently open."
   ].join("\n");
 }
 

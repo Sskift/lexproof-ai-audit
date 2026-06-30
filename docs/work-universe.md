@@ -48,7 +48,7 @@ Acceptance:
 
 - A user can select jurisdictions and see source-linked review triggers with missing evidence.
 - The UI never says a project is legally compliant or non-compliant.
-- Counsel Pack exports matched clauses, evidence gaps, and local counsel questions.
+- Counsel Pack exports matched clauses, evidence gaps, Source Review Ledger freshness metadata, and local counsel questions.
 
 Do not build:
 
@@ -144,11 +144,12 @@ Build:
 - Export Safety Gate that routes the same data-boundary report into Markdown preview, Markdown/PDF download gating, manifest JSON gating, simulated anchor gating, version-save gating, and server export-record gating.
 - Download receipts for manifest JSON, model-run receipts, evidence audit trail, and simulated/real anchor receipts.
 - Export diff view between pack versions.
+- Source Review Ledger export in Markdown so reviewed source counts, next review dates, reviewer notes, and refresh actions survive the counsel handoff without becoming legal conclusions.
 
 Acceptance:
 
 - A judge can reproduce the demo export from a clean project.
-- Counsel can see facts, assumptions, source links, evidence gaps, review status, and hashes in one packet.
+- Counsel can see facts, assumptions, source links, source freshness, evidence gaps, review status, and hashes in one packet.
 - Blocked private-key, credential, or raw-KYC findings stop export handoff until remediated.
 - Every export repeats the Not legal advice boundary.
 

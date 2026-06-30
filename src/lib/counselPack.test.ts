@@ -12,6 +12,7 @@ import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
 import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile } from "./modelIntake";
 import { createRegulatoryGraph } from "./regulatoryGraph";
+import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import { createDataBoundaryReport } from "./dataBoundary";
 
 const project: ProjectProfile = {
@@ -130,7 +131,7 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("Not legal advice");
   });
 
-  it("includes regulatory source graph clauses, evidence gaps, and non-advice boundary when provided", async () => {
+  it("includes regulatory source graph clauses, source review ledger, evidence gaps, and non-advice boundary when provided", async () => {
     const graphProject: ProjectProfile = {
       ...project,
       jurisdictions: ["European Union", "United Kingdom"],
@@ -142,9 +143,17 @@ describe("buildMarkdownCounselPack", () => {
     const audit = analyzeAuditProfile(graphProject);
     const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
     const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
-    const markdown = buildMarkdownCounselPack(graphProject, audit, manifest, [], [], undefined, graph);
+    const sourceReview = createRegulatorySourceReview(graph, {
+      asOf: "2026-07-15T00:00:00.000Z"
+    });
+    const markdown = buildMarkdownCounselPack(graphProject, audit, manifest, [], [], undefined, graph, undefined, undefined, sourceReview);
 
     expect(markdown).toContain("## Regulatory Source Graph");
+    expect(markdown).toContain("## Source Review Ledger");
+    expect(markdown).toContain("Not legal advice. Source review metadata is audit preparation lineage only.");
+    expect(markdown).toContain("- Review cadence: 90 days");
+    expect(markdown).toContain("next review 2026-09-28");
+    expect(markdown).toContain("route interpretation to local counsel");
     expect(markdown).toContain("Regulation (EU) 2023/1114, Title II");
     expect(markdown).toContain("FCA PS23/6 and FG23/3");
     expect(markdown).toContain("Evidence gaps");

@@ -12,6 +12,7 @@ lexproof-ai-audit/
     app.ts                   # Fastify app composition, shared hooks, and Phase 2 health endpoint
     index.ts                 # API process entry point
     modelGatewayRoutes.ts    # Model Gateway adapter, run, lookup, and summary routes
+    counselPackExportRoutes.ts # Counsel Pack export-record create/list/lookup routes
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
     modelGatewayService.ts   # Mock Model Gateway success/failure receipts and boundary checks
     humanReviewService.ts    # Human review record helpers
@@ -519,7 +520,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/modelGatewayRoutes.ts` is the first W7 domain route module split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/modelGatewayRoutes.ts` and `server/counselPackExportRoutes.ts` are the first W7 domain route modules split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -571,7 +572,7 @@ Human review records are not signed legal opinions. They track audit preparation
 - reject raw Markdown/PDF content, raw KYC/personal data, credential material, invalid hashes, and invalid artifact metadata
 - append audit-log records when a server export record is created
 
-`server/counselPackExportService.ts` implements export-record validation and metadata construction. `src/lib/counselPackExportClient.ts` maps local Pack Version metadata into the Phase 2 API request. The server route persists records through the repository and intentionally does not render PDFs or store raw Counsel Pack content.
+`server/counselPackExportService.ts` implements export-record validation and metadata construction. `src/lib/counselPackExportClient.ts` maps local Pack Version metadata into the Phase 2 API request. `server/counselPackExportRoutes.ts` persists records through the repository, exposes create/list/lookup routes, appends audit-log records, and intentionally does not render PDFs or store raw Counsel Pack content.
 
 ### Audit Log Responsibilities
 

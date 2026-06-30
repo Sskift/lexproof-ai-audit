@@ -222,6 +222,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Model Gateway route-module registration independently from the full app composition
+- Counsel Pack export route-module registration independently from the full app composition
 
 `server/reviewWorkspaceRepository.test.ts` covers:
 

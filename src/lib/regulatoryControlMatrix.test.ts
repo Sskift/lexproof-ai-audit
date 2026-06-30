@@ -52,6 +52,7 @@ describe("createRegulatoryControlMatrix", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
+      aiUsage: "Manual evidence summary only",
       evidenceItems: [
         {
           id: "mica-whitepaper",
@@ -86,6 +87,7 @@ describe("createRegulatoryControlMatrix", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
+      aiUsage: "Manual evidence summary only",
       evidenceItems: [
         {
           id: "mica-whitepaper",

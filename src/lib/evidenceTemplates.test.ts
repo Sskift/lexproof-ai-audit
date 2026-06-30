@@ -17,6 +17,21 @@ const yieldProject: ProjectProfile = {
   evidenceItems: []
 };
 
+const aiLegalWorkflowProject: ProjectProfile = {
+  id: "template-ai-workflow",
+  projectName: "LexAssist Evidence Desk",
+  entityType: "Legal operations AI workflow",
+  jurisdictions: ["European Union", "United Kingdom"],
+  assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
+  userType: "In-house counsel and compliance reviewers",
+  custodyModel: "No custody; metadata-only evidence records",
+  dataSensitivity: "Confidential matter summaries with client identifiers excluded",
+  aiUsage: "AI drafts issue-spotting notes, evidence requests, and source-linked counsel questions for human review",
+  blockchainUse: "Simulated manifest anchor",
+  operatingStage: "Internal pilot before counsel-supervised rollout",
+  evidenceItems: []
+};
+
 describe("evidence templates", () => {
   it("lists the three hackathon-critical evidence template scenarios", () => {
     const templates = listEvidenceTemplates();
@@ -47,5 +62,21 @@ describe("evidence templates", () => {
     expect(items.every((item) => item.status === "requested")).toBe(true);
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
+  });
+
+  it("recommends AI workflow evidence with regulatory control links", () => {
+    const recommended = recommendEvidenceTemplates(aiLegalWorkflowProject);
+    const items = createEvidenceItemsFromTemplate("ai-compliance-workflow");
+    const serializedSources = items.map((item) => item.source ?? "").join("\n");
+
+    expect(recommended[0]).toMatchObject({
+      id: "ai-compliance-workflow",
+      title: "AI Legal / Compliance Workflow"
+    });
+    expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");
+    expect(serializedSources).toContain("regulatory control: control-uk-ico-ai-data-protection-governance");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
   });
 });

@@ -160,6 +160,7 @@ Build:
 
 - `src/data/regulatoryClauses.ts` with source-backed regulatory references by jurisdiction, regulator, topic, citation, source URL, trigger facts, evidence requests, and counsel questions.
 - `src/lib/regulatoryGraph.ts` to match project facts, audit flags, evidence status, and jurisdiction packs to clause references and evidence gaps.
+- AI legal workflow source-control coverage is implemented for EU AI Act Article 4 / Chapter III review routing and UK ICO AI data protection guidance. The `ai-compliance-workflow` evidence template carries `control-eu-ai-act-ai-literacy-governance` and `control-uk-ico-ai-data-protection-governance` source references so the AI scenario can show human oversight, source lineage, redaction, and reviewer decision-log gaps without legal conclusions.
 - `src/lib/regulatorySourcePack.ts` for downloadable metadata-only source pack JSON with matched clauses, evidence gaps, Source Review Ledger freshness, counsel questions, local counsel routes, and a stable pack hash from the Counsel Pack surface.
 - `src/lib/regulatoryControlMatrix.ts` for downloadable metadata-only control matrix JSON with source review status, evidence coverage status, local counsel route, next action, and Not legal advice boundary from the command center.
 - Frontend panels for jurisdiction risk matrix, clause cards, evidence coverage by source, and local counsel handoff routes.

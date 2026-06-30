@@ -119,6 +119,47 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-ai-act-ai-literacy-governance",
+    jurisdiction: "European Union",
+    regulator: "European Union",
+    sourceName: "Regulation (EU) 2024/1689 laying down harmonised rules on artificial intelligence",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+    citation: "Regulation (EU) 2024/1689, Article 4 and Chapter III",
+    topic: "ai-governance",
+    summary:
+      "Prepare AI literacy, human oversight, source lineage, and risk-control evidence for EU AI workflow review without treating the system output as legal advice.",
+    triggerFlagIds: ["ai-workflow"],
+    triggerKeywords: ["ai-assisted", "ai drafts", "model", "human review", "source-linked counsel"],
+    evidenceRequests: [
+      {
+        id: "eu-ai-act-ai-use-policy-human-oversight",
+        title: "EU AI use policy and human oversight evidence",
+        reason:
+          "EU AI workflow review needs permitted-use, model-limit, human-review owner, oversight, escalation, and non-advice boundary evidence.",
+        priority: "P1",
+        keywords: ["ai system use policy", "permitted model use", "human review", "review owner", "non-advice", "oversight", "escalation"]
+      },
+      {
+        id: "eu-ai-act-source-lineage-risk-controls",
+        title: "EU AI source lineage and risk-control evidence",
+        reason:
+          "AI-assisted review should show source lineage, risk management, unsupported-claim handling, audit logs, and reviewer control before counsel reliance.",
+        priority: "P1",
+        keywords: ["source lineage", "risk management", "unsupported claims", "audit log", "review log", "risk-control"]
+      }
+    ],
+    counselQuestions: [
+      "Which AI literacy, human oversight, and source-lineage controls should EU counsel review for this workflow?",
+      "What evidence shows model outputs remain draft audit preparation with reviewer authority and escalation paths?"
+    ],
+    localCounselRole: "EU AI governance / data protection counsel",
+    effectiveAsOf: "2024-08-01",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, Article 4 AI literacy, Chapter III high-risk governance context, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uk-fca-crypto-financial-promotions",
     jurisdiction: "United Kingdom",
     regulator: "Financial Conduct Authority",
@@ -157,6 +198,48 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-06-30",
     reviewerNotes:
       "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "uk-ico-ai-data-protection-governance",
+    jurisdiction: "United Kingdom",
+    regulator: "Information Commissioner's Office",
+    sourceName: "Guidance on AI and data protection",
+    sourceUrl:
+      "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/",
+    citation: "ICO Guidance on AI and data protection",
+    topic: "data",
+    summary:
+      "Prepare AI data-protection governance, redaction, transparency, fairness, explainability, and reviewer decision-log evidence for UK counsel review.",
+    triggerFlagIds: ["ai-workflow"],
+    triggerKeywords: ["ai", "data protection", "personal data", "model", "human review", "legal workflow"],
+    evidenceRequests: [
+      {
+        id: "uk-ico-ai-data-protection-redaction",
+        title: "UK AI data-protection and redaction evidence",
+        reason:
+          "UK AI workflow review needs model-payload redaction, excluded data categories, approved evidence summaries, and data-protection boundary evidence.",
+        priority: "P1",
+        keywords: ["model payload redaction", "redaction", "excluded data categories", "approved evidence summaries", "data protection", "personal data"]
+      },
+      {
+        id: "uk-ico-ai-explainability-review-log",
+        title: "UK AI explainability and reviewer decision log",
+        reason:
+          "AI-assisted decisions and recommendations should have source lineage, explainability notes, reviewer decisions, approval logs, and override history.",
+        priority: "P1",
+        keywords: ["source lineage", "explainability", "reviewer", "approval log", "human review", "decision log", "review notes"]
+      }
+    ],
+    counselQuestions: [
+      "Which AI data-protection, transparency, fairness, and data-minimisation issues should UK counsel review?",
+      "What redaction, source-lineage, and reviewer decision evidence should be retained before counsel handoff?"
+    ],
+    localCounselRole: "UK AI / data protection counsel",
+    effectiveAsOf: "2023-03-15",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed for updated ICO AI guidance structure, fairness, transparency, lawfulness, security and data-minimisation routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

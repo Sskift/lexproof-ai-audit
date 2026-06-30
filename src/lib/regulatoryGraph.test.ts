@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
+import { createEvidenceItemsFromTemplate } from "./evidenceTemplates";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import type { ProjectProfile } from "./projectModel";
 
@@ -15,6 +16,21 @@ const baseProject: ProjectProfile = {
   aiUsage: "AI drafts evidence summaries for human review",
   blockchainUse: "Simulated evidence anchor",
   operatingStage: "Planned public launch",
+  evidenceItems: []
+};
+
+const aiLegalWorkflowProject: ProjectProfile = {
+  id: "project-ai-legal-workflow",
+  projectName: "LexAssist Evidence Desk",
+  entityType: "Legal operations AI workflow",
+  jurisdictions: ["European Union", "United Kingdom"],
+  assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
+  userType: "In-house counsel, compliance reviewers, and outside counsel",
+  custodyModel: "No custody; workspace stores metadata-only evidence records",
+  dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
+  aiUsage: "AI drafts issue-spotting notes, evidence requests, and source-linked counsel questions for human review",
+  blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
+  operatingStage: "Internal pilot before counsel-supervised rollout",
   evidenceItems: []
 };
 
@@ -47,8 +63,8 @@ describe("createRegulatoryGraph", () => {
     });
 
     expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "European Union")).toMatchObject({
-      matchedClauseCount: 1,
-      missingEvidenceCount: 2,
+      matchedClauseCount: 2,
+      missingEvidenceCount: 4,
       readiness: "evidence-gaps",
       localCounselRole: "EU crypto-asset / data protection counsel"
     });
@@ -119,6 +135,87 @@ describe("createRegulatoryGraph", () => {
         "Prepare US crypto asset classification and offering analysis for counsel review.",
         "Prepare EU crypto-asset white paper and public communication evidence for counsel review."
       ])
+    );
+  });
+
+  it("matches EU and UK AI legal workflow source controls without legal conclusions", () => {
+    const audit = analyzeAuditProfile(aiLegalWorkflowProject);
+    const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["eu-ai-act-ai-literacy-governance", "uk-ico-ai-data-protection-governance"])
+    );
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-ai-literacy-governance")).toMatchObject({
+      jurisdiction: "European Union",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+      citation: "Regulation (EU) 2024/1689, Article 4 and Chapter III",
+      coverageStatus: "missing",
+      localCounselRole: "EU AI governance / data protection counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-ico-ai-data-protection-governance")).toMatchObject({
+      jurisdiction: "United Kingdom",
+      sourceUrl:
+        "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/",
+      coverageStatus: "missing",
+      localCounselRole: "UK AI / data protection counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "EU AI use policy and human oversight evidence",
+        "EU AI source lineage and risk-control evidence",
+        "UK AI data-protection and redaction evidence",
+        "UK AI explainability and reviewer decision log"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks AI legal workflow source controls covered when AI template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("ai-compliance-workflow").map((item, index) => ({
+      ...item,
+      id: `ai-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...aiLegalWorkflowProject,
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-ai-literacy-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-ico-ai-data-protection-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
+        expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
+      ])
+    );
+  });
+
+  it("does not match AI source controls for a manual EU and UK workflow", () => {
+    const manualProject: ProjectProfile = {
+      ...aiLegalWorkflowProject,
+      id: "project-manual-workflow",
+      entityType: "Legal operations workflow",
+      aiUsage: "Manual evidence summary only",
+      assetModel: "Internal matter intake and evidence review workflow",
+      dataSensitivity: "Confidential matter summaries with personal identifiers excluded"
+    };
+    const audit = analyzeAuditProfile(manualProject);
+    const graph = createRegulatoryGraph(manualProject, audit, manualProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["eu-ai-act-ai-literacy-governance", "uk-ico-ai-data-protection-governance"])
     );
   });
 });

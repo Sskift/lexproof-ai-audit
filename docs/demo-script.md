@@ -30,7 +30,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 0. **Start from a seeded scenario**
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
-   - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, source review, and counsel export.
+   - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, EU AI Act / UK ICO AI data protection source controls, and counsel export.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
@@ -40,6 +40,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show jurisdiction readiness, official-source clause triggers, the Regulatory Control Matrix, evidence gap queue, manifest status, and the Not legal advice boundary.
    - Click **Download Control Matrix JSON** to show the metadata-only handoff with evidence coverage, source review status, local counsel route, next action, and no compliance conclusion.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
+   - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 
 2. **Connect model**
@@ -51,6 +52,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 3. **Select or upload evidence**
    - Open **Evidence Ledger**.
    - Apply the **tokenized yield / RWA** evidence template, or add one local synthetic evidence item.
+   - For the AI alternate path, apply the **AI compliance workflow** evidence template and show source references such as `regulatory control: control-eu-ai-act-ai-literacy-governance` and `regulatory control: control-uk-ico-ai-data-protection-governance`.
    - Include a source reference such as `regulatory control: control-eu-mica-title-ii-white-paper`, sync to the local Evidence Vault API, and show the vault record's **Controls:** line plus manifest hash. Not legal advice.
    - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
    - Show **Evidence Retention Readiness** and confirm normal demo evidence is metadata-only or needs human confirmation before vault sync. Not legal advice.

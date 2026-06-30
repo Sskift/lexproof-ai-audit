@@ -829,7 +829,7 @@ textarea {
 
 .reg-control-item header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
   align-items: center;
   min-width: 0;
@@ -838,7 +838,8 @@ textarea {
 .reg-control-item strong,
 .reg-control-item p {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .reg-control-item strong {
@@ -850,9 +851,11 @@ textarea {
   border-radius: 999px;
   background: #e7edf8;
   color: #263d73;
+  grid-column: 2;
+  justify-self: start;
   padding: 4px 7px;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .reg-control-item.needs-evidence header small {

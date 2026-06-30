@@ -39,7 +39,7 @@ export function createEvidenceItemsFromTemplate(templateId: string): EvidenceIte
 }
 
 function scoreTemplate(template: EvidenceTemplate, projectText: string): number {
-  return template.triggerKeywords.reduce((score, keyword) => (projectText.includes(keyword) ? score + 1 : score), 0);
+  return template.triggerKeywords.reduce((score, keyword) => (keywordMatchesProjectText(keyword, projectText) ? score + 1 : score), 0);
 }
 
 function cloneTemplate(template: EvidenceTemplate): EvidenceTemplate {
@@ -48,4 +48,19 @@ function cloneTemplate(template: EvidenceTemplate): EvidenceTemplate {
     triggerKeywords: [...template.triggerKeywords],
     items: template.items.map((item) => ({ ...item }))
   };
+}
+
+function keywordMatchesProjectText(keyword: string, projectText: string): boolean {
+  const normalized = keyword.trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+  if (normalized.includes(" ")) {
+    return projectText.includes(normalized);
+  }
+  return new RegExp(`\\b${escapeRegExp(normalized)}\\b`, "i").test(projectText);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -99,6 +99,7 @@ import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
 import type { CounselPackExportRecord } from "./lib/phase2Types";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
+import { createRegulatorySourceReview } from "./lib/regulatorySourceReview";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
   createRiskEvidenceCoverage,
@@ -169,6 +170,7 @@ export default function App() {
   );
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
+  const regulatorySourceReview = useMemo(() => createRegulatorySourceReview(regulatoryGraph), [regulatoryGraph]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
   const evidenceTemplates = useMemo(() => listEvidenceTemplates(), []);
@@ -747,6 +749,7 @@ export default function App() {
             project={project}
             audit={audit}
             graph={regulatoryGraph}
+            sourceReview={regulatorySourceReview}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />

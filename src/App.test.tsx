@@ -24,6 +24,9 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /LexProof AuditOS/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Regulatory Command Center/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Source Review Ledger/i })).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Source review metadata is audit preparation lineage only./i)).toBeInTheDocument();
+    expect(screen.getByText(/Reviewed sources/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Regulation \(EU\) 2023\/1114, Title II/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Evidence gap queue/i)).toBeInTheDocument();
     expect(screen.getAllByText(/BLI Legal Tech Hackathon 2/i).length).toBeGreaterThan(0);

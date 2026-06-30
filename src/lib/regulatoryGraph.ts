@@ -35,6 +35,7 @@ export type MatchedRegulatoryClause = {
   localCounselRole: string;
   effectiveAsOf: string;
   lastReviewedAt: string;
+  reviewerNotes: string;
   notLegalAdviceBoundary: RegulatoryClause["notLegalAdviceBoundary"];
 };
 
@@ -146,6 +147,7 @@ function createMatchedClause(
     localCounselRole: clause.localCounselRole,
     effectiveAsOf: clause.effectiveAsOf,
     lastReviewedAt: clause.lastReviewedAt,
+    reviewerNotes: clause.reviewerNotes,
     notLegalAdviceBoundary: clause.notLegalAdviceBoundary
   };
 }

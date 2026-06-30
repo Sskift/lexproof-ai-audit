@@ -83,6 +83,7 @@ lexproof-ai-audit/
       jurisdictionChecklist.ts # Jurisdiction checklist generation
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
+      regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
       counselPack.ts         # Markdown pack and browser download helper
       dataBoundary.ts        # Export Safety Gate classification, redaction, and blocker report
       counselPackTemplates.ts # Counsel Pack template definitions and recommendation logic
@@ -118,6 +119,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
   -> createRegulatoryGraph(project, audit, evidenceItems)
+  -> createRegulatorySourceReview(regulatoryGraph)
   -> recommendEvidenceTemplates(project)
   -> validateModelConnectionProfile(modelIntakeProfile)
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
@@ -320,6 +322,16 @@ Owns official-source regulatory graph behavior:
 
 Regulatory graph output is audit preparation material only. It does not classify legality, determine compliance, or replace local counsel review.
 
+### `src/lib/regulatorySourceReview.ts`
+
+Owns source review metadata for the Regulatory Command Center:
+
+- `createRegulatorySourceReview(graph, options)` turns matched regulatory clauses into source review records with `effectiveAsOf`, `lastReviewedAt`, `nextReviewDueAt`, `sourceUrl`, and reviewer notes.
+- Review status distinguishes `current`, `review-due`, and `metadata-missing` source records using a configurable review window.
+- The output repeats the Not legal advice boundary and creates review actions for source metadata refresh only.
+
+This module tracks source lineage and review freshness. It does not decide whether a law applies, whether a source is legally current, or whether a project is compliant.
+
 ### `src/data/regulatoryClauses.ts`
 
 Owns reviewed official-source reference seeds for the Regulatory Source Graph:
@@ -331,7 +343,7 @@ Owns reviewed official-source reference seeds for the Regulatory Source Graph:
 - Swiss FINMA ICO/token classification guidance.
 - UAE VARA virtual asset regulations and compliance/risk management rulebook.
 
-This file contains static source metadata, trigger keywords, evidence requests, and counsel questions. It must not contain legal conclusions, scraped user data, credentials, or scoring logic.
+This file contains static source metadata, trigger keywords, evidence requests, counsel questions, effective dates, review dates, and reviewer notes. It must not contain legal conclusions, scraped user data, credentials, or scoring logic.
 
 ### `src/lib/modelProvider.ts`
 
@@ -583,7 +595,7 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
-- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`.
+- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts` and `regulatorySourceReview.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
@@ -750,6 +762,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
+- regulatory source review freshness, review-due actions, reviewer notes, and non-advice boundary
 
 UI tests cover:
 

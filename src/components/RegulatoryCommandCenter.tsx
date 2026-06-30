@@ -1,12 +1,14 @@
 import { AlertTriangle, ExternalLink, FileSearch, Globe2, ListChecks, ShieldCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
 import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGraph";
+import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
 
 type RegulatoryCommandCenterProps = {
   project: ProjectProfile;
   audit: AuditResult;
   graph: RegulatoryGraph;
+  sourceReview: RegulatorySourceReview;
   manifestHash?: string;
   onNavigate: (tab: "jurisdiction" | "risk" | "evidence" | "counsel") => void;
 };
@@ -15,11 +17,13 @@ export function RegulatoryCommandCenter({
   project,
   audit,
   graph,
+  sourceReview,
   manifestHash,
   onNavigate
 }: RegulatoryCommandCenterProps) {
   const topClauses = graph.matchedClauses.slice(0, 4);
   const topGaps = graph.evidenceGaps.slice(0, 5);
+  const topSourceReviewItems = sourceReview.items.slice(0, 4);
 
   return (
     <section className="panel regulatory-command-center" aria-label="Regulatory Command Center">
@@ -49,6 +53,37 @@ export function RegulatoryCommandCenter({
         <Metric label="Evidence gaps" value={graph.evidenceGaps.length} helper="open source controls" />
         <Metric label="Manifest" value={manifestHash ? "ready" : "pending"} helper={manifestHash ? `${manifestHash.slice(0, 12)}...` : "calculating"} />
       </div>
+
+      <section className={`reg-source-review ${sourceReview.status}`} aria-label="Source Review Ledger">
+        <div className="reg-section-title">
+          <ShieldCheck size={17} aria-hidden="true" />
+          <h3>Source Review Ledger</h3>
+        </div>
+        <div className="reg-source-review-summary">
+          <Metric label="Reviewed sources" value={sourceReview.currentSourceCount} helper={`${sourceReview.totalSourceCount} matched`} />
+          <Metric label="Review due" value={sourceReview.reviewDueCount} helper={`${sourceReview.reviewWindowDays}-day cadence`} />
+          <Metric label="Metadata gaps" value={sourceReview.metadataMissingCount} helper="citation, URL, notes" />
+        </div>
+        <p>{sourceReview.notLegalAdviceBoundary}</p>
+        <div className="reg-source-review-list">
+          {topSourceReviewItems.length === 0 ? (
+            <p className="empty-state">No source review records matched current facts.</p>
+          ) : null}
+          {topSourceReviewItems.map((item) => (
+            <article key={item.clauseId} className={`reg-source-review-item ${item.reviewStatus}`}>
+              <header>
+                <span>{formatSourceReviewStatus(item.reviewStatus)}</span>
+                <strong>{item.jurisdiction}</strong>
+              </header>
+              <p>{item.citation}</p>
+              <small>
+                Effective {item.effectiveAsOf} · last reviewed {item.lastReviewedAt} · next review {item.nextReviewDueAt}
+              </small>
+              <small>{item.reviewerNotes}</small>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="reg-command-layout">
         <section className="reg-jurisdiction-matrix" aria-label="Jurisdiction risk matrix">
@@ -153,4 +188,14 @@ function formatReadiness(readiness: RegulatoryReadiness): string {
     return "partial evidence";
   }
   return "evidence gaps";
+}
+
+function formatSourceReviewStatus(status: RegulatorySourceReviewStatus): string {
+  if (status === "metadata-missing") {
+    return "metadata gap";
+  }
+  if (status === "review-due") {
+    return "review due";
+  }
+  return "current";
 }

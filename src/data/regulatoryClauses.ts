@@ -31,6 +31,7 @@ export type RegulatoryClause = {
   localCounselRole: string;
   effectiveAsOf: string;
   lastReviewedAt: string;
+  reviewerNotes: string;
   notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only.";
 };
 
@@ -72,6 +73,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "US securities / commodities counsel",
     effectiveAsOf: "2026-03-23",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -111,6 +114,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "EU crypto-asset / data protection counsel",
     effectiveAsOf: "2024-12-30",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -150,6 +155,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "UK financial promotion / crypto counsel",
     effectiveAsOf: "2023-10-08",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -189,6 +196,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "Singapore fintech / digital asset counsel",
     effectiveAsOf: "2025-06-30",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -228,6 +237,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "Swiss DLT / financial services counsel",
     effectiveAsOf: "2018-02-16",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -267,6 +278,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "UAE virtual-assets / financial regulatory counsel",
     effectiveAsOf: "2025-06-19",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -306,6 +319,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     localCounselRole: "UAE virtual-assets / financial regulatory counsel",
     effectiveAsOf: "2025-06-19",
     lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   }
 ];

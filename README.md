@@ -43,8 +43,8 @@ Key evidence:
 - Human Review queue with reviewer assignment, due dates, saved status history, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
-- Regulatory Command Center first screen with jurisdiction readiness, source-backed clause triggers, evidence gaps, manifest readiness, and counsel handoff status.
-- Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, UK FCA, Singapore MAS, Swiss FINMA, and UAE VARA references.
+- Regulatory Command Center first screen with jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
+- Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, UK FCA, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
@@ -69,9 +69,11 @@ The Demo Scenario Library turns seeded synthetic profiles into runnable judging 
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
-The Regulatory Command Center turns project facts into source-backed jurisdiction triggers, evidence gaps, and local counsel handoff status without making legal conclusions.
+The Regulatory Command Center turns project facts into source-backed jurisdiction triggers, source review freshness, evidence gaps, and local counsel handoff status without making legal conclusions.
 
 ![Regulatory Command Center](docs/assets/screenshots/regulatory-command-center.png)
+
+![Regulatory Source Review Ledger](docs/assets/screenshots/regulatory-source-review-ledger.png)
 
 ![Risk Audit with source-linked issue cards](docs/assets/screenshots/risk-audit-source-links.jpg)
 

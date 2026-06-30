@@ -572,6 +572,109 @@ textarea {
   gap: 10px;
 }
 
+.reg-source-review {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.reg-source-review.review-due {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.reg-source-review.metadata-missing {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.reg-source-review > p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.reg-source-review-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reg-source-review-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.reg-source-review-item {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 10px;
+}
+
+.reg-source-review-item.review-due {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.reg-source-review-item.metadata-missing {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.reg-source-review-item header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.reg-source-review-item header span {
+  border-radius: 999px;
+  background: #dcefe5;
+  color: #176b52;
+  padding: 4px 7px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reg-source-review-item.review-due header span,
+.reg-source-review-item.metadata-missing header span {
+  background: #f7dfd8;
+  color: #9f241a;
+}
+
+.reg-source-review-item strong,
+.reg-source-review-item p,
+.reg-source-review-item small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reg-source-review-item strong {
+  color: #172431;
+  line-height: 1.25;
+}
+
+.reg-source-review-item p,
+.reg-source-review-item small {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 .reg-metric {
   display: grid;
   gap: 4px;

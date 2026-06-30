@@ -60,6 +60,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "EvidenceVaultRecord",
       true
     ),
+    createRoute(
+      "POST",
+      "/api/workspaces/:workspaceId/evidence/:evidenceId/replacement",
+      "evidence-vault",
+      "EvidenceReplacementRequest",
+      "EvidenceReplacementResult",
+      true
+    ),
     createRoute("GET", "/api/workspaces/:workspaceId/evidence-manifest", "evidence-vault", "EvidenceManifestRequest", "EvidenceManifest", true),
     createRoute("GET", "/api/model-gateway/adapters", "model-gateway", "ModelGatewayAdapterListRequest", "ModelGatewayAdapterDescriptor[]", true),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
@@ -165,10 +173,14 @@ model EvidenceVaultRecord {
   version                      Int
   linkedRiskFlagIdsJson        String
   containsRawKycOrPersonalData Boolean
+  parentEvidenceId             String?
+  supersededByEvidenceId       String?
+  replacementReason            String?
   createdAt                    DateTime
   updatedAt                    DateTime
 
   @@index([workspaceId])
+  @@index([parentEvidenceId])
 }
 
 model ModelGatewayRun {

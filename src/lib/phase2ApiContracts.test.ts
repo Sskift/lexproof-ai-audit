@@ -40,6 +40,14 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "POST",
+        path: "/api/workspaces/:workspaceId/evidence/:evidenceId/replacement",
+        domain: "evidence-vault",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "GET",
         path: "/api/model-gateway/adapters",
         domain: "model-gateway",
@@ -121,6 +129,9 @@ describe("Phase 2 backend API contracts", () => {
 
     expect(schema).toContain("model WorkspaceRecord");
     expect(schema).toContain("model EvidenceVaultRecord");
+    expect(schema).toContain("parentEvidenceId");
+    expect(schema).toContain("supersededByEvidenceId");
+    expect(schema).toContain("replacementReason");
     expect(schema).toContain("model ModelGatewayRun");
     expect(schema).toContain("model HumanReviewRecord");
     expect(schema).toContain("model AuditLogRecord");

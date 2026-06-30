@@ -63,6 +63,8 @@ Regulatory source output must say it is a review trigger or audit-prep prompt, n
 Use `projectModel.ts`, `fileEvidence.ts`, `evidenceAuditTrail.ts`, `evidenceManifest.ts`, `evidenceVaultClient.ts`, and server evidence services.
 
 - Evidence records should store metadata, hashes, status, owner, source notes, linked risk/control IDs, and timestamps.
+- Evidence Vault records that replace rejected material should preserve parent/child lineage, replacement reason, and superseded status instead of overwriting history.
+- Duplicate evidence hashes should be detected as recoverable workflow errors before a second active vault record is stored.
 - Raw document content, raw KYC, personal data, private keys, and secrets must not enter demo data or exports.
 - Manifest hashes must be deterministic and covered by tests.
 - Evidence status changes that affect export readiness should be visible in UI and audit logs.

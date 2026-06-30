@@ -32,10 +32,14 @@ model EvidenceVaultRecord {
   version                      Int
   linkedRiskFlagIdsJson        String
   containsRawKycOrPersonalData Boolean
+  parentEvidenceId             String?
+  supersededByEvidenceId       String?
+  replacementReason            String?
   createdAt                    DateTime
   updatedAt                    DateTime
 
   @@index([workspaceId])
+  @@index([parentEvidenceId])
 }
 
 model ModelGatewayRun {

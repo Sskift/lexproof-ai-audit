@@ -6,6 +6,8 @@ import type { EvidenceManifest } from "../lib/evidenceManifest";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import {
   fetchEvidenceVaultManifest,
+  listEvidenceVaultRecords,
+  replaceEvidenceVaultRecord,
   syncEvidenceLedgerToVault,
   type EvidenceVaultManifestResponse,
   type EvidenceVaultRecordResponse
@@ -55,6 +57,8 @@ export function EvidenceLedger({
   const [vaultApiBaseUrl, setVaultApiBaseUrl] = useState("");
   const [vaultStatus, setVaultStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [vaultError, setVaultError] = useState("");
+  const [vaultRecoveryState, setVaultRecoveryState] = useState("");
+  const [vaultReplacementReasons, setVaultReplacementReasons] = useState<Record<string, string>>({});
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
 
@@ -89,6 +93,7 @@ export function EvidenceLedger({
 
     setVaultStatus("syncing");
     setVaultError("");
+    setVaultRecoveryState("");
 
     try {
       const result = await syncEvidenceLedgerToVault({
@@ -113,17 +118,61 @@ export function EvidenceLedger({
 
     setVaultStatus("syncing");
     setVaultError("");
+    setVaultRecoveryState("");
 
     try {
-      const nextManifest = await fetchEvidenceVaultManifest({
-        workspaceId: projectId,
-        apiBaseUrl: vaultApiBaseUrl
-      });
+      const [nextManifest, nextRecords] = await Promise.all([
+        fetchEvidenceVaultManifest({
+          workspaceId: projectId,
+          apiBaseUrl: vaultApiBaseUrl
+        }),
+        listEvidenceVaultRecords({
+          workspaceId: projectId,
+          apiBaseUrl: vaultApiBaseUrl
+        })
+      ]);
       setVaultManifest(nextManifest);
+      setVaultRecords(nextRecords);
       setVaultStatus("synced");
     } catch (error) {
       setVaultStatus("error");
       setVaultError(error instanceof Error ? error.message : "Evidence Vault manifest refresh failed.");
+    }
+  };
+
+  const recoverRejectedVaultRecord = async (record: EvidenceVaultRecordResponse, index: number) => {
+    const replacementItem = findReplacementEvidenceItem(record, evidenceItems, index);
+
+    if (!replacementItem) {
+      setVaultStatus("error");
+      setVaultError("Add local evidence metadata before replacing a rejected Evidence Vault record.");
+      return;
+    }
+
+    setVaultStatus("syncing");
+    setVaultError("");
+    setVaultRecoveryState("");
+
+    try {
+      const result = await replaceEvidenceVaultRecord({
+        workspaceId: projectId,
+        evidenceId: record.id,
+        replacementItem,
+        replacementReason: vaultReplacementReasons[record.id] ?? createDefaultReplacementReason(record),
+        apiBaseUrl: vaultApiBaseUrl
+      });
+      const nextManifest = await fetchEvidenceVaultManifest({
+        workspaceId: projectId,
+        apiBaseUrl: vaultApiBaseUrl
+      });
+
+      setVaultRecords((current) => upsertVaultRecords(current, [result.superseded, result.replacement]));
+      setVaultManifest(nextManifest);
+      setVaultStatus("synced");
+      setVaultRecoveryState(`Replacement evidence created for ${record.filename}.`);
+    } catch (error) {
+      setVaultStatus("error");
+      setVaultError(error instanceof Error ? error.message : "Evidence Vault replacement failed.");
     }
   };
 
@@ -278,16 +327,42 @@ export function EvidenceLedger({
             Evidence Vault synced {vaultRecords.length} records. Manifest contains {vaultManifest.itemCount} items.
           </p>
         ) : null}
+        {vaultRecoveryState ? <p className="save-state vault-recovery-state">{vaultRecoveryState} Not legal advice.</p> : null}
         {vaultError ? <p className="error-text">{vaultError}</p> : null}
         {vaultRecords.length > 0 ? (
           <div className="vault-record-list">
-            {vaultRecords.slice(0, 3).map((record) => (
+            {vaultRecords.slice(0, 5).map((record, index) => (
               <article key={record.id} className={`vault-record ${record.status}`}>
                 <strong>{record.filename}</strong>
                 <span>
                   {record.status} · {record.owner} · v{record.version}
                 </span>
+                {record.sourceNote ? <small>{record.sourceNote}</small> : null}
+                {record.parentEvidenceId ? <small>Parent evidence: {record.parentEvidenceId}</small> : null}
+                {record.supersededByEvidenceId ? <small>Superseded by: {record.supersededByEvidenceId}</small> : null}
+                {record.replacementReason ? <small>Replacement reason: {record.replacementReason}</small> : null}
                 <code>{record.fileHash}</code>
+                {record.status === "rejected" ? (
+                  <div className="vault-recovery">
+                    <label className="field-label" htmlFor={`vault-replacement-reason-${record.id}`}>
+                      Replacement reason for {record.filename}
+                    </label>
+                    <input
+                      id={`vault-replacement-reason-${record.id}`}
+                      value={vaultReplacementReasons[record.id] ?? createDefaultReplacementReason(record)}
+                      onChange={(event) =>
+                        setVaultReplacementReasons((current) => ({
+                          ...current,
+                          [record.id]: event.target.value
+                        }))
+                      }
+                    />
+                    <button type="button" className="secondary" onClick={() => void recoverRejectedVaultRecord(record, index)}>
+                      <RefreshCcw size={16} aria-hidden="true" />
+                      Replace rejected evidence
+                    </button>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
@@ -487,5 +562,38 @@ function VaultMetric({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function findReplacementEvidenceItem(record: EvidenceVaultRecordResponse, evidenceItems: EvidenceItem[], index: number): EvidenceItem | undefined {
+  const filename = record.filename.toLowerCase();
+  return evidenceItems.find((item) => filename.startsWith(slug(item.label))) ?? evidenceItems[index] ?? evidenceItems[0];
+}
+
+function createDefaultReplacementReason(record: EvidenceVaultRecordResponse): string {
+  return record.sourceNote.trim() ? `Replacement after rejected review: ${record.sourceNote.trim()}` : "Replacement after rejected evidence review.";
+}
+
+function upsertVaultRecords(current: EvidenceVaultRecordResponse[], next: EvidenceVaultRecordResponse[]): EvidenceVaultRecordResponse[] {
+  return next.reduce((records, record) => {
+    const index = records.findIndex((item) => item.id === record.id);
+
+    if (index === -1) {
+      return [...records, record];
+    }
+
+    const updated = [...records];
+    updated[index] = record;
+    return updated;
+  }, current);
+}
+
+function slug(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 72) || "evidence"
   );
 }

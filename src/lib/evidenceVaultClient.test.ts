@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createEvidenceVaultSnapshot,
+  replaceEvidenceVaultRecord,
   syncEvidenceLedgerToVault,
   type EvidenceVaultManifestResponse,
   type EvidenceVaultRecordResponse
@@ -53,7 +54,7 @@ describe("evidence vault client", () => {
       byteSize: 512,
       fileHash: "b".repeat(64),
       storageMode: "server-vault",
-      status: "submitted",
+      status: "received",
       owner: "Compliance",
       sourceNote: "Metadata-only sync",
       version: 1,
@@ -103,6 +104,82 @@ describe("evidence vault client", () => {
     expect(uploadedPayload).toContain("governance-approval");
     expect(uploadedPayload).not.toContain("Confidential board approval text");
     expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
+  });
+
+  it("uploads a metadata-only replacement for a rejected vault record", async () => {
+    const uploadedForms: FormData[] = [];
+    const superseded: EvidenceVaultRecordResponse = {
+      recordVersion: "lexproof-evidence-vault-record-v1",
+      id: "evidence-vault-rejected",
+      workspaceId: "workspace-vault",
+      filename: "launch-approval-memo.metadata.json",
+      mimeType: "application/json",
+      byteSize: 512,
+      fileHash: "c".repeat(64),
+      storageMode: "server-vault",
+      status: "superseded",
+      owner: "Compliance",
+      sourceNote: "Rejected memo.",
+      version: 3,
+      linkedRiskFlagIds: ["governance-approval"],
+      containsRawKycOrPersonalData: false,
+      supersededByEvidenceId: "evidence-vault-replacement",
+      replacementReason: "Reviewer requested corrected approval scope.",
+      createdAt: "2026-06-30T00:00:00.000Z",
+      updatedAt: "2026-06-30T01:00:00.000Z"
+    };
+    const replacement: EvidenceVaultRecordResponse = {
+      ...superseded,
+      id: "evidence-vault-replacement",
+      filename: "launch-approval-memo-v2.metadata.json",
+      fileHash: "d".repeat(64),
+      status: "received",
+      parentEvidenceId: "evidence-vault-rejected",
+      supersededByEvidenceId: undefined,
+      version: 3
+    };
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence/evidence-vault-rejected/replacement") && init?.method === "POST") {
+        uploadedForms.push(init.body as FormData);
+        return jsonResponse(
+          {
+            superseded,
+            replacement,
+            notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only."
+          },
+          201
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+
+    const result = await replaceEvidenceVaultRecord({
+      workspaceId: "workspace-vault",
+      evidenceId: "evidence-vault-rejected",
+      replacementItem: {
+        ...evidenceItem,
+        content: "Corrected confidential board approval text that must stay local."
+      },
+      replacementReason: "Reviewer requested corrected approval scope.",
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://api.lexproof.test/api/workspaces/workspace-vault/evidence/evidence-vault-rejected/replacement",
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(result.superseded.status).toBe("superseded");
+    expect(result.replacement).toEqual(expect.objectContaining({ parentEvidenceId: "evidence-vault-rejected", status: "received" }));
+    expect(result.notLegalAdviceBoundary).toContain("Not legal advice");
+    expect(uploadedForms[0].get("replacementReason")).toBe("Reviewer requested corrected approval scope.");
+
+    const uploadedFile = uploadedForms[0].get("file") as Blob;
+    const uploadedPayload = await readBlobText(uploadedFile);
+    expect(uploadedPayload).toContain("localContentHash");
+    expect(uploadedPayload).not.toContain("Corrected confidential board approval text");
   });
 });
 

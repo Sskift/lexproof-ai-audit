@@ -10,12 +10,15 @@ export type EvidenceVaultRecordResponse = {
   byteSize: number;
   fileHash: string;
   storageMode: "local-metadata" | "server-vault" | "external-reference";
-  status: "requested" | "submitted" | "under-review" | "verified" | "rejected";
+  status: "draft" | "requested" | "received" | "submitted" | "under-review" | "verified" | "rejected" | "superseded";
   owner: string;
   sourceNote: string;
   version: number;
   linkedRiskFlagIds: string[];
   containsRawKycOrPersonalData: boolean;
+  parentEvidenceId?: string;
+  supersededByEvidenceId?: string;
+  replacementReason?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -38,6 +41,9 @@ export type EvidenceVaultManifestResponse = {
     version: number;
     linkedRiskFlagIds: string[];
     containsRawKycOrPersonalData: boolean;
+    parentEvidenceId?: string;
+    supersededByEvidenceId?: string;
+    replacementReason?: string;
   }>;
   bundleHash: string;
   notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only.";
@@ -74,11 +80,24 @@ export type EvidenceVaultSyncInput = EvidenceVaultClientOptions & {
   evidenceItems: EvidenceItem[];
 };
 
+export type EvidenceVaultReplacementInput = EvidenceVaultClientOptions & {
+  evidenceId: string;
+  replacementItem: EvidenceItem;
+  replacementReason: string;
+};
+
+export type EvidenceVaultReplacementResult = {
+  superseded: EvidenceVaultRecordResponse;
+  replacement: EvidenceVaultRecordResponse;
+  notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only.";
+};
+
 type EvidenceVaultFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 type ErrorResponse = {
   error?: string;
   errors?: string[];
+  recoveryAction?: string;
 };
 
 export async function createEvidenceVaultSnapshot(item: EvidenceItem): Promise<EvidenceVaultSnapshot> {
@@ -156,7 +175,37 @@ export async function fetchEvidenceVaultManifest(input: EvidenceVaultClientOptio
   return readJsonResponse<EvidenceVaultManifestResponse>(response, "Evidence Vault manifest fetch failed.");
 }
 
-function createVaultUploadFormData(snapshot: EvidenceVaultSnapshot): FormData {
+export async function listEvidenceVaultRecords(input: EvidenceVaultClientOptions): Promise<EvidenceVaultRecordResponse[]> {
+  const workspaceId = normalizeWorkspaceId(input.workspaceId);
+  const fetcher = resolveFetcher(input.fetcher);
+  const response = await fetcher(buildEvidenceVaultUrl(input.apiBaseUrl, workspaceId, "evidence"), { method: "GET" });
+
+  return readJsonResponse<EvidenceVaultRecordResponse[]>(response, "Evidence Vault records fetch failed.");
+}
+
+export async function replaceEvidenceVaultRecord(input: EvidenceVaultReplacementInput): Promise<EvidenceVaultReplacementResult> {
+  const workspaceId = normalizeWorkspaceId(input.workspaceId);
+  const evidenceId = input.evidenceId.trim();
+
+  if (!evidenceId) {
+    throw new Error("Evidence ID is required before Evidence Vault replacement.");
+  }
+
+  if (!input.replacementReason.trim()) {
+    throw new Error("Replacement reason is required before Evidence Vault replacement.");
+  }
+
+  const fetcher = resolveFetcher(input.fetcher);
+  const snapshot = await createEvidenceVaultSnapshot(input.replacementItem);
+  const response = await fetcher(buildEvidenceVaultUrl(input.apiBaseUrl, workspaceId, `evidence/${encodeURIComponent(evidenceId)}/replacement`), {
+    method: "POST",
+    body: createVaultUploadFormData(snapshot, input.replacementReason)
+  });
+
+  return readJsonResponse<EvidenceVaultReplacementResult>(response, "Evidence Vault replacement failed.");
+}
+
+function createVaultUploadFormData(snapshot: EvidenceVaultSnapshot, replacementReason?: string): FormData {
   const formData = new FormData();
   const payload = stableStringify(snapshot);
   const file = new Blob([payload], { type: "application/json" });
@@ -166,6 +215,9 @@ function createVaultUploadFormData(snapshot: EvidenceVaultSnapshot): FormData {
   formData.append("sourceNote", createSourceNote(snapshot));
   formData.append("linkedRiskFlagIds", snapshot.linkedRiskFlagIds.join(","));
   formData.append("containsRawKycOrPersonalData", "false");
+  if (replacementReason) {
+    formData.append("replacementReason", replacementReason.trim());
+  }
 
   return formData;
 }
@@ -189,11 +241,15 @@ function mapLedgerStatusToVaultStatus(status: EvidenceItem["status"]): EvidenceV
     return "verified";
   }
 
+  if (status === "received") {
+    return "received";
+  }
+
   if (status === "requested" || status === "draft") {
     return "requested";
   }
 
-  return "submitted";
+  return "received";
 }
 
 function buildEvidenceVaultUrl(apiBaseUrl: string | undefined, workspaceId: string, route: string): string {
@@ -206,7 +262,7 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
 
   if (!response.ok) {
     const errorPayload = payload as ErrorResponse;
-    const details = errorPayload.errors?.join(" ") || errorPayload.error || fallbackMessage;
+    const details = [errorPayload.errors?.join(" "), errorPayload.error, errorPayload.recoveryAction].filter(Boolean).join(" ") || fallbackMessage;
     throw new Error(details);
   }
 

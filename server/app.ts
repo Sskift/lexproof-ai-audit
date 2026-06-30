@@ -11,7 +11,11 @@ import {
   type WorkspaceRecord
 } from "../src/lib/phase2Types.js";
 import { createHumanReviewRecord, updateHumanReviewRecord } from "./humanReviewService.js";
-import { createEvidenceVaultRecordFromUpload } from "./evidenceVaultService.js";
+import {
+  createEvidenceVaultRecordFromUpload,
+  findDuplicateEvidenceVaultRecord,
+  supersedeEvidenceVaultRecord
+} from "./evidenceVaultService.js";
 
 export type BuildServerOptions = {
   repository?: ReviewWorkspaceRepository;
@@ -41,7 +45,7 @@ export function buildServer(options: BuildServerOptions = {}) {
     version: "lexproof-phase-2-backend-v1",
     capabilities: {
       modelGateway: "mock-run-ready",
-      evidenceVault: "metadata-hashing-ready",
+      evidenceVault: "metadata-versioning-ready",
       humanReview: "repository-ready",
       auditLog: "repository-ready"
     },
@@ -140,6 +144,30 @@ export function buildServer(options: BuildServerOptions = {}) {
         linkedRiskFlagIds: parseCsv(getMultipartFieldValue(upload, "linkedRiskFlagIds", "")),
         containsRawKycOrPersonalData: parseBooleanField(getMultipartFieldValue(upload, "containsRawKycOrPersonalData", "false"))
       });
+      const duplicate = findDuplicateEvidenceVaultRecord(await repository.listEvidenceVaultRecords(request.params.workspaceId), evidence);
+
+      if (duplicate) {
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: evidence.owner,
+            action: "evidence.duplicate.blocked",
+            targetType: "evidence",
+            targetId: duplicate.id,
+            beforeHash: duplicate.fileHash,
+            afterHash: evidence.fileHash,
+            summary: "Blocked duplicate evidence hash before storing a second vault record.",
+            createdAt: new Date().toISOString()
+          })
+        );
+        return reply.status(409).send({
+          error: "Duplicate evidence hash already exists in this workspace.",
+          duplicateEvidenceId: duplicate.id,
+          duplicateStatus: duplicate.status,
+          recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        });
+      }
 
       await repository.saveEvidenceVaultRecord(evidence);
       await repository.appendAuditLogRecord(
@@ -182,7 +210,10 @@ export function buildServer(options: BuildServerOptions = {}) {
       owner: record.owner,
       version: record.version,
       linkedRiskFlagIds: record.linkedRiskFlagIds,
-      containsRawKycOrPersonalData: record.containsRawKycOrPersonalData
+      containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
+      ...(record.parentEvidenceId ? { parentEvidenceId: record.parentEvidenceId } : {}),
+      ...(record.supersededByEvidenceId ? { supersededByEvidenceId: record.supersededByEvidenceId } : {}),
+      ...(record.replacementReason ? { replacementReason: record.replacementReason } : {})
     }));
     const hashPayload = {
       manifestVersion: "lexproof-evidence-vault-manifest-v1",
@@ -230,6 +261,111 @@ export function buildServer(options: BuildServerOptions = {}) {
       } catch (error) {
         return reply.status(400).send({
           error: error instanceof Error ? error.message : "Evidence update failed.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        });
+      }
+    }
+  );
+
+  server.post<{ Params: { workspaceId: string; evidenceId: string } }>(
+    "/api/workspaces/:workspaceId/evidence/:evidenceId/replacement",
+    async (request, reply) => {
+      const existing = await repository.findEvidenceVaultRecord(request.params.workspaceId, request.params.evidenceId);
+
+      if (!existing) {
+        return reply.status(404).send({ error: "Evidence vault record not found." });
+      }
+
+      if (existing.status !== "rejected") {
+        return reply.status(400).send({
+          error: "Only rejected evidence vault records can be replaced from this recovery flow.",
+          recoveryAction: "Mark the record rejected after review, or update the existing record status instead.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        });
+      }
+
+      try {
+        const upload = await readMultipartFile(request);
+
+        if (!upload) {
+          return reply.status(400).send({ error: "Replacement evidence file is required." });
+        }
+
+        const replacementReason = getMultipartFieldValue(upload, "replacementReason", "").trim();
+
+        if (!replacementReason) {
+          return reply.status(400).send({
+            error: "Replacement reason is required.",
+            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          });
+        }
+
+        const bytes = new Uint8Array(await upload.toBuffer());
+        const replacement = createEvidenceVaultRecordFromUpload({
+          workspaceId: request.params.workspaceId,
+          filename: upload.filename,
+          mimeType: upload.mimetype,
+          bytes,
+          owner: getMultipartFieldValue(upload, "owner", existing.owner),
+          sourceNote: getMultipartFieldValue(upload, "sourceNote", ""),
+          linkedRiskFlagIds: parseCsv(getMultipartFieldValue(upload, "linkedRiskFlagIds", existing.linkedRiskFlagIds.join(","))),
+          containsRawKycOrPersonalData: parseBooleanField(getMultipartFieldValue(upload, "containsRawKycOrPersonalData", "false")),
+          parentEvidenceId: existing.id,
+          replacementReason,
+          baseVersion: existing.version
+        });
+        const duplicate = findDuplicateEvidenceVaultRecord(await repository.listEvidenceVaultRecords(request.params.workspaceId), replacement);
+
+        if (duplicate) {
+          return reply.status(409).send({
+            error:
+              duplicate.id === existing.id
+                ? "Replacement evidence must use a new metadata hash from the rejected record."
+                : "Duplicate evidence hash already exists in this workspace.",
+            duplicateEvidenceId: duplicate.id,
+            duplicateStatus: duplicate.status,
+            recoveryAction: "Change the replacement evidence metadata or use the existing vault record.",
+            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          });
+        }
+
+        const superseded = supersedeEvidenceVaultRecord(existing, replacement, replacementReason);
+        await repository.updateEvidenceVaultRecord(superseded);
+        await repository.saveEvidenceVaultRecord(replacement);
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: superseded.owner,
+            action: "evidence.superseded",
+            targetType: "evidence",
+            targetId: superseded.id,
+            beforeHash: sha256Hex(stableStringify(existing)),
+            afterHash: sha256Hex(stableStringify(superseded)),
+            summary: "Superseded rejected evidence after replacement upload.",
+            createdAt: superseded.updatedAt
+          })
+        );
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: replacement.owner,
+            action: "evidence.replacement.created",
+            targetType: "evidence",
+            targetId: replacement.id,
+            beforeHash: existing.fileHash,
+            afterHash: replacement.fileHash,
+            summary: "Created replacement evidence metadata for rejected vault record.",
+            createdAt: replacement.createdAt
+          })
+        );
+        return reply.status(201).send({
+          superseded,
+          replacement,
+          notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only."
+        });
+      } catch (error) {
+        return reply.status(400).send({
+          error: error instanceof Error ? error.message : "Evidence replacement failed.",
           notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
         });
       }
@@ -537,8 +673,8 @@ function assertWorkspaceStatus(status: string): asserts status is WorkspaceRecor
 }
 
 function assertEvidenceVaultStatus(status: string): asserts status is EvidenceVaultRecord["status"] {
-  if (!["requested", "submitted", "under-review", "verified", "rejected"].includes(status)) {
-    throw new Error("Evidence status must be requested, submitted, under-review, verified, or rejected.");
+  if (!["draft", "requested", "received", "submitted", "under-review", "verified", "rejected", "superseded"].includes(status)) {
+    throw new Error("Evidence status must be draft, requested, received, submitted, under-review, verified, rejected, or superseded.");
   }
 }
 

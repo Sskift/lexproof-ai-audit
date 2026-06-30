@@ -350,6 +350,7 @@ Owns Phase 2 backend-boundary contracts:
 - `createAuditLogRecord()` creates deterministic local audit-log IDs from material metadata.
 - `createModelGatewayRunSummary()` returns a credential-free model-run summary for UI and exports.
 - `validateEvidenceVaultRecord()` returns explicit validation errors for missing evidence metadata and blocked raw KYC/personal-data handling.
+- Evidence vault records can carry `parentEvidenceId`, `supersededByEvidenceId`, and `replacementReason` so rejected evidence can be recovered without hiding the original record.
 
 This module is a contract draft only. It does not create a backend, upload files, persist credentials, perform KYC, or make legal conclusions.
 
@@ -444,12 +445,14 @@ The gateway must keep model output as draft audit preparation. It must not chang
 - accept file upload metadata or external evidence references
 - compute and store server-side file hashes
 - keep raw file bytes out of Counsel Pack exports by default
-- track owner, source notes, linked risk flags, evidence status, version, and timestamps
+- track owner, source notes, linked risk flags, evidence status, version, replacement lineage, and timestamps
+- block active duplicate hashes before storing a second evidence record
+- let rejected records be superseded by replacement metadata while preserving parent/child relationships and replacement reasons
 - feed the Evidence Manifest with stable server-side evidence versions
 
 The Phase 2 draft must not store raw KYC or personal data. Secure document parsing and OCR should be added only after privacy and retention boundaries are documented.
 
-`server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, and blocks raw KYC/personal-data markers. It does not persist files or expose raw document content through JSON.
+`server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
 
 ### Human Review Workflow Responsibilities
 

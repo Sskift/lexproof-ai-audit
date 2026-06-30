@@ -138,9 +138,10 @@ The first Evidence Vault routes are implemented in `server/app.ts` and backed by
 - `POST /api/workspaces/:workspaceId/evidence`
 - `GET /api/workspaces/:workspaceId/evidence`
 - `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`
+- `POST /api/workspaces/:workspaceId/evidence/:evidenceId/replacement`
 - `GET /api/workspaces/:workspaceId/evidence-manifest`
 
-The upload route accepts multipart files, computes SHA-256 server-side, persists metadata-only records, and appends audit-log records. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records. The manifest route returns current evidence versions with item hashes and a bundle hash.
+The upload route accepts multipart files, computes SHA-256 server-side, persists metadata-only records, and appends audit-log records. Duplicate active hashes are rejected with an actionable recovery message before a second record is stored. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records. The replacement route lets rejected evidence create a child metadata record with `parentEvidenceId` and `replacementReason`, while the rejected parent remains visible as `superseded` with `supersededByEvidenceId`. The manifest route returns current evidence versions, parent/superseded lineage when present, item hashes, and a bundle hash.
 
 ## Model Gateway Routes
 
@@ -196,6 +197,7 @@ Workspace creation/update, Evidence Vault upload/update, Model Gateway run creat
 - Model Gateway adapter readiness with only the mock adapter enabled
 - server-side SHA-256 evidence metadata hashing
 - raw KYC/personal-data blocking before evidence vault record creation
+- duplicate evidence hash blocking and rejected-evidence replacement lineage
 - mock Model Gateway route creation, listing, and boundary blocking
 - Human Review route creation, status update, and listing
 - Workspace create/read/update routes

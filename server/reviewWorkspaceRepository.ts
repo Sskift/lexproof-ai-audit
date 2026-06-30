@@ -271,11 +271,18 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
       "version" INTEGER NOT NULL,
       "linkedRiskFlagIdsJson" TEXT NOT NULL,
       "containsRawKycOrPersonalData" BOOLEAN NOT NULL,
+      "parentEvidenceId" TEXT,
+      "supersededByEvidenceId" TEXT,
+      "replacementReason" TEXT,
       "createdAt" DATETIME NOT NULL,
       "updatedAt" DATETIME NOT NULL
     );
   `);
+  await addColumnIfMissing(prisma, "EvidenceVaultRecord", "parentEvidenceId", "TEXT");
+  await addColumnIfMissing(prisma, "EvidenceVaultRecord", "supersededByEvidenceId", "TEXT");
+  await addColumnIfMissing(prisma, "EvidenceVaultRecord", "replacementReason", "TEXT");
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "EvidenceVaultRecord_workspaceId_idx" ON "EvidenceVaultRecord"("workspaceId");`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "EvidenceVaultRecord_parentEvidenceId_idx" ON "EvidenceVaultRecord"("parentEvidenceId");`);
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "ModelGatewayRun" (
@@ -384,6 +391,9 @@ function serializeEvidenceVaultRecord(record: EvidenceVaultRecord) {
     version: record.version,
     linkedRiskFlagIdsJson: JSON.stringify(record.linkedRiskFlagIds),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
+    parentEvidenceId: record.parentEvidenceId ?? null,
+    supersededByEvidenceId: record.supersededByEvidenceId ?? null,
+    replacementReason: record.replacementReason ?? null,
     createdAt: new Date(record.createdAt),
     updatedAt: new Date(record.updatedAt)
   };
@@ -403,6 +413,9 @@ type PersistedEvidenceVaultRecord = {
   version: number;
   linkedRiskFlagIdsJson: string;
   containsRawKycOrPersonalData: boolean;
+  parentEvidenceId: string | null;
+  supersededByEvidenceId: string | null;
+  replacementReason: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -423,9 +436,20 @@ function deserializeEvidenceVaultRecord(record: PersistedEvidenceVaultRecord): E
     version: record.version,
     linkedRiskFlagIds: parseStringArray(record.linkedRiskFlagIdsJson),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
+    parentEvidenceId: record.parentEvidenceId ?? undefined,
+    supersededByEvidenceId: record.supersededByEvidenceId ?? undefined,
+    replacementReason: record.replacementReason ?? undefined,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString()
   };
+}
+
+async function addColumnIfMissing(prisma: PrismaClient, tableName: string, columnName: string, definition: string): Promise<void> {
+  const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("${tableName}");`);
+
+  if (!columns.some((column) => column.name === columnName)) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "${tableName}" ADD COLUMN "${columnName}" ${definition};`);
+  }
 }
 
 function parseStringArray(payload: string): string[] {

@@ -43,6 +43,7 @@ Key evidence:
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
 - Editable Evidence Ledger with evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, and local evidence change trail.
+- Evidence Vault versioning with duplicate-hash detection, rejected-record replacement, parent/superseded lineage, replacement reasons, and metadata-only recovery actions.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest generator with deterministic SHA-256 item hashes, bundle hash, and JSON download.
 - Simulated Anchor Receipt for the manifest bundle hash. It is explicitly not a real on-chain write.
@@ -75,6 +76,10 @@ Model Intake records provider purpose, human review readiness, AI event hashes, 
 Evidence Ledger records local evidence creation, template application, edits, and removals as audit-prep events with a standalone JSON export.
 
 ![Evidence Audit Trail](docs/assets/screenshots/evidence-audit-trail.png)
+
+Evidence Vault recovery preserves rejected evidence as superseded metadata and creates a received replacement record with parent lineage and a replacement reason.
+
+![Evidence Vault rejected evidence recovery](docs/assets/screenshots/evidence-vault-recovery.png)
 
 The Phase 2 secure review journey connects Model Connect, metadata-only Evidence Vault sync, Model Gateway receipts, Human Review, audit log records, and Counsel Pack handoff.
 
@@ -182,7 +187,7 @@ npm run build:server
 npm run start:api
 ```
 
-The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders until server-side secret policy is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
+The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. Duplicate evidence hashes are blocked with recoverable errors, and rejected vault records can be superseded by replacement metadata with parent lineage and a replacement reason. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders until server-side secret policy is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
 
 For the scripted hackathon demo, use a disposable SQLite file:
 

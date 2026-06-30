@@ -11,6 +11,9 @@ export type EvidenceVaultUploadInput = {
   sourceNote: string;
   linkedRiskFlagIds: string[];
   containsRawKycOrPersonalData: boolean;
+  parentEvidenceId?: string;
+  replacementReason?: string;
+  baseVersion?: number;
   createdAt?: string;
 };
 
@@ -41,13 +44,45 @@ export function createEvidenceVaultRecordFromUpload(input: EvidenceVaultUploadIn
     byteSize: input.bytes.byteLength,
     fileHash,
     storageMode: "server-vault",
-    status: "submitted",
+    status: "received",
     owner: input.owner.trim(),
     sourceNote: input.sourceNote.trim(),
-    version: 1,
+    version: input.baseVersion ? input.baseVersion + 1 : 1,
     linkedRiskFlagIds: [...input.linkedRiskFlagIds],
     containsRawKycOrPersonalData: false,
+    parentEvidenceId: normalizeOptional(input.parentEvidenceId),
+    supersededByEvidenceId: undefined,
+    replacementReason: normalizeOptional(input.replacementReason),
     createdAt,
     updatedAt: createdAt
   };
+}
+
+export function supersedeEvidenceVaultRecord(
+  record: EvidenceVaultRecord,
+  replacement: EvidenceVaultRecord,
+  replacementReason: string
+): EvidenceVaultRecord {
+  return {
+    ...record,
+    status: "superseded",
+    supersededByEvidenceId: replacement.id,
+    replacementReason: replacementReason.trim(),
+    version: Math.max(record.version + 1, replacement.version),
+    updatedAt: replacement.createdAt
+  };
+}
+
+export function findDuplicateEvidenceVaultRecord(
+  records: EvidenceVaultRecord[],
+  candidate: Pick<EvidenceVaultRecord, "id" | "fileHash">
+): EvidenceVaultRecord | null {
+  return (
+    records.find((record) => record.fileHash === candidate.fileHash && record.status !== "superseded") ?? null
+  );
+}
+
+function normalizeOptional(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
 }

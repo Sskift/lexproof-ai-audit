@@ -78,7 +78,7 @@ describe("Phase 2 workspace and evidence routes", () => {
         mimeType: "text/plain",
         byteSize: 19,
         storageMode: "server-vault",
-        status: "submitted",
+        status: "received",
         owner: "Compliance",
         sourceNote: "Board approval memo for counsel review.",
         linkedRiskFlagIds: ["governance", "custody"],
@@ -125,6 +125,117 @@ describe("Phase 2 workspace and evidence routes", () => {
       expect.arrayContaining([
         expect.objectContaining({ action: "evidence.created", targetType: "evidence", targetId: evidence.id }),
         expect.objectContaining({ action: "evidence.updated", targetType: "evidence", targetId: evidence.id })
+      ])
+    );
+
+    await server.close();
+  });
+
+  it("detects duplicate evidence uploads and supports rejected-evidence replacement lineage", async () => {
+    const server = buildServer();
+    const firstForm = new FormData();
+    firstForm.append("file", Buffer.from("original approval memo"), {
+      filename: "approval-memo-v1.txt",
+      contentType: "text/plain"
+    });
+    firstForm.append("owner", "Compliance");
+    firstForm.append("sourceNote", "Original memo for counsel review.");
+    firstForm.append("linkedRiskFlagIds", "governance");
+    firstForm.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-dup/evidence",
+      headers: firstForm.getHeaders(),
+      payload: firstForm
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const original = uploadResponse.json();
+    const originalManifest = await server.inject({ method: "GET", url: "/api/workspaces/workspace-dup/evidence-manifest" });
+
+    const duplicateForm = new FormData();
+    duplicateForm.append("file", Buffer.from("original approval memo"), {
+      filename: "approval-memo-copy.txt",
+      contentType: "text/plain"
+    });
+    duplicateForm.append("owner", "Compliance");
+    duplicateForm.append("sourceNote", "Duplicate memo.");
+    duplicateForm.append("containsRawKycOrPersonalData", "false");
+
+    const duplicateResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-dup/evidence",
+      headers: duplicateForm.getHeaders(),
+      payload: duplicateForm
+    });
+    expect(duplicateResponse.statusCode).toBe(409);
+    expect(duplicateResponse.json()).toEqual(
+      expect.objectContaining({
+        error: "Duplicate evidence hash already exists in this workspace.",
+        duplicateEvidenceId: original.id,
+        recoveryAction: expect.stringContaining("Use the existing record")
+      })
+    );
+
+    const rejectedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-dup/evidence/${original.id}`,
+      payload: {
+        status: "rejected",
+        sourceNote: "Reviewer rejected this memo because approval scope was incomplete."
+      }
+    });
+    expect(rejectedResponse.statusCode).toBe(200);
+
+    const replacementForm = new FormData();
+    replacementForm.append("file", Buffer.from("replacement approval memo with corrected scope"), {
+      filename: "approval-memo-v2.txt",
+      contentType: "text/plain"
+    });
+    replacementForm.append("owner", "Compliance");
+    replacementForm.append("sourceNote", "Replacement memo with corrected approval scope.");
+    replacementForm.append("linkedRiskFlagIds", "governance");
+    replacementForm.append("replacementReason", "Reviewer rejected the first memo because approval scope was incomplete.");
+    replacementForm.append("containsRawKycOrPersonalData", "false");
+
+    const replacementResponse = await server.inject({
+      method: "POST",
+      url: `/api/workspaces/workspace-dup/evidence/${original.id}/replacement`,
+      headers: replacementForm.getHeaders(),
+      payload: replacementForm
+    });
+    expect(replacementResponse.statusCode).toBe(201);
+    expect(replacementResponse.json()).toEqual(
+      expect.objectContaining({
+        superseded: expect.objectContaining({
+          id: original.id,
+          status: "superseded",
+          replacementReason: "Reviewer rejected the first memo because approval scope was incomplete."
+        }),
+        replacement: expect.objectContaining({
+          parentEvidenceId: original.id,
+          replacementReason: "Reviewer rejected the first memo because approval scope was incomplete.",
+          status: "received"
+        }),
+        notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only."
+      })
+    );
+
+    const replacementManifest = await server.inject({ method: "GET", url: "/api/workspaces/workspace-dup/evidence-manifest" });
+    expect(replacementManifest.json().bundleHash).not.toBe(originalManifest.json().bundleHash);
+    expect(replacementManifest.json().items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ evidenceId: original.id, status: "superseded", supersededByEvidenceId: replacementResponse.json().replacement.id }),
+        expect.objectContaining({ parentEvidenceId: original.id, status: "received" })
+      ])
+    );
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-dup/audit-log" });
+    expect(auditResponse.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: "evidence.duplicate.blocked", targetId: original.id }),
+        expect.objectContaining({ action: "evidence.replacement.created", targetId: replacementResponse.json().replacement.id }),
+        expect.objectContaining({ action: "evidence.superseded", targetId: original.id })
       ])
     );
 

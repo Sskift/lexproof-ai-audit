@@ -2218,6 +2218,7 @@ textarea {
 }
 
 .vault-record.requested,
+.vault-record.received,
 .vault-record.under-review {
   border-left-color: #b57a3a;
 }
@@ -2226,8 +2227,14 @@ textarea {
   border-left-color: #b85c54;
 }
 
+.vault-record.superseded {
+  border-left-color: #7f8a96;
+  background: #f7f8f9;
+}
+
 .vault-record strong,
 .vault-record span,
+.vault-record small,
 .vault-record code {
   display: block;
 }
@@ -2243,10 +2250,34 @@ textarea {
   font-weight: 800;
 }
 
+.vault-record small {
+  overflow-wrap: anywhere;
+  color: #657382;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
 .vault-record code {
   overflow-wrap: anywhere;
   color: #41505e;
   font-size: 0.78rem;
+}
+
+.vault-recovery {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #edf1f4;
+}
+
+.vault-recovery input {
+  min-width: 0;
+}
+
+.vault-recovery-state {
+  overflow-wrap: anywhere;
 }
 
 .ledger-item {

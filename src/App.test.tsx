@@ -221,6 +221,123 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
   });
 
+  it("recovers a rejected Evidence Vault record by creating a metadata-only replacement", async () => {
+    const rejectedRecord = {
+      recordVersion: "lexproof-evidence-vault-record-v1",
+      id: "evidence-vault-rejected-ui",
+      workspaceId: "workspace-ui",
+      filename: "rejected-approval-memo.metadata.json",
+      mimeType: "application/json",
+      byteSize: 512,
+      fileHash: "c".repeat(64),
+      storageMode: "server-vault",
+      status: "rejected",
+      owner: "Compliance",
+      sourceNote: "Reviewer rejected this memo because approval scope was incomplete.",
+      version: 2,
+      linkedRiskFlagIds: ["governance-approval"],
+      containsRawKycOrPersonalData: false,
+      createdAt: "2026-06-30T00:00:00.000Z",
+      updatedAt: "2026-06-30T01:00:00.000Z"
+    };
+    const supersededRecord = {
+      ...rejectedRecord,
+      status: "superseded",
+      version: 3,
+      supersededByEvidenceId: "evidence-vault-replacement-ui",
+      replacementReason: "Reviewer requested corrected approval scope."
+    };
+    const replacementRecord = {
+      ...rejectedRecord,
+      id: "evidence-vault-replacement-ui",
+      filename: "rejected-approval-memo-v2.metadata.json",
+      fileHash: "d".repeat(64),
+      status: "received",
+      version: 3,
+      parentEvidenceId: "evidence-vault-rejected-ui",
+      supersededByEvidenceId: undefined,
+      replacementReason: "Reviewer requested corrected approval scope."
+    };
+    const uploadedForms: FormData[] = [];
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+
+      if (path.endsWith("/evidence") && init?.method === "GET") {
+        return appJsonResponse([rejectedRecord], 200);
+      }
+
+      if (path.endsWith("/evidence-manifest") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            manifestVersion: "lexproof-evidence-vault-manifest-v1",
+            workspaceId: "workspace-ui",
+            generatedAt: "2026-06-30T00:00:00.000Z",
+            itemCount: 1,
+            items: [{ evidenceId: "evidence-vault-rejected-ui", status: "rejected" }],
+            bundleHash: "e".repeat(64),
+            notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+          },
+          200
+        );
+      }
+
+      if (path.endsWith("/evidence/evidence-vault-rejected-ui/replacement") && init?.method === "POST") {
+        uploadedForms.push(init.body as FormData);
+        return appJsonResponse(
+          {
+            superseded: supersededRecord,
+            replacement: replacementRecord,
+            notLegalAdviceBoundary: "Not legal advice. Evidence replacement records are audit preparation metadata only."
+          },
+          201
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Rejected approval memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: "risk evidence requirement: governance-approval" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "received" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: { value: "Corrected approval memo summary that must stay local." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Refresh Vault Manifest/i }));
+
+      expect((await screen.findAllByText(/rejected-approval-memo.metadata.json/i)).length).toBeGreaterThan(0);
+      expect(screen.getByText(/rejected · Compliance · v2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Reviewer rejected this memo because approval scope was incomplete/i)).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Replacement reason for rejected-approval-memo.metadata.json/i), {
+        target: { value: "Reviewer requested corrected approval scope." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Replace rejected evidence/i }));
+
+      expect(await screen.findByText(/Replacement evidence created for rejected-approval-memo.metadata.json/i)).toBeInTheDocument();
+      expect(screen.getByText(/superseded · Compliance · v3/i)).toBeInTheDocument();
+      expect(screen.getByText(/received · Compliance · v3/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+
+      const uploadedFile = uploadedForms[0].get("file") as Blob;
+      const uploadedPayload = await readAppBlobText(uploadedFile);
+      expect(uploadedPayload).toContain("localContentHash");
+      expect(uploadedPayload).not.toContain("Corrected approval memo summary that must stay local.");
+      expect(uploadedForms[0].get("replacementReason")).toBe("Reviewer requested corrected approval scope.");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("runs the full Secure Review Workspace journey across evidence vault, model gateway, and human review", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);

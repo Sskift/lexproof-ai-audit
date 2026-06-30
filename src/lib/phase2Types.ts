@@ -10,7 +10,15 @@ export type WorkspaceRecord = {
   notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only.";
 };
 
-export type EvidenceVaultStatus = "requested" | "submitted" | "under-review" | "verified" | "rejected";
+export type EvidenceVaultStatus =
+  | "draft"
+  | "requested"
+  | "received"
+  | "submitted"
+  | "under-review"
+  | "verified"
+  | "rejected"
+  | "superseded";
 
 export type EvidenceVaultRecord = {
   recordVersion: "lexproof-evidence-vault-record-v1";
@@ -27,6 +35,9 @@ export type EvidenceVaultRecord = {
   version: number;
   linkedRiskFlagIds: string[];
   containsRawKycOrPersonalData: boolean;
+  parentEvidenceId?: string;
+  supersededByEvidenceId?: string;
+  replacementReason?: string;
   createdAt: string;
   updatedAt: string;
 };

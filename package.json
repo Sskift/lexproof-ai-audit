@@ -9,6 +9,7 @@
     "build:server": "npm run prisma:generate && tsc -p tsconfig.server.json",
     "prisma:generate": "prisma generate",
     "start:api": "node server-dist/server/index.js",
+    "pretest": "npm run prisma:generate",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "preview": "vite preview --host 127.0.0.1",

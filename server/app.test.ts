@@ -14,7 +14,7 @@ describe("Phase 2 backend app", () => {
       version: "lexproof-phase-2-backend-v1",
       capabilities: {
         modelGateway: "mock-run-ready",
-        evidenceVault: "metadata-hashing-ready",
+        evidenceVault: "metadata-versioning-ready",
         humanReview: "repository-ready",
         auditLog: "repository-ready"
       },

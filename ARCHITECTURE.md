@@ -45,6 +45,7 @@ lexproof-ai-audit/
       modelConnectionReadiness.ts # Model configuration and redaction readiness summary
       modelIntake.ts         # Model connection profile validation and AI event hashes
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
+      modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
       counselReview.ts       # Counsel/compliance review status queue helpers
@@ -102,6 +103,7 @@ sampleProfiles or blank project
   -> runAIReview(...) through mock or OpenAI-compatible provider
   -> create local ModelReviewRun with payload and response hashes
   -> createAIReviewEventFromRun(run, result, humanReviewer)
+  -> createModelGatewayEvaluationRecord(server model run) after Secure Review Journey
   -> merge AI draft questions into editable CounselQuestion queue
   -> createDefaultCounselQuestions(project, audit)
   -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
@@ -338,6 +340,16 @@ Owns model intake and AI event registration:
 
 Model Intake records are local audit-prep metadata. They do not store API keys, perform KYC, make legal determinations, or prove model correctness.
 
+### `src/lib/modelGatewayEvaluation.ts`
+
+Owns metadata-only Model Gateway evaluation artifacts:
+
+- `createModelGatewayEvaluationRecord(run)` converts a server Model Gateway receipt into a safe review artifact with provider policy metadata, allowed data classes, payload/response/source-evidence hashes, human-review status, retry state, remediation steps, and reviewer action.
+- `exportModelGatewayEvaluationJson(record)` and `downloadModelGatewayEvaluationJson(filename, record)` export the evaluation JSON locally.
+- Error messages and remediation steps are passed through the shared data-boundary redactor before export.
+
+The evaluation record is audit preparation metadata only. It does not store raw prompts, raw model output, provider credentials, KYC data, legal conclusions, or proof that a model response is correct.
+
 ### `src/lib/evidenceManifest.ts`
 
 Owns deterministic manifest behavior:
@@ -471,6 +483,7 @@ Components are intentionally presentational and interaction-focused:
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
 - `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`.
+- `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, and audit log status without exposing raw model payloads or credentials.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -597,6 +610,7 @@ Domain tests live next to the audit engine and cover:
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export
+- Model Gateway evaluation record generation, redaction, and JSON export
 - counsel pack Markdown content
 - counsel pack template recommendation and template-specific Markdown agenda behavior
 - Markdown browser download behavior
@@ -633,6 +647,7 @@ UI tests cover:
 - local file evidence import without displaying raw file content
 - long evidence record editing with visible field labels
 - manifest bundle hash visibility
+- Model Gateway Evaluation visibility and JSON download action
 - AI Review mock workflow
 - Model Access Workflow visibility in AI Review
 - Model Intake profile and AI event workflow

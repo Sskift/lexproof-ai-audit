@@ -479,7 +479,18 @@ describe("App", () => {
             redactionStatus: "clean",
             payloadHash: "c".repeat(64),
             responseHash: "d".repeat(64),
+            sourceEvidenceHash: "e".repeat(64),
+            providerMetadata: {
+              adapterMode: "local-mock",
+              credentialPolicy: "no credentials accepted",
+              secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
+              allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"]
+            },
             humanReviewStatus: "needs-review",
+            attempt: 1,
+            maxAttempts: 1,
+            retryState: "not-needed",
+            remediationSteps: [],
             createdAt: "2026-06-30T00:00:00.000Z",
             completedAt: "2026-06-30T00:00:00.000Z",
             notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
@@ -561,6 +572,11 @@ describe("App", () => {
       expect(screen.getByText(/Model Gateway response dddddddddddd/i)).toBeInTheDocument();
       expect(screen.getByText(/Human review request human-review-full/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit log events 4/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /Model Gateway Evaluation/i })).toBeInTheDocument();
+      expect(screen.getByText(/Payload hash cccccccccccc/i)).toBeInTheDocument();
+      expect(screen.getByText(/Source evidence eeeeeeeeeeee/i)).toBeInTheDocument();
+      expect(screen.getByText(/Human review needs-review/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Download Model Evaluation JSON/i })).toBeInTheDocument();
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     } finally {
       vi.unstubAllGlobals();

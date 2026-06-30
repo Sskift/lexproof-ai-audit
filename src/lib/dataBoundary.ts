@@ -159,9 +159,9 @@ export function summarizeDataBoundaryForExport(report: DataBoundaryReport): stri
 export function redactDataBoundaryText(value: string): string {
   return value
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
-    .replace(/\b[a-fA-F0-9]{24,}\b/g, "[redacted-hex-material]")
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")
     .replace(/\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)(\s*[:=]\s*)[\w.\-]{8,}/gi, "$1$2[redacted-secret]")
+    .replace(/\b[a-fA-F0-9]{24,}\b/g, "[redacted-hex-material]")
     .replace(/\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi, "[redacted-raw-kyc]")
     .replace(/\b(passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]");
 }

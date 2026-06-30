@@ -1,6 +1,11 @@
 import { useState } from "react";
-import { Bot, CheckCircle2, ClipboardList, DatabaseZap, FileText, PlayCircle, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
+import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
+import {
+  createModelGatewayEvaluationRecord,
+  downloadModelGatewayEvaluationJson,
+  type ModelGatewayEvaluationRecord
+} from "../lib/modelGatewayEvaluation";
 import type { ModelConnectReceipt } from "../lib/modelConnect";
 import type { ProjectProfile } from "../lib/projectModel";
 import { runSecureReviewJourney, type SecureReviewJourneyResult } from "../lib/secureReviewJourney";
@@ -194,6 +199,8 @@ function statusLabel(status: WorkflowStepProps["status"]): string {
 }
 
 function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) {
+  const evaluation = createModelGatewayEvaluationRecord(result.modelGatewayRun);
+
   return (
     <div className="secure-journey-result">
       <strong>Secure review journey complete</strong>
@@ -204,7 +211,47 @@ function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) 
         <JourneyFact label="Audit log events" value={String(result.auditLogRecords.length)} />
       </div>
       <small>{result.notLegalAdviceBoundary}</small>
+      <ModelGatewayEvaluationPanel evaluation={evaluation} />
     </div>
+  );
+}
+
+function ModelGatewayEvaluationPanel({ evaluation }: { evaluation: ModelGatewayEvaluationRecord }) {
+  return (
+    <section className={`model-gateway-evaluation ${evaluation.status}`}>
+      <div className="split-title compact-title">
+        <div>
+          <ServerCog size={17} aria-hidden="true" />
+          <h3>Model Gateway Evaluation</h3>
+        </div>
+        <span className={`workflow-status ${evaluation.status}`}>{evaluation.status}</span>
+      </div>
+      <p className="section-note">{evaluation.notLegalAdviceBoundary}</p>
+      <div className="run-facts evaluation-facts">
+        <JourneyFact label="Payload hash" value={shortHash(evaluation.hashes.payloadHash)} />
+        <JourneyFact label="Response hash" value={shortHash(evaluation.hashes.responseHash)} />
+        <JourneyFact label="Source evidence" value={shortHash(evaluation.hashes.sourceEvidenceHash)} />
+        <JourneyFact label="Human review" value={evaluation.humanReviewStatus} />
+        <JourneyFact label="Retry state" value={evaluation.retryState} />
+        <JourneyFact label="Adapter" value={evaluation.adapterMode} />
+      </div>
+      <div className="model-evaluation-policy">
+        <span>Allowed data classes</span>
+        <strong>{evaluation.allowedDataClasses.join(", ") || "none declared"}</strong>
+        <small>{evaluation.credentialPolicy}. {evaluation.secretPolicy}</small>
+      </div>
+      <div className="model-evaluation-actions">
+        <span>Reviewer action: {evaluation.reviewerAction}</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadModelGatewayEvaluationJson("model-gateway-evaluation.json", evaluation)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Model Evaluation JSON
+        </button>
+      </div>
+    </section>
   );
 }
 

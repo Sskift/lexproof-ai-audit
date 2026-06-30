@@ -832,6 +832,70 @@ textarea {
   color: #53616f;
 }
 
+.model-gateway-evaluation {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.model-gateway-evaluation.completed {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.model-gateway-evaluation.blocked,
+.model-gateway-evaluation.failed {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.model-gateway-evaluation .section-note {
+  margin: 0;
+}
+
+.evaluation-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.model-evaluation-policy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.model-evaluation-policy span {
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.model-evaluation-policy strong,
+.model-evaluation-policy small {
+  overflow-wrap: anywhere;
+}
+
+.model-evaluation-policy small,
+.model-evaluation-actions span {
+  color: #53616f;
+  line-height: 1.4;
+}
+
+.model-evaluation-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .tabs button {
   border: 1px solid #c9d5de;
   background: #ffffff;
@@ -1177,6 +1241,16 @@ textarea {
 }
 
 .workflow-status.blocked {
+  color: #9f241a;
+  background: #f3d1cd;
+}
+
+.workflow-status.completed {
+  color: #176b52;
+  background: #dcefe5;
+}
+
+.workflow-status.failed {
   color: #9f241a;
   background: #f3d1cd;
 }
@@ -3540,6 +3614,7 @@ textarea {
   .human-review-card header,
   .human-review-grid,
   .template-grid,
+  .evaluation-facts,
   .retention-grid,
   .vault-sync-grid,
   .secure-journey-controls {

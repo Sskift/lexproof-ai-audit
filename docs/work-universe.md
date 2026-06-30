@@ -90,13 +90,14 @@ Build:
 - Secret handling policy before real external model calls.
 - Model Gateway route that enforces Redaction Gate, allowed data classes, purpose, reviewer, and final-decision blockers.
 - Safe Model Gateway failure receipts with run ID, retry state, error code, and remediation steps.
-- Model run evaluation records: payload hash, response hash, source evidence hash, provider metadata, human-review status, and retry/error state.
+- Model run evaluation records: payload hash, response hash, source evidence hash, provider metadata, human-review status, and retry/error state. The first metadata-only evaluation artifact is implemented in `src/lib/modelGatewayEvaluation.ts` and rendered in `SecureReviewWorkspace` with JSON download.
 - Admin-visible model connection failures with remediation steps.
 
 Acceptance:
 
 - A model connection or gateway policy failure returns a user-actionable error without leaking secrets or raw model payloads.
 - Every model output that enters the workspace creates a human-review-required event.
+- Secure Review Journey exposes a metadata-only Model Gateway Evaluation artifact for human review.
 - Deterministic risk scoring never depends on model output.
 
 Do not build:

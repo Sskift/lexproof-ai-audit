@@ -36,7 +36,7 @@ Key evidence:
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
 - Export Safety Gate before Counsel Pack handoff, with data-boundary findings for private keys, API keys, raw KYC, personal-data references, and confidentiality labels.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
-- Server Model Gateway receipts with source evidence hashes, allowed data-class policy, safe failure receipts, retry state, and remediation steps without returning raw payloads or credentials.
+- Server Model Gateway receipts and Model Gateway Evaluation artifacts with payload hash, response hash, source evidence hash, provider policy metadata, human-review status, retry/error state, and remediation steps without returning raw payloads or credentials.
 - Human Review queue with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
@@ -100,6 +100,10 @@ The Phase 2 secure review journey connects Model Connect, metadata-only Evidence
 
 ![Secure Review Journey](docs/assets/screenshots/secure-review-journey.png)
 
+Model Gateway Evaluation turns the server receipt into a metadata-only review artifact with payload/response/source-evidence hashes, provider policy, retry state, and a JSON download for human review. Not legal advice.
+
+![Model Gateway Evaluation](docs/assets/screenshots/model-gateway-evaluation.png)
+
 ![Model Gateway failure receipt remediation](docs/assets/screenshots/model-gateway-failure-receipt.png)
 
 Counsel Pack exports template-specific Markdown, browser Print / Save PDF output, Model Intake summary, AI event hashes, manifest JSON, version-history JSON, and a simulated anchor receipt without claiming a real chain write. Model Intake can also download its own profile, event ledger, readiness checklist, and event hashes as JSON.
@@ -130,7 +134,7 @@ The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.
 2. Evidence selection or local metadata-only evidence intake.
 3. Deterministic Risk Audit with source-linked issue cards.
 4. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
-5. Secure Review Journey across Evidence Vault, Model Gateway, Human Review, and audit log routes.
+5. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, and audit log routes.
 6. Counsel Pack template selection, version save, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
 
 Screenshots for the exact demo path:
@@ -181,7 +185,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 11. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.
 12. Open **Counsel Pack** to choose an export template, inspect the Export Safety Gate, edit the counsel question queue, update review status for each risk flag, save a Pack Version to capture manifest/Markdown hashes and review-status diff, create a server export record from that latest version when the Phase 2 API is running, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download version JSON, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review. If the gate detects private keys, API keys, or raw KYC materials, these export actions are disabled until the evidence is replaced with metadata-only summaries.
 
-Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, audit-log, and Counsel Pack export metadata records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, raw Markdown, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Evidence Retention Policy JSON, Counsel Pack version JSON, Model Gateway receipts, server export records, and model-run ledger exports store hashes and metadata, not credentials or raw Markdown content. Evidence Retention Readiness redacts detected secrets in snippets and blocks Evidence Vault sync for private-key-like material, credential-like tokens, and raw KYC references. The Export Safety Gate redacts detected secrets in the preview and blocks export handoff for the same blocked data classes. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, audit-log, and Counsel Pack export metadata records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, raw Markdown, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Evidence Retention Policy JSON, Model Gateway Evaluation JSON, Counsel Pack version JSON, Model Gateway receipts, server export records, and model-run ledger exports store hashes and metadata, not credentials or raw Markdown content. Evidence Retention Readiness redacts detected secrets in snippets and blocks Evidence Vault sync for private-key-like material, credential-like tokens, and raw KYC references. The Export Safety Gate redacts detected secrets in the preview and blocks export handoff for the same blocked data classes. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 

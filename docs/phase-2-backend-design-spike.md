@@ -135,7 +135,7 @@ The routes create, read, and update durable workspace metadata with a visible no
 
 ## Evidence Vault Routes
 
-The first Evidence Vault routes are implemented in `server/app.ts` and backed by `server/evidenceVaultService.ts` and `server/reviewWorkspaceRepository.ts`:
+The first Evidence Vault routes are implemented in `server/evidenceVaultRoutes.ts` and backed by `server/evidenceVaultService.ts`, `src/lib/evidenceVaultWorkflow.ts`, and `server/reviewWorkspaceRepository.ts`:
 
 - `POST /api/workspaces/:workspaceId/evidence`
 - `GET /api/workspaces/:workspaceId/evidence`
@@ -147,7 +147,7 @@ The upload route accepts multipart files, computes SHA-256 server-side, persists
 
 ## Model Gateway Routes
 
-The first Model Gateway routes are implemented in `server/app.ts` and backed by `server/modelGatewayService.ts`:
+The first Model Gateway routes are implemented in `server/modelGatewayRoutes.ts` and backed by `server/modelGatewayService.ts`:
 
 - `GET /api/model-gateway/adapters`
 - `POST /api/workspaces/:workspaceId/model-runs`
@@ -224,6 +224,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition
+- Evidence Vault route-module registration independently from the full app composition
 
 `server/reviewWorkspaceRepository.test.ts` covers:
 

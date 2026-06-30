@@ -1,37 +1,68 @@
-# LexProof AuditOS Demo Script
+# LexProof AuditOS Hackathon Demo Script
 
-This script is for a short BLI Legal Tech Hackathon 2 walkthrough. Keep the narration clear that LexProof creates audit preparation materials, not legal advice.
+This is the runnable judging path for BLI Legal Tech Hackathon 2. The demo shows audit preparation workflow records only. It is not legal advice, not KYC, and not a real on-chain write.
 
-## 1. Product Position
+## Local Setup
 
-LexProof AuditOS helps Web3 teams turn scattered launch facts, evidence notes, model-assisted issue spotting, and deterministic hashes into a counsel-ready review packet.
+Run the API and web app in separate terminals:
 
-The product is not an AI judge, a law firm, a KYC provider, or a real chain-writing service.
+```bash
+npm install
+npm run build:server
+DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+```
 
-## 2. Walkthrough
+```bash
+npm run dev
+```
 
-1. Start on **Project Workspace** and load `YieldPassport`.
-2. Open **Audit Wizard** and show the handoff boundary: project facts, AI/data/chain boundaries, and review gate.
-3. Open **Model Intake** and show provider/model purpose, allowed data classes, human-review owner, readiness checklist, AI event hash records, and the standalone Model Intake JSON download.
-4. Open **AI Review** and show **Model Settings**, **Model Access Workflow**, and **Model Connection Readiness**:
-   - mock provider for demo
-   - OpenAI-compatible provider for user-supplied endpoint/model/API key
-   - API key is local browser state and not persisted
-   - workflow steps show Model Intake, provider setup, Redaction Gate, model run, and human-review/export status
-   - readiness distinguishes mock-ready, incomplete live settings, and Redaction Gate blockers
-5. Show the **Redaction Gate**:
-   - evidence summaries are previewed before model calls
-   - KYC/personal-data references are marked for review
-   - private-key-like material blocks model calls
-6. Run the mock AI Review and show extracted facts, missing evidence, draft counsel questions, remediation suggestions, and the automatically created Model Intake event.
-7. Show the **AI Review Run Ledger** with provider/model metadata, redaction status, payload SHA-256, response SHA-256, and downloadable run JSON, then open **Model Intake** to assign a reviewer, mark the run reviewed, show the event SHA-256, and download Model Intake JSON.
-8. Open **Jurisdiction Checklist** and show preparation prompts, jurisdiction packs, and local-counsel routing as audit-prep aids, not legal conclusions.
-9. Open **Risk Audit** and show deterministic flags, source links, “why this flag triggered,” score, and remediation queue.
-10. Open **Evidence Ledger**, apply the tokenized yield/RWA template, add one synthetic evidence item, show the local Evidence Audit Trail and JSON export, and show the manifest bundle SHA-256 update.
-11. Open **Counsel Pack**, show the Model Intake Summary and AI event hashes, download Markdown, download Manifest JSON, and create the **Simulated Anchor Receipt**.
+Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks for a Secure Review or Evidence Vault API base URL.
 
-## 3. Closing Message
+## End-To-End Demo Path
 
-LexProof's trust layer is not the model. The trust layer is the structured workspace, deterministic audit engine, source-linked issue explanations, evidence templates, editable evidence ledger, evidence audit trail JSON, model intake JSON, model intake event hashes, model-run hash receipts, manifest hash, redaction gate, and human counsel handoff.
+1. **Connect model**
+   - Open **AI Review**.
+   - Keep **Mock local reviewer** selected for the live demo, then click **Validate Model Connect**.
+   - Show the receipt, Model Access Workflow, Model Connection Readiness, and Redaction Gate.
+   - Screenshot: `docs/assets/screenshots/demo-01-model-connect.png`.
 
-Every output remains audit preparation material. Not legal advice.
+2. **Select or upload evidence**
+   - Open **Evidence Ledger**.
+   - Apply the **tokenized yield / RWA** evidence template, or add one local synthetic evidence item.
+   - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
+   - Screenshot: `docs/assets/screenshots/demo-02-evidence-ledger.png`.
+
+3. **Run risk audit**
+   - Open **Risk Audit**.
+   - Show deterministic flags, source-linked issue cards, evidence workflow coverage, and remediation owners.
+   - If a missing item is useful for narration, click **Request evidence** to push a requested item into Evidence Ledger.
+   - Screenshot: `docs/assets/screenshots/demo-03-risk-audit.png`.
+
+4. **Route human review**
+   - Open **Human Review**.
+   - Set one evidence item to `needs-more-evidence`, save the decision, and show the return message.
+   - Return to **Evidence Ledger** and show the linked evidence status moved back to `requested`.
+   - Screenshot: `docs/assets/screenshots/demo-04-human-review-return.png`.
+
+5. **Sync vault and gateway journey**
+   - Open the **Secure Review Workspace** panel at the top of the app.
+   - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
+   - Click **Run Secure Review Journey**.
+   - Show the Evidence Vault manifest hash, Model Gateway response hash, Human Review request ID, audit log count, and Not legal advice boundary.
+   - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
+
+6. **Export counsel pack**
+   - Open **Counsel Pack**.
+   - Show Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, and source pack.
+   - Click **Download Markdown**. Optionally click **Download Manifest JSON** and **Create Simulated Anchor Receipt**.
+   - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
+
+## Error-State Checks
+
+- **Model connection failure:** choose **OpenAI-compatible**, leave Base URL/model/API key incomplete, click **Validate Model Connect**, then run **Secure Review Journey**. The workspace should show a recoverable **Fix Model Connect** action. No API key is persisted.
+- **Evidence missing:** start a new project and click **Run Secure Review Journey** before adding evidence. The workspace should direct the user to add metadata-only evidence first.
+- **Review returned:** save a Human Review decision as `needs-more-evidence`; linked evidence should move to `requested` for rework.
+
+## Closing Line
+
+LexProof's trust layer is the structured workspace: deterministic risk rules, source-linked issue cards, metadata-only evidence vault sync, model-run hash receipts, human review decisions, manifest hashes, and counsel-pack export. Every output remains audit preparation material. Not legal advice.

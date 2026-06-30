@@ -205,6 +205,18 @@ describe("App", () => {
     }
   });
 
+  it("explains the Evidence Vault empty state before metadata sync", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+
+    expect(await screen.findByRole("heading", { name: /Evidence Vault Sync/i })).toBeInTheDocument();
+    expect(screen.getByText(/Add or apply at least one evidence item before syncing Evidence Vault/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sync Evidence Vault/i })).toBeDisabled();
+    expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
+  });
+
   it("runs the full Secure Review Workspace journey across evidence vault, model gateway, and human review", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
@@ -394,6 +406,31 @@ describe("App", () => {
     expect(await screen.findByText(/Validate Model Connect before running the secure review journey/i)).toBeInTheDocument();
   });
 
+  it("shows a recoverable Secure Review Journey error when Model Connect validation is blocked", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Blocked connection memo" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), { target: { value: "Evidence summary exists now." } });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.change(screen.getByLabelText(/^Provider$/i), { target: { value: "openai-compatible" } });
+    fireEvent.change(screen.getByLabelText(/Model name/i), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+    expect(await screen.findByText(/Model Connect is blocked until configuration and redaction checks pass/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
+
+    expect(await screen.findByText(/Secure Review Journey cannot run until Model Connect is ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/Complete Base URL, model name, and API key, or switch to the mock local reviewer/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Fix Model Connect/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+  });
+
   it("shows per-risk evidence workflow coverage and updates it from ledger evidence", async () => {
     render(<App />);
 
@@ -558,6 +595,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save decision for Returned review memo/i }));
 
     expect(await screen.findByText(/Human review decision saved for Returned review memo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Returned for more evidence. Linked evidence is moved back to requested status/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("requested");
@@ -568,6 +606,8 @@ describe("App", () => {
       target: { value: "Rejected as stale audit-prep evidence." }
     });
     fireEvent.click(screen.getByRole("button", { name: /Save decision for Returned review memo/i }));
+
+    expect(await screen.findByText(/Rejected from review. Linked evidence is moved to draft for rework/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("draft");

@@ -267,6 +267,12 @@ export function EvidenceLedger({
           </button>
         </div>
         {vaultStatus === "syncing" ? <p className="save-state">Syncing metadata-only evidence snapshots to the vault...</p> : null}
+        {evidenceItems.length === 0 ? (
+          <p className="empty-state">
+            Add or apply at least one evidence item before syncing Evidence Vault. Not legal advice; sync creates metadata-only
+            audit preparation records.
+          </p>
+        ) : null}
         {vaultStatus === "synced" && vaultManifest ? (
           <p className="save-state">
             Evidence Vault synced {vaultRecords.length} records. Manifest contains {vaultManifest.itemCount} items.

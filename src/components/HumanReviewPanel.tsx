@@ -12,10 +12,12 @@ const statuses: HumanReviewStatus[] = ["needs-review", "in-review", "needs-more-
 
 export function HumanReviewPanel({ queue, onSaveDecision }: HumanReviewPanelProps) {
   const [savedTitle, setSavedTitle] = useState("");
+  const [saveGuidance, setSaveGuidance] = useState("");
 
   const saveDecision = (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => {
     onSaveDecision(item, update);
     setSavedTitle(item.title);
+    setSaveGuidance(reviewDecisionGuidance(item, update.status));
   };
 
   return (
@@ -38,7 +40,11 @@ export function HumanReviewPanel({ queue, onSaveDecision }: HumanReviewPanelProp
         <SummaryStat label="Rejected or blocked" value={queue.summary.blockedCount} />
       </div>
 
-      {savedTitle ? <p className="save-state">Human review decision saved for {savedTitle}.</p> : null}
+      {savedTitle ? (
+        <p className="save-state">
+          Human review decision saved for {savedTitle}. {saveGuidance}
+        </p>
+      ) : null}
 
       <div className="human-review-queue">
         {queue.items.length === 0 ? <p className="empty-state">No human review targets are currently queued.</p> : null}
@@ -148,4 +154,24 @@ function labelForTarget(targetType: HumanReviewQueueItem["targetType"]): string 
     return "AI event";
   }
   return "Evidence";
+}
+
+function reviewDecisionGuidance(item: HumanReviewQueueItem, status: HumanReviewStatus): string {
+  if (item.targetType !== "evidence") {
+    return "Not legal advice; this is an audit preparation workflow status.";
+  }
+
+  if (status === "needs-more-evidence") {
+    return "Returned for more evidence. Linked evidence is moved back to requested status. Not legal advice.";
+  }
+
+  if (status === "rejected") {
+    return "Rejected from review. Linked evidence is moved to draft for rework. Not legal advice.";
+  }
+
+  if (status === "reviewed") {
+    return "Linked evidence is marked verified for audit preparation handoff. Not legal advice.";
+  }
+
+  return "Linked evidence remains in review workflow status. Not legal advice.";
 }

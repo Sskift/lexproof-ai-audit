@@ -520,6 +520,24 @@ textarea {
   line-height: 1.4;
 }
 
+.secure-journey-error {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e2a7a1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.secure-journey-error > strong {
+  color: #9f3328;
+}
+
+.secure-journey-error small,
+.secure-journey-error span {
+  color: #53616f;
+}
+
 .tabs button {
   border: 1px solid #c9d5de;
   background: #ffffff;

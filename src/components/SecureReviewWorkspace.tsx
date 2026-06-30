@@ -41,6 +41,7 @@ export function SecureReviewWorkspace({
   const runJourney = async () => {
     setJourneyStatus("running");
     setJourneyError("");
+    setJourneyResult(null);
 
     try {
       const result = await runSecureReviewJourney({
@@ -145,7 +146,9 @@ export function SecureReviewWorkspace({
             {journeyStatus === "running" ? "Running Secure Review Journey" : "Run Secure Review Journey"}
           </button>
         </div>
-        {journeyError ? <p className="error-text">{journeyError}</p> : null}
+        {journeyError ? (
+          <SecureJourneyError message={journeyError} onNavigate={onNavigate} />
+        ) : null}
         {journeyResult ? <SecureJourneyResult result={journeyResult} /> : null}
       </section>
     </section>
@@ -203,6 +206,69 @@ function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) 
       <small>{result.notLegalAdviceBoundary}</small>
     </div>
   );
+}
+
+function SecureJourneyError({
+  message,
+  onNavigate
+}: {
+  message: string;
+  onNavigate: SecureReviewWorkspaceProps["onNavigate"];
+}) {
+  const recovery = recoveryForJourneyError(message);
+
+  return (
+    <div className="secure-journey-error" role="alert">
+      <strong>{recovery.title}</strong>
+      <p>{recovery.detail}</p>
+      <small>{message}</small>
+      <div className="inline-actions">
+        <span>Not legal advice. Fixing this step only prepares workflow records for human review.</span>
+        <button type="button" className="secondary" onClick={() => onNavigate(recovery.target)}>
+          {recovery.actionLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function recoveryForJourneyError(message: string): {
+  title: string;
+  detail: string;
+  actionLabel: string;
+  target: Parameters<SecureReviewWorkspaceProps["onNavigate"]>[0];
+} {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("model connect") ||
+    normalized.includes("model name") ||
+    normalized.includes("base url") ||
+    normalized.includes("api key")
+  ) {
+    return {
+      title: "Secure Review Journey cannot run until Model Connect is ready",
+      detail: "Complete Base URL, model name, and API key, or switch to the mock local reviewer, then validate Model Connect again.",
+      actionLabel: "Fix Model Connect",
+      target: "ai"
+    };
+  }
+
+  if (normalized.includes("evidence")) {
+    return {
+      title: "Secure Review Journey needs evidence before vault sync",
+      detail: "Add a metadata-only evidence item or apply an evidence template, then rerun the secure review journey.",
+      actionLabel: "Add Evidence",
+      target: "evidence"
+    };
+  }
+
+  return {
+    title: "Secure Review Journey stopped before completion",
+    detail: "Check the API base URL, backend server status, and workspace inputs before retrying.",
+    actionLabel: "Review Workspace",
+    target: "wizard"
+  };
 }
 
 function JourneyFact({ label, value }: { label: string; value: string }) {

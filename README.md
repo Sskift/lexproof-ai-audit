@@ -70,9 +70,40 @@ Evidence Ledger records local evidence creation, template application, edits, an
 
 ![Evidence Audit Trail](docs/assets/screenshots/evidence-audit-trail.png)
 
+The Phase 2 secure review journey connects Model Connect, metadata-only Evidence Vault sync, Model Gateway receipts, Human Review, audit log records, and Counsel Pack handoff.
+
+![Secure Review Journey](docs/assets/screenshots/secure-review-journey.png)
+
 Counsel Pack exports Markdown, browser Print / Save PDF output, Model Intake summary, AI event hashes, manifest JSON, and a simulated anchor receipt without claiming a real chain write. Model Intake can also download its own profile, event ledger, readiness checklist, and event hashes as JSON.
 
 ![Counsel Pack export surface](docs/assets/screenshots/counsel-pack-exports.jpg)
+
+## Hackathon Demo Runbook
+
+The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
+
+1. Model Connect validation with the mock local reviewer.
+2. Evidence selection or local metadata-only evidence intake.
+3. Deterministic Risk Audit with source-linked issue cards.
+4. Human Review return flow that moves linked evidence back to `requested`.
+5. Secure Review Journey across Evidence Vault, Model Gateway, Human Review, and audit log routes.
+6. Counsel Pack Markdown export, Manifest JSON, and simulated anchor receipt.
+
+Screenshots for the exact demo path:
+
+![Demo step 1: Model Connect](docs/assets/screenshots/demo-01-model-connect.png)
+
+![Demo step 2: Evidence Ledger](docs/assets/screenshots/demo-02-evidence-ledger.png)
+
+![Demo step 3: Risk Audit](docs/assets/screenshots/demo-03-risk-audit.png)
+
+![Demo step 4: Human Review Return](docs/assets/screenshots/demo-04-human-review-return.png)
+
+![Demo step 5: Secure Review Journey](docs/assets/screenshots/demo-05-secure-review-journey.png)
+
+![Demo step 6: Counsel Pack Export](docs/assets/screenshots/demo-06-counsel-pack-export.png)
+
+Every step is audit preparation only. Not legal advice.
 
 ## How Users Connect Models
 
@@ -144,10 +175,23 @@ npm run start:api
 
 The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/manifest routes, mock Model Gateway run routes, Human Review routes, Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/audit records. Evidence uploads are hashed server-side and responses stay metadata-only. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders until server-side secret policy is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, or write to a blockchain.
 
+For the scripted hackathon demo, use a disposable SQLite file:
+
+```bash
+npm run build:server
+DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+```
+
+Then run the frontend in another terminal:
+
+```bash
+npm run dev
+```
+
 ## Submission Assets
 
 - Public GitHub repository: this repo
-- Demo video: record the app flow through project creation, Model Intake, AI Review, Jurisdiction Checklist, Risk Audit, Evidence Ledger, and Counsel Pack
+- Demo video: record the scripted flow in [docs/demo-script.md](docs/demo-script.md), including Model Connect, Evidence Ledger, Risk Audit, Human Review, Secure Review Journey, and Counsel Pack export
 - DoraHacks BUIDL submission: use the generated Counsel Pack and README summary
 - Screenshot-backed submission narrative: see [docs/submission-pack.md](docs/submission-pack.md)
 - Source pack: see [docs/research.md](docs/research.md)

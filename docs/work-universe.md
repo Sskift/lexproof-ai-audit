@@ -40,6 +40,7 @@ Build:
 
 - `src/data/regulatoryClauses.ts` with source-backed regulatory references by jurisdiction, regulator, topic, citation, source URL, trigger facts, evidence requests, and counsel questions.
 - `src/lib/regulatoryGraph.ts` to match project facts, audit flags, evidence status, and jurisdiction packs to clause references and evidence gaps.
+- `src/lib/regulatorySourcePack.ts` for metadata-only source pack JSON with matched clauses, evidence gaps, Source Review Ledger freshness, counsel questions, local counsel routes, and a stable pack hash.
 - Frontend panels for jurisdiction risk matrix, clause cards, evidence coverage by source, and local counsel handoff routes.
 - Source update metadata: `effectiveAsOf`, `lastReviewedAt`, `sourceUrl`, and reviewer notes. The first Source Review Ledger is implemented in `src/lib/regulatorySourceReview.ts` and `RegulatoryCommandCenter`: it shows current/review-due/metadata-missing source records and refresh actions without making legal conclusions.
 - Tests proving clause matching, evidence coverage, source visibility, source review freshness, and non-advice wording.
@@ -48,7 +49,7 @@ Acceptance:
 
 - A user can select jurisdictions and see source-linked review triggers with missing evidence.
 - The UI never says a project is legally compliant or non-compliant.
-- Counsel Pack exports matched clauses, evidence gaps, Source Review Ledger freshness metadata, and local counsel questions.
+- Counsel Pack and source pack exports include matched clauses, evidence gaps, Source Review Ledger freshness metadata, and local counsel questions.
 
 Do not build:
 

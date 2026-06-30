@@ -46,6 +46,7 @@ Key evidence:
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Regulatory Command Center first screen with a Workspace Action Queue, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
 - Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, UK FCA, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
+- Metadata-only Regulatory Source Pack JSON builder with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash for future counsel handoff surfaces.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.

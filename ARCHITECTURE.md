@@ -86,6 +86,7 @@ lexproof-ai-audit/
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
+      regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
       workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
       counselPack.ts         # Markdown pack and browser download helper
       dataClassification.ts  # Shared security data-classification and redaction rules
@@ -338,6 +339,16 @@ Owns source review metadata for the Regulatory Command Center:
 - The output repeats the Not legal advice boundary and creates review actions for source metadata refresh only.
 
 This module tracks source lineage and review freshness. It does not decide whether a law applies, whether a source is legally current, or whether a project is compliant.
+
+### `src/lib/regulatorySourcePack.ts`
+
+Owns standalone source-pack handoff artifacts:
+
+- `createRegulatorySourcePack({ graph, sourceReview })` projects the Regulatory Source Graph and Source Review Ledger into metadata-only clauses, evidence gaps, jurisdiction summaries, counsel questions, source review status, and a stable SHA-256 pack hash.
+- `exportRegulatorySourcePackJson(pack)` produces readable JSON for future UI download or server export records.
+- The pack hash excludes `generatedAt`, raw evidence bodies, and legal conclusions so counsel can compare source/gap lineage across exports.
+
+Source packs are audit preparation materials only. They do not determine legal status, certify source currency, or replace local counsel review.
 
 ### `src/lib/workspaceActionQueue.ts`
 

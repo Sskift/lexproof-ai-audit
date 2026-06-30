@@ -111,6 +111,10 @@ import {
   createRegulatorySourcePack,
   type RegulatorySourcePack
 } from "./lib/regulatorySourcePack";
+import {
+  createRegulatorySourceReviewPacket,
+  type RegulatorySourceReviewPacket
+} from "./lib/regulatorySourceReviewPacket";
 import { createRegulatorySourceReview } from "./lib/regulatorySourceReview";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
@@ -156,6 +160,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
+  const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
@@ -450,6 +455,23 @@ export default function App() {
       live = false;
     };
   }, [regulatoryGraph, regulatorySourceReview]);
+
+  useEffect(() => {
+    let live = true;
+    setRegulatorySourceReviewPacket(null);
+    createRegulatorySourceReviewPacket({
+      projectId: project.id,
+      projectName: project.projectName,
+      sourceReview: regulatorySourceReview
+    }).then((nextPacket) => {
+      if (live) {
+        setRegulatorySourceReviewPacket(nextPacket);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [project.id, project.projectName, regulatorySourceReview]);
 
   useEffect(() => {
     let live = true;
@@ -912,6 +934,7 @@ export default function App() {
             controlMatrix={regulatoryControlMatrix}
             actionQueue={workspaceActionQueue}
             journey={workspaceJourney}
+            sourceReviewPacket={regulatorySourceReviewPacket}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />

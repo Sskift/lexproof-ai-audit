@@ -47,6 +47,7 @@ Key evidence:
 - Regulatory Command Center first screen with a Workspace Journey rail, Workspace Action Queue, Regulatory Control Matrix, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
 - Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, EU AI Act, UK FCA, UK ICO AI data protection guidance, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
 - Downloadable metadata-only Regulatory Source Pack JSON from Counsel Pack with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash.
+- Downloadable metadata-only Source Review Packet JSON from the command center with source refresh actions, clause-match targets, packet hash, and Not legal advice boundary.
 - Downloadable metadata-only Regulatory Control Matrix JSON from the command center with source-review status, evidence coverage, local counsel routes, next actions, and Not legal advice boundary.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
@@ -155,6 +156,10 @@ Source review refresh actions route into Human Review as clause-match items for 
 
 ![Human Review clause-match source refresh](docs/assets/screenshots/human-review-clause-match-source-refresh.png)
 
+The Source Review Ledger can also export a metadata-only Source Review Packet JSON with a packet hash, source records, and clause-match refresh actions for counsel/compliance review. Not legal advice.
+
+![Source Review Packet](docs/assets/screenshots/source-review-packet.png)
+
 The Phase 2 secure review journey connects Model Connect, metadata-only Evidence Vault sync, Model Gateway receipts, Human Review, audit log records, and Counsel Pack handoff. If the server gateway blocks a run, the UI shows the persisted failure receipt run ID, retry state, remediation steps, and the Not legal advice boundary.
 
 ![Secure Review Journey](docs/assets/screenshots/secure-review-journey.png)
@@ -254,7 +259,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, **Public source education review**, or **AI legal workflow review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
-3. Review the **Regulatory Command Center** for the **Workspace Journey**, **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. The **AI legal workflow review** scenario shows EU AI Act and UK ICO AI data protection controls for human oversight, source lineage, redaction, and reviewer decision logs. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff. Use journey and queue buttons to jump directly to project facts, evidence, model, review, or export recovery work.
+3. Review the **Regulatory Command Center** for the **Workspace Journey**, **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. The **AI legal workflow review** scenario shows EU AI Act and UK ICO AI data protection controls for human oversight, source lineage, redaction, and reviewer decision logs. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff, or download the Source Review Packet JSON when counsel needs the source refresh action queue and packet hash. Use journey and queue buttons to jump directly to project facts, evidence, model, review, or export recovery work.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
 5. Open **AI Review** to inspect Model Access Workflow, Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.

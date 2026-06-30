@@ -53,7 +53,7 @@ The repository already has:
 - Local Human Review operations with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence updates, and downloadable timeline JSON with audit log IDs.
 - Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, Evidence Vault control coverage summary, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
-- Demo script, screenshots, Demo Scenario Library launcher, Workspace Journey rail, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, command-center Regulatory Control Matrix export, and seeded judge paths.
+- Demo script, screenshots, Demo Scenario Library launcher, Workspace Journey rail, Source Review Packet export, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, command-center Regulatory Control Matrix export, and seeded judge paths.
 - Generated Submission Pack JSON in Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, feature-to-theme mapping, known limitations, and Not legal advice boundary.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
@@ -163,6 +163,7 @@ Build:
 - AI legal workflow source-control coverage is implemented for EU AI Act Article 4 / Chapter III review routing and UK ICO AI data protection guidance. The `ai-compliance-workflow` evidence template carries `control-eu-ai-act-ai-literacy-governance` and `control-uk-ico-ai-data-protection-governance` source references so the AI scenario can show human oversight, source lineage, redaction, and reviewer decision-log gaps without legal conclusions.
 - `src/lib/regulatorySourcePack.ts` for downloadable metadata-only source pack JSON with matched clauses, evidence gaps, Source Review Ledger freshness, counsel questions, local counsel routes, and a stable pack hash from the Counsel Pack surface.
 - `src/lib/regulatoryControlMatrix.ts` for downloadable metadata-only control matrix JSON with source review status, evidence coverage status, local counsel route, next action, and Not legal advice boundary from the command center.
+- `src/lib/regulatorySourceReviewPacket.ts` for downloadable metadata-only source review packet JSON with a packet hash, source review records, clause-match refresh actions, and Not legal advice boundary from the command center.
 - Frontend panels for jurisdiction risk matrix, clause cards, evidence coverage by source, and local counsel handoff routes.
 - Source update metadata: `effectiveAsOf`, `lastReviewedAt`, `sourceUrl`, and reviewer notes. The first Source Review Ledger is implemented in `src/lib/regulatorySourceReview.ts` and `RegulatoryCommandCenter`: it shows current/review-due/metadata-missing source records and refresh actions without making legal conclusions.
 - Tests proving clause matching, evidence coverage, source visibility, source review freshness, control matrix export, and non-advice wording.
@@ -238,7 +239,7 @@ Goal: make review status operational instead of decorative.
 
 Build:
 
-- Review queues by target type: evidence, model run, risk flag, clause match, counsel pack. Clause-match source review actions now enter the local Human Review queue from `regulatorySourceReview.ts`, and the server queue view in `src/lib/serverHumanReviewQueue.ts` plus `GET /api/workspaces/:workspaceId/reviews/queue` accepts `clause-match` filters with target/status/reviewer next actions.
+- Review queues by target type: evidence, model run, risk flag, clause match, counsel pack. Clause-match source review actions now enter the local Human Review queue from `regulatorySourceReview.ts`, the command center can export those actions as a hashed Source Review Packet through `src/lib/regulatorySourceReviewPacket.ts`, and the server queue view in `src/lib/serverHumanReviewQueue.ts` plus `GET /api/workspaces/:workspaceId/reviews/queue` accepts `clause-match` filters with target/status/reviewer next actions.
 - Reviewer assignment, due date, status history, decision reason, and linked evidence/model-run changes. Server review updates now sync Evidence Vault status and Model Gateway `humanReviewStatus` through `src/lib/serverHumanReviewEffects.ts` and append metadata-only audit-log records.
 - Return-to-evidence flow when a reviewer requests more support.
 - Rejection flow that preserves the rejected item and opens a replacement action.

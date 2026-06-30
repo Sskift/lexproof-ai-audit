@@ -838,6 +838,22 @@ textarea {
   flex: 0 0 auto;
 }
 
+.reg-source-review-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.reg-source-review-header .reg-section-title {
+  margin-bottom: 0;
+}
+
+.reg-source-review-header button {
+  flex: 0 0 auto;
+}
+
 .reg-control-boundary {
   display: flex;
   gap: 8px;
@@ -5324,12 +5340,14 @@ textarea {
     display: grid;
   }
 
-  .reg-control-header {
+  .reg-control-header,
+  .reg-source-review-header {
     align-items: stretch;
     display: grid;
   }
 
-  .reg-control-header button {
+  .reg-control-header button,
+  .reg-source-review-header button {
     justify-self: start;
   }
 

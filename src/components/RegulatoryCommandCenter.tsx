@@ -1,8 +1,12 @@
-import { AlertTriangle, ExternalLink, FileSearch, Globe2, ListChecks, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, ShieldCheck } from "lucide-react";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
 import type { AuditResult } from "../lib/auditEngine";
 import type { RegulatoryControlMatrix } from "../lib/regulatoryControlMatrix";
 import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGraph";
+import {
+  downloadRegulatorySourceReviewPacketJson,
+  type RegulatorySourceReviewPacket
+} from "../lib/regulatorySourceReviewPacket";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
@@ -16,6 +20,7 @@ type RegulatoryCommandCenterProps = {
   controlMatrix: RegulatoryControlMatrix;
   actionQueue: WorkspaceActionQueue;
   journey: WorkspaceJourney;
+  sourceReviewPacket: RegulatorySourceReviewPacket | null;
   manifestHash?: string;
   onNavigate: (tab: WorkspaceActionTarget) => void;
 };
@@ -28,6 +33,7 @@ export function RegulatoryCommandCenter({
   controlMatrix,
   actionQueue,
   journey,
+  sourceReviewPacket,
   manifestHash,
   onNavigate
 }: RegulatoryCommandCenterProps) {
@@ -122,9 +128,23 @@ export function RegulatoryCommandCenter({
       <RegulatoryControlMatrixPanel matrix={controlMatrix} />
 
       <section className={`reg-source-review ${sourceReview.status}`} aria-label="Source Review Ledger">
-        <div className="reg-section-title">
-          <ShieldCheck size={17} aria-hidden="true" />
-          <h3>Source Review Ledger</h3>
+        <div className="reg-source-review-header">
+          <div className="reg-section-title">
+            <ShieldCheck size={17} aria-hidden="true" />
+            <h3>Source Review Ledger</h3>
+          </div>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!sourceReviewPacket}
+            onClick={() =>
+              sourceReviewPacket &&
+              downloadRegulatorySourceReviewPacketJson(`lexproof-${project.id}-source-review-packet.json`, sourceReviewPacket)
+            }
+          >
+            <Download size={15} aria-hidden="true" />
+            Download Source Review Packet JSON
+          </button>
         </div>
         <div className="reg-source-review-summary">
           <Metric label="Reviewed sources" value={sourceReview.currentSourceCount} helper={`${sourceReview.totalSourceCount} matched`} />

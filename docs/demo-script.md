@@ -40,8 +40,10 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show the **Workspace Journey** from project facts -> model/evidence intake -> risk/source graph -> human review -> vault/manifest -> counsel export, including the current next action and the Not legal advice boundary.
    - Show jurisdiction readiness, official-source clause triggers, the Regulatory Control Matrix, evidence gap queue, manifest status, and the Not legal advice boundary.
    - Click **Download Control Matrix JSON** to show the metadata-only handoff with evidence coverage, source review status, local counsel route, next action, and no compliance conclusion.
+   - Click **Download Source Review Packet JSON** to show the metadata-only source refresh action queue, clause-match targets, packet hash, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
    - Screenshot: `docs/assets/screenshots/workspace-journey.png`.
+   - Screenshot: `docs/assets/screenshots/source-review-packet.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 

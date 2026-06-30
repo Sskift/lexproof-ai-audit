@@ -39,6 +39,7 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Workspace actions are audit preparation workflow prompts only./i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Resolve source evidence gaps/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Source Review Ledger/i })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: /Download Source Review Packet JSON/i })).toBeEnabled());
     expect(
       screen.getAllByText(/Not legal advice. Source review metadata is audit preparation lineage only./i).length
     ).toBeGreaterThan(0);

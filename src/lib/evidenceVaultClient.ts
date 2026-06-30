@@ -97,8 +97,39 @@ type EvidenceVaultFetch = (input: RequestInfo | URL, init?: RequestInit) => Prom
 type ErrorResponse = {
   error?: string;
   errors?: string[];
+  code?: string;
   recoveryAction?: string;
+  duplicateEvidenceId?: string;
+  duplicateStatus?: EvidenceVaultRecordResponse["status"];
+  notLegalAdviceBoundary?: string;
 };
+
+export type EvidenceVaultClientErrorDetails = {
+  message: string;
+  code?: string;
+  recoveryAction?: string;
+  duplicateEvidenceId?: string;
+  duplicateStatus?: EvidenceVaultRecordResponse["status"];
+  notLegalAdviceBoundary?: string;
+};
+
+export class EvidenceVaultClientError extends Error {
+  code?: string;
+  recoveryAction?: string;
+  duplicateEvidenceId?: string;
+  duplicateStatus?: EvidenceVaultRecordResponse["status"];
+  notLegalAdviceBoundary?: string;
+
+  constructor(details: EvidenceVaultClientErrorDetails) {
+    super(details.message);
+    this.name = "EvidenceVaultClientError";
+    this.code = details.code;
+    this.recoveryAction = details.recoveryAction;
+    this.duplicateEvidenceId = details.duplicateEvidenceId;
+    this.duplicateStatus = details.duplicateStatus;
+    this.notLegalAdviceBoundary = details.notLegalAdviceBoundary;
+  }
+}
 
 export async function createEvidenceVaultSnapshot(item: EvidenceItem): Promise<EvidenceVaultSnapshot> {
   const localContentHash = await hashEvidenceItem(item);
@@ -262,8 +293,15 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
 
   if (!response.ok) {
     const errorPayload = payload as ErrorResponse;
-    const details = [errorPayload.errors?.join(" "), errorPayload.error, errorPayload.recoveryAction].filter(Boolean).join(" ") || fallbackMessage;
-    throw new Error(details);
+    const message = [errorPayload.errors?.join(" "), errorPayload.error].filter(Boolean).join(" ") || fallbackMessage;
+    throw new EvidenceVaultClientError({
+      message,
+      code: errorPayload.code,
+      recoveryAction: errorPayload.recoveryAction,
+      duplicateEvidenceId: errorPayload.duplicateEvidenceId,
+      duplicateStatus: errorPayload.duplicateStatus,
+      notLegalAdviceBoundary: errorPayload.notLegalAdviceBoundary
+    });
   }
 
   return payload as T;

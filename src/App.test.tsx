@@ -384,6 +384,57 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
   });
 
+  it("shows structured Evidence Vault duplicate recovery details without losing the non-advice boundary", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        return appJsonResponse(
+          {
+            error: "Duplicate evidence hash already exists in this workspace.",
+            code: "EVIDENCE_DUPLICATE_HASH",
+            recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash.",
+            duplicateEvidenceId: "evidence-vault-existing",
+            duplicateStatus: "verified",
+            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          },
+          409
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Duplicate vault memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Source reference/i), { target: { value: "risk evidence requirement: governance-approval" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "verified" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: { value: "Duplicate evidence facts stay local and are represented by hash only." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Sync Evidence Vault/i }));
+
+      expect(await screen.findByText(/Duplicate evidence hash already exists in this workspace/i)).toBeInTheDocument();
+      const recoveryPanel = screen.getByRole("region", { name: /Evidence Vault recovery details/i });
+      expect(within(recoveryPanel).getByText(/EVIDENCE_DUPLICATE_HASH/i)).toBeInTheDocument();
+      expect(within(recoveryPanel).getByText(/Use the existing record, update its status, or upload a replacement/i)).toBeInTheDocument();
+      expect(within(recoveryPanel).getByText(/Duplicate evidence ID/i)).toBeInTheDocument();
+      expect(within(recoveryPanel).getByText(/evidence-vault-existing/i)).toBeInTheDocument();
+      expect(within(recoveryPanel).getByText(/Duplicate status/i)).toBeInTheDocument();
+      expect(within(recoveryPanel).getByText("verified")).toBeInTheDocument();
+      expect(within(recoveryPanel).getByText(/Not legal advice. This API creates audit preparation workflow records only./i)).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("recovers a rejected Evidence Vault record by creating a metadata-only replacement", async () => {
     const rejectedRecord = {
       recordVersion: "lexproof-evidence-vault-record-v1",

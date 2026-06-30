@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createEvidenceVaultSnapshot,
+  EvidenceVaultClientError,
   replaceEvidenceVaultRecord,
   syncEvidenceLedgerToVault,
   type EvidenceVaultManifestResponse,
@@ -104,6 +105,47 @@ describe("evidence vault client", () => {
     expect(uploadedPayload).toContain("governance-approval");
     expect(uploadedPayload).not.toContain("Confidential board approval text");
     expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
+  });
+
+  it("preserves structured duplicate-hash recovery metadata from Evidence Vault errors", async () => {
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        return jsonResponse(
+          {
+            error: "Duplicate evidence hash already exists in this workspace.",
+            code: "EVIDENCE_DUPLICATE_HASH",
+            recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash.",
+            duplicateEvidenceId: "evidence-vault-existing",
+            duplicateStatus: "verified",
+            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          },
+          409
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+
+    try {
+      await syncEvidenceLedgerToVault({
+        workspaceId: "workspace-vault",
+        evidenceItems: [evidenceItem],
+        apiBaseUrl: "https://api.lexproof.test",
+        fetcher
+      });
+      throw new Error("Expected duplicate Evidence Vault error.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(EvidenceVaultClientError);
+      expect(error).toMatchObject({
+        message: "Duplicate evidence hash already exists in this workspace.",
+        code: "EVIDENCE_DUPLICATE_HASH",
+        recoveryAction: "Use the existing record, update its status, or upload a replacement with a changed metadata hash.",
+        duplicateEvidenceId: "evidence-vault-existing",
+        duplicateStatus: "verified",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      });
+    }
   });
 
   it("uploads a metadata-only replacement for a rejected vault record", async () => {

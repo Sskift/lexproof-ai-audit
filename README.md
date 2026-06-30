@@ -119,6 +119,10 @@ Evidence Vault recovery preserves rejected evidence as superseded metadata and c
 
 ![Evidence Vault rejected evidence recovery](docs/assets/screenshots/evidence-vault-recovery.png)
 
+Evidence Vault duplicate-hash recovery keeps the existing vault record visible, shows the server error code, duplicate record ID, duplicate status, and an actionable retry path without storing raw evidence content. Not legal advice.
+
+![Evidence Vault duplicate hash recovery](docs/assets/screenshots/evidence-vault-duplicate-recovery.png)
+
 Human Review records reviewer due dates, saved status history, audit log IDs, source clause-match refresh actions, and a downloadable review timeline.
 
 ![Human Review timeline](docs/assets/screenshots/human-review-timeline.png)

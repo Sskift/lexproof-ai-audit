@@ -6,6 +6,7 @@ import type { EvidenceIntakeGuidance, EvidenceIntakeGuidanceAction } from "../li
 import type { EvidenceManifest } from "../lib/evidenceManifest";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import {
+  EvidenceVaultClientError,
   fetchEvidenceVaultManifest,
   listEvidenceVaultRecords,
   replaceEvidenceVaultRecord,
@@ -47,6 +48,15 @@ const blankEvidence: EvidenceItem = {
   owner: "Founder"
 };
 
+type VaultErrorDetails = {
+  message: string;
+  code?: string;
+  recoveryAction?: string;
+  duplicateEvidenceId?: string;
+  duplicateStatus?: EvidenceVaultRecordResponse["status"];
+  notLegalAdviceBoundary?: string;
+};
+
 export function EvidenceLedger({
   projectId,
   evidenceItems,
@@ -65,6 +75,7 @@ export function EvidenceLedger({
   const [vaultApiBaseUrl, setVaultApiBaseUrl] = useState("");
   const [vaultStatus, setVaultStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [vaultError, setVaultError] = useState("");
+  const [vaultErrorDetails, setVaultErrorDetails] = useState<VaultErrorDetails | null>(null);
   const [vaultRecoveryState, setVaultRecoveryState] = useState("");
   const [vaultReplacementReasons, setVaultReplacementReasons] = useState<Record<string, string>>({});
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
@@ -127,6 +138,7 @@ export function EvidenceLedger({
 
     setVaultStatus("syncing");
     setVaultError("");
+    setVaultErrorDetails(null);
     setVaultRecoveryState("");
 
     try {
@@ -141,7 +153,7 @@ export function EvidenceLedger({
       setVaultStatus("synced");
     } catch (error) {
       setVaultStatus("error");
-      setVaultError(error instanceof Error ? error.message : "Evidence Vault sync failed.");
+      captureVaultError(error, "Evidence Vault sync failed.");
     }
   };
 
@@ -152,6 +164,7 @@ export function EvidenceLedger({
 
     setVaultStatus("syncing");
     setVaultError("");
+    setVaultErrorDetails(null);
     setVaultRecoveryState("");
 
     try {
@@ -170,7 +183,7 @@ export function EvidenceLedger({
       setVaultStatus("synced");
     } catch (error) {
       setVaultStatus("error");
-      setVaultError(error instanceof Error ? error.message : "Evidence Vault manifest refresh failed.");
+      captureVaultError(error, "Evidence Vault manifest refresh failed.");
     }
   };
 
@@ -180,11 +193,13 @@ export function EvidenceLedger({
     if (!replacementItem) {
       setVaultStatus("error");
       setVaultError("Add local evidence metadata before replacing a rejected Evidence Vault record.");
+      setVaultErrorDetails(null);
       return;
     }
 
     setVaultStatus("syncing");
     setVaultError("");
+    setVaultErrorDetails(null);
     setVaultRecoveryState("");
 
     try {
@@ -206,9 +221,27 @@ export function EvidenceLedger({
       setVaultRecoveryState(`Replacement evidence created for ${record.filename}.`);
     } catch (error) {
       setVaultStatus("error");
-      setVaultError(error instanceof Error ? error.message : "Evidence Vault replacement failed.");
+      captureVaultError(error, "Evidence Vault replacement failed.");
     }
   };
+
+  function captureVaultError(error: unknown, fallbackMessage: string) {
+    if (error instanceof EvidenceVaultClientError) {
+      setVaultError(error.message);
+      setVaultErrorDetails({
+        message: error.message,
+        code: error.code,
+        recoveryAction: error.recoveryAction,
+        duplicateEvidenceId: error.duplicateEvidenceId,
+        duplicateStatus: error.duplicateStatus,
+        notLegalAdviceBoundary: error.notLegalAdviceBoundary
+      });
+      return;
+    }
+
+    setVaultError(error instanceof Error ? error.message : fallbackMessage);
+    setVaultErrorDetails(null);
+  }
 
   return (
     <section className="panel stage-panel">
@@ -372,6 +405,7 @@ export function EvidenceLedger({
         ) : null}
         {vaultRecoveryState ? <p className="save-state vault-recovery-state">{vaultRecoveryState} Not legal advice.</p> : null}
         {vaultError ? <p className="error-text">{vaultError}</p> : null}
+        {vaultErrorDetails ? <VaultErrorRecoveryPanel error={vaultErrorDetails} /> : null}
         {vaultRecords.length > 0 ? (
           <div className="vault-record-list">
             {vaultRecords.slice(0, 5).map((record, index) => (
@@ -710,6 +744,48 @@ function VaultMetric({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function VaultErrorRecoveryPanel({ error }: { error: VaultErrorDetails }) {
+  const facts = [
+    { label: "Error code", value: error.code },
+    { label: "Duplicate evidence ID", value: error.duplicateEvidenceId },
+    { label: "Duplicate status", value: error.duplicateStatus }
+  ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value));
+
+  return (
+    <section className="vault-error-panel" aria-label="Evidence Vault recovery details">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldAlert size={17} aria-hidden="true" />
+          <h3>Evidence Vault Recovery</h3>
+        </div>
+        <span>Review before retry</span>
+      </div>
+      {error.recoveryAction ? (
+        <p>
+          <strong>Recovery action</strong>
+          <span>{error.recoveryAction}</span>
+        </p>
+      ) : null}
+      {facts.length > 0 ? (
+        <dl className="vault-error-facts">
+          {facts.map((fact) => (
+            <div key={fact.label}>
+              <dt>{fact.label}</dt>
+              <dd>
+                <code>{fact.value}</code>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      <small>
+        {error.notLegalAdviceBoundary ??
+          "Not legal advice. Evidence Vault recovery details are audit preparation workflow signals only."}
+      </small>
+    </section>
   );
 }
 

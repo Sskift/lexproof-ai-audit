@@ -3293,6 +3293,66 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.vault-error-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e2a7a1;
+  border-radius: 8px;
+  background: #fffdfb;
+}
+
+.vault-error-panel p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  color: #5f2b24;
+  line-height: 1.45;
+}
+
+.vault-error-panel p strong,
+.vault-error-panel small,
+.vault-error-facts dt {
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.vault-error-panel small {
+  color: #714438;
+  line-height: 1.45;
+}
+
+.vault-error-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.vault-error-facts div {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #f0d2cb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vault-error-facts dt {
+  margin-bottom: 5px;
+  color: #7b463d;
+}
+
+.vault-error-facts dd {
+  margin: 0;
+}
+
+.vault-error-facts code {
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.78rem;
+}
+
 .ledger-item {
   grid-template-columns: 48px minmax(0, 1fr) 28px;
   padding: 12px;
@@ -4454,6 +4514,7 @@ textarea {
   .grc-ticket-list,
   .retention-grid,
   .vault-sync-grid,
+  .vault-error-facts,
   .secure-journey-controls {
     grid-template-columns: 1fr;
   }

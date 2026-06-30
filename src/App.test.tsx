@@ -566,9 +566,10 @@ describe("App", () => {
 
       expect(await screen.findByText(/Evidence Vault synced 1 records/i)).toBeInTheDocument();
       expect(screen.getByText("a".repeat(64))).toBeInTheDocument();
-      expect(screen.getByText(/vault-approval-memo.metadata.json/i)).toBeInTheDocument();
-      expect(screen.getByText(/verified · Compliance · v2/i)).toBeInTheDocument();
-      expect(screen.getByText(/Controls: control-eu-mica-title-ii-white-paper/i)).toBeInTheDocument();
+      const vaultRecords = within(screen.getByLabelText(/Evidence Vault records/i));
+      expect(vaultRecords.getByText(/vault-approval-memo.metadata.json/i)).toBeInTheDocument();
+      expect(vaultRecords.getByText(/verified · Compliance · v2/i)).toBeInTheDocument();
+      expect(vaultRecords.getByText(/Controls: control-eu-mica-title-ii-white-paper/i)).toBeInTheDocument();
 
       const uploadedFile = uploadedForms[0].get("file") as Blob;
       const uploadedPayload = await readAppBlobText(uploadedFile);
@@ -578,6 +579,144 @@ describe("App", () => {
       expect(uploadedPayload).not.toContain("Raw board approval facts stay local");
       expect(uploadedForms[0].get("linkedControlIds")).toBe("control-eu-mica-title-ii-white-paper");
       expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("shows Evidence Vault control coverage after syncing AI workflow template evidence", async () => {
+    const uploadedRecords: Array<{
+      id: string;
+      filename: string;
+      status: string;
+      owner: string;
+      linkedControlIds: string[];
+    }> = [];
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        const form = init.body as FormData;
+        const filename = ((form.get("file") as File | null)?.name ?? `ai-template-${uploadedRecords.length + 1}.metadata.json`).toString();
+        const linkedControlIds = String(form.get("linkedControlIds") ?? "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean);
+        const owner = String(form.get("owner") ?? "Compliance");
+        const record = {
+          recordVersion: "lexproof-evidence-vault-record-v1",
+          id: `evidence-vault-ai-${uploadedRecords.length + 1}`,
+          workspaceId: "workspace-ai-controls",
+          filename,
+          mimeType: "application/json",
+          byteSize: 512,
+          fileHash: `${uploadedRecords.length + 1}`.repeat(64).slice(0, 64),
+          storageMode: "server-vault",
+          status: "requested",
+          owner,
+          sourceNote: "Metadata-only sync",
+          version: 1,
+          linkedRiskFlagIds: [],
+          linkedControlIds,
+          containsRawKycOrPersonalData: false,
+          createdAt: `2026-07-01T00:00:0${uploadedRecords.length}.000Z`,
+          updatedAt: `2026-07-01T00:00:0${uploadedRecords.length}.000Z`
+        };
+        uploadedRecords.push({
+          id: record.id,
+          filename: record.filename,
+          status: record.status,
+          owner: record.owner,
+          linkedControlIds: record.linkedControlIds
+        });
+        return appJsonResponse(record, 201);
+      }
+
+      if (path.includes("/evidence/") && init?.method === "PATCH") {
+        const evidenceId = path.split("/evidence/")[1] ?? "";
+        const patch = JSON.parse(String(init.body ?? "{}")) as {
+          status?: string;
+          owner?: string;
+          linkedControlIds?: string[];
+        };
+        const index = uploadedRecords.findIndex((record) => record.id === decodeURIComponent(evidenceId));
+        if (index === -1) {
+          return appJsonResponse({ message: "Missing evidence record" }, 404);
+        }
+        uploadedRecords[index] = {
+          ...uploadedRecords[index],
+          status: patch.status ?? uploadedRecords[index].status,
+          owner: patch.owner ?? uploadedRecords[index].owner,
+          linkedControlIds: patch.linkedControlIds ?? uploadedRecords[index].linkedControlIds
+        };
+        return appJsonResponse(
+          {
+            recordVersion: "lexproof-evidence-vault-record-v1",
+            ...uploadedRecords[index],
+            workspaceId: "workspace-ai-controls",
+            mimeType: "application/json",
+            byteSize: 512,
+            fileHash: `${index + 1}`.repeat(64).slice(0, 64),
+            storageMode: "server-vault",
+            sourceNote: "Metadata-only sync",
+            version: 1,
+            linkedRiskFlagIds: [],
+            containsRawKycOrPersonalData: false,
+            createdAt: `2026-07-01T00:00:0${index}.000Z`,
+            updatedAt: `2026-07-01T00:00:1${index}.000Z`
+          },
+          200
+        );
+      }
+
+      if (path.endsWith("/evidence-manifest") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            manifestVersion: "lexproof-evidence-vault-manifest-v1",
+            workspaceId: "workspace-ai-controls",
+            generatedAt: "2026-07-01T00:00:00.000Z",
+            itemCount: uploadedRecords.length,
+            items: uploadedRecords.map((record, index) => ({
+              sequence: index + 1,
+              evidenceId: record.id,
+              filename: record.filename,
+              mimeType: "application/json",
+              byteSize: 512,
+              fileHash: `${index + 1}`.repeat(64).slice(0, 64),
+              storageMode: "server-vault",
+              status: record.status,
+              owner: record.owner,
+              version: 1,
+              linkedRiskFlagIds: [],
+              linkedControlIds: record.linkedControlIds,
+              containsRawKycOrPersonalData: false
+            })),
+            bundleHash: "c".repeat(64),
+            notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+          },
+          200
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Apply AI compliance workflow template/i }));
+      fireEvent.click(await screen.findByRole("button", { name: /Sync Evidence Vault/i }));
+
+      expect(await screen.findByText(/Evidence Vault synced 4 records/i)).toBeInTheDocument();
+      const coverage = within(screen.getByRole("region", { name: /Evidence Vault Control Coverage/i }));
+      expect(coverage.getByRole("heading", { name: /Evidence Vault Control Coverage/i })).toBeInTheDocument();
+      expect(coverage.getByText(/2 controls linked across 4 vault records and 4 manifest items/i)).toBeInTheDocument();
+      expect(coverage.getByText(/control-eu-ai-act-ai-literacy-governance/i)).toBeInTheDocument();
+      expect(coverage.getByText(/control-uk-ico-ai-data-protection-governance/i)).toBeInTheDocument();
+      expect(coverage.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }

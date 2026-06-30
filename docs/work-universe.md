@@ -51,7 +51,7 @@ The repository already has:
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
 - Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, server-side Counsel Pack export metadata records, and Audit Log listing.
 - Local Human Review operations with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence updates, and downloadable timeline JSON with audit log IDs.
-- Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
+- Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, Evidence Vault control coverage summary, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
 - Demo script, screenshots, Demo Scenario Library launcher, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, command-center Regulatory Control Matrix export, and seeded judge paths.
 - Generated Submission Pack JSON in Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, feature-to-theme mapping, known limitations, and Not legal advice boundary.
@@ -186,7 +186,7 @@ Goal: make evidence handling durable, versioned, and reviewable while staying me
 
 Build:
 
-- Versioned Evidence Vault records with parent/child relationships, replacement reason, owner, source notes, and linked risk/control IDs. The first control-link path is implemented from Evidence Ledger source references through multipart upload, persisted vault records, manifest hashing, and the vault record UI.
+- Versioned Evidence Vault records with parent/child relationships, replacement reason, owner, source notes, and linked risk/control IDs. The first control-link path is implemented from Evidence Ledger source references through multipart upload, persisted vault records, manifest hashing, the vault record UI, and an aggregated Evidence Vault Control Coverage summary in `src/lib/evidenceVaultControlCoverage.ts`.
 - Server-side manifest generation from persisted evidence metadata. The first dedicated manifest builder is implemented in `src/lib/evidenceVaultManifest.ts` and the Evidence Vault manifest route: it uses stable ordering, status/version/lineage hashes, and excludes raw bytes plus source-note body content.
 - Evidence state machine: `draft`, `requested`, `received`, `under-review`, `verified`, `rejected`, `superseded`. The first server-enforced transition guard is implemented in `src/lib/evidenceVaultWorkflow.ts` and the Evidence Vault PATCH route; rejected or superseded records cannot be directly reactivated outside replacement recovery.
 - Evidence empty states, invalid upload errors, duplicate hash detection, and rejected-evidence recovery flows. The first empty-ledger guidance is implemented in `src/lib/evidenceIntakeGuidance.ts` and `EvidenceLedger`: it recommends the safest template action and missing risk evidence requests without raw KYC, private keys, credentials, personal data, or legal conclusions.
@@ -197,6 +197,7 @@ Acceptance:
 - Adding, replacing, rejecting, and verifying evidence changes the manifest bundle hash.
 - Raw evidence bytes are not included in Counsel Pack or manifest JSON by default.
 - Empty evidence journeys tell the user exactly what to add next from risk evidence coverage and recommended templates.
+- Evidence Vault control coverage shows linked controls across vault records and manifest items without describing a project as compliant or non-compliant.
 - Invalid Evidence Vault status transitions return actionable recovery guidance before any record or audit log mutation.
 
 Do not build:

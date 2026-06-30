@@ -14,6 +14,7 @@ import {
   type EvidenceVaultManifestResponse,
   type EvidenceVaultRecordResponse
 } from "../lib/evidenceVaultClient";
+import { createEvidenceVaultControlCoverage, type EvidenceVaultControlCoverage } from "../lib/evidenceVaultControlCoverage";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
 import {
@@ -80,6 +81,14 @@ export function EvidenceLedger({
   const [vaultReplacementReasons, setVaultReplacementReasons] = useState<Record<string, string>>({});
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
+  const vaultControlCoverage = useMemo(
+    () =>
+      createEvidenceVaultControlCoverage({
+        records: vaultRecords,
+        manifest: vaultManifest
+      }),
+    [vaultManifest, vaultRecords]
+  );
   const retentionReport = useMemo(
     () =>
       createRetentionPolicyReport({
@@ -403,11 +412,12 @@ export function EvidenceLedger({
             Evidence Vault synced {vaultRecords.length} records. Manifest contains {vaultManifest.itemCount} items.
           </p>
         ) : null}
+        {vaultControlCoverage.controlCount > 0 ? <VaultControlCoveragePanel coverage={vaultControlCoverage} /> : null}
         {vaultRecoveryState ? <p className="save-state vault-recovery-state">{vaultRecoveryState} Not legal advice.</p> : null}
         {vaultError ? <p className="error-text">{vaultError}</p> : null}
         {vaultErrorDetails ? <VaultErrorRecoveryPanel error={vaultErrorDetails} /> : null}
         {vaultRecords.length > 0 ? (
-          <div className="vault-record-list">
+          <div className="vault-record-list" aria-label="Evidence Vault records">
             {vaultRecords.slice(0, 5).map((record, index) => (
               <article key={record.id} className={`vault-record ${record.status}`}>
                 <strong>{record.filename}</strong>
@@ -745,6 +755,38 @@ function VaultMetric({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function VaultControlCoveragePanel({ coverage }: { coverage: EvidenceVaultControlCoverage }) {
+  return (
+    <section className="vault-control-coverage" aria-label="Evidence Vault Control Coverage">
+      <div className="split-title compact-title">
+        <div>
+          <BadgeCheck size={17} aria-hidden="true" />
+          <h3>Evidence Vault Control Coverage</h3>
+        </div>
+        <span>{coverage.controlCount} controls</span>
+      </div>
+      <p>
+        {coverage.controlCount} controls linked across {coverage.recordCount} vault records and {coverage.manifestItemCount} manifest
+        items.
+      </p>
+      <div className="vault-control-list">
+        {coverage.controls.map((control) => (
+          <article key={control.controlId} className="vault-control-card">
+            <code>{control.controlId}</code>
+            <div className="vault-control-facts">
+              <span>{control.evidenceRecordCount} records</span>
+              <span>{control.manifestItemCount} manifest items</span>
+            </div>
+            <small>Status coverage: {control.statuses.join(", ") || "not synced"}</small>
+            <small>Evidence files: {control.filenames.join(", ") || "no filenames"}</small>
+          </article>
+        ))}
+      </div>
+      <small>{coverage.notLegalAdviceBoundary}</small>
+    </section>
   );
 }
 

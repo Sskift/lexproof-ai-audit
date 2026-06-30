@@ -53,10 +53,11 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **Evidence Ledger**.
    - Apply the **tokenized yield / RWA** evidence template, or add one local synthetic evidence item.
    - For the AI alternate path, apply the **AI compliance workflow** evidence template and show source references such as `regulatory control: control-eu-ai-act-ai-literacy-governance` and `regulatory control: control-uk-ico-ai-data-protection-governance`.
-   - Include a source reference such as `regulatory control: control-eu-mica-title-ii-white-paper`, sync to the local Evidence Vault API, and show the vault record's **Controls:** line plus manifest hash. Not legal advice.
+   - Include a source reference such as `regulatory control: control-eu-mica-title-ii-white-paper`, sync to the local Evidence Vault API, and show the vault record's **Controls:** line plus manifest hash. In the AI alternate path, show **Evidence Vault Control Coverage** with the EU AI Act and UK ICO control IDs linked across vault records and manifest items. Not legal advice.
    - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
    - Show **Evidence Retention Readiness** and confirm normal demo evidence is metadata-only or needs human confirmation before vault sync. Not legal advice.
    - Screenshot: `docs/assets/screenshots/demo-02-evidence-ledger.png`.
+   - AI control-coverage screenshot: `docs/assets/screenshots/evidence-vault-control-coverage-ai.png`.
 
 4. **Run risk audit**
    - Open **Risk Audit**.

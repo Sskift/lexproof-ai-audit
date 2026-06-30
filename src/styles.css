@@ -3667,6 +3667,75 @@ textarea {
   gap: 8px;
 }
 
+.vault-control-coverage {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #c7dccf;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vault-control-coverage p,
+.vault-control-coverage small {
+  margin: 0;
+  color: #40515f;
+  line-height: 1.45;
+}
+
+.vault-control-coverage > .split-title span {
+  border-radius: 999px;
+  background: #dff2e7;
+  color: #25553d;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.vault-control-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.vault-control-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.vault-control-card code {
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.vault-control-card small {
+  overflow-wrap: anywhere;
+  font-size: 0.76rem;
+}
+
+.vault-control-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vault-control-facts span {
+  border-radius: 999px;
+  background: #edf4f7;
+  color: #40515f;
+  padding: 4px 7px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
 .vault-record-list {
   display: grid;
   gap: 8px;

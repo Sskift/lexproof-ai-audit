@@ -592,6 +592,107 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("refreshes server provider policy with Model Connect receipt metadata but without the session API key", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/model-gateway/provider-policy");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body).toEqual({
+        modelConnectReceipt: {
+          provider: "openai-compatible",
+          mode: "session-openai-compatible",
+          status: "ready",
+          blockers: []
+        }
+      });
+      expect(String(init?.body)).not.toContain("sk-test-session-only");
+      expect(String(init?.body)).not.toContain("api.lexproof-model.test");
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-model-gateway-provider-policy-v1",
+          generatedAt: "2026-07-01T00:00:00.000Z",
+          overallStatus: "needs-policy",
+          enabledProviderCount: 1,
+          deferredProviderCount: 2,
+          adapters: [
+            {
+              provider: "mock",
+              label: "Mock local reviewer gateway",
+              enabled: true,
+              mode: "local-mock",
+              credentialPolicy: "no credentials accepted",
+              status: "ready",
+              readinessEvidence: "Mock local reviewer gateway is enabled for metadata-only mock review.",
+              requiredControls: ["redaction-gate", "human-review-enforcement"]
+            },
+            {
+              provider: "openai-compatible",
+              label: "OpenAI-compatible gateway",
+              enabled: false,
+              mode: "external-provider-placeholder",
+              credentialPolicy: "deferred until server-side secret policy is approved",
+              status: "needs-policy",
+              readinessEvidence:
+                "OpenAI-compatible gateway has a session-only browser receipt, but server proxying remains disabled until provider policy controls are approved.",
+              requiredControls: [
+                "server-side-secret-policy",
+                "provider-allowlist",
+                "egress-logging",
+                "redaction-gate",
+                "human-review-enforcement"
+              ]
+            }
+          ],
+          controls: [
+            {
+              id: "server-side-secret-policy",
+              label: "Server-side secret policy",
+              status: "needs-policy",
+              evidence: "No KMS-backed provider credential storage or secret rotation policy is approved yet.",
+              recoveryAction: "Approve KMS-backed secret storage before external provider proxying."
+            },
+            {
+              id: "redaction-gate",
+              label: "Redaction Gate",
+              status: "ready",
+              evidence: "Model Connect has no current redaction blockers for audit-prep routing.",
+              recoveryAction: "Keep Redaction Gate mandatory before any provider request."
+            }
+          ],
+          nextActions: ["Approve server-side secret policy before enabling OpenAI-compatible gateway."],
+          notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    const aiReview = within(screen.getByRole("heading", { name: "AI Review", level: 2 }).closest("section") as HTMLElement);
+    fireEvent.change(aiReview.getByLabelText("Provider"), { target: { value: "openai-compatible" } });
+    fireEvent.change(aiReview.getByLabelText("Base URL"), { target: { value: "https://api.lexproof-model.test/v1" } });
+    fireEvent.change(aiReview.getByLabelText("Model name"), { target: { value: "gpt-review" } });
+    fireEvent.change(aiReview.getByLabelText("API key"), { target: { value: "sk-test-session-only" } });
+    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const policy = within(registry.getByRole("region", { name: /Model Gateway Provider Policy/i }));
+
+    fireEvent.change(policy.getByLabelText(/Provider Policy API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.click(policy.getByRole("button", { name: /Refresh Server Provider Policy/i }));
+
+    expect(await policy.findByText(/Server provider policy synced/i)).toBeInTheDocument();
+    expect(policy.getByText(/OpenAI-compatible gateway needs policy/i)).toBeInTheDocument();
+    expect(policy.getByText(/No KMS-backed provider credential storage/i)).toBeInTheDocument();
+    expect(policy.queryByText(/sk-test-session-only/i)).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
     const fetchMock = vi.fn(async () =>
       appJsonResponse(

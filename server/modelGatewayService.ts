@@ -5,7 +5,8 @@ import {
   createModelGatewayProviderPolicyReport,
   defaultModelGatewayProviderAdapters,
   type ModelGatewayProviderPolicyReport,
-  type ModelGatewayProviderPolicyAdapter
+  type ModelGatewayProviderPolicyAdapter,
+  type ModelGatewayProviderPolicyModelConnectReceipt
 } from "../src/lib/modelGatewayProviderPolicy.js";
 
 export type ModelGatewayAdapterDescriptor = ModelGatewayProviderPolicyAdapter;
@@ -33,10 +34,13 @@ export function listModelGatewayAdapters(): ModelGatewayAdapterDescriptor[] {
   return modelGatewayAdapters.map((adapter) => ({ ...adapter }));
 }
 
-export function createServerModelGatewayProviderPolicyReport(createdAt?: string): ModelGatewayProviderPolicyReport {
+export function createServerModelGatewayProviderPolicyReport(
+  modelConnectReceipt: ModelGatewayProviderPolicyModelConnectReceipt | null = null,
+  createdAt?: string
+): ModelGatewayProviderPolicyReport {
   return createModelGatewayProviderPolicyReport({
     adapters: listModelGatewayAdapters(),
-    modelConnectReceipt: null,
+    modelConnectReceipt,
     generatedAt: createdAt
   });
 }

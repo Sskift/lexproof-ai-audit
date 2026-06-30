@@ -1,13 +1,16 @@
 import type {
   ModelGatewayProviderPolicyAdapterReport,
   ModelGatewayProviderPolicyControl,
+  ModelGatewayProviderPolicyModelConnectReceipt,
   ModelGatewayProviderPolicyReport,
   ModelGatewayProviderPolicyStatus
 } from "./modelGatewayProviderPolicy";
+import type { ModelConnectReceipt } from "./modelConnect";
 
 export type FetchModelGatewayProviderPolicyInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
+  modelConnectReceipt?: ModelConnectReceipt | null;
 };
 
 type ErrorResponse = {
@@ -37,7 +40,8 @@ export class ModelGatewayProviderPolicyClientError extends Error {
 
 export async function fetchModelGatewayProviderPolicy({
   apiBaseUrl,
-  fetcher = globalThis.fetch?.bind(globalThis)
+  fetcher = globalThis.fetch?.bind(globalThis),
+  modelConnectReceipt = null
 }: FetchModelGatewayProviderPolicyInput = {}): Promise<ModelGatewayProviderPolicyReport> {
   if (!fetcher) {
     throw new ModelGatewayProviderPolicyClientError("Fetch is required to refresh Model Gateway provider policy.", {
@@ -46,7 +50,8 @@ export async function fetchModelGatewayProviderPolicy({
     });
   }
 
-  const response = await fetcher(buildProviderPolicyUrl(apiBaseUrl), { method: "GET" });
+  const providerPolicyReceipt = createProviderPolicyReceipt(modelConnectReceipt);
+  const response = await fetcher(buildProviderPolicyUrl(apiBaseUrl), createProviderPolicyRequestInit(providerPolicyReceipt));
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -64,6 +69,31 @@ export async function fetchModelGatewayProviderPolicy({
 function buildProviderPolicyUrl(apiBaseUrl: string | undefined): string {
   const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
   return `${base}/api/model-gateway/provider-policy`;
+}
+
+function createProviderPolicyRequestInit(receipt: ModelGatewayProviderPolicyModelConnectReceipt | null): RequestInit {
+  if (!receipt) {
+    return { method: "GET" };
+  }
+
+  return {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ modelConnectReceipt: receipt })
+  };
+}
+
+function createProviderPolicyReceipt(receipt: ModelConnectReceipt | null): ModelGatewayProviderPolicyModelConnectReceipt | null {
+  if (!receipt) {
+    return null;
+  }
+
+  return {
+    provider: receipt.provider,
+    mode: receipt.mode,
+    status: receipt.status,
+    blockers: receipt.blockers.map((blocker) => blocker.replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 10)
+  };
 }
 
 function validateProviderPolicyReport(payload: unknown): ModelGatewayProviderPolicyReport {

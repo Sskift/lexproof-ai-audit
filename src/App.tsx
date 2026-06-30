@@ -606,9 +606,17 @@ export default function App() {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
   };
 
+  const resetModelConnectContext = () => {
+    setModelConnectReceipt(null);
+    setServerProviderPolicyReport(null);
+    setProviderPolicySyncStatus("idle");
+    setProviderPolicySyncError("");
+    setProviderPolicySyncRecoveryAction("");
+  };
+
   const updateModelSettings = (settings: ModelSettings) => {
     setModelSettings(settings);
-    setModelConnectReceipt(null);
+    resetModelConnectContext();
   };
 
   const loadSample = (projectName: string) => {
@@ -619,7 +627,7 @@ export default function App() {
     setProject(projectFromAuditProfile(profile));
     setShowValidation(false);
     setSavedAt("");
-    setModelConnectReceipt(null);
+    resetModelConnectContext();
     setActiveTab("wizard");
   };
 
@@ -633,7 +641,7 @@ export default function App() {
     setProject(projectFromAuditProfile(profile));
     setShowValidation(false);
     setSavedAt("");
-    setModelConnectReceipt(null);
+    resetModelConnectContext();
     setActiveTab(scenario.recommendedStartTab);
   };
 
@@ -641,7 +649,7 @@ export default function App() {
     setProject(createBlankProject());
     setShowValidation(false);
     setSavedAt("");
-    setModelConnectReceipt(null);
+    resetModelConnectContext();
     setActiveTab("wizard");
   };
 
@@ -786,6 +794,10 @@ export default function App() {
       redactionStatus: createRedactionReport(project.evidenceItems).status
     });
     setModelConnectReceipt(receipt);
+    setServerProviderPolicyReport(null);
+    setProviderPolicySyncStatus("idle");
+    setProviderPolicySyncError("");
+    setProviderPolicySyncRecoveryAction("");
 
     if (receipt.status === "ready") {
       setModelIntakeProfile((current) => ({
@@ -871,7 +883,8 @@ export default function App() {
 
     try {
       const report = await fetchModelGatewayProviderPolicy({
-        apiBaseUrl: providerPolicyApiBaseUrl
+        apiBaseUrl: providerPolicyApiBaseUrl,
+        modelConnectReceipt
       });
       setServerProviderPolicyReport(report);
       setProviderPolicySyncStatus("synced");

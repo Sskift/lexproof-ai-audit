@@ -59,6 +59,52 @@ describe("model gateway provider policy client", () => {
     expect(JSON.stringify(report).toLowerCase()).not.toContain("private key");
   });
 
+  it("posts only Model Connect receipt metadata when refreshing receipt-aware server policy", async () => {
+    const fetcher = vi.fn(async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) =>
+      jsonResponse(
+        {
+          ...providerPolicyReport,
+          adapters: providerPolicyReport.adapters.map((adapter) =>
+            adapter.provider === "openai-compatible" ? { ...adapter, status: "needs-policy", disabledReason: undefined } : adapter
+          )
+        },
+        200
+      )
+    );
+
+    const report = await fetchModelGatewayProviderPolicy({
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher: fetcher as unknown as typeof fetch,
+      modelConnectReceipt: {
+        receiptVersion: "lexproof-model-connect-receipt-v1",
+        provider: "openai-compatible",
+        providerLabel: "OpenAI-compatible session model",
+        model: "gpt-review",
+        endpointHost: "api.example.test",
+        status: "ready",
+        mode: "session-openai-compatible",
+        blockers: [],
+        createdAt: "2026-07-01T00:00:00.000Z",
+        notLegalAdviceBoundary: "Not legal advice. Model Connect validates audit-prep routing only."
+      }
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const [url, init] = fetcher.mock.calls[0];
+    expect(url).toBe("https://api.lexproof.test/api/model-gateway/provider-policy");
+    expect(init).toEqual(
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+    );
+    expect(String(init?.body)).toContain("\"provider\":\"openai-compatible\"");
+    expect(String(init?.body)).toContain("\"mode\":\"session-openai-compatible\"");
+    expect(String(init?.body)).not.toContain("apiKey");
+    expect(String(init?.body)).not.toContain("endpointHost");
+    expect(report.adapters.find((adapter) => adapter.provider === "openai-compatible")?.status).toBe("needs-policy");
+  });
+
   it("surfaces typed server errors with recovery guidance and the audit-prep boundary", async () => {
     const fetcher = vi.fn(async () =>
       jsonResponse(

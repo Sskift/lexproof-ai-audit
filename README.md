@@ -145,7 +145,7 @@ Integration Readiness Registry maps those gates into adapter-level status for mo
 
 ![Integration Readiness Registry](docs/assets/screenshots/integration-readiness-registry.png)
 
-Model Gateway Provider Policy makes disabled external model adapters and required controls visible before any server-side provider proxy is enabled. The workbench can refresh the metadata-only policy from `GET /api/model-gateway/provider-policy`, shows server sync and failure recovery states, exports metadata-only JSON, and keeps external providers disabled until secret policy, provider allowlist, egress logging, Redaction Gate, and human-review controls are approved. Not legal advice.
+Model Gateway Provider Policy makes disabled external model adapters and required controls visible before any server-side provider proxy is enabled. The workbench can refresh the metadata-only policy from `GET /api/model-gateway/provider-policy`, or after Model Connect validation use `POST /api/model-gateway/provider-policy` with only provider, mode, status, and blocker metadata. It never sends session API keys, endpoint hosts, model names, provider labels, or raw evidence to the policy route. The panel shows server sync and failure recovery states, exports metadata-only JSON, and keeps external providers disabled until secret policy, provider allowlist, egress logging, Redaction Gate, and human-review controls are approved. Not legal advice.
 
 ![Model Gateway Provider Policy](docs/assets/screenshots/model-gateway-provider-policy.png)
 

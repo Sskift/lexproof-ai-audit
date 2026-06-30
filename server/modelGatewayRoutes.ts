@@ -9,6 +9,7 @@ import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 import { createAuditLogRecord, createModelGatewayRunSummary } from "../src/lib/phase2Types.js";
+import type { ModelGatewayProviderPolicyModelConnectReceipt } from "../src/lib/modelGatewayProviderPolicy.js";
 
 export type ModelGatewayRoutesOptions = {
   repository: ReviewWorkspaceRepository;
@@ -19,6 +20,9 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
 
   server.get("/api/model-gateway/adapters", async () => listModelGatewayAdapters());
   server.get("/api/model-gateway/provider-policy", async () => createServerModelGatewayProviderPolicyReport());
+  server.post<{ Body: ModelGatewayProviderPolicyRequestBody }>("/api/model-gateway/provider-policy", async (request) =>
+    createServerModelGatewayProviderPolicyReport(toModelGatewayProviderPolicyReceipt(request.body?.modelConnectReceipt))
+  );
 
   server.post<{ Params: { workspaceId: string }; Body: ModelGatewayRequestBody }>(
     "/api/workspaces/:workspaceId/model-runs",
@@ -147,6 +151,49 @@ type ModelGatewayRequestBody = {
   allowedDataClasses?: string[];
   payload: unknown;
 };
+
+type ModelGatewayProviderPolicyRequestBody = {
+  modelConnectReceipt?: unknown;
+};
+
+function toModelGatewayProviderPolicyReceipt(value: unknown): ModelGatewayProviderPolicyModelConnectReceipt | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (!isProvider(value.provider) || !isReceiptMode(value.mode) || !isReceiptStatus(value.status)) {
+    return null;
+  }
+
+  return {
+    provider: value.provider,
+    mode: value.mode,
+    status: value.status,
+    blockers: Array.isArray(value.blockers)
+      ? value.blockers
+          .filter((blocker): blocker is string => typeof blocker === "string")
+          .map((blocker) => blocker.replace(/\s+/g, " ").trim())
+          .filter(Boolean)
+          .slice(0, 10)
+      : []
+  };
+}
+
+function isProvider(value: unknown): value is ModelGatewayProviderPolicyModelConnectReceipt["provider"] {
+  return value === "mock" || value === "openai-compatible" || value === "enterprise-proxy";
+}
+
+function isReceiptMode(value: unknown): value is ModelGatewayProviderPolicyModelConnectReceipt["mode"] {
+  return value === "local-mock" || value === "session-openai-compatible";
+}
+
+function isReceiptStatus(value: unknown): value is ModelGatewayProviderPolicyModelConnectReceipt["status"] {
+  return value === "ready" || value === "blocked";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function createModelGatewayRunNotFoundError() {
   return createApiErrorResponse({

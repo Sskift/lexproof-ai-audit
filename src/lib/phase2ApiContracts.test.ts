@@ -66,6 +66,16 @@ describe("Phase 2 backend API contracts", () => {
     expect(routes).toContainEqual(
       expect.objectContaining({
         method: "POST",
+        path: "/api/model-gateway/provider-policy",
+        domain: "model-gateway",
+        requestContract: "ModelGatewayProviderPolicyReceiptRequest",
+        responseContract: "ModelGatewayProviderPolicyReport",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "POST",
         path: "/api/workspaces/:workspaceId/model-runs",
         domain: "model-gateway",
         implemented: true

@@ -61,6 +61,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **AI Review**.
    - Keep **Mock local reviewer** selected for the live demo, then click **Validate Model Connect**.
    - Show the receipt, Model Access Workflow, Model Connection Readiness, and Redaction Gate.
+   - In **Integration Readiness Registry**, click **Refresh Server Provider Policy** after validation to show the receipt-aware policy refresh. The request sends only provider, mode, status, and blocker metadata; session API keys, endpoint hosts, model names, provider labels, and raw evidence are not sent.
    - Screenshot: `docs/assets/screenshots/demo-01-model-connect.png`.
 
 3. **Select or upload evidence**

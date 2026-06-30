@@ -47,6 +47,50 @@ describe("model gateway route module", () => {
     await repository.close();
   });
 
+  it("evaluates provider policy from a metadata-only Model Connect receipt without accepting credentials", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerModelGatewayRoutes(server, { repository });
+
+    const policyResponse = await server.inject({
+      method: "POST",
+      url: "/api/model-gateway/provider-policy",
+      payload: {
+        modelConnectReceipt: {
+          provider: "openai-compatible",
+          mode: "session-openai-compatible",
+          status: "ready",
+          blockers: [],
+          apiKey: "sk-live-abcdef1234567890abcdef1234567890"
+        }
+      }
+    });
+
+    expect(policyResponse.statusCode).toBe(200);
+    expect(policyResponse.json()).toEqual(
+      expect.objectContaining({
+        reportVersion: "lexproof-model-gateway-provider-policy-v1",
+        overallStatus: "needs-policy",
+        notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+      })
+    );
+    expect(policyResponse.json().adapters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ provider: "openai-compatible", status: "needs-policy", enabled: false }),
+        expect.objectContaining({ provider: "enterprise-proxy", status: "disabled", enabled: false })
+      ])
+    );
+    expect(policyResponse.json().nextActions).toEqual(
+      expect.arrayContaining(["Approve server-side secret policy before enabling OpenAI-compatible gateway."])
+    );
+    expect(policyResponse.body).not.toContain("sk-live-abcdef");
+    expect(policyResponse.body).not.toContain("apiKey");
+    expect(policyResponse.body.toLowerCase()).not.toContain("legal opinion");
+
+    await server.close();
+    await repository.close();
+  });
+
   it("registers metadata-only adapter, run, lookup, and summary routes without raw payload leakage", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();

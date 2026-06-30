@@ -15,6 +15,7 @@ describe("App", () => {
     window.localStorage?.removeItem?.("lexproof.evidenceAuditTrail.v1");
     window.localStorage?.removeItem?.("lexproof.humanReviewDecisions.v1");
     window.localStorage?.removeItem?.("lexproof.counselPackVersions.v1");
+    window.localStorage?.removeItem?.("lexproof.counselPackServerExports.v1");
   });
 
   it("renders the BLI-focused legal audit workbench with submission-critical surfaces", async () => {
@@ -1086,6 +1087,77 @@ describe("App", () => {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
+    }
+  });
+
+  it("creates server-side Counsel Pack export records from version metadata", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      expect(path).toMatch(/https:\/\/api\.lexproof\.test\/api\/workspaces\/.+\/exports\/counsel-pack$/);
+      const workspaceId = decodeURIComponent(path.match(/\/api\/workspaces\/([^/]+)\/exports\/counsel-pack$/)?.[1] ?? "");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body));
+      expect(body).toEqual(
+        expect.objectContaining({
+          title: expect.stringMatching(/Counsel Pack v1/i),
+          format: "markdown",
+          manifestHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          includesRawKycOrPersonalData: false,
+          includesCredentialMaterial: false
+        })
+      );
+      expect(JSON.stringify(body)).not.toContain("# Counsel Pack");
+      expect(JSON.stringify(body).toLowerCase()).not.toContain("api_key");
+      return appJsonResponse(
+        {
+          recordVersion: "lexproof-counsel-pack-export-record-v1",
+          id: "counsel-pack-export-ui",
+          workspaceId,
+          exportType: "counsel-pack",
+          format: "markdown",
+          version: 1,
+          projectName: body.projectName,
+          title: body.title,
+          artifactName: body.artifactName,
+          manifestHash: body.manifestHash,
+          artifactHash: body.artifactHash,
+          artifactSize: body.artifactSize,
+          riskLevel: body.riskLevel,
+          reviewSummary: body.reviewSummary,
+          sourceCount: body.sourceCount,
+          createdBy: body.createdBy,
+          status: "ready",
+          createdAt: "2026-06-30T08:30:00.000Z",
+          notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."
+        },
+        201
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      const saveButton = await screen.findByRole("button", { name: /Save Pack Version/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+      expect(await screen.findByText(/Version 1/i)).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Server export API base URL/i), {
+        target: { value: "https://api.lexproof.test" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Create Server Export Record/i }));
+
+      expect(await screen.findByText(/Server Export Records/i)).toBeInTheDocument();
+      expect(await screen.findByText(/counsel-pack-export-ui/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Not legal advice. Counsel Pack export records are audit preparation metadata only./i)
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 

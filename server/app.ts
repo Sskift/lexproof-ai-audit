@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
 import multipart from "@fastify/multipart";
 import Fastify from "fastify";
+import { createCounselPackExportRecord } from "./counselPackExportService.js";
 import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
   createAuditLogRecord,
   createModelGatewayRunSummary,
+  type CounselPackExportRecord,
   type EvidenceVaultRecord,
   type HumanReviewRecord,
   type WorkspaceRecord
@@ -47,6 +49,7 @@ export function buildServer(options: BuildServerOptions = {}) {
       modelGateway: "mock-run-ready",
       evidenceVault: "metadata-versioning-ready",
       humanReview: "repository-ready",
+      exports: "metadata-records-ready",
       auditLog: "repository-ready"
     },
     notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
@@ -525,6 +528,72 @@ export function buildServer(options: BuildServerOptions = {}) {
     repository.listHumanReviewRecords(request.params.workspaceId)
   );
 
+  server.post<{ Params: { workspaceId: string }; Body: CounselPackExportRequestBody }>(
+    "/api/workspaces/:workspaceId/exports/counsel-pack",
+    async (request, reply) => {
+      try {
+        const existingExports = await repository.listCounselPackExportRecords(request.params.workspaceId);
+        const record = createCounselPackExportRecord({
+          workspaceId: request.params.workspaceId,
+          projectName: request.body.projectName,
+          title: request.body.title,
+          format: request.body.format,
+          version: existingExports.length + 1,
+          artifactName: request.body.artifactName,
+          manifestHash: request.body.manifestHash,
+          artifactHash: request.body.artifactHash,
+          artifactSize: request.body.artifactSize,
+          riskLevel: request.body.riskLevel,
+          reviewSummary: request.body.reviewSummary,
+          sourceCount: request.body.sourceCount,
+          createdBy: request.body.createdBy,
+          includesRawKycOrPersonalData: request.body.includesRawKycOrPersonalData,
+          includesCredentialMaterial: request.body.includesCredentialMaterial,
+          rawMarkdown: request.body.rawMarkdown,
+          rawContent: request.body.rawContent,
+          content: request.body.content
+        });
+
+        await repository.saveCounselPackExportRecord(record);
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: record.createdBy,
+            action: "export.counsel-pack.created",
+            targetType: "export",
+            targetId: record.id,
+            beforeHash: "",
+            afterHash: record.artifactHash,
+            summary: "Created Counsel Pack export metadata record.",
+            createdAt: record.createdAt
+          })
+        );
+
+        return reply.status(201).send(record);
+      } catch (error) {
+        return reply.status(400).send({
+          error: error instanceof Error ? error.message : "Counsel Pack export record creation failed.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        });
+      }
+    }
+  );
+
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/exports", async (request) =>
+    repository.listCounselPackExportRecords(request.params.workspaceId)
+  );
+
+  server.get<{ Params: { workspaceId: string; exportId: string } }>(
+    "/api/workspaces/:workspaceId/exports/:exportId",
+    async (request, reply) => {
+      const record = await repository.findCounselPackExportRecord(request.params.workspaceId, request.params.exportId);
+      if (!record) {
+        return reply.status(404).send({ error: "Counsel Pack export record not found." });
+      }
+      return record;
+    }
+  );
+
   server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/audit-log", async (request) =>
     repository.listAuditLogRecords(request.params.workspaceId)
   );
@@ -555,6 +624,25 @@ type HumanReviewUpdateBody = {
   status?: HumanReviewRecord["status"];
   comment?: string;
   reviewerId?: string;
+};
+
+type CounselPackExportRequestBody = {
+  projectName: string;
+  title: string;
+  format: CounselPackExportRecord["format"];
+  artifactName: string;
+  manifestHash: string;
+  artifactHash: string;
+  artifactSize: number;
+  riskLevel: CounselPackExportRecord["riskLevel"];
+  reviewSummary: CounselPackExportRecord["reviewSummary"];
+  sourceCount: number;
+  createdBy: string;
+  includesRawKycOrPersonalData: boolean;
+  includesCredentialMaterial: boolean;
+  rawMarkdown?: string;
+  rawContent?: string;
+  content?: string;
 };
 
 type CreateWorkspaceRequestBody = {

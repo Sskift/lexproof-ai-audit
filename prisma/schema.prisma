@@ -84,6 +84,29 @@ model HumanReviewRecord {
   @@index([workspaceId])
 }
 
+model CounselPackExportRecord {
+  id                     String   @id
+  workspaceId            String
+  exportType             String
+  format                 String
+  version                Int
+  projectName            String
+  title                  String
+  artifactName           String
+  manifestHash           String
+  artifactHash           String
+  artifactSize           Int
+  riskLevel              String
+  reviewSummaryJson      String
+  sourceCount            Int
+  createdBy              String
+  status                 String
+  createdAt              DateTime
+  notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}
+
 model AuditLogRecord {
   id                     String   @id
   workspaceId            String

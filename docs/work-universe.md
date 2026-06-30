@@ -22,11 +22,11 @@ The repository already has:
 - Local-first project workspace and synthetic sample profiles.
 - Deterministic risk audit, issue explainers, source links, remediation queue, and risk evidence coverage.
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
-- Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, and Audit Log listing.
+- Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, server-side Counsel Pack export metadata records, and Audit Log listing.
 - Local Human Review operations with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable timeline JSON with audit log IDs.
-- Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export, and local Counsel Pack version history with manifest/Markdown hashes and diff metadata.
+- Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export, local Counsel Pack version history with manifest/Markdown hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
-- Demo script, screenshots, and integration tests for the full secure review journey and Counsel Pack version-history export path.
+- Demo script, screenshots, and integration tests for the full secure review journey, Counsel Pack version-history export path, and server export-record path.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
 
@@ -135,7 +135,7 @@ Goal: make exports reliable artifacts for counsel, compliance, and judges.
 
 Build:
 
-- Versioned Counsel Pack records with manifest hash, review status, source pack, and export timestamp.
+- Versioned Counsel Pack records with manifest hash, review status, source pack, export timestamp, and metadata-only server export records.
 - Markdown and print/PDF flows that share the same export builder.
 - Export templates for launch review, RWA/tokenized asset review, AI governance review, custody review, and marketing review.
 - Download receipts for manifest JSON, model-run receipts, evidence audit trail, and simulated/real anchor receipts.

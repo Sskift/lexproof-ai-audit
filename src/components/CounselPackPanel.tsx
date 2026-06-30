@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Anchor, CheckCircle2, Download, FileText, History, Printer, Save } from "lucide-react";
+import { Anchor, CheckCircle2, Download, FileText, History, Printer, Save, ServerCog } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   createSimulatedAnchorReceipt,
@@ -16,6 +16,7 @@ import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselRevie
 import type { CounselQuestion } from "../lib/counselQuestions";
 import type { SubmissionFit } from "../lib/auditEngine";
 import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
+import type { CounselPackExportRecord } from "../lib/phase2Types";
 
 type CounselPackPanelProps = {
   projectName: string;
@@ -25,11 +26,13 @@ type CounselPackPanelProps = {
   counselQuestions: CounselQuestion[];
   counselReviews: CounselReviewItem[];
   counselPackVersions: CounselPackVersionRecord[];
+  serverExportRecords: CounselPackExportRecord[];
   onAddQuestion: () => void;
   onUpdateQuestion: (id: string, updates: Partial<CounselQuestion>) => void;
   onRemoveQuestion: (id: string) => void;
   onUpdateReview: (id: string, updates: Partial<CounselReviewItem>) => void;
   onSaveVersion: () => Promise<void> | void;
+  onCreateServerExport: (apiBaseUrl: string) => Promise<void> | void;
 };
 
 export function CounselPackPanel({
@@ -40,16 +43,21 @@ export function CounselPackPanel({
   counselQuestions,
   counselReviews,
   counselPackVersions,
+  serverExportRecords,
   onAddQuestion,
   onUpdateQuestion,
   onRemoveQuestion,
   onUpdateReview,
-  onSaveVersion
+  onSaveVersion,
+  onCreateServerExport
 }: CounselPackPanelProps) {
   const [receipt, setReceipt] = useState<SimulatedAnchorReceipt | null>(null);
   const [printError, setPrintError] = useState("");
   const [versionError, setVersionError] = useState("");
   const [isSavingVersion, setIsSavingVersion] = useState(false);
+  const [serverExportApiBaseUrl, setServerExportApiBaseUrl] = useState("");
+  const [serverExportError, setServerExportError] = useState("");
+  const [isCreatingServerExport, setIsCreatingServerExport] = useState(false);
 
   const createReceipt = () => {
     if (!manifest) {
@@ -76,6 +84,18 @@ export function CounselPackPanel({
       setVersionError(error instanceof Error ? error.message : "Unable to save Counsel Pack version.");
     } finally {
       setIsSavingVersion(false);
+    }
+  };
+
+  const createServerExport = async () => {
+    setServerExportError("");
+    setIsCreatingServerExport(true);
+    try {
+      await onCreateServerExport(serverExportApiBaseUrl);
+    } catch (error) {
+      setServerExportError(error instanceof Error ? error.message : "Unable to create server Counsel Pack export record.");
+    } finally {
+      setIsCreatingServerExport(false);
     }
   };
 
@@ -142,6 +162,15 @@ export function CounselPackPanel({
       </div>
 
       <CounselPackVersionsPanel projectName={projectName} versions={counselPackVersions} />
+      <ServerExportRecordsPanel
+        apiBaseUrl={serverExportApiBaseUrl}
+        error={serverExportError}
+        isCreating={isCreatingServerExport}
+        records={serverExportRecords}
+        canCreate={counselPackVersions.length > 0}
+        onApiBaseUrlChange={setServerExportApiBaseUrl}
+        onCreate={createServerExport}
+      />
 
       {receipt ? (
         <section className="anchor-receipt">
@@ -169,6 +198,79 @@ export function CounselPackPanel({
       ) : null}
 
       <pre className="memo">{markdown}</pre>
+    </section>
+  );
+}
+
+function ServerExportRecordsPanel({
+  apiBaseUrl,
+  error,
+  isCreating,
+  records,
+  canCreate,
+  onApiBaseUrlChange,
+  onCreate
+}: {
+  apiBaseUrl: string;
+  error: string;
+  isCreating: boolean;
+  records: CounselPackExportRecord[];
+  canCreate: boolean;
+  onApiBaseUrlChange: (value: string) => void;
+  onCreate: () => Promise<void> | void;
+}) {
+  return (
+    <section className="server-export-panel">
+      <div className="panel-title compact-title">
+        <ServerCog size={17} aria-hidden="true" />
+        <h3>Server Export Records</h3>
+      </div>
+      <p className="section-note">
+        Create a Phase 2 API record for the latest Counsel Pack version using hashes and metadata only. Not legal advice.
+      </p>
+      <div className="server-export-controls">
+        <label className="editor-field" htmlFor="server-export-api-base">
+          <span className="field-label">Server export API base URL</span>
+          <input
+            id="server-export-api-base"
+            value={apiBaseUrl}
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+            placeholder="/api on same host, or http://127.0.0.1:8787"
+          />
+        </label>
+        <button type="button" className="secondary" disabled={!canCreate || isCreating} onClick={() => void onCreate()}>
+          <ServerCog size={16} aria-hidden="true" />
+          {isCreating ? "Creating Server Export Record" : "Create Server Export Record"}
+        </button>
+      </div>
+      {!canCreate ? <p className="empty-state">Save a Pack Version before creating a server export record.</p> : null}
+      {error ? <p className="save-state">{error}</p> : null}
+      {records.length === 0 ? (
+        <p className="empty-state">No server Counsel Pack export records have been created for this project yet.</p>
+      ) : (
+        <div className="server-export-list">
+          {records.slice(0, 5).map((record) => (
+            <article key={record.id} className="server-export-row">
+              <header>
+                <span>Server v{record.version}</span>
+                <div>
+                  <strong>{record.title}</strong>
+                  <small>
+                    {record.id} · {record.format} · {record.status}
+                  </small>
+                </div>
+              </header>
+              <div className="counsel-version-facts">
+                <VersionFact label="Manifest" value={shortHash(record.manifestHash)} />
+                <VersionFact label="Artifact" value={shortHash(record.artifactHash)} />
+                <VersionFact label="Sources" value={String(record.sourceCount)} />
+                <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
+              </div>
+              <small>{record.notLegalAdviceBoundary}</small>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

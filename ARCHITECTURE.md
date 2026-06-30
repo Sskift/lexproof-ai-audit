@@ -14,6 +14,7 @@ lexproof-ai-audit/
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
     modelGatewayService.ts   # Mock Model Gateway success/failure receipts and boundary checks
     humanReviewService.ts    # Human review record helpers
+    counselPackExportService.ts # Metadata-only Counsel Pack export record helper
     reviewWorkspaceRepository.ts # Memory and Prisma/SQLite repository adapters
   prisma/
     schema.prisma            # Phase 2 SQLite/Prisma persistence schema
@@ -62,6 +63,7 @@ lexproof-ai-audit/
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       counselPack.ts         # Markdown pack and browser download helper
       counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
+      counselPackExportClient.ts # Browser client for Phase 2 Counsel Pack export records
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
@@ -105,6 +107,7 @@ sampleProfiles or blank project
   -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph)
   -> buildPrintableCounselPackHtml(title, markdown)
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
+  -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
   -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
 
@@ -348,6 +351,7 @@ Owns Phase 2 backend-boundary contracts:
 - `EvidenceVaultRecord` describes uploaded-file or external-reference metadata for a future evidence vault.
 - `ModelGatewayRun` describes server-mediated model-run receipts, source evidence hashes, retry state, provider metadata, and safe failure remediation without credentials.
 - `HumanReviewRecord` describes reviewer workflow metadata for risk flags, evidence, model runs, and exports.
+- `CounselPackExportRecord` describes metadata-only server export records for saved Counsel Pack versions.
 - `AuditLogRecord` describes append-only operation metadata for workspace actions.
 - `createAuditLogRecord()` creates deterministic local audit-log IDs from material metadata.
 - `createModelGatewayRunSummary()` returns a credential-free model-run summary for UI and exports.
@@ -363,7 +367,7 @@ Owns the Phase 2 backend design-spike contracts:
 - `listPhase2ApiRoutes()` returns the review workspace API route table for workspaces, evidence vault, model gateway, human review, exports, and audit log domains.
 - `validateModelGatewayBoundary()` blocks model gateway requests that bypass Redaction Gate, include credential material, include raw KYC/personal data, request final legal decisions, lack a human-review owner, or route data classes outside the approved audit-prep metadata boundary.
 - `validateEvidenceUploadBoundary()` blocks evidence upload metadata that embeds raw document content, raw KYC/personal data, missing hashes, or missing file metadata.
-- `createPhase2PrismaSchemaDraft()` returns the SQLite/Prisma persistence draft for `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`.
+- `createPhase2PrismaSchemaDraft()` returns the SQLite/Prisma persistence draft for `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, `CounselPackExportRecord`, and `AuditLogRecord`.
 
 The contracts are executable design artifacts. They do not start a server, add backend dependencies, store files, persist provider keys, process KYC, or create real chain records.
 
@@ -386,6 +390,14 @@ Owns Counsel Pack export version metadata:
 
 Version records intentionally do not store raw Markdown content, credentials, raw KYC, personal data, or legal conclusions. They are audit preparation export metadata only.
 
+### `src/lib/counselPackExportClient.ts`
+
+Owns the browser-to-Phase-2 API call for server export records:
+
+- `createServerCounselPackExportRecord(apiBaseUrl, workspaceId, versionRecord, createdBy)` maps the latest local Counsel Pack version into a metadata-only API request.
+- The request includes manifest hash, Markdown artifact hash, artifact size, review summary, source count, and the Not legal advice boundary.
+- It does not send raw Markdown, PDF bytes, credentials, raw KYC, or personal data.
+
 ### `src/data/sampleProfiles.ts`
 
 Owns seeded demo scenarios. Each scenario should represent a realistic legal/compliance posture:
@@ -407,6 +419,7 @@ Owns UI state and composition:
 - active tab
 - async evidence manifest state
 - current regulatory source graph derived from project facts, audit flags, and evidence items
+- local server export-record cache filtered by current workspace ID
 
 The component calls library modules and renders the workbench surfaces: Regulatory Command Center, Secure Review Workspace, Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
@@ -426,7 +439,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, and exposes recent local evidence audit trail events plus JSON export.
-- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
+- `CounselPackPanel` previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -438,7 +451,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Backend exports, raw file persistence, OCR, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -480,6 +493,15 @@ Human review records are not signed legal opinions. They track audit preparation
 
 `src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository and appends audit-log records.
 
+### Counsel Pack Export Record Responsibilities
+
+- create server-side records for saved local Counsel Pack versions
+- persist version number, project title, artifact name, manifest hash, artifact hash, artifact size, risk level, review summary, source count, creator, status, timestamp, and Not legal advice boundary
+- reject raw Markdown/PDF content, raw KYC/personal data, credential material, invalid hashes, and invalid artifact metadata
+- append audit-log records when a server export record is created
+
+`server/counselPackExportService.ts` implements export-record validation and metadata construction. `src/lib/counselPackExportClient.ts` maps local Pack Version metadata into the Phase 2 API request. The server route persists records through the repository and intentionally does not render PDFs or store raw Counsel Pack content.
+
 ### Audit Log Responsibilities
 
 - append operation metadata for workspace, evidence, model-run, human-review, and export actions
@@ -488,7 +510,7 @@ Human review records are not signed legal opinions. They track audit preparation
 
 Audit logs are review metadata. They are not real chain anchors, signed approvals, or legal conclusions.
 
-`server/reviewWorkspaceRepository.ts` provides both an in-memory adapter for tests and a Prisma/SQLite adapter for the API process. The Prisma schema covers only `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, and `AuditLogRecord`.
+`server/reviewWorkspaceRepository.ts` provides both an in-memory adapter for tests and a Prisma/SQLite adapter for the API process. The Prisma schema covers only `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, `CounselPackExportRecord`, and `AuditLogRecord`.
 
 ### Current Simulated Capabilities
 
@@ -499,9 +521,10 @@ These capabilities remain simulated or local in the current codebase:
 - OpenAI-compatible and enterprise-proxy Model Gateway adapters are visible as disabled readiness records only.
 - Evidence files are hashed locally in the browser or uploaded through the Phase 2 multipart route for server-side metadata hashing.
 - The Phase 2 server computes evidence hashes in memory for metadata records and persists evidence metadata, but does not persist uploaded file bytes.
-- Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records use Prisma/SQLite in the API process.
+- Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records use Prisma/SQLite in the API process.
 - Evidence Audit Trail is local browser metadata, not a signed external log.
 - Counsel Pack PDF output uses browser Print / Save PDF, not backend rendering.
+- Server export records store hashes and metadata for a local Counsel Pack version, not the raw Markdown/PDF artifact.
 - Manifest anchoring creates a simulated receipt and does not submit a transaction.
 - Model Intake and AI Review ledgers are local audit-prep metadata, not final model governance certification.
 
@@ -538,6 +561,7 @@ Domain tests live next to the audit engine and cover:
 - counsel pack Markdown content
 - Markdown browser download behavior
 - counsel pack version record hashing, diffing, and metadata-only JSON download behavior
+- server Counsel Pack export-record client mapping and metadata-only API behavior
 - printable counsel pack HTML and browser print behavior
 - redaction report warnings and blockers
 - jurisdiction checklist generation
@@ -550,7 +574,8 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing
 - Phase 2 Model Gateway adapter readiness, mock run routes, and persisted Human Review routes
-- Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records
+- Phase 2 Counsel Pack export-record creation, route validation, repository persistence, and audit-log creation
+- Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation
 - per-risk evidence workflow coverage
 
@@ -575,6 +600,7 @@ UI tests cover:
 - editable counsel questions in Counsel Pack
 - editable counsel review statuses in Counsel Pack
 - Counsel Pack version save, diff visibility, and version JSON download action
+- Counsel Pack server export-record creation from saved Pack Version metadata
 - Jurisdiction Checklist tab with policy controls and local-counsel routing
 - source-linked Risk Audit trigger explanations
 - evidence template application

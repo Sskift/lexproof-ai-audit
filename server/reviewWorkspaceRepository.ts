@@ -1,5 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import type { AuditLogRecord, EvidenceVaultRecord, HumanReviewRecord, ModelGatewayRun, WorkspaceRecord } from "../src/lib/phase2Types.js";
+import type {
+  AuditLogRecord,
+  CounselPackExportRecord,
+  EvidenceVaultRecord,
+  HumanReviewRecord,
+  ModelGatewayRun,
+  WorkspaceRecord
+} from "../src/lib/phase2Types.js";
 
 export type ReviewWorkspaceRepository = {
   saveWorkspaceRecord(record: WorkspaceRecord): Promise<void>;
@@ -15,6 +22,9 @@ export type ReviewWorkspaceRepository = {
   saveHumanReviewRecord(record: HumanReviewRecord): Promise<void>;
   updateHumanReviewRecord(record: HumanReviewRecord): Promise<void>;
   listHumanReviewRecords(workspaceId: string): Promise<HumanReviewRecord[]>;
+  saveCounselPackExportRecord(record: CounselPackExportRecord): Promise<void>;
+  listCounselPackExportRecords(workspaceId: string): Promise<CounselPackExportRecord[]>;
+  findCounselPackExportRecord(workspaceId: string, exportId: string): Promise<CounselPackExportRecord | null>;
   appendAuditLogRecord(record: AuditLogRecord): Promise<void>;
   listAuditLogRecords(workspaceId: string): Promise<AuditLogRecord[]>;
   close(): Promise<void>;
@@ -29,6 +39,7 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
   const evidenceRecords = new Map<string, EvidenceVaultRecord[]>();
   const modelRuns = new Map<string, ModelGatewayRun[]>();
   const humanReviews = new Map<string, HumanReviewRecord[]>();
+  const counselPackExports = new Map<string, CounselPackExportRecord[]>();
   const auditLogs = new Map<string, AuditLogRecord[]>();
 
   return {
@@ -82,6 +93,18 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
 
     async listHumanReviewRecords(workspaceId) {
       return humanReviews.get(workspaceId) ?? [];
+    },
+
+    async saveCounselPackExportRecord(record) {
+      counselPackExports.set(record.workspaceId, upsertById(counselPackExports.get(record.workspaceId) ?? [], record));
+    },
+
+    async listCounselPackExportRecords(workspaceId) {
+      return counselPackExports.get(workspaceId) ?? [];
+    },
+
+    async findCounselPackExportRecord(workspaceId, exportId) {
+      return (counselPackExports.get(workspaceId) ?? []).find((record) => record.id === exportId) ?? null;
     },
 
     async appendAuditLogRecord(record) {
@@ -208,6 +231,29 @@ export async function createPrismaReviewWorkspaceRepository(
         orderBy: { createdAt: "asc" }
       });
       return records.map(deserializeHumanReviewRecord);
+    },
+
+    async saveCounselPackExportRecord(record) {
+      await prisma.counselPackExportRecord.upsert({
+        where: { id: record.id },
+        update: serializeCounselPackExportRecord(record),
+        create: serializeCounselPackExportRecord(record)
+      });
+    },
+
+    async listCounselPackExportRecords(workspaceId) {
+      const records = await prisma.counselPackExportRecord.findMany({
+        where: { workspaceId },
+        orderBy: { createdAt: "asc" }
+      });
+      return records.map(deserializeCounselPackExportRecord);
+    },
+
+    async findCounselPackExportRecord(workspaceId, exportId) {
+      const record = await prisma.counselPackExportRecord.findFirst({
+        where: { workspaceId, id: exportId }
+      });
+      return record ? deserializeCounselPackExportRecord(record) : null;
     },
 
     async appendAuditLogRecord(record) {
@@ -340,6 +386,32 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
     );
   `);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "HumanReviewRecord_workspaceId_idx" ON "HumanReviewRecord"("workspaceId");`);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "CounselPackExportRecord" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "workspaceId" TEXT NOT NULL,
+      "exportType" TEXT NOT NULL,
+      "format" TEXT NOT NULL,
+      "version" INTEGER NOT NULL,
+      "projectName" TEXT NOT NULL,
+      "title" TEXT NOT NULL,
+      "artifactName" TEXT NOT NULL,
+      "manifestHash" TEXT NOT NULL,
+      "artifactHash" TEXT NOT NULL,
+      "artifactSize" INTEGER NOT NULL,
+      "riskLevel" TEXT NOT NULL,
+      "reviewSummaryJson" TEXT NOT NULL,
+      "sourceCount" INTEGER NOT NULL,
+      "createdBy" TEXT NOT NULL,
+      "status" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL,
+      "notLegalAdviceBoundary" TEXT NOT NULL
+    );
+  `);
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "CounselPackExportRecord_workspaceId_idx" ON "CounselPackExportRecord"("workspaceId");`
+  );
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "AuditLogRecord" (
@@ -630,6 +702,99 @@ function deserializeHumanReviewRecord(record: PersistedHumanReviewRecord): Human
     updatedAt: record.updatedAt.toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
   };
+}
+
+function serializeCounselPackExportRecord(record: CounselPackExportRecord) {
+  return {
+    id: record.id,
+    workspaceId: record.workspaceId,
+    exportType: record.exportType,
+    format: record.format,
+    version: record.version,
+    projectName: record.projectName,
+    title: record.title,
+    artifactName: record.artifactName,
+    manifestHash: record.manifestHash,
+    artifactHash: record.artifactHash,
+    artifactSize: record.artifactSize,
+    riskLevel: record.riskLevel,
+    reviewSummaryJson: JSON.stringify(record.reviewSummary),
+    sourceCount: record.sourceCount,
+    createdBy: record.createdBy,
+    status: record.status,
+    createdAt: new Date(record.createdAt),
+    notLegalAdviceBoundary: record.notLegalAdviceBoundary
+  };
+}
+
+type PersistedCounselPackExportRecord = {
+  id: string;
+  workspaceId: string;
+  exportType: string;
+  format: string;
+  version: number;
+  projectName: string;
+  title: string;
+  artifactName: string;
+  manifestHash: string;
+  artifactHash: string;
+  artifactSize: number;
+  riskLevel: string;
+  reviewSummaryJson: string;
+  sourceCount: number;
+  createdBy: string;
+  status: string;
+  createdAt: Date;
+  notLegalAdviceBoundary: string;
+};
+
+function deserializeCounselPackExportRecord(record: PersistedCounselPackExportRecord): CounselPackExportRecord {
+  return {
+    recordVersion: "lexproof-counsel-pack-export-record-v1",
+    id: record.id,
+    workspaceId: record.workspaceId,
+    exportType: "counsel-pack",
+    format: record.format as CounselPackExportRecord["format"],
+    version: record.version,
+    projectName: record.projectName,
+    title: record.title,
+    artifactName: record.artifactName,
+    manifestHash: record.manifestHash,
+    artifactHash: record.artifactHash,
+    artifactSize: record.artifactSize,
+    riskLevel: record.riskLevel as CounselPackExportRecord["riskLevel"],
+    reviewSummary: parseCounselPackExportReviewSummary(record.reviewSummaryJson),
+    sourceCount: record.sourceCount,
+    createdBy: record.createdBy,
+    status: "ready",
+    createdAt: record.createdAt.toISOString(),
+    notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."
+  };
+}
+
+function parseCounselPackExportReviewSummary(payload: string): CounselPackExportRecord["reviewSummary"] {
+  const fallback: CounselPackExportRecord["reviewSummary"] = {
+    total: 0,
+    reviewed: 0,
+    readyForCounsel: 0,
+    needsEvidence: 0,
+    blocked: 0,
+    open: 0
+  };
+
+  try {
+    const parsed = JSON.parse(payload) as Partial<CounselPackExportRecord["reviewSummary"]>;
+    return {
+      total: Number(parsed.total ?? fallback.total),
+      reviewed: Number(parsed.reviewed ?? fallback.reviewed),
+      readyForCounsel: Number(parsed.readyForCounsel ?? fallback.readyForCounsel),
+      needsEvidence: Number(parsed.needsEvidence ?? fallback.needsEvidence),
+      blocked: Number(parsed.blocked ?? fallback.blocked),
+      open: Number(parsed.open ?? fallback.open)
+    };
+  } catch {
+    return fallback;
+  }
 }
 
 function serializeAuditLogRecord(record: AuditLogRecord) {

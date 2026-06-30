@@ -115,6 +115,37 @@ export type HumanReviewRecord = {
   notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status.";
 };
 
+export type CounselPackExportReviewSummary = {
+  total: number;
+  reviewed: number;
+  readyForCounsel: number;
+  needsEvidence: number;
+  blocked: number;
+  open: number;
+};
+
+export type CounselPackExportRecord = {
+  recordVersion: "lexproof-counsel-pack-export-record-v1";
+  id: string;
+  workspaceId: string;
+  exportType: "counsel-pack";
+  format: "markdown" | "print-pdf";
+  version: number;
+  projectName: string;
+  title: string;
+  artifactName: string;
+  manifestHash: string;
+  artifactHash: string;
+  artifactSize: number;
+  riskLevel: "low" | "moderate" | "high" | "critical";
+  reviewSummary: CounselPackExportReviewSummary;
+  sourceCount: number;
+  createdBy: string;
+  status: "ready";
+  createdAt: string;
+  notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only.";
+};
+
 export type AuditLogRecord = {
   recordVersion: "lexproof-audit-log-record-v1";
   id: string;

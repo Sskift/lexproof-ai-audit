@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createAuditLogRecord } from "../src/lib/phase2Types";
+import { createCounselPackExportRecord } from "./counselPackExportService";
 import { createEvidenceVaultRecordFromUpload } from "./evidenceVaultService";
 import { createHumanReviewRecord } from "./humanReviewService";
 import { createModelGatewayRun } from "./modelGatewayService";
@@ -117,6 +118,45 @@ describe("Prisma review workspace repository", () => {
     await expect(secondRepository.findWorkspaceRecord(workspace.id)).resolves.toEqual(workspace);
     await expect(secondRepository.listEvidenceVaultRecords(workspace.id)).resolves.toEqual([updatedEvidence]);
     await expect(secondRepository.findEvidenceVaultRecord(workspace.id, evidence.id)).resolves.toEqual(updatedEvidence);
+
+    await secondRepository.close();
+  });
+
+  it("persists Counsel Pack export records across repository instances", async () => {
+    const firstRepository = await createPrismaReviewWorkspaceRepository({ databaseUrl });
+    const exportRecord = createCounselPackExportRecord({
+      workspaceId: "workspace-1",
+      projectName: "YieldPassport",
+      title: "YieldPassport Counsel Pack v1",
+      format: "markdown",
+      version: 1,
+      artifactName: "yieldpassport-counsel-pack.md",
+      manifestHash: "a".repeat(64),
+      artifactHash: "b".repeat(64),
+      artifactSize: 4096,
+      riskLevel: "critical",
+      reviewSummary: {
+        total: 7,
+        reviewed: 1,
+        readyForCounsel: 2,
+        needsEvidence: 3,
+        blocked: 1,
+        open: 6
+      },
+      sourceCount: 4,
+      createdBy: "Compliance",
+      includesRawKycOrPersonalData: false,
+      includesCredentialMaterial: false,
+      createdAt: "2026-06-30T08:30:00.000Z"
+    });
+
+    await firstRepository.saveCounselPackExportRecord(exportRecord);
+    await firstRepository.close();
+
+    const secondRepository = await createPrismaReviewWorkspaceRepository({ databaseUrl });
+
+    await expect(secondRepository.listCounselPackExportRecords("workspace-1")).resolves.toEqual([exportRecord]);
+    await expect(secondRepository.findCounselPackExportRecord("workspace-1", exportRecord.id)).resolves.toEqual(exportRecord);
 
     await secondRepository.close();
   });

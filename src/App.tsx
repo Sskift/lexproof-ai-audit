@@ -27,6 +27,7 @@ import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
 import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
 import { buildMarkdownCounselPack } from "./lib/counselPack";
+import { createServerCounselPackExportRecord } from "./lib/counselPackExportClient";
 import {
   createCounselPackVersionRecord,
   type CounselPackVersionRecord
@@ -80,6 +81,7 @@ import {
   type ModelIntakeSummary
 } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
+import type { CounselPackExportRecord } from "./lib/phase2Types";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
@@ -100,6 +102,7 @@ const COUNSEL_REVIEWS_KEY = "lexproof.counselReviews.v1";
 const EVIDENCE_AUDIT_TRAIL_KEY = "lexproof.evidenceAuditTrail.v1";
 const HUMAN_REVIEW_DECISIONS_KEY = "lexproof.humanReviewDecisions.v1";
 const COUNSEL_PACK_VERSIONS_KEY = "lexproof.counselPackVersions.v1";
+const COUNSEL_PACK_SERVER_EXPORTS_KEY = "lexproof.counselPackServerExports.v1";
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
@@ -130,6 +133,9 @@ export default function App() {
   const [counselReviews, setCounselReviews] = useState<CounselReviewItem[]>(() => loadStoredCounselReviews());
   const [counselPackVersions, setCounselPackVersions] = useState<CounselPackVersionRecord[]>(() =>
     loadStoredCounselPackVersions()
+  );
+  const [counselPackServerExports, setCounselPackServerExports] = useState<CounselPackExportRecord[]>(() =>
+    loadStoredCounselPackServerExports()
   );
   const [evidenceAuditEvents, setEvidenceAuditEvents] = useState<EvidenceAuditEvent[]>(() => loadStoredEvidenceAuditEvents());
   const [humanReviewDecisions, setHumanReviewDecisions] = useState<HumanReviewDecision[]>(() => loadStoredHumanReviewDecisions());
@@ -163,6 +169,10 @@ export default function App() {
   const currentCounselPackVersions = useMemo(
     () => counselPackVersions.filter((record) => record.projectId === project.id).sort((left, right) => right.version - left.version),
     [counselPackVersions, project.id]
+  );
+  const currentCounselPackServerExports = useMemo(
+    () => counselPackServerExports.filter((record) => record.workspaceId === project.id).sort((left, right) => right.version - left.version),
+    [counselPackServerExports, project.id]
   );
   const currentEvidenceAuditEvents = useMemo(
     () => evidenceAuditEvents.filter((event) => event.projectId === project.id),
@@ -290,6 +300,10 @@ export default function App() {
   useEffect(() => {
     safeStorage()?.setItem(COUNSEL_PACK_VERSIONS_KEY, JSON.stringify(counselPackVersions.slice(0, 120)));
   }, [counselPackVersions]);
+
+  useEffect(() => {
+    safeStorage()?.setItem(COUNSEL_PACK_SERVER_EXPORTS_KEY, JSON.stringify(counselPackServerExports.slice(0, 120)));
+  }, [counselPackServerExports]);
 
   useEffect(() => {
     safeStorage()?.setItem(EVIDENCE_AUDIT_TRAIL_KEY, JSON.stringify(evidenceAuditEvents.slice(0, 120)));
@@ -520,6 +534,22 @@ export default function App() {
     setCounselPackVersions((current) => [record, ...current].slice(0, 120));
   };
 
+  const createServerExportRecord = async (apiBaseUrl: string) => {
+    const latestVersion = currentCounselPackVersions[0];
+    if (!latestVersion) {
+      throw new Error("Save a Counsel Pack version before creating a server export record.");
+    }
+
+    const record = await createServerCounselPackExportRecord({
+      workspaceId: project.id,
+      versionRecord: latestVersion,
+      createdBy: modelIntakeProfile.humanReviewOwner || "Compliance",
+      apiBaseUrl
+    });
+
+    setCounselPackServerExports((current) => [record, ...current].slice(0, 120));
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -692,11 +722,13 @@ export default function App() {
               counselQuestions={currentCounselQuestions}
               counselReviews={currentCounselReviews}
               counselPackVersions={currentCounselPackVersions}
+              serverExportRecords={currentCounselPackServerExports}
               onAddQuestion={addCounselQuestion}
               onUpdateQuestion={updateCounselQuestion}
               onRemoveQuestion={removeCounselQuestion}
               onUpdateReview={updateCounselReview}
               onSaveVersion={saveCounselPackVersion}
+              onCreateServerExport={createServerExportRecord}
             />
           ) : null}
           {activeTab === "sources" ? <SourcesPanel audit={audit} /> : null}
@@ -1061,6 +1093,27 @@ function loadStoredCounselPackVersions(): CounselPackVersionRecord[] {
             record.recordVersion === "lexproof-counsel-pack-version-v1" &&
             record.notLegalAdviceBoundary ===
               "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadStoredCounselPackServerExports(): CounselPackExportRecord[] {
+  const raw = safeStorage()?.getItem(COUNSEL_PACK_SERVER_EXPORTS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as CounselPackExportRecord[];
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (record) =>
+            record.recordVersion === "lexproof-counsel-pack-export-record-v1" &&
+            record.notLegalAdviceBoundary ===
+              "Not legal advice. Counsel Pack export records are audit preparation metadata only."
         )
       : [];
   } catch {

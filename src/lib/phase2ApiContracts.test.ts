@@ -78,6 +78,24 @@ describe("Phase 2 backend API contracts", () => {
         implemented: true
       })
     );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "POST",
+        path: "/api/workspaces/:workspaceId/exports/counsel-pack",
+        domain: "exports",
+        implemented: true,
+        responseContract: "CounselPackExportRecord"
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/exports",
+        domain: "exports",
+        implemented: true,
+        responseContract: "CounselPackExportRecord[]"
+      })
+    );
     expect(routes.every((route) => route.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
   });
 
@@ -127,7 +145,7 @@ describe("Phase 2 backend API contracts", () => {
     });
   });
 
-  it("drafts a Prisma schema with the five Phase 2 persistence models", () => {
+  it("drafts a Prisma schema with the six Phase 2 persistence models", () => {
     const schema = createPhase2PrismaSchemaDraft();
 
     expect(schema).toContain("model WorkspaceRecord");
@@ -141,6 +159,10 @@ describe("Phase 2 backend API contracts", () => {
     expect(schema).toContain("retryState");
     expect(schema).toContain("remediationStepsJson");
     expect(schema).toContain("model HumanReviewRecord");
+    expect(schema).toContain("model CounselPackExportRecord");
+    expect(schema).toContain("reviewSummaryJson");
+    expect(schema).toContain("manifestHash");
+    expect(schema).toContain("artifactHash");
     expect(schema).toContain("model AuditLogRecord");
     expect(schema).toContain('provider = "sqlite"');
     expect(schema).toContain('provider = "prisma-client-js"');

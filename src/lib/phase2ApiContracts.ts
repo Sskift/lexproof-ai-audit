@@ -77,8 +77,23 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     createRoute("POST", "/api/workspaces/:workspaceId/reviews", "human-review", "CreateHumanReviewRequest", "HumanReviewRecord", true),
     createRoute("PATCH", "/api/workspaces/:workspaceId/reviews/:reviewId", "human-review", "UpdateHumanReviewRequest", "HumanReviewRecord", true),
     createRoute("GET", "/api/workspaces/:workspaceId/reviews", "human-review", "HumanReviewListRequest", "HumanReviewRecord[]", true),
-    createRoute("POST", "/api/workspaces/:workspaceId/exports/counsel-pack", "exports", "CreateCounselPackExportRequest", "CounselPackExportRecord"),
-    createRoute("GET", "/api/workspaces/:workspaceId/exports/:exportId", "exports", "ExportDownloadRequest", "ExportArtifact"),
+    createRoute(
+      "POST",
+      "/api/workspaces/:workspaceId/exports/counsel-pack",
+      "exports",
+      "CreateCounselPackExportRequest",
+      "CounselPackExportRecord",
+      true
+    ),
+    createRoute("GET", "/api/workspaces/:workspaceId/exports", "exports", "CounselPackExportListRequest", "CounselPackExportRecord[]", true),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/exports/:exportId",
+      "exports",
+      "CounselPackExportLookupRequest",
+      "CounselPackExportRecord",
+      true
+    ),
     createRoute("GET", "/api/workspaces/:workspaceId/audit-log", "audit-log", "AuditLogListRequest", "AuditLogRecord[]", true)
   ];
 }
@@ -231,6 +246,29 @@ model HumanReviewRecord {
   comment                String
   createdAt              DateTime
   updatedAt              DateTime
+  notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}
+
+model CounselPackExportRecord {
+  id                     String   @id
+  workspaceId            String
+  exportType             String
+  format                 String
+  version                Int
+  projectName            String
+  title                  String
+  artifactName           String
+  manifestHash           String
+  artifactHash           String
+  artifactSize           Int
+  riskLevel              String
+  reviewSummaryJson      String
+  sourceCount            Int
+  createdBy              String
+  status                 String
+  createdAt              DateTime
   notLegalAdviceBoundary String
 
   @@index([workspaceId])

@@ -61,6 +61,7 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
    - Open **Counsel Pack**.
    - Show Regulatory Source Graph, Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, and source pack.
    - Click **Save Pack Version**, update one counsel review status, then click **Save Pack Version** again to show the export diff and version JSON action.
+   - Enter `http://127.0.0.1:8787` in **Server export API base URL**, then click **Create Server Export Record** to persist a metadata-only server record for the latest Pack Version.
    - Click **Download Markdown**. Optionally click **Download Version JSON**, **Download Manifest JSON**, and **Create Simulated Anchor Receipt**.
    - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
 
@@ -71,7 +72,8 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 - **Model Gateway policy failure:** with a server test fixture or API client, submit a Model Gateway request that fails Redaction Gate or allowed data-class policy. The API should persist a safe failure receipt and return a run ID, retry state, and remediation steps without raw payloads or credentials. The UI should show the Model Gateway remediation state when the Secure Review Journey receives that response.
 - **Review returned:** save a Human Review decision as `needs-more-evidence`; linked evidence should move to `requested` for rework and the review timeline should record the decision with an audit log ID.
 - **Rejected vault evidence:** refresh **Evidence Vault Sync** after the backend has a rejected vault record, edit the replacement reason, and click **Replace rejected evidence**. The old record should remain visible as `superseded`, the new record should show `received`, and the manifest hash should update. Not legal advice.
+- **Server export blocked:** try **Create Server Export Record** before saving a Pack Version, or point **Server export API base URL** at an inactive server. The UI should require a saved version or show a recoverable metadata export error without losing local Pack Version data.
 
 ## Closing Line
 
-LexProof's trust layer is the structured workspace: deterministic risk rules, source-linked issue cards, metadata-only evidence vault sync, duplicate-hash checks, rejected-evidence replacement lineage, model-run hash receipts, human review timelines, manifest hashes, and counsel-pack export. Every output remains audit preparation material. Not legal advice.
+LexProof's trust layer is the structured workspace: deterministic risk rules, source-linked issue cards, metadata-only evidence vault sync, duplicate-hash checks, rejected-evidence replacement lineage, model-run hash receipts, human review timelines, manifest hashes, local counsel-pack versions, and server export metadata records. Every output remains audit preparation material. Not legal advice.

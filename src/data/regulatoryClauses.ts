@@ -405,6 +405,88 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     reviewerNotes:
       "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "br-bcb-virtual-asset-service-framework",
+    jurisdiction: "Brazil",
+    regulator: "Banco Central do Brasil",
+    sourceName: "Virtual assets regulation",
+    sourceUrl: "https://www.bcb.gov.br/en/financialstability/virtualassets",
+    citation: "Law No. 14,478/2022 and Banco Central virtual asset service regulation",
+    topic: "aml-cft",
+    summary:
+      "Prepare virtual asset service scope, authorization, AML/CFT, customer protection, sanctions, transaction monitoring, and operational governance evidence for Brazil counsel review.",
+    triggerFlagIds: ["custody", "sensitive-data", "retail", "public-launch"],
+    triggerKeywords: ["brazil", "brasil", "virtual asset service", "vasp", "kyc", "aml", "cft", "sanctions"],
+    evidenceRequests: [
+      {
+        id: "br-vasp-scope-authorization-intake",
+        title: "Brazil virtual asset service scope and authorization intake",
+        reason:
+          "Brazil virtual asset review needs activity scope, authorization assumptions, custody boundaries, transfer controls, and responsible owner evidence.",
+        priority: "P1",
+        keywords: ["virtual asset service", "authorization", "activity scope", "custody boundaries", "transfer controls", "responsible owner"]
+      },
+      {
+        id: "br-vasp-aml-cft-monitoring-evidence",
+        title: "Brazil AML/CFT, sanctions, and monitoring evidence",
+        reason:
+          "Counsel and compliance review need AML/CFT, sanctions, transaction-monitoring, customer-protection, and data-minimization handoff evidence.",
+        priority: "P1",
+        keywords: ["aml", "cft", "sanctions", "transaction monitoring", "customer protection", "data minimization"]
+      }
+    ],
+    counselQuestions: [
+      "Which virtual asset service activities, authorization assumptions, and custody boundaries need Brazil counsel review?",
+      "What AML/CFT, sanctions, monitoring, customer-protection, and data-minimization evidence should be included before handoff?"
+    ],
+    localCounselRole: "Brazil virtual-assets / financial regulatory counsel",
+    effectiveAsOf: "2026-02-02",
+    lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for Banco Central virtual asset service regulation, Law No. 14,478/2022 routing, trigger facts, and evidence-request mapping; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "br-cvm-crypto-asset-securities-guidance",
+    jurisdiction: "Brazil",
+    regulator: "Comissao de Valores Mobiliarios",
+    sourceName: "CVM Guidance Opinion 40 on crypto-assets and securities markets",
+    sourceUrl: "https://conteudo.cvm.gov.br/legislacao/pareceres-orientacao/pare040.html",
+    citation: "CVM Guidance Opinion 40, 11 October 2022",
+    topic: "asset-classification",
+    summary:
+      "Prepare crypto-asset securities characterization, public distribution, disclosure, intermediary, and investor communication evidence for Brazil capital-markets counsel review.",
+    triggerFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
+    triggerKeywords: ["brazil", "brasil", "crypto asset", "security token", "public distribution", "investment", "tokenized"],
+    evidenceRequests: [
+      {
+        id: "br-cvm-crypto-security-classification",
+        title: "Brazil crypto-security classification and disclosure evidence",
+        reason:
+          "Brazil capital-markets review needs token rights, investment expectation, public distribution, disclosure, and intermediary assumptions before external reliance.",
+        priority: "P1",
+        keywords: ["crypto security", "token rights", "investment expectation", "public distribution", "disclosure", "intermediary"]
+      },
+      {
+        id: "br-cvm-public-communication-review",
+        title: "Brazil investor communication and distribution review evidence",
+        reason:
+          "Retail or public distribution should be paired with reviewed investor communication, risk-factor, eligibility, and approval-route evidence.",
+        priority: "P1",
+        keywords: ["investor communication", "risk factor", "eligibility", "approval route", "distribution", "retail"]
+      }
+    ],
+    counselQuestions: [
+      "Which token rights, yield mechanics, or distribution facts should Brazil capital-markets counsel review under CVM crypto-asset guidance?",
+      "What disclosure, investor communication, intermediary, and approval-route evidence should be retained before launch?"
+    ],
+    localCounselRole: "Brazil capital markets / crypto-asset counsel",
+    effectiveAsOf: "2022-10-11",
+    lastReviewedAt: "2026-06-30",
+    reviewerNotes:
+      "Source metadata reviewed for CVM Guidance Opinion 40 citation, URL, token/securities characterization triggers, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   }
 ];
 

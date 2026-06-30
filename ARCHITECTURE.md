@@ -324,7 +324,7 @@ Owns jurisdiction checklist generation:
 
 Owns jurisdiction pack behavior:
 
-- `createJurisdictionPacks(project, audit)` returns jurisdiction-specific policy controls for US, EU, UK, Singapore, Switzerland, UAE, and fallback local-counsel intake.
+- `createJurisdictionPacks(project, audit)` returns jurisdiction-specific policy controls for US, EU, UK, Singapore, Switzerland, UAE, Brazil, and fallback local-counsel intake.
 - Each control maps active risk flags to evidence keywords, owner, priority, and evidence-ready status.
 - Each pack includes a local-counsel route with recommended role, trigger, handoff note, source, and explicit non-advice boundary.
 
@@ -401,6 +401,7 @@ Owns reviewed official-source reference seeds for the Regulatory Source Graph:
 - Singapore MAS PSN02 digital payment token AML/CFT materials.
 - Swiss FINMA ICO/token classification guidance.
 - UAE VARA virtual asset regulations and compliance/risk management rulebook.
+- Brazil Banco Central virtual asset service regulation and CVM Guidance Opinion 40 crypto-asset securities guidance.
 
 This file contains static source metadata, trigger keywords, evidence requests, counsel questions, effective dates, review dates, and reviewer notes. It must not contain legal conclusions, scraped user data, credentials, or scoring logic.
 

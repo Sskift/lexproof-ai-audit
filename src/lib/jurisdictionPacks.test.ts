@@ -100,9 +100,15 @@ describe("createJurisdictionPacks", () => {
     expect(brazilPack).toMatchObject({
       jurisdiction: "Brazil",
       localCounselRoute: {
-        recommendedRole: "Local counsel",
-        trigger: "Unmapped jurisdiction"
+        recommendedRole: "Brazil virtual-assets / capital markets counsel"
       }
     });
+    expect(brazilPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "Virtual asset service authorization and AML/CFT control",
+        "Crypto-security classification and disclosure control"
+      ])
+    );
+    expect(brazilPack?.source).toBe("LexProof jurisdiction pack v1 for audit preparation. Not legal advice.");
   });
 });

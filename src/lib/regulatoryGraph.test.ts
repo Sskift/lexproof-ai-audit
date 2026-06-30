@@ -218,4 +218,50 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining(["eu-ai-act-ai-literacy-governance", "uk-ico-ai-data-protection-governance"])
     );
   });
+
+  it("matches Brazil virtual asset and crypto-security source controls without legal conclusions", () => {
+    const brazilProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-brazil-virtual-assets",
+      jurisdictions: ["Brazil"],
+      assetModel: "Tokenized private credit note with yield and public token distribution",
+      userType: "Retail users and qualified investors in Brazil",
+      custodyModel: "Platform controls omnibus wallet and virtual asset transfer approvals",
+      dataSensitivity: "KYC metadata, sanctions screening results, and wallet transaction history",
+      aiUsage: "AI drafts evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor",
+      operatingStage: "Planned public launch",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(brazilProject);
+    const graph = createRegulatoryGraph(brazilProject, audit, brazilProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining([
+        "br-bcb-virtual-asset-service-framework",
+        "br-cvm-crypto-asset-securities-guidance"
+      ])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "br-bcb-virtual-asset-service-framework")).toMatchObject({
+      jurisdiction: "Brazil",
+      regulator: "Banco Central do Brasil",
+      citation: "Law No. 14,478/2022 and Banco Central virtual asset service regulation",
+      coverageStatus: "missing",
+      localCounselRole: "Brazil virtual-assets / financial regulatory counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "br-cvm-crypto-asset-securities-guidance")).toMatchObject({
+      jurisdiction: "Brazil",
+      regulator: "Comissao de Valores Mobiliarios",
+      citation: "CVM Guidance Opinion 40, 11 October 2022",
+      coverageStatus: "missing",
+      localCounselRole: "Brazil capital markets / crypto-asset counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Brazil virtual asset service scope and authorization intake",
+        "Brazil crypto-security classification and disclosure evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
 });

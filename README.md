@@ -45,13 +45,13 @@ Key evidence:
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Regulatory Command Center first screen with a Workspace Journey rail, Workspace Action Queue, Regulatory Control Matrix, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, Source Update Approval Queue, evidence gaps, manifest readiness, and counsel handoff status.
-- Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, EU AI Act, UK FCA, UK ICO AI data protection guidance, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
+- Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, EU AI Act, UK FCA, UK ICO AI data protection guidance, Singapore MAS, Swiss FINMA, UAE VARA, Brazil Banco Central, and Brazil CVM references, including effective dates, source review dates, and reviewer notes.
 - Downloadable metadata-only Regulatory Source Pack JSON from Counsel Pack with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash.
 - Downloadable metadata-only Source Review Packet JSON from the command center with source refresh actions, clause-match targets, packet hash, and Not legal advice boundary.
 - Downloadable metadata-only Source Update Approval Queue JSON from the command center with review-due source approvals, metadata gates, and a boundary that source updates cannot affect matching until counsel or compliance review records refreshed source metadata.
 - Downloadable metadata-only Regulatory Control Matrix JSON from the command center with source-review status, evidence coverage, local counsel routes, next actions, and Not legal advice boundary.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
-- Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
+- Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, Brazil, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
 - Editable Evidence Ledger with empty-state Evidence Intake Guidance, evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, and local evidence change trail.
 - Evidence Retention Readiness panel that classifies metadata-only evidence, personal-data review needs, and vault-sync blockers for private-key-like material, API keys, and raw KYC references with metadata-only retention policy JSON plus a hashed remediation queue JSON export.
@@ -88,6 +88,10 @@ The Regulatory Command Center turns project facts into a first-screen Workspace 
 The AI legal workflow scenario now routes `LexAssist Evidence Desk` into EU AI Act and UK ICO AI data protection source controls, with evidence gaps for human oversight, source lineage, redaction, and reviewer decision logs. Not legal advice.
 
 ![AI workflow regulatory source controls](docs/assets/screenshots/ai-workflow-regulatory-source-controls.png)
+
+Brazil projects now route to Banco Central virtual asset service and CVM crypto-asset securities source controls, with evidence gaps for authorization, AML/CFT, classification, disclosure, and investor communication. Not legal advice.
+
+![Brazil regulatory source graph](docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png)
 
 ![Workspace Action Queue](docs/assets/screenshots/workspace-action-queue.png)
 

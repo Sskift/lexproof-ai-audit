@@ -34,7 +34,14 @@ export type JurisdictionPack = {
 type ControlTemplate = Omit<JurisdictionPackControl, "status" | "evidenceLabels">;
 
 type PackTemplate = {
-  jurisdiction: "United States" | "European Union" | "United Kingdom" | "Singapore" | "Switzerland" | "United Arab Emirates";
+  jurisdiction:
+    | "United States"
+    | "European Union"
+    | "United Kingdom"
+    | "Singapore"
+    | "Switzerland"
+    | "United Arab Emirates"
+    | "Brazil";
   aliases: string[];
   summary: string;
   recommendedRole: string;
@@ -196,6 +203,31 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
         evidenceKeywords: ["marketing approval", "cross-border", "wallet control", "custody", "kyc", "redaction", "human review"]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Brazil",
+    aliases: ["brazil", "br", "brasil"],
+    summary:
+      "Prepare virtual asset service authorization, AML/CFT, crypto-security classification, disclosure, and public distribution evidence for Brazil counsel.",
+    recommendedRole: "Brazil virtual-assets / capital markets counsel",
+    controls: [
+      {
+        id: "br-vasp-authorization-aml-control",
+        title: "Virtual asset service authorization and AML/CFT control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail", "public-launch"],
+        evidenceKeywords: ["virtual asset service", "authorization", "aml", "cft", "kyc", "sanctions", "transaction monitoring"]
+      },
+      {
+        id: "br-crypto-security-disclosure-control",
+        title: "Crypto-security classification and disclosure control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
+        evidenceKeywords: ["crypto security", "token classification", "public offering", "disclosure", "distribution", "investment"]
       }
     ]
   }

@@ -32,6 +32,8 @@ Before pushing `main`, run:
 npm run verify
 ```
 
+Use [docs/engineering-workflow.md](docs/engineering-workflow.md) to choose targeted tests before the full gate, decide when screenshots are required, and keep commits scoped.
+
 That command runs:
 
 ```bash

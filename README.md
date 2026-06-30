@@ -150,6 +150,9 @@ Workspace data is stored locally in browser `localStorage`. Local file evidence 
 - [WORKFLOW.md](WORKFLOW.md): direct-to-main development and push workflow.
 - [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, data flow, and extension points.
 - [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.
+- [docs/work-universe.md](docs/work-universe.md): complete build universe and product direction for future work.
+- [docs/architecture-guardrails.md](docs/architecture-guardrails.md): placement rules that keep new features aligned with the existing structure.
+- [docs/engineering-workflow.md](docs/engineering-workflow.md): verification matrix, screenshot policy, cleanliness rules, and agent prompt contract.
 - [docs/research.md](docs/research.md): hackathon selection and audit research notes.
 - [docs/product-strategy.md](docs/product-strategy.md): competition fit, product outlook, gaps, and roadmap.
 - [docs/phase-2-secure-review-workspace.md](docs/phase-2-secure-review-workspace.md): near-term Secure Review Workspace plan and backend-boundary contracts.

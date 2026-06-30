@@ -18,6 +18,9 @@ This is a hackathon MVP, so the codebase should stay easy to inspect, demo, and 
 - Add or update tests for scoring, hashing, memo generation, or user-visible workflow changes.
 - Use TypeScript types rather than ad hoc object shapes.
 - Keep generated assets out of Git.
+- For new feature placement, follow [docs/architecture-guardrails.md](docs/architecture-guardrails.md).
+- For backlog direction and non-goals, follow [docs/work-universe.md](docs/work-universe.md).
+- For test selection, screenshots, and repository cleanliness, follow [docs/engineering-workflow.md](docs/engineering-workflow.md).
 
 ## Direct-to-Main Policy
 

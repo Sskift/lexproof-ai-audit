@@ -2,6 +2,8 @@
 
 LexProof AuditOS is a Vite React single-page application. The app is intentionally local-first: all demo data, scoring, hashing, and memo generation happen in the browser with pure TypeScript logic.
 
+For future feature placement and anti-drift rules, use [docs/architecture-guardrails.md](docs/architecture-guardrails.md) with this file. For the approved backlog direction, use [docs/work-universe.md](docs/work-universe.md).
+
 ## Top-Level Shape
 
 ```text

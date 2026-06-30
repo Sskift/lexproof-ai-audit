@@ -1,4 +1,5 @@
 import type { AIReviewPayload } from "./aiReview";
+import { classifyDataBoundaryText, type ClassifiedDataClass } from "./dataClassification";
 
 export type ModelProviderKind = "mock" | "openai-compatible";
 
@@ -39,10 +40,34 @@ export function validateModelSettings(settings: ModelSettings): ModelSettingsVal
     errors.push("API key is required for live model calls.");
   }
 
+  errors.push(...createModelMetadataBoundaryErrors(settings));
+
   return {
     valid: errors.length === 0,
     errors
   };
+}
+
+const modelMetadataBlockedClasses: ClassifiedDataClass[] = [
+  "credential-material",
+  "private-key-material",
+  "raw-kyc"
+];
+
+function createModelMetadataBoundaryErrors(settings: ModelSettings): string[] {
+  const metadataText = [settings.model, settings.baseUrl ?? ""].join(" ");
+  const blockedClasses = new Set(
+    classifyDataBoundaryText(metadataText)
+      .map((finding) => finding.dataClass)
+      .filter((dataClass) => modelMetadataBlockedClasses.includes(dataClass))
+  );
+
+  return modelMetadataBlockedClasses
+    .filter((dataClass) => blockedClasses.has(dataClass))
+    .map(
+      (dataClass) =>
+        `Model settings metadata contains ${dataClass}. Remove credentials, private keys, or raw KYC from model name and endpoint metadata before validating Model Connect.`
+    );
 }
 
 export function buildOpenAICompatibleRequest(settings: ModelSettings, payload: AIReviewPayload) {

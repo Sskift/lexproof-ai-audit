@@ -1,4 +1,5 @@
 import type { RedactionReport } from "./aiReview";
+import { redactClassifiedText } from "./dataClassification";
 import type { ModelSettings, ModelSettingsValidation } from "./modelProvider";
 
 export type ModelConnectReceipt = {
@@ -31,11 +32,11 @@ export function createModelConnectReceipt(input: CreateModelConnectReceiptInput)
     receiptVersion: "lexproof-model-connect-receipt-v1",
     provider: input.settings.provider,
     providerLabel: providerLabel(input.settings),
-    model: input.settings.model.trim(),
-    endpointHost: endpointHost(input.settings),
+    model: sanitizeReceiptText(input.settings.model.trim()),
+    endpointHost: sanitizeReceiptText(endpointHost(input.settings)),
     status: blockers.length === 0 ? "ready" : "blocked",
     mode: input.settings.provider === "mock" ? "local-mock" : "session-openai-compatible",
-    blockers,
+    blockers: blockers.map(sanitizeReceiptText),
     createdAt: input.createdAt ?? new Date().toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Model Connect validates audit-prep routing only."
   };
@@ -59,4 +60,8 @@ function endpointHost(settings: ModelSettings): string {
   } catch {
     return settings.baseUrl?.trim() ?? "";
   }
+}
+
+function sanitizeReceiptText(value: string): string {
+  return redactClassifiedText(value.replace(/\s+/g, " ").trim());
 }

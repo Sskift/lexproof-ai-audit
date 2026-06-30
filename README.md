@@ -34,7 +34,7 @@ Key evidence:
 - Model Intake for registering provider/model purpose, allowed data classes, human-review owner, editable hashed AI event review records, and downloadable Model Intake JSON.
 - AI Review with mock and OpenAI-compatible model settings, Model Access Workflow, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
-- Shared data classification and redaction rules for private keys, API keys, raw KYC, personal-data references, and confidentiality labels across Export Safety Gate and Evidence Vault metadata checks.
+- Shared data classification and redaction rules for private keys, API keys, raw KYC, personal-data references, and confidentiality labels across Model Connect settings metadata, Export Safety Gate, and Evidence Vault metadata checks.
 - Export Safety Gate before Counsel Pack handoff, with data-boundary findings for private keys, API keys, raw KYC, personal-data references, and confidentiality labels.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Server Model Gateway receipts, Model Gateway Evaluation artifacts, and Audit Log Export artifacts with payload hash, response hash, source evidence hash, provider policy metadata, human-review status, retry/error state, audit actions, before/after hashes, and remediation steps without returning raw payloads or credentials.

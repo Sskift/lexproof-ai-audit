@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createModelConnectReceipt } from "./modelConnect";
+import { validateModelSettings } from "./modelProvider";
 
 describe("model connect receipts", () => {
   it("creates a session-only OpenAI-compatible receipt without exposing the API key", () => {
@@ -52,5 +53,34 @@ describe("model connect receipts", () => {
       "Model name is required.",
       "Redaction Gate blocked this model connection."
     ]);
+  });
+
+  it("carries sanitized unsafe model metadata blockers without exposing pasted secrets", () => {
+    const apiKeyInUrl = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const settings = {
+      provider: "openai-compatible" as const,
+      model: `raw KYC routing ${privateKey}`,
+      baseUrl: `https://models.example.test/v1?api_key=${apiKeyInUrl}`,
+      apiKey: "sk-session-only"
+    };
+    const receipt = createModelConnectReceipt({
+      settings,
+      settingsValidation: validateModelSettings(settings),
+      redactionStatus: "clean",
+      createdAt: "2026-06-30T00:00:00.000Z"
+    });
+
+    expect(receipt.status).toBe("blocked");
+    expect(receipt.blockers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("credential-material"),
+        expect.stringContaining("private-key-material"),
+        expect.stringContaining("raw-kyc")
+      ])
+    );
+    expect(JSON.stringify(receipt)).not.toContain(apiKeyInUrl);
+    expect(JSON.stringify(receipt)).not.toContain(privateKey);
+    expect(JSON.stringify(receipt)).not.toContain("sk-session-only");
   });
 });

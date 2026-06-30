@@ -369,9 +369,9 @@ Owns model connection boundaries:
 - `createMockModelProvider()` returns deterministic demo output for judges and tests.
 - `buildOpenAICompatibleRequest()` prepares a chat-completions request without putting API keys in the JSON body.
 - `createOpenAICompatibleModelProvider()` can call a user-supplied OpenAI-compatible endpoint.
-- `validateModelSettings()` prevents live calls without endpoint, model, and API key.
+- `validateModelSettings()` prevents live calls without endpoint, model, and API key, and blocks unsafe model name or endpoint metadata through the shared data-classification rules.
 
-API keys are not persisted by the app.
+API keys are session-only and are not persisted by the app. Model Connect receipts redact model and endpoint metadata before rendering or export.
 
 ### `src/lib/modelConnectionReadiness.ts`
 
@@ -511,7 +511,7 @@ Owns shared W8 data-classification rules:
 
 - `classifyDataBoundaryText(value)` detects private-key-like material, credential-like tokens, raw KYC references, personal-data references, and confidentiality labels with severity metadata.
 - `redactClassifiedText(value)` redacts reusable snippets before UI, export, or server error surfaces display them.
-- Export and server upload boundaries must reuse this module instead of copying scanner regexes.
+- Model settings, export, and server upload boundaries must reuse this module instead of copying scanner regexes.
 
 ### `src/lib/dataBoundary.ts`
 

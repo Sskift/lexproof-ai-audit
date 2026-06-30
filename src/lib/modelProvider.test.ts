@@ -31,6 +31,27 @@ describe("validateModelSettings", () => {
       errors: ["Base URL is required for OpenAI-compatible providers.", "Model name is required.", "API key is required for live model calls."]
     });
   });
+
+  it("blocks unsafe model metadata without treating the session-only API key field as leaked metadata", () => {
+    const apiKeyInUrl = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const validation = validateModelSettings({
+      provider: "openai-compatible",
+      model: `raw KYC routing ${privateKey}`,
+      baseUrl: `https://models.example.com/v1?api_key=${apiKeyInUrl}`,
+      apiKey: "sk-session-only"
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toEqual([
+      "Model settings metadata contains credential-material. Remove credentials, private keys, or raw KYC from model name and endpoint metadata before validating Model Connect.",
+      "Model settings metadata contains private-key-material. Remove credentials, private keys, or raw KYC from model name and endpoint metadata before validating Model Connect.",
+      "Model settings metadata contains raw-kyc. Remove credentials, private keys, or raw KYC from model name and endpoint metadata before validating Model Connect."
+    ]);
+    expect(JSON.stringify(validation)).not.toContain(apiKeyInUrl);
+    expect(JSON.stringify(validation)).not.toContain(privateKey);
+    expect(JSON.stringify(validation)).not.toContain("sk-session-only");
+  });
 });
 
 describe("buildOpenAICompatibleRequest", () => {

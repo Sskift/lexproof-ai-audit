@@ -484,8 +484,11 @@ describe("App", () => {
     expect(screen.getByText(/Vault sync blocked until retention blockers are remediated/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sync Evidence Vault/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Download Retention Policy JSON/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Evidence Retention Remediation Queue/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Delete or replace Unsafe retention packet before Evidence Vault sync/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /Download Remediation Queue JSON/i })).toBeEnabled();
     const retention = within(retentionPanel as HTMLElement);
-    expect(retention.getByText(/\[redacted-private-key\]/i)).toBeInTheDocument();
+    expect(retention.getAllByText(/\[redacted-private-key\]/i).length).toBeGreaterThan(0);
     expect(retention.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(retention.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   });

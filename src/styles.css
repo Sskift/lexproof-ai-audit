@@ -3683,6 +3683,146 @@ textarea {
   line-height: 1.45;
 }
 
+.retention-remediation-panel {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #d8e1e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.retention-remediation-panel .split-title > span {
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #344658;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.retention-remediation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.retention-remediation-grid > div {
+  min-width: 0;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 10px;
+}
+
+.retention-remediation-grid span,
+.retention-remediation-grid strong {
+  display: block;
+}
+
+.retention-remediation-grid span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.retention-remediation-grid strong {
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.88rem;
+}
+
+.retention-remediation-list {
+  display: grid;
+  gap: 9px;
+}
+
+.retention-remediation-item {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #e1e7eb;
+  border-left: 4px solid #78909c;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 10px;
+}
+
+.retention-remediation-item.p0 {
+  border-left-color: #b85c54;
+}
+
+.retention-remediation-item.p1 {
+  border-left-color: #b57a3a;
+}
+
+.retention-remediation-item.p2 {
+  border-left-color: #5f9c77;
+}
+
+.retention-remediation-item header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.retention-remediation-item strong {
+  color: #172431;
+}
+
+.retention-remediation-item p {
+  margin-bottom: 0;
+  color: #445361;
+  line-height: 1.4;
+}
+
+.retention-remediation-item small {
+  color: #657382;
+  line-height: 1.35;
+}
+
+.retention-remediation-item code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  background: #f4f7f9;
+  color: #263d73;
+  padding: 9px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.retention-priority {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.retention-priority.p0 {
+  background: #fee4df;
+  color: #9f241a;
+}
+
+.retention-priority.p1 {
+  background: #fff0bd;
+  color: #7a4e00;
+}
+
+.retention-priority.p2 {
+  background: #dff4eb;
+  color: #0c5f55;
+}
+
 .retention-footer {
   display: flex;
   flex-wrap: wrap;

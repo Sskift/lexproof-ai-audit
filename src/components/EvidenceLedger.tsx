@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BadgeCheck, CloudUpload, DatabaseZap, Download, FileUp, History, LockKeyhole, RefreshCcw, ShieldAlert, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
@@ -17,6 +17,11 @@ import {
 import { createEvidenceVaultControlCoverage, type EvidenceVaultControlCoverage } from "../lib/evidenceVaultControlCoverage";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
+import {
+  createEvidenceRetentionRemediationQueue,
+  downloadEvidenceRetentionRemediationJson,
+  type EvidenceRetentionRemediationQueue
+} from "../lib/evidenceRetentionRemediation";
 import {
   createRetentionPolicyReport,
   downloadRetentionPolicyJson,
@@ -81,6 +86,7 @@ export function EvidenceLedger({
   const [vaultReplacementReasons, setVaultReplacementReasons] = useState<Record<string, string>>({});
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
+  const [retentionRemediationQueue, setRetentionRemediationQueue] = useState<EvidenceRetentionRemediationQueue | null>(null);
   const vaultControlCoverage = useMemo(
     () =>
       createEvidenceVaultControlCoverage({
@@ -97,6 +103,18 @@ export function EvidenceLedger({
       }),
     [evidenceItems, projectId]
   );
+  useEffect(() => {
+    let isActive = true;
+    setRetentionRemediationQueue(null);
+    void createEvidenceRetentionRemediationQueue(retentionReport).then((queue) => {
+      if (isActive) {
+        setRetentionRemediationQueue(queue);
+      }
+    });
+    return () => {
+      isActive = false;
+    };
+  }, [retentionReport]);
 
   const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
   const canSyncVault =
@@ -354,7 +372,7 @@ export function EvidenceLedger({
         {fileImportState ? <p className="save-state">{fileImportState}</p> : null}
       </section>
 
-      <RetentionPolicyPanel report={retentionReport} />
+      <RetentionPolicyPanel report={retentionReport} remediationQueue={retentionRemediationQueue} />
 
       <section className={`evidence-vault-sync ${vaultStatus}`}>
         <div className="split-title compact-title">
@@ -681,10 +699,17 @@ function EvidenceIntakeGuidancePanel({
   );
 }
 
-function RetentionPolicyPanel({ report }: { report: RetentionPolicyReport }) {
+function RetentionPolicyPanel({
+  report,
+  remediationQueue
+}: {
+  report: RetentionPolicyReport;
+  remediationQueue: EvidenceRetentionRemediationQueue | null;
+}) {
   const statusLabel =
     report.status === "blocked" ? "Blocked retention" : report.status === "needs-review" ? "Needs retention review" : "Ready";
   const visibleActions = report.actions.slice(0, 5);
+  const visibleRemediationItems = remediationQueue?.items.slice(0, 5) ?? [];
 
   return (
     <section className={`retention-policy-panel ${report.status}`}>
@@ -720,12 +745,62 @@ function RetentionPolicyPanel({ report }: { report: RetentionPolicyReport }) {
           </article>
         ))}
       </div>
+      <section className="retention-remediation-panel" aria-label="Evidence Retention Remediation Queue">
+        <div className="split-title compact-title">
+          <div>
+            <ShieldAlert size={16} aria-hidden="true" />
+            <h3>Evidence Retention Remediation Queue</h3>
+          </div>
+          <span>{remediationQueue?.status ?? "generating"}</span>
+        </div>
+        <p className="section-note">
+          {remediationQueue?.notLegalAdviceBoundary ??
+            "Not legal advice. Evidence retention remediation queues are audit preparation workflow metadata only."}
+        </p>
+        <div className="retention-remediation-grid">
+          <RetentionFact label="Queue actions" value={String(remediationQueue?.summary.totalActionCount ?? report.actions.length)} />
+          <RetentionFact label="P0 blockers" value={String(remediationQueue?.summary.blockedActionCount ?? report.blockerCount)} />
+          <RetentionFact label="P1 reviews" value={String(remediationQueue?.summary.reviewActionCount ?? report.reviewCount)} />
+          <RetentionFact label="Queue SHA-256" value={remediationQueue?.queueHash ?? "calculating"} />
+        </div>
+        <div className="retention-remediation-list">
+          {visibleRemediationItems.map((item) => (
+            <article key={item.id} className={`retention-remediation-item ${item.priority.toLowerCase()}`}>
+              <header>
+                <span className={`retention-priority ${item.priority.toLowerCase()}`}>{item.priority}</span>
+                <strong>{item.nextAction}</strong>
+                <small>
+                  {item.dataClass} · {item.actionType} · {item.owner}
+                </small>
+              </header>
+              <p>{item.reason}</p>
+              <code>{item.redactedSnippet}</code>
+              <small>
+                Retention: {item.retentionWindow}. Trigger: {item.deletionTrigger}.
+              </small>
+            </article>
+          ))}
+        </div>
+      </section>
       <div className="retention-footer">
         <ul>
-          {report.nextSteps.map((step) => (
+          {(remediationQueue?.nextSteps ?? report.nextSteps).map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ul>
+        <button
+          type="button"
+          className="secondary"
+          disabled={!remediationQueue || report.evidenceCount === 0}
+          onClick={() =>
+            remediationQueue
+              ? downloadEvidenceRetentionRemediationJson("evidence-retention-remediation-queue.json", remediationQueue)
+              : undefined
+          }
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Remediation Queue JSON
+        </button>
         <button
           type="button"
           className="secondary"

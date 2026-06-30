@@ -7,6 +7,11 @@ import {
   downloadRegulatorySourceReviewPacketJson,
   type RegulatorySourceReviewPacket
 } from "../lib/regulatorySourceReviewPacket";
+import {
+  downloadRegulatorySourceApprovalQueueJson,
+  type RegulatorySourceApprovalQueue,
+  type RegulatorySourceApprovalStatus
+} from "../lib/regulatorySourceApproval";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
@@ -17,6 +22,7 @@ type RegulatoryCommandCenterProps = {
   audit: AuditResult;
   graph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
+  sourceApprovalQueue: RegulatorySourceApprovalQueue;
   controlMatrix: RegulatoryControlMatrix;
   actionQueue: WorkspaceActionQueue;
   journey: WorkspaceJourney;
@@ -30,6 +36,7 @@ export function RegulatoryCommandCenter({
   audit,
   graph,
   sourceReview,
+  sourceApprovalQueue,
   controlMatrix,
   actionQueue,
   journey,
@@ -172,6 +179,49 @@ export function RegulatoryCommandCenter({
         </div>
       </section>
 
+      <section className={`source-approval-queue ${sourceApprovalQueue.status}`} aria-label="Source Update Approval Queue">
+        <div className="reg-source-review-header">
+          <div className="reg-section-title">
+            <ShieldCheck size={17} aria-hidden="true" />
+            <h3>Source Update Approval Queue</h3>
+          </div>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() =>
+              downloadRegulatorySourceApprovalQueueJson(`lexproof-${project.id}-source-approval-queue.json`, sourceApprovalQueue)
+            }
+          >
+            <Download size={15} aria-hidden="true" />
+            Download Source Approval Queue JSON
+          </button>
+        </div>
+        <div className="reg-source-review-summary">
+          <Metric label="Approval required" value={sourceApprovalQueue.approvalRequiredCount} helper="review-due sources" />
+          <Metric label="Metadata required" value={sourceApprovalQueue.metadataRequiredCount} helper="source lineage gaps" />
+          <Metric label="Open gates" value={sourceApprovalQueue.totalItemCount} helper={sourceApprovalQueue.status} />
+        </div>
+        <p>{sourceApprovalQueue.notLegalAdviceBoundary}</p>
+        <div className="source-approval-list">
+          {sourceApprovalQueue.items.length === 0 ? (
+            <p className="empty-state">No source update approval actions are open. Source matching remains tied to reviewed metadata.</p>
+          ) : null}
+          {sourceApprovalQueue.items.slice(0, 4).map((item) => (
+            <article key={item.id} className={`source-approval-item ${item.approvalStatus}`}>
+              <header>
+                <span>{formatApprovalStatus(item.approvalStatus)}</span>
+                <strong>{item.jurisdiction}</strong>
+              </header>
+              <p>{item.nextAction}</p>
+              <small>{item.approvalGate}</small>
+              <small>
+                {item.citation} · last reviewed {item.lastReviewedAt} · next review {item.nextReviewDueAt}
+              </small>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="reg-command-layout">
         <section className="reg-jurisdiction-matrix" aria-label="Jurisdiction risk matrix">
           <div className="reg-section-title">
@@ -285,6 +335,13 @@ function formatSourceReviewStatus(status: RegulatorySourceReviewStatus): string 
     return "review due";
   }
   return "current";
+}
+
+function formatApprovalStatus(status: RegulatorySourceApprovalStatus): string {
+  if (status === "metadata-required") {
+    return "metadata required";
+  }
+  return "approval required";
 }
 
 function formatJourneyStatus(status: WorkspaceJourneyStatus): string {

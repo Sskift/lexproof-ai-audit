@@ -120,6 +120,63 @@ describe("App", () => {
     }
   });
 
+  it("shows and downloads the Source Update Approval Queue when source review is due", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:source-approval-queue");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      const queue = screen.getByRole("region", { name: /Source Update Approval Queue/i });
+      expect(
+        within(queue).getByText(/Not legal advice. Source update approvals are audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+      expect(within(queue).getAllByText(/approval required/i).length).toBeGreaterThan(0);
+      expect(within(queue).getByRole("button", { name: /Download Source Approval Queue JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(queue).getByRole("button", { name: /Download Source Approval Queue JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:source-approval-queue");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Source Approval Queue JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          queueVersion: "lexproof-regulatory-source-approval-queue-v1",
+          status: "needs-approval",
+          notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.items.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it("loads a judge-ready demo scenario from the seeded scenario library", async () => {
     render(<App />);
 

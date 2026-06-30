@@ -116,6 +116,7 @@ import {
   createRegulatorySourcePack,
   type RegulatorySourcePack
 } from "./lib/regulatorySourcePack";
+import { createRegulatorySourceApprovalQueue } from "./lib/regulatorySourceApproval";
 import {
   createRegulatorySourceReviewPacket,
   type RegulatorySourceReviewPacket
@@ -203,6 +204,10 @@ export default function App() {
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
   const regulatorySourceReview = useMemo(() => createRegulatorySourceReview(regulatoryGraph), [regulatoryGraph]);
+  const regulatorySourceApprovalQueue = useMemo(
+    () => createRegulatorySourceApprovalQueue(regulatorySourceReview),
+    [regulatorySourceReview]
+  );
   const regulatoryControlMatrix = useMemo(
     () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
     [regulatoryGraph, regulatorySourceReview]
@@ -965,6 +970,7 @@ export default function App() {
             audit={audit}
             graph={regulatoryGraph}
             sourceReview={regulatorySourceReview}
+            sourceApprovalQueue={regulatorySourceApprovalQueue}
             controlMatrix={regulatoryControlMatrix}
             actionQueue={workspaceActionQueue}
             journey={workspaceJourney}

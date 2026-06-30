@@ -4,6 +4,49 @@ import { registerModelGatewayRoutes } from "./modelGatewayRoutes";
 import { createMemoryReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
 describe("model gateway route module", () => {
+  it("exposes a metadata-only provider policy report from the server registry", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerModelGatewayRoutes(server, { repository });
+
+    const policyResponse = await server.inject({ method: "GET", url: "/api/model-gateway/provider-policy" });
+
+    expect(policyResponse.statusCode).toBe(200);
+    expect(policyResponse.json()).toEqual(
+      expect.objectContaining({
+        reportVersion: "lexproof-model-gateway-provider-policy-v1",
+        overallStatus: "needs-policy",
+        enabledProviderCount: 1,
+        deferredProviderCount: 2,
+        notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+      })
+    );
+    expect(policyResponse.json().adapters).toEqual([
+      expect.objectContaining({ provider: "mock", enabled: true, status: "ready", credentialPolicy: "no credentials accepted" }),
+      expect.objectContaining({
+        provider: "openai-compatible",
+        enabled: false,
+        status: "disabled",
+        credentialPolicy: "deferred until server-side secret policy is approved"
+      }),
+      expect.objectContaining({ provider: "enterprise-proxy", enabled: false, status: "disabled" })
+    ]);
+    expect(policyResponse.json().controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "server-side-secret-policy", status: "needs-policy" }),
+        expect.objectContaining({ id: "provider-allowlist", status: "needs-policy" }),
+        expect.objectContaining({ id: "egress-logging", status: "needs-policy" })
+      ])
+    );
+    expect(policyResponse.body).not.toContain("sk-live");
+    expect(policyResponse.body).not.toContain("private key 0x");
+    expect(policyResponse.body.toLowerCase()).not.toContain("legal opinion");
+    expect(policyResponse.body.toLowerCase()).not.toContain("final legal decision");
+
+    await server.close();
+    await repository.close();
+  });
+
   it("registers metadata-only adapter, run, lookup, and summary routes without raw payload leakage", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();

@@ -152,6 +152,10 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - returns adapter readiness records
   - enables only the local mock adapter in Phase 2A
   - lists OpenAI-compatible and enterprise-proxy adapters as disabled placeholders until server-side secret policy is approved
+- `GET /api/model-gateway/provider-policy`
+  - returns the server-side provider registry policy report
+  - exposes enabled/disabled provider status, required controls, next actions, and Not legal advice boundary
+  - does not accept credentials, call external providers, or enable external provider proxying
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate

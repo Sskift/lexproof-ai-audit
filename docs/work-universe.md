@@ -213,7 +213,7 @@ Goal: move BYOM/BYOK model access behind a server policy boundary with review re
 
 Build:
 
-- Server-side provider registry with disabled-by-default adapters.
+- Server-side provider registry with disabled-by-default adapters. The registry is exposed through `GET /api/model-gateway/adapters` and a metadata-only `GET /api/model-gateway/provider-policy` report with required controls, next actions, and Not legal advice boundary; it does not accept credentials or call external providers.
 - Secret handling policy before real external model calls.
 - Model Gateway route that enforces Redaction Gate, allowed data classes, purpose, reviewer, and final-decision blockers.
 - Safe Model Gateway failure receipts with run ID, retry state, error code, and remediation steps.

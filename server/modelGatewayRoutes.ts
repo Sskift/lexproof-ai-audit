@@ -1,5 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
+import {
+  createModelGatewayRun,
+  createServerModelGatewayProviderPolicyReport,
+  listModelGatewayAdapters
+} from "./modelGatewayService.js";
 import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
@@ -13,6 +17,7 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
   const { repository } = options;
 
   server.get("/api/model-gateway/adapters", async () => listModelGatewayAdapters());
+  server.get("/api/model-gateway/provider-policy", async () => createServerModelGatewayProviderPolicyReport());
 
   server.post<{ Params: { workspaceId: string }; Body: ModelGatewayRequestBody }>(
     "/api/workspaces/:workspaceId/model-runs",

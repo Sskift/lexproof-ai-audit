@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 import { validateModelGatewayBoundary, type ModelGatewayBoundaryInput } from "../src/lib/phase2ApiContracts.js";
 import type { ModelGatewayProviderMetadata, ModelGatewayRun } from "../src/lib/phase2Types.js";
 import {
+  createModelGatewayProviderPolicyReport,
   defaultModelGatewayProviderAdapters,
+  type ModelGatewayProviderPolicyReport,
   type ModelGatewayProviderPolicyAdapter
 } from "../src/lib/modelGatewayProviderPolicy.js";
 
@@ -29,6 +31,14 @@ const modelGatewayAdapters: ModelGatewayAdapterDescriptor[] = defaultModelGatewa
 
 export function listModelGatewayAdapters(): ModelGatewayAdapterDescriptor[] {
   return modelGatewayAdapters.map((adapter) => ({ ...adapter }));
+}
+
+export function createServerModelGatewayProviderPolicyReport(createdAt?: string): ModelGatewayProviderPolicyReport {
+  return createModelGatewayProviderPolicyReport({
+    adapters: listModelGatewayAdapters(),
+    modelConnectReceipt: null,
+    generatedAt: createdAt
+  });
 }
 
 export function createModelGatewayRun(input: CreateModelGatewayRunInput): ModelGatewayRunResult {

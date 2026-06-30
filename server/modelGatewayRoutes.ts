@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
+import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 import { createAuditLogRecord, createModelGatewayRunSummary } from "../src/lib/phase2Types.js";
@@ -52,12 +53,16 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
           })
         );
         return reply.status(400).send({
-          error: "Model Gateway boundary failed.",
+          ...createApiErrorResponse({
+            error: new Error("Model Gateway boundary failed."),
+            code: result.failureRun.errorCode ?? "MODEL_GATEWAY_BOUNDARY_FAILED",
+            fallbackMessage: "Model Gateway boundary failed.",
+            recoveryAction: result.failureRun.remediationSteps[0] ?? "Review Model Gateway boundary errors and retry after remediation."
+          }),
           errors: result.errors,
           runId: result.failureRun.id,
           retryState: result.failureRun.retryState,
-          remediationSteps: result.failureRun.remediationSteps,
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          remediationSteps: result.failureRun.remediationSteps
         });
       }
 
@@ -88,7 +93,7 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
     async (request, reply) => {
       const run = await repository.findModelGatewayRun(request.params.workspaceId, request.params.runId);
       if (!run) {
-        return reply.status(404).send({ error: "Model Gateway run not found." });
+        return reply.status(404).send(createModelGatewayRunNotFoundError());
       }
       return run;
     }
@@ -106,3 +111,12 @@ type ModelGatewayRequestBody = {
   allowedDataClasses?: string[];
   payload: unknown;
 };
+
+function createModelGatewayRunNotFoundError() {
+  return createApiErrorResponse({
+    error: new Error("Model Gateway run not found."),
+    code: "MODEL_GATEWAY_RUN_NOT_FOUND",
+    fallbackMessage: "Model Gateway run not found.",
+    recoveryAction: "Create a model run before lookup or verify the run ID."
+  });
+}

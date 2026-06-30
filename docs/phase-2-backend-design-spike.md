@@ -156,7 +156,7 @@ The first Model Gateway routes are implemented in `server/modelGatewayRoutes.ts`
 
 The adapters route returns provider readiness without credentials. The POST route validates Redaction Gate status, allowed data classes, credential material, raw KYC/personal-data markers, final-legal-decision purposes, human-review owner, and provider adapter availability.
 
-Successful mock runs persist a receipt with payload hash, response hash, source evidence hash, provider metadata, attempt count, retry state, human-review status, and the non-advice boundary. Boundary failures and disabled adapter attempts persist a safe failure receipt with run ID, status, error code, retry state, and remediation steps, then return a 400 response that omits raw payloads and credential material. Both success and failure paths append audit-log records. The route does not call external providers or persist credentials.
+Successful mock runs persist a receipt with payload hash, response hash, source evidence hash, provider metadata, attempt count, retry state, human-review status, and the non-advice boundary. Boundary failures and disabled adapter attempts persist a safe failure receipt with run ID, status, error code, retry state, and remediation steps, then return a typed 400 response that includes a stable code, recovery guidance, and no raw payloads or credential material. Missing run lookups return a typed 404 response with the audit-prep boundary. Both success and failure paths append audit-log records. The route does not call external providers or persist credentials.
 
 ## Human Review Routes
 
@@ -222,7 +222,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Workspace route-module registration independently from the full app composition
-- Shared typed API error helper and Workspace create/read/update error code responses
+- Shared typed API error helper plus Workspace and Model Gateway error code responses
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition

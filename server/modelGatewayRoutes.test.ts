@@ -81,4 +81,59 @@ describe("model gateway route module", () => {
     await server.close();
     await repository.close();
   });
+
+  it("returns typed audit-prep errors for blocked runs and missing lookups", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerModelGatewayRoutes(server, { repository });
+
+    const blockedResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-model-errors/model-runs",
+      payload: {
+        provider: "openai-compatible",
+        model: "gpt-4.1-mini",
+        purpose: "Make final legal decision for launch approval.",
+        redactionStatus: "blocked",
+        humanReviewOwner: "",
+        includesCredentialMaterial: true,
+        includesRawKycOrPersonalData: true,
+        allowedDataClasses: ["audit-prep metadata", "evidence hashes", "risk flag summaries"],
+        payload: { projectName: "YieldPassport" }
+      }
+    });
+
+    expect(blockedResponse.statusCode).toBe(400);
+    expect(blockedResponse.json()).toEqual(
+      expect.objectContaining({
+        error: "Model Gateway boundary failed.",
+        code: "MODEL_GATEWAY_POLICY_BLOCKED",
+        runId: expect.stringMatching(/^model-gateway-run-[a-f0-9]{16}$/),
+        retryState: "blocked-until-remediated",
+        recoveryAction: "Pass the Redaction Gate before creating a server Model Gateway run.",
+        remediationSteps: expect.arrayContaining([
+          "Pass the Redaction Gate before creating a server Model Gateway run.",
+          "Remove API keys, private keys, credentials, raw KYC, and personal data from the request metadata."
+        ]),
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+    expect(blockedResponse.body.toLowerCase()).not.toContain("api_key");
+
+    const missingResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-model-errors/model-runs/missing-run"
+    });
+
+    expect(missingResponse.statusCode).toBe(404);
+    expect(missingResponse.json()).toEqual({
+      error: "Model Gateway run not found.",
+      code: "MODEL_GATEWAY_RUN_NOT_FOUND",
+      recoveryAction: "Create a model run before lookup or verify the run ID.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    await server.close();
+    await repository.close();
+  });
 });

@@ -189,7 +189,7 @@ Build:
 
 - Fastify route modules split by domain: workspaces, evidence vault, model gateway, human review, audit log, exports. The first W7 splits are implemented for Workspace routes in `server/workspaceRoutes.ts`, Model Gateway routes in `server/modelGatewayRoutes.ts`, Counsel Pack export routes in `server/counselPackExportRoutes.ts`, Human Review routes in `server/humanReviewRoutes.ts`, Evidence Vault routes in `server/evidenceVaultRoutes.ts`, and Audit Log routes in `server/auditLogRoutes.ts`; continue extracting shared system routes without changing route contracts.
 - Repository interfaces with Prisma implementations and memory implementations for tests.
-- Request validation, typed error responses, and consistent audit logging. The first shared typed error helper is implemented in `server/apiError.ts` and wired into Workspace create/read/update failures with stable error codes and the audit-prep boundary.
+- Request validation, typed error responses, and consistent audit logging. The shared typed error helper is implemented in `server/apiError.ts` and currently wired into Workspace create/read/update failures plus Model Gateway boundary and lookup failures with stable error codes and the audit-prep boundary.
 - Optional background jobs for export rendering and long-running model calls.
 - Auth/RBAC design before multi-user or organization features.
 

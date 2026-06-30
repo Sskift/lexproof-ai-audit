@@ -6,6 +6,7 @@ import {
 } from "../src/lib/serverHumanReviewEffects.js";
 import { createServerHumanReviewQueueView, type ServerHumanReviewQueueFilters } from "../src/lib/serverHumanReviewQueue.js";
 import { createHumanReviewRecord, updateHumanReviewRecord } from "./humanReviewService.js";
+import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 import { createAuditLogRecord, type EvidenceVaultRecord, type HumanReviewRecord } from "../src/lib/phase2Types.js";
@@ -21,6 +22,7 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
     "/api/workspaces/:workspaceId/reviews",
     async (request, reply) => {
       try {
+        assertHumanReviewTargetType(request.body.targetType);
         const review = createHumanReviewRecord({
           workspaceId: request.params.workspaceId,
           targetType: request.body.targetType,
@@ -44,10 +46,14 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
         );
         return reply.status(201).send(review);
       } catch (error) {
-        return reply.status(400).send({
-          error: error instanceof Error ? error.message : "Human review request failed.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "HUMAN_REVIEW_CREATE_FAILED",
+            fallbackMessage: "Human review request failed.",
+            recoveryAction: "Provide a supported review target, reviewer, and audit-prep comment before creating a review."
+          })
+        );
       }
     }
   );
@@ -63,10 +69,14 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
           filters: createHumanReviewQueueFilters(request.query)
         });
       } catch (error) {
-        return reply.status(400).send({
-          error: error instanceof Error ? error.message : "Human Review queue lookup failed.",
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        });
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "HUMAN_REVIEW_QUEUE_FAILED",
+            fallbackMessage: "Human Review queue lookup failed.",
+            recoveryAction: "Use targetType risk-flag, evidence, model-run, or counsel-pack and a supported review status."
+          })
+        );
       }
     }
   );
@@ -78,95 +88,106 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
       const reviewIndex = reviews.findIndex((item) => item.id === request.params.reviewId);
 
       if (reviewIndex === -1) {
-        return reply.status(404).send({ error: "Human review record not found." });
+        return reply.status(404).send(createHumanReviewNotFoundError());
       }
 
-      const updated = updateHumanReviewRecord(reviews[reviewIndex], {
-        status: request.body.status,
-        comment: request.body.comment,
-        reviewerId: request.body.reviewerId
-      });
-      const evidenceEffect = createEvidenceVaultStatusEffectFromHumanReview(updated);
-      const existingEvidence = evidenceEffect
-        ? await repository.findEvidenceVaultRecord(request.params.workspaceId, evidenceEffect.targetEvidenceId)
-        : null;
-      let updatedEvidence: EvidenceVaultRecord | null = null;
-      const modelRunEffect = createModelGatewayReviewStatusEffectFromHumanReview(updated);
-      const existingModelRun = modelRunEffect
-        ? await repository.findModelGatewayRun(request.params.workspaceId, modelRunEffect.targetRunId)
-        : null;
-      const updatedModelRun =
-        modelRunEffect && existingModelRun && existingModelRun.humanReviewStatus !== modelRunEffect.nextStatus
-          ? {
-              ...existingModelRun,
-              humanReviewStatus: modelRunEffect.nextStatus
-            }
+      try {
+        if (request.body.status) {
+          assertHumanReviewStatus(request.body.status);
+        }
+
+        const updated = updateHumanReviewRecord(reviews[reviewIndex], {
+          status: request.body.status,
+          comment: request.body.comment,
+          reviewerId: request.body.reviewerId
+        });
+        const evidenceEffect = createEvidenceVaultStatusEffectFromHumanReview(updated);
+        const existingEvidence = evidenceEffect
+          ? await repository.findEvidenceVaultRecord(request.params.workspaceId, evidenceEffect.targetEvidenceId)
           : null;
+        let updatedEvidence: EvidenceVaultRecord | null = null;
+        const modelRunEffect = createModelGatewayReviewStatusEffectFromHumanReview(updated);
+        const existingModelRun = modelRunEffect
+          ? await repository.findModelGatewayRun(request.params.workspaceId, modelRunEffect.targetRunId)
+          : null;
+        const updatedModelRun =
+          modelRunEffect && existingModelRun && existingModelRun.humanReviewStatus !== modelRunEffect.nextStatus
+            ? {
+                ...existingModelRun,
+                humanReviewStatus: modelRunEffect.nextStatus
+              }
+            : null;
 
-      if (evidenceEffect && existingEvidence && existingEvidence.status !== evidenceEffect.nextStatus) {
-        const transition = validateEvidenceVaultStatusTransition(existingEvidence.status, evidenceEffect.nextStatus);
+        if (evidenceEffect && existingEvidence && existingEvidence.status !== evidenceEffect.nextStatus) {
+          const transition = validateEvidenceVaultStatusTransition(existingEvidence.status, evidenceEffect.nextStatus);
 
-        if (!transition.valid) {
-          return reply.status(409).send({
-            error: transition.error,
-            recoveryAction: transition.recoveryAction,
-            notLegalAdviceBoundary: transition.notLegalAdviceBoundary
+          if (!transition.valid) {
+            return reply.status(409).send(createLinkedEvidenceTransitionError(transition));
+          }
+
+          updatedEvidence = updateEvidenceVaultRecordFromReview(existingEvidence, {
+            status: evidenceEffect.nextStatus,
+            sourceNote: evidenceEffect.summary
           });
         }
 
-        updatedEvidence = updateEvidenceVaultRecordFromReview(existingEvidence, {
-          status: evidenceEffect.nextStatus,
-          sourceNote: evidenceEffect.summary
-        });
-      }
-
-      await repository.updateHumanReviewRecord(updated);
-      await repository.appendAuditLogRecord(
-        createAuditLogRecord({
-          workspaceId: request.params.workspaceId,
-          actorId: updated.reviewerId,
-          action: "human-review.updated",
-          targetType: "human-review",
-          targetId: updated.id,
-          beforeHash: reviews[reviewIndex].status,
-          afterHash: updated.status,
-          summary: `Updated human review status to ${updated.status}.`,
-          createdAt: updated.updatedAt
-        })
-      );
-      if (evidenceEffect && existingEvidence && updatedEvidence) {
-        await repository.updateEvidenceVaultRecord(updatedEvidence);
+        await repository.updateHumanReviewRecord(updated);
         await repository.appendAuditLogRecord(
           createAuditLogRecord({
             workspaceId: request.params.workspaceId,
             actorId: updated.reviewerId,
-            action: "evidence.review-status.synced",
-            targetType: "evidence",
-            targetId: updatedEvidence.id,
-            beforeHash: sha256Hex(stableStringify(existingEvidence)),
-            afterHash: sha256Hex(stableStringify(updatedEvidence)),
-            summary: evidenceEffect.summary,
+            action: "human-review.updated",
+            targetType: "human-review",
+            targetId: updated.id,
+            beforeHash: reviews[reviewIndex].status,
+            afterHash: updated.status,
+            summary: `Updated human review status to ${updated.status}.`,
             createdAt: updated.updatedAt
           })
         );
-      }
-      if (modelRunEffect && existingModelRun && updatedModelRun) {
-        await repository.saveModelGatewayRun(updatedModelRun);
-        await repository.appendAuditLogRecord(
-          createAuditLogRecord({
-            workspaceId: request.params.workspaceId,
-            actorId: updated.reviewerId,
-            action: "model.run.review-status.synced",
-            targetType: "model-run",
-            targetId: updatedModelRun.id,
-            beforeHash: sha256Hex(stableStringify(existingModelRun)),
-            afterHash: sha256Hex(stableStringify(updatedModelRun)),
-            summary: modelRunEffect.summary,
-            createdAt: updated.updatedAt
+        if (evidenceEffect && existingEvidence && updatedEvidence) {
+          await repository.updateEvidenceVaultRecord(updatedEvidence);
+          await repository.appendAuditLogRecord(
+            createAuditLogRecord({
+              workspaceId: request.params.workspaceId,
+              actorId: updated.reviewerId,
+              action: "evidence.review-status.synced",
+              targetType: "evidence",
+              targetId: updatedEvidence.id,
+              beforeHash: sha256Hex(stableStringify(existingEvidence)),
+              afterHash: sha256Hex(stableStringify(updatedEvidence)),
+              summary: evidenceEffect.summary,
+              createdAt: updated.updatedAt
+            })
+          );
+        }
+        if (modelRunEffect && existingModelRun && updatedModelRun) {
+          await repository.saveModelGatewayRun(updatedModelRun);
+          await repository.appendAuditLogRecord(
+            createAuditLogRecord({
+              workspaceId: request.params.workspaceId,
+              actorId: updated.reviewerId,
+              action: "model.run.review-status.synced",
+              targetType: "model-run",
+              targetId: updatedModelRun.id,
+              beforeHash: sha256Hex(stableStringify(existingModelRun)),
+              afterHash: sha256Hex(stableStringify(updatedModelRun)),
+              summary: modelRunEffect.summary,
+              createdAt: updated.updatedAt
+            })
+          );
+        }
+        return updated;
+      } catch (error) {
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "HUMAN_REVIEW_UPDATE_FAILED",
+            fallbackMessage: "Human review update failed.",
+            recoveryAction: "Use a supported review status and keep decisions as audit-prep workflow metadata."
           })
         );
       }
-      return updated;
     }
   );
 
@@ -240,4 +261,29 @@ function assertHumanReviewStatus(status: string): asserts status is HumanReviewR
   if (!["requested", "under-review", "reviewed", "rejected", "needs-more-evidence"].includes(status)) {
     throw new Error("Human review status must be requested, under-review, reviewed, rejected, or needs-more-evidence.");
   }
+}
+
+function createHumanReviewNotFoundError() {
+  return createApiErrorResponse({
+    error: new Error("Human review record not found."),
+    code: "HUMAN_REVIEW_NOT_FOUND",
+    fallbackMessage: "Human review record not found.",
+    recoveryAction: "Create the human review record before updating it or verify the review ID."
+  });
+}
+
+function createLinkedEvidenceTransitionError(transition: {
+  error: string;
+  recoveryAction: string;
+  notLegalAdviceBoundary: string;
+}) {
+  return {
+    ...createApiErrorResponse({
+      error: new Error(transition.error),
+      code: "HUMAN_REVIEW_LINKED_EVIDENCE_TRANSITION_BLOCKED",
+      fallbackMessage: "Linked Evidence Vault status transition failed.",
+      recoveryAction: transition.recoveryAction
+    }),
+    notLegalAdviceBoundary: transition.notLegalAdviceBoundary
+  };
 }

@@ -167,7 +167,7 @@ The first Human Review routes are implemented in `server/humanReviewRoutes.ts` a
 - `GET /api/workspaces/:workspaceId/reviews`
 - `GET /api/workspaces/:workspaceId/reviews/queue`
 
-The current routes support create, update, list, filtered queue-view behavior, and linked target status sync through the repository. The queue view groups review records by target type, status, and reviewer, then returns operational next actions for evidence, model-run, risk-flag, and counsel-pack review triage. When an evidence-target review is marked `needs-more-evidence`, `under-review`, `reviewed`, or `rejected`, the linked Evidence Vault record is moved to the corresponding workflow status and an audit-log record is appended. When a model-run-target review is marked `reviewed` or `rejected`, the linked Model Gateway receipt updates `humanReviewStatus` and appends audit-log metadata. Review decisions remain workflow metadata, not signed legal approvals.
+The current routes support create, update, list, filtered queue-view behavior, and linked target status sync through the repository. The queue view groups review records by target type, status, and reviewer, then returns operational next actions for evidence, model-run, risk-flag, and counsel-pack review triage. Create, queue, update, missing-record, and linked Evidence Vault transition failures return typed error codes, recovery guidance, and the applicable Not legal advice boundary. When an evidence-target review is marked `needs-more-evidence`, `under-review`, `reviewed`, or `rejected`, the linked Evidence Vault record is moved to the corresponding workflow status and an audit-log record is appended. When a model-run-target review is marked `reviewed` or `rejected`, the linked Model Gateway receipt updates `humanReviewStatus` and appends audit-log metadata. Review decisions remain workflow metadata, not signed legal approvals.
 
 ## Counsel Pack Export Record Routes
 
@@ -222,7 +222,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - multipart Evidence Vault upload/list/update/manifest routes
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Workspace route-module registration independently from the full app composition
-- Shared typed API error helper plus Workspace, Model Gateway, and Counsel Pack export error code responses
+- Shared typed API error helper plus Workspace, Model Gateway, Human Review, and Counsel Pack export error code responses
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
 - Human Review route-module registration independently from the full app composition

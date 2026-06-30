@@ -170,7 +170,128 @@ describe("Human Review route module", () => {
     expect(invalidQueueResponse.statusCode).toBe(400);
     expect(invalidQueueResponse.json()).toEqual({
       error: "Human review target type must be risk-flag, evidence, model-run, or counsel-pack.",
+      code: "HUMAN_REVIEW_QUEUE_FAILED",
+      recoveryAction: "Use targetType risk-flag, evidence, model-run, or counsel-pack and a supported review status.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("returns typed audit-prep errors for invalid create, update, missing, and linked evidence sync failures", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerHumanReviewRoutes(server, { repository });
+
+    const invalidCreateResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-errors/reviews",
+      payload: {
+        targetType: "legal-opinion",
+        targetId: "risk-1",
+        reviewerId: "Counsel",
+        comment: "Create a legal approval."
+      }
+    });
+
+    expect(invalidCreateResponse.statusCode).toBe(400);
+    expect(invalidCreateResponse.json()).toEqual({
+      error: "Human review target type must be risk-flag, evidence, model-run, or counsel-pack.",
+      code: "HUMAN_REVIEW_CREATE_FAILED",
+      recoveryAction: "Provide a supported review target, reviewer, and audit-prep comment before creating a review.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    const missingUpdateResponse = await server.inject({
+      method: "PATCH",
+      url: "/api/workspaces/workspace-human-review-errors/reviews/missing-review",
+      payload: {
+        status: "reviewed",
+        comment: "Review metadata only."
+      }
+    });
+
+    expect(missingUpdateResponse.statusCode).toBe(404);
+    expect(missingUpdateResponse.json()).toEqual({
+      error: "Human review record not found.",
+      code: "HUMAN_REVIEW_NOT_FOUND",
+      recoveryAction: "Create the human review record before updating it or verify the review ID.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    const reviewResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-errors/reviews",
+      payload: {
+        targetType: "risk-flag",
+        targetId: "risk-1",
+        reviewerId: "Counsel",
+        comment: "Review deterministic risk flag for audit preparation."
+      }
+    });
+    expect(reviewResponse.statusCode).toBe(201);
+
+    const invalidStatusResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-human-review-errors/reviews/${reviewResponse.json().id}`,
+      payload: {
+        status: "approved",
+        comment: "Do not create legal approval states."
+      }
+    });
+
+    expect(invalidStatusResponse.statusCode).toBe(400);
+    expect(invalidStatusResponse.json()).toEqual({
+      error: "Human review status must be requested, under-review, reviewed, rejected, or needs-more-evidence.",
+      code: "HUMAN_REVIEW_UPDATE_FAILED",
+      recoveryAction: "Use a supported review status and keep decisions as audit-prep workflow metadata.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+    expect(await repository.listHumanReviewRecords("workspace-human-review-errors")).toEqual([
+      expect.objectContaining({ id: reviewResponse.json().id, status: "requested" })
+    ]);
+
+    const rejectedEvidence = createEvidenceVaultRecordFromUpload({
+      workspaceId: "workspace-human-review-errors",
+      filename: "rejected-custody-controls.pdf",
+      mimeType: "application/pdf",
+      bytes: new TextEncoder().encode("rejected custody controls metadata"),
+      owner: "Ops",
+      sourceNote: "Rejected evidence should require replacement.",
+      linkedRiskFlagIds: ["custody-controls"],
+      containsRawKycOrPersonalData: false,
+      createdAt: "2026-06-30T00:00:00.000Z"
+    });
+    await repository.saveEvidenceVaultRecord({ ...rejectedEvidence, status: "rejected" });
+
+    const evidenceReviewResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-errors/reviews",
+      payload: {
+        targetType: "evidence",
+        targetId: rejectedEvidence.id,
+        reviewerId: "Counsel",
+        comment: "Review rejected evidence status."
+      }
+    });
+    expect(evidenceReviewResponse.statusCode).toBe(201);
+
+    const blockedSyncResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-human-review-errors/reviews/${evidenceReviewResponse.json().id}`,
+      payload: {
+        status: "reviewed",
+        comment: "Trying to mark rejected evidence as reviewed should be blocked."
+      }
+    });
+
+    expect(blockedSyncResponse.statusCode).toBe(409);
+    expect(blockedSyncResponse.json()).toEqual({
+      error: "Rejected Evidence Vault records cannot be directly moved to verified.",
+      code: "HUMAN_REVIEW_LINKED_EVIDENCE_TRANSITION_BLOCKED",
+      recoveryAction: "Upload a replacement from the rejected evidence recovery flow so parent/child lineage is preserved.",
+      notLegalAdviceBoundary: "Not legal advice. Evidence status transitions are audit preparation workflow metadata only."
     });
 
     await server.close();

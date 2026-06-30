@@ -121,6 +121,7 @@ import {
 import { createSecurityReviewChecklist } from "./lib/securityReviewChecklist";
 import { createSubmissionPack, type SubmissionPack } from "./lib/submissionPack";
 import { createWorkspaceActionQueue, type WorkspaceActionTarget } from "./lib/workspaceActionQueue";
+import { createWorkspaceJourney } from "./lib/workspaceJourney";
 
 type TabId = WorkspaceActionTarget;
 
@@ -338,6 +339,33 @@ export default function App() {
       regulatoryGraph,
       regulatorySourceReview,
       securityReviewChecklist,
+      validation
+    ]
+  );
+  const workspaceJourney = useMemo(
+    () =>
+      createWorkspaceJourney({
+        validation,
+        evidenceCount: project.evidenceItems.length,
+        modelConnectStatus: modelConnectReceipt?.status ?? "not-configured",
+        regulatoryTriggerCount: regulatoryGraph.matchedClauses.length,
+        evidenceGapCount: regulatoryGraph.evidenceGaps.length,
+        sourceReviewStatus: regulatorySourceReview.status,
+        humanReviewSummary: humanReviewQueue.summary,
+        manifestHash: manifest?.bundleHash,
+        exportAllowed: dataBoundaryReport.exportAllowed,
+        counselPackVersionCount: currentCounselPackVersions.length
+      }),
+    [
+      currentCounselPackVersions.length,
+      dataBoundaryReport.exportAllowed,
+      humanReviewQueue.summary,
+      manifest?.bundleHash,
+      modelConnectReceipt?.status,
+      project.evidenceItems.length,
+      regulatoryGraph.evidenceGaps.length,
+      regulatoryGraph.matchedClauses.length,
+      regulatorySourceReview.status,
       validation
     ]
   );
@@ -883,6 +911,7 @@ export default function App() {
             sourceReview={regulatorySourceReview}
             controlMatrix={regulatoryControlMatrix}
             actionQueue={workspaceActionQueue}
+            journey={workspaceJourney}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
           />

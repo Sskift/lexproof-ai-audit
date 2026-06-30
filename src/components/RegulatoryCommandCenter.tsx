@@ -6,6 +6,7 @@ import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGrap
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
+import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
 
 type RegulatoryCommandCenterProps = {
   project: ProjectProfile;
@@ -14,6 +15,7 @@ type RegulatoryCommandCenterProps = {
   sourceReview: RegulatorySourceReview;
   controlMatrix: RegulatoryControlMatrix;
   actionQueue: WorkspaceActionQueue;
+  journey: WorkspaceJourney;
   manifestHash?: string;
   onNavigate: (tab: WorkspaceActionTarget) => void;
 };
@@ -25,12 +27,14 @@ export function RegulatoryCommandCenter({
   sourceReview,
   controlMatrix,
   actionQueue,
+  journey,
   manifestHash,
   onNavigate
 }: RegulatoryCommandCenterProps) {
   const topClauses = graph.matchedClauses.slice(0, 4);
   const topGaps = graph.evidenceGaps.slice(0, 5);
   const topSourceReviewItems = sourceReview.items.slice(0, 4);
+  const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
 
   return (
     <section className="panel regulatory-command-center" aria-label="Regulatory Command Center">
@@ -53,6 +57,36 @@ export function RegulatoryCommandCenter({
         <ShieldCheck size={18} aria-hidden="true" />
         <span>{graph.notLegalAdviceBoundary}</span>
       </div>
+
+      <section className="workspace-journey" aria-label="Workspace Journey">
+        <div className="reg-section-title">
+          <ListChecks size={17} aria-hidden="true" />
+          <h3>Workspace Journey</h3>
+          <span className="action-count">{journey.summary.readyCount}/{journey.steps.length} ready</span>
+        </div>
+        <p>{journey.notLegalAdviceBoundary}</p>
+        <div className="workspace-journey-list">
+          {journey.steps.map((step, index) => (
+            <article key={step.id} className={`workspace-journey-step ${step.status}`}>
+              <span className="journey-step-index">{index + 1}</span>
+              <div>
+                <header>
+                  <strong>{step.label}</strong>
+                  <span>{formatJourneyStatus(step.status)}</span>
+                </header>
+                <p>{step.summary}</p>
+                <small>{step.detail}</small>
+              </div>
+            </article>
+          ))}
+        </div>
+        {nextJourneyTarget ? (
+          <button type="button" className="secondary" onClick={() => onNavigate(nextJourneyTarget)}>
+            <ListChecks size={14} aria-hidden="true" />
+            Continue journey
+          </button>
+        ) : null}
+      </section>
 
       <section className="workspace-action-queue" aria-label="Workspace Action Queue">
         <div className="reg-section-title">
@@ -231,4 +265,14 @@ function formatSourceReviewStatus(status: RegulatorySourceReviewStatus): string 
     return "review due";
   }
   return "current";
+}
+
+function formatJourneyStatus(status: WorkspaceJourneyStatus): string {
+  if (status === "needs-input") {
+    return "needs input";
+  }
+  if (status === "needs-review") {
+    return "needs review";
+  }
+  return status;
 }

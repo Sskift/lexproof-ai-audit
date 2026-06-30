@@ -27,6 +27,13 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: /LexProof AuditOS/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Regulatory Command Center/i })).toBeInTheDocument();
+    const journey = within(screen.getByRole("region", { name: /Workspace Journey/i }));
+    expect(journey.getByRole("heading", { name: /Workspace Journey/i })).toBeInTheDocument();
+    expect(
+      journey.getByText(/Not legal advice. Workspace journey status is audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
+    expect(journey.getByText(/Project facts/i)).toBeInTheDocument();
+    expect(journey.getByText(/Vault \/ manifest/i)).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Workspace Action Queue/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Workspace actions are audit preparation workflow prompts only./i)).toBeInTheDocument();
@@ -361,7 +368,7 @@ describe("App", () => {
     expect(screen.getByText(/Asset model: Tokenized yield note/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
-    expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Evidence Templates/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Apply tokenized yield \/ RWA template/i }));
     expect((await screen.findAllByText(/RWA disclosure assumptions memo/i)).length).toBeGreaterThan(0);
 

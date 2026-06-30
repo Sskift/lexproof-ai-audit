@@ -44,7 +44,7 @@ Key evidence:
 - Human Review queue with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
-- Regulatory Command Center first screen with a Workspace Action Queue, Regulatory Control Matrix, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
+- Regulatory Command Center first screen with a Workspace Journey rail, Workspace Action Queue, Regulatory Control Matrix, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
 - Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, EU AI Act, UK FCA, UK ICO AI data protection guidance, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
 - Downloadable metadata-only Regulatory Source Pack JSON from Counsel Pack with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash.
 - Downloadable metadata-only Regulatory Control Matrix JSON from the command center with source-review status, evidence coverage, local counsel routes, next actions, and Not legal advice boundary.
@@ -77,9 +77,11 @@ Judge Demo Readiness keeps the clean-clone path visible on the first screen: req
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
-The Regulatory Command Center turns project facts into a first-screen Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, evidence gaps, and local counsel handoff status without making legal conclusions.
+The Regulatory Command Center turns project facts into a first-screen Workspace Journey, Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, evidence gaps, and local counsel handoff status without making legal conclusions. The Workspace Journey shows the audit-prep path from project facts through model/evidence intake, risk/source graph, human review, vault/manifest, and counsel export with a next-action button.
 
 ![Regulatory Command Center](docs/assets/screenshots/regulatory-command-center.png)
+
+![Workspace Journey](docs/assets/screenshots/workspace-journey.png)
 
 The AI legal workflow scenario now routes `LexAssist Evidence Desk` into EU AI Act and UK ICO AI data protection source controls, with evidence gaps for human oversight, source lineage, redaction, and reviewer decision logs. Not legal advice.
 
@@ -204,13 +206,14 @@ Sources now includes a generated Submission Pack JSON artifact for judges. It su
 The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
 
 1. Demo Scenario Library launch from a synthetic profile such as **High-risk RWA launch**.
-2. Model Connect validation with the mock local reviewer.
-3. Evidence selection or local metadata-only evidence intake.
-4. Deterministic Risk Audit with source-linked issue cards.
-5. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
-6. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
-7. Counsel Pack template selection, Source Review Ledger preview, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
-8. Sources tab Submission Pack JSON export with pack hash, known limitations, demo readiness, and hackathon mapping.
+2. Workspace Journey review on the command center to show the full path and next blocked/review action.
+3. Model Connect validation with the mock local reviewer.
+4. Evidence selection or local metadata-only evidence intake.
+5. Deterministic Risk Audit with source-linked issue cards.
+6. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
+7. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
+8. Counsel Pack template selection, Source Review Ledger preview, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
+9. Sources tab Submission Pack JSON export with pack hash, known limitations, demo readiness, and hackathon mapping.
 
 Screenshots for the exact demo path:
 
@@ -251,7 +254,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, **Public source education review**, or **AI legal workflow review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
-3. Review the **Regulatory Command Center** for the **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. The **AI legal workflow review** scenario shows EU AI Act and UK ICO AI data protection controls for human oversight, source lineage, redaction, and reviewer decision logs. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff. Use queue buttons to jump directly to evidence, model, review, or export recovery work.
+3. Review the **Regulatory Command Center** for the **Workspace Journey**, **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. The **AI legal workflow review** scenario shows EU AI Act and UK ICO AI data protection controls for human oversight, source lineage, redaction, and reviewer decision logs. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff. Use journey and queue buttons to jump directly to project facts, evidence, model, review, or export recovery work.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
 5. Open **AI Review** to inspect Model Access Workflow, Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.

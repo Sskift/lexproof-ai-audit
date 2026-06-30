@@ -699,6 +699,108 @@ textarea {
   gap: 10px;
 }
 
+.workspace-journey {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #cfdce5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.workspace-journey > p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.workspace-journey > button {
+  justify-self: start;
+}
+
+.workspace-journey-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+.workspace-journey-step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-left: 4px solid #7f8a96;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.workspace-journey-step.ready {
+  border-left-color: #5f9c77;
+}
+
+.workspace-journey-step.needs-input,
+.workspace-journey-step.needs-review {
+  border-left-color: #b57a3a;
+}
+
+.workspace-journey-step.blocked {
+  border-left-color: #b85c54;
+}
+
+.journey-step-index {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #edf4f7;
+  color: #31424f;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.workspace-journey-step div,
+.workspace-journey-step header {
+  min-width: 0;
+}
+
+.workspace-journey-step header {
+  display: grid;
+  gap: 4px;
+}
+
+.workspace-journey-step strong {
+  color: #172431;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+
+.workspace-journey-step header span {
+  color: #657382;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.workspace-journey-step p,
+.workspace-journey-step small {
+  margin: 0;
+  overflow-wrap: break-word;
+  color: #53616f;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.workspace-journey-step small {
+  color: #657382;
+}
+
 .reg-control-matrix {
   display: grid;
   gap: 10px;
@@ -5191,6 +5293,7 @@ textarea {
   .reg-command-layout,
   .reg-command-metrics,
   .reg-control-summary,
+  .workspace-journey-list,
   .workspace-action-list,
   .model-connect-receipt > div:first-child,
   .human-review-summary,

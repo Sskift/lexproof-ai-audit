@@ -36,8 +36,10 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 
 1. **Review command center**
    - Start on the **Regulatory Command Center** at the top of the workbench.
-   - Show jurisdiction readiness, official-source clause triggers, evidence gap queue, manifest status, and the Not legal advice boundary.
+   - Show jurisdiction readiness, official-source clause triggers, the Regulatory Control Matrix, evidence gap queue, manifest status, and the Not legal advice boundary.
+   - Click **Download Control Matrix JSON** to show the metadata-only handoff with evidence coverage, source review status, local counsel route, next action, and no compliance conclusion.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
+   - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 
 2. **Connect model**
    - Open **AI Review**.

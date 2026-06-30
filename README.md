@@ -44,9 +44,10 @@ Key evidence:
 - Human Review queue with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
-- Regulatory Command Center first screen with a Workspace Action Queue, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
+- Regulatory Command Center first screen with a Workspace Action Queue, Regulatory Control Matrix, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, evidence gaps, manifest readiness, and counsel handoff status.
 - Regulatory Source Graph for official-source audit-prep triggers across US SEC/CFTC, EU MiCA, UK FCA, Singapore MAS, Swiss FINMA, and UAE VARA references, including effective dates, source review dates, and reviewer notes.
 - Downloadable metadata-only Regulatory Source Pack JSON from Counsel Pack with matched clauses, evidence gaps, source freshness, counsel questions, local counsel routes, and a stable pack hash.
+- Downloadable metadata-only Regulatory Control Matrix JSON from the command center with source-review status, evidence coverage, local counsel routes, next actions, and Not legal advice boundary.
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
@@ -81,6 +82,8 @@ The Regulatory Command Center turns project facts into a first-screen Workspace 
 ![Regulatory Command Center](docs/assets/screenshots/regulatory-command-center.png)
 
 ![Workspace Action Queue](docs/assets/screenshots/workspace-action-queue.png)
+
+![Regulatory Control Matrix](docs/assets/screenshots/regulatory-control-matrix.png)
 
 ![Regulatory Source Review Ledger](docs/assets/screenshots/regulatory-source-review-ledger.png)
 
@@ -238,7 +241,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, or **Public source education review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
-3. Review the **Regulatory Command Center** for the **Workspace Action Queue**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. Use queue buttons to jump directly to evidence, model, review, or export recovery work.
+3. Review the **Regulatory Command Center** for the **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff. Use queue buttons to jump directly to evidence, model, review, or export recovery work.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.
 5. Open **AI Review** to inspect Model Access Workflow, Model Connection Readiness, review the Redaction Gate, and run the mock reviewer or an OpenAI-compatible model. AI output is draft audit preparation, not legal advice, and each completed run receives a local hash receipt plus an automatic Model Intake event for human review.
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.

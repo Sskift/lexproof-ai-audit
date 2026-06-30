@@ -39,6 +39,7 @@ lexproof-ai-audit/
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
       ModelIntakePanel.tsx   # Model connection profile and AI event intake records
       RegulatoryCommandCenter.tsx # Source-backed jurisdiction graph and evidence gap cockpit
+      RegulatoryControlMatrixPanel.tsx # Downloadable source/evidence/source-review control matrix
       SecurityReviewChecklistPanel.tsx # Security readiness gates for integrations
       IntegrationReadinessPanel.tsx # Adapter-level readiness registry for external integration gates
       GrcTicketExportPanel.tsx # Metadata-only remediation ticket export from Risk Audit
@@ -86,6 +87,7 @@ lexproof-ai-audit/
       jurisdictionChecklist.ts # Jurisdiction checklist generation
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
+      regulatoryControlMatrix.ts # Metadata-only source/evidence/source-review control matrix
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
       regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
       submissionPack.ts      # Metadata-only hackathon submission pack artifact and stable hash
@@ -127,6 +129,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createJurisdictionPacks(project, audit)
   -> createRegulatoryGraph(project, audit, evidenceItems)
   -> createRegulatorySourceReview(regulatoryGraph)
+  -> createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview })
   -> recommendEvidenceTemplates(project)
   -> validateModelConnectionProfile(modelIntakeProfile)
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
@@ -342,6 +345,16 @@ Owns source review metadata for the Regulatory Command Center:
 - The output repeats the Not legal advice boundary and creates review actions for source metadata refresh only.
 
 This module tracks source lineage and review freshness. It does not decide whether a law applies, whether a source is legally current, or whether a project is compliant.
+
+### `src/lib/regulatoryControlMatrix.ts`
+
+Owns control-matrix workflow metadata for the Regulatory Command Center:
+
+- `createRegulatoryControlMatrix({ graph, sourceReview })` turns matched regulatory clauses into controls with evidence coverage status, source review status, local counsel route, open evidence request count, priority, and next action.
+- Control status is workflow-only: `needs-evidence`, `needs-source-review`, `metadata-missing`, or `ready-for-counsel`.
+- `exportRegulatoryControlMatrixJson(matrix)` produces readable metadata-only JSON for counsel/compliance handoff.
+
+Control matrices are audit preparation workflow metadata only. They do not classify a project as legally compliant or non-compliant, and they do not replace source review or local counsel review.
 
 ### `src/lib/regulatorySourcePack.ts`
 

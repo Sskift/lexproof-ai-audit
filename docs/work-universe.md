@@ -26,7 +26,7 @@ The repository already has:
 - Local Human Review operations with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence updates, and downloadable timeline JSON with audit log IDs.
 - Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
-- Demo script, screenshots, Demo Scenario Library launcher, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, and seeded judge paths.
+- Demo script, screenshots, Demo Scenario Library launcher, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, command-center Regulatory Control Matrix export, and seeded judge paths.
 - Generated Submission Pack JSON in Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, feature-to-theme mapping, known limitations, and Not legal advice boundary.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
@@ -104,15 +104,17 @@ Build:
 - `src/data/regulatoryClauses.ts` with source-backed regulatory references by jurisdiction, regulator, topic, citation, source URL, trigger facts, evidence requests, and counsel questions.
 - `src/lib/regulatoryGraph.ts` to match project facts, audit flags, evidence status, and jurisdiction packs to clause references and evidence gaps.
 - `src/lib/regulatorySourcePack.ts` for downloadable metadata-only source pack JSON with matched clauses, evidence gaps, Source Review Ledger freshness, counsel questions, local counsel routes, and a stable pack hash from the Counsel Pack surface.
+- `src/lib/regulatoryControlMatrix.ts` for downloadable metadata-only control matrix JSON with source review status, evidence coverage status, local counsel route, next action, and Not legal advice boundary from the command center.
 - Frontend panels for jurisdiction risk matrix, clause cards, evidence coverage by source, and local counsel handoff routes.
 - Source update metadata: `effectiveAsOf`, `lastReviewedAt`, `sourceUrl`, and reviewer notes. The first Source Review Ledger is implemented in `src/lib/regulatorySourceReview.ts` and `RegulatoryCommandCenter`: it shows current/review-due/metadata-missing source records and refresh actions without making legal conclusions.
-- Tests proving clause matching, evidence coverage, source visibility, source review freshness, and non-advice wording.
+- Tests proving clause matching, evidence coverage, source visibility, source review freshness, control matrix export, and non-advice wording.
 
 Acceptance:
 
 - A user can select jurisdictions and see source-linked review triggers with missing evidence.
 - The UI never says a project is legally compliant or non-compliant.
 - Counsel Pack and source pack exports include matched clauses, evidence gaps, Source Review Ledger freshness metadata, and local counsel questions.
+- The command center can export a control matrix without raw evidence, legal conclusions, or compliance labels.
 
 Do not build:
 
@@ -228,7 +230,7 @@ Goal: make the product feel like a real review cockpit.
 
 Build:
 
-- A first-screen Regulatory Command Center with project readiness, jurisdiction risk matrix, evidence coverage, model readiness, human review status, and export readiness. The first Workspace Action Queue is implemented in `src/lib/workspaceActionQueue.ts` and `RegulatoryCommandCenter`: it ranks recoverable project facts, source evidence gaps, source refresh, human review, security readiness, and export actions with Not legal advice wording.
+- A first-screen Regulatory Command Center with project readiness, jurisdiction risk matrix, evidence coverage, model readiness, human review status, and export readiness. The first Workspace Action Queue is implemented in `src/lib/workspaceActionQueue.ts` and `RegulatoryCommandCenter`: it ranks recoverable project facts, source evidence gaps, source refresh, human review, security readiness, and export actions with Not legal advice wording. The first Regulatory Control Matrix is implemented in `src/lib/regulatoryControlMatrix.ts` and `RegulatoryControlMatrixPanel`: it turns source graph clauses, evidence coverage, and Source Review Ledger status into downloadable workflow controls without compliance conclusions.
 - Clear left-to-right journey: project facts -> model/evidence intake -> risk/source graph -> review -> vault/manifest -> counsel export.
 - Dense professional panels, icons, tabs, status chips, empty states, error recovery, and screenshot-ready demo surfaces.
 - Frontend copy that is concise, operational, and consistent with audit preparation.

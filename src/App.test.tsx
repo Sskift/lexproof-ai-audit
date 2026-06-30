@@ -60,6 +60,58 @@ describe("App", () => {
     expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
   });
 
+  it("shows and downloads the Regulatory Control Matrix from the command center", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:regulatory-control-matrix");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const matrix = await screen.findByRole("region", { name: /Regulatory Control Matrix/i });
+      expect(within(matrix).getByText(/Not legal advice. Regulatory control matrices are audit preparation workflow metadata only./i)).toBeInTheDocument();
+      expect(within(matrix).getAllByText(/needs evidence/i).length).toBeGreaterThan(0);
+      expect(within(matrix).getAllByText(/EU crypto-asset \/ data protection counsel/i).length).toBeGreaterThan(0);
+      expect(within(matrix).getByRole("button", { name: /Download Control Matrix JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(matrix).getByRole("button", { name: /Download Control Matrix JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:regulatory-control-matrix");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Regulatory Control Matrix JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          matrixVersion: "lexproof-regulatory-control-matrix-v1",
+          status: "needs-evidence",
+          notLegalAdviceBoundary: "Not legal advice. Regulatory control matrices are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.controls.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("loads a judge-ready demo scenario from the seeded scenario library", async () => {
     render(<App />);
 
@@ -1793,9 +1845,9 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Planned public launch" } });
     fireEvent.click(screen.getByRole("button", { name: /Jurisdiction Checklist/i }));
 
-    expect(await screen.findByText(/Singapore fintech \/ digital asset counsel/i)).toBeInTheDocument();
-    expect(screen.getByText(/Swiss DLT \/ financial services counsel/i)).toBeInTheDocument();
-    expect(screen.getByText(/UAE virtual-assets \/ financial regulatory counsel/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/Singapore fintech \/ digital asset counsel/i)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Swiss DLT \/ financial services counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UAE virtual-assets \/ financial regulatory counsel/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Product scope and launch-intake control/i)).toBeInTheDocument();
     expect(screen.getByText(/Token classification and prospectus-intake control/i)).toBeInTheDocument();
     expect(screen.getByText(/Virtual asset activity scope control/i)).toBeInTheDocument();

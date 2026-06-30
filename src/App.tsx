@@ -105,6 +105,7 @@ import {
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
 import type { CounselPackExportRecord } from "./lib/phase2Types";
+import { createRegulatoryControlMatrix } from "./lib/regulatoryControlMatrix";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import {
   createRegulatorySourcePack,
@@ -186,6 +187,10 @@ export default function App() {
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
   const regulatorySourceReview = useMemo(() => createRegulatorySourceReview(regulatoryGraph), [regulatoryGraph]);
+  const regulatoryControlMatrix = useMemo(
+    () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
+    [regulatoryGraph, regulatorySourceReview]
+  );
   const fit = useMemo(() => createSubmissionFit(), []);
   const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
   const demoReadinessReport = useMemo(
@@ -876,6 +881,7 @@ export default function App() {
             audit={audit}
             graph={regulatoryGraph}
             sourceReview={regulatorySourceReview}
+            controlMatrix={regulatoryControlMatrix}
             actionQueue={workspaceActionQueue}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}

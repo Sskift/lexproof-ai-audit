@@ -1,5 +1,7 @@
 import { AlertTriangle, ExternalLink, FileSearch, Globe2, ListChecks, ShieldCheck } from "lucide-react";
+import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
 import type { AuditResult } from "../lib/auditEngine";
+import type { RegulatoryControlMatrix } from "../lib/regulatoryControlMatrix";
 import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGraph";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
@@ -10,6 +12,7 @@ type RegulatoryCommandCenterProps = {
   audit: AuditResult;
   graph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
+  controlMatrix: RegulatoryControlMatrix;
   actionQueue: WorkspaceActionQueue;
   manifestHash?: string;
   onNavigate: (tab: WorkspaceActionTarget) => void;
@@ -20,6 +23,7 @@ export function RegulatoryCommandCenter({
   audit,
   graph,
   sourceReview,
+  controlMatrix,
   actionQueue,
   manifestHash,
   onNavigate
@@ -80,6 +84,8 @@ export function RegulatoryCommandCenter({
         <Metric label="Evidence gaps" value={graph.evidenceGaps.length} helper="open source controls" />
         <Metric label="Manifest" value={manifestHash ? "ready" : "pending"} helper={manifestHash ? `${manifestHash.slice(0, 12)}...` : "calculating"} />
       </div>
+
+      <RegulatoryControlMatrixPanel matrix={controlMatrix} />
 
       <section className={`reg-source-review ${sourceReview.status}`} aria-label="Source Review Ledger">
         <div className="reg-section-title">

@@ -60,6 +60,7 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 
 6. **Sync vault and gateway journey**
    - Open the **Secure Review Workspace** panel at the top of the app.
+   - In **Integration Readiness Registry**, show **Model Gateway Provider Policy** with mock-only enabled status, disabled external model adapters, required provider controls, and **Download Provider Policy JSON**. Not legal advice.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.
    - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.

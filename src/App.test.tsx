@@ -143,6 +143,30 @@ describe("App", () => {
     expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   });
 
+  it("shows Model Gateway provider policy readiness before external server providers can be enabled", async () => {
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registryPanel = registryHeading.closest("section");
+
+    expect(registryPanel).not.toBeNull();
+    const registry = within(registryPanel as HTMLElement);
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+    expect(await registry.findByRole("heading", { name: /Model Gateway Provider Policy/i })).toBeInTheDocument();
+    const policy = within(registry.getByRole("region", { name: /Model Gateway Provider Policy/i }));
+    expect(policy.getByText(/Mock local reviewer gateway ready/i)).toBeInTheDocument();
+    expect(policy.getByText(/OpenAI-compatible gateway disabled/i)).toBeInTheDocument();
+    expect(policy.getByText(/Enterprise model proxy gateway disabled/i)).toBeInTheDocument();
+    expect(policy.getByText("Server-side secret policy")).toBeInTheDocument();
+    expect(policy.getByText("Provider allowlist")).toBeInTheDocument();
+    expect(policy.getByText("Human review enforcement")).toBeInTheDocument();
+    expect(policy.getByRole("button", { name: /Download Provider Policy JSON/i })).toBeEnabled();
+    expect(policy.getByText(/Not legal advice. Model Gateway provider policy is audit preparation metadata only./i)).toBeInTheDocument();
+  });
+
   it("creates a custom project, updates the risk audit, and displays editable evidence in the ledger", async () => {
     render(<App />);
 

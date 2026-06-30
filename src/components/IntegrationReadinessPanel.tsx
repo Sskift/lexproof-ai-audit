@@ -1,13 +1,19 @@
-import { Bot, ClipboardList, DatabaseZap, FileText, Link2, PlugZap } from "lucide-react";
+import { Bot, ClipboardList, DatabaseZap, Download, FileText, Link2, PlugZap, ShieldCheck } from "lucide-react";
 import type {
   IntegrationAdapterCategory,
   IntegrationAdapterId,
   IntegrationReadinessAdapter,
   IntegrationReadinessRegistry
 } from "../lib/integrationReadiness";
+import {
+  exportModelGatewayProviderPolicyJson,
+  type ModelGatewayProviderPolicyReport,
+  type ModelGatewayProviderPolicyStatus
+} from "../lib/modelGatewayProviderPolicy";
 
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
+  providerPolicyReport: ModelGatewayProviderPolicyReport;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -21,7 +27,7 @@ const categoryIcons: Record<IntegrationAdapterCategory, typeof PlugZap> = {
   "workflow-export": ClipboardList
 };
 
-export function IntegrationReadinessPanel({ registry, onNavigate }: IntegrationReadinessPanelProps) {
+export function IntegrationReadinessPanel({ registry, providerPolicyReport, onNavigate }: IntegrationReadinessPanelProps) {
   return (
     <section className={`integration-readiness-panel ${registry.overallStatus}`} aria-label="Integration Readiness Registry">
       <div className="split-title compact-title">
@@ -43,6 +49,7 @@ export function IntegrationReadinessPanel({ registry, onNavigate }: IntegrationR
           <IntegrationAdapterCard key={adapter.id} adapter={adapter} onNavigate={onNavigate} />
         ))}
       </div>
+      <ModelGatewayProviderPolicyPanel report={providerPolicyReport} />
       <div className="integration-next-actions">
         <strong>Adapter recovery path</strong>
         <ul>
@@ -52,6 +59,83 @@ export function IntegrationReadinessPanel({ registry, onNavigate }: IntegrationR
         </ul>
       </div>
     </section>
+  );
+}
+
+function ModelGatewayProviderPolicyPanel({ report }: { report: ModelGatewayProviderPolicyReport }) {
+  return (
+    <section className={`model-gateway-provider-policy ${report.overallStatus}`} aria-label="Model Gateway Provider Policy">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldCheck size={17} aria-hidden="true" />
+          <h3>Model Gateway Provider Policy</h3>
+        </div>
+        <span className={`workflow-status ${report.overallStatus}`}>{policyStatusLabel(report.overallStatus)}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="provider-policy-summary">
+        <ProviderPolicyFact label="Enabled providers" value={String(report.enabledProviderCount)} />
+        <ProviderPolicyFact label="Deferred providers" value={String(report.deferredProviderCount)} />
+        <ProviderPolicyFact label="Provider controls" value={String(report.controls.length)} />
+      </div>
+      <div className="provider-policy-grid">
+        {report.adapters.map((adapter) => (
+          <article key={adapter.provider} className={`provider-policy-card ${adapter.status}`}>
+            <header>
+              <Bot size={16} aria-hidden="true" />
+              <strong>
+                {adapter.label} {policyStatusLabel(adapter.status)}
+              </strong>
+            </header>
+            <p>{adapter.readinessEvidence}</p>
+            <small>{adapter.credentialPolicy}</small>
+            {adapter.disabledReason ? <small>{adapter.disabledReason}</small> : null}
+          </article>
+        ))}
+      </div>
+      <div className="provider-control-list">
+        {report.controls.map((control) => (
+          <article key={control.id} className={`provider-control ${control.status}`}>
+            <header>
+              <span>{policyStatusLabel(control.status)}</span>
+              <strong>{control.label}</strong>
+            </header>
+            <p>{control.evidence}</p>
+            <small>{control.recoveryAction}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>{report.nextActions[0]}</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadProviderPolicyJson("model-gateway-provider-policy.json", report)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Provider Policy JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function downloadProviderPolicyJson(filename: string, report: ModelGatewayProviderPolicyReport): void {
+  const blob = new Blob([exportModelGatewayProviderPolicyJson(report)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function ProviderPolicyFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -95,6 +179,14 @@ function IntegrationAdapterCard({
 }
 
 function statusLabel(status: IntegrationReadinessRegistry["overallStatus"]): string {
+  if (status === "needs-policy") {
+    return "needs policy";
+  }
+
+  return status;
+}
+
+function policyStatusLabel(status: ModelGatewayProviderPolicyStatus): string {
   if (status === "needs-policy") {
     return "needs policy";
   }

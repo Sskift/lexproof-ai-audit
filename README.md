@@ -111,6 +111,10 @@ Integration Readiness Registry maps those gates into adapter-level status for mo
 
 ![Integration Readiness Registry](docs/assets/screenshots/integration-readiness-registry.png)
 
+Model Gateway Provider Policy makes disabled external model adapters and required controls visible before any server-side provider proxy is enabled. It exports metadata-only JSON and keeps external providers disabled until secret policy, provider allowlist, egress logging, Redaction Gate, and human-review controls are approved. Not legal advice.
+
+![Model Gateway Provider Policy](docs/assets/screenshots/model-gateway-provider-policy.png)
+
 Risk Audit can export the remediation queue as a metadata-only GRC ticket bundle after the GRC adapter readiness gate is clear. It does not create external Jira/Linear/ServiceNow tickets. Not legal advice.
 
 ![GRC Ticket Export](docs/assets/screenshots/grc-ticket-export.png)

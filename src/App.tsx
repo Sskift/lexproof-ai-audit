@@ -69,6 +69,10 @@ import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEviden
 import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
+  createModelGatewayProviderPolicyReport,
+  defaultModelGatewayProviderAdapters
+} from "./lib/modelGatewayProviderPolicy";
+import {
   createHumanReviewDecision,
   createHumanReviewQueue,
   humanReviewStatusToAIEventStatus,
@@ -282,6 +286,14 @@ export default function App() {
       project.evidenceItems.length,
       securityReviewChecklist
     ]
+  );
+  const modelGatewayProviderPolicyReport = useMemo(
+    () =>
+      createModelGatewayProviderPolicyReport({
+        adapters: defaultModelGatewayProviderAdapters,
+        modelConnectReceipt
+      }),
+    [modelConnectReceipt]
   );
   const workspaceActionQueue = useMemo(
     () =>
@@ -825,7 +837,11 @@ export default function App() {
 
           <SecurityReviewChecklistPanel report={securityReviewChecklist} onNavigate={setActiveTab} />
 
-          <IntegrationReadinessPanel registry={integrationReadinessRegistry} onNavigate={setActiveTab} />
+          <IntegrationReadinessPanel
+            registry={integrationReadinessRegistry}
+            providerPolicyReport={modelGatewayProviderPolicyReport}
+            onNavigate={setActiveTab}
+          />
 
           <nav className="tabs" aria-label="Workbench tabs">
             {tabs.map((tab) => {

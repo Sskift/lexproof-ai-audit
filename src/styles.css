@@ -1446,6 +1446,139 @@ textarea {
   justify-self: start;
 }
 
+.model-gateway-provider-policy {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.model-gateway-provider-policy.needs-policy {
+  border-color: #e9bd87;
+  background: #fffdf8;
+}
+
+.model-gateway-provider-policy.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.provider-policy-summary,
+.provider-policy-grid,
+.provider-control-list {
+  display: grid;
+  gap: 8px;
+}
+
+.provider-policy-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.provider-policy-summary > div,
+.provider-policy-card,
+.provider-control {
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.provider-policy-summary > div {
+  padding: 9px;
+}
+
+.provider-policy-summary span,
+.provider-policy-summary strong {
+  display: block;
+}
+
+.provider-policy-summary span,
+.provider-control header span {
+  margin-bottom: 5px;
+  color: #53616f;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.provider-policy-summary strong {
+  color: #172431;
+  font-size: 1.15rem;
+}
+
+.provider-policy-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.provider-policy-card,
+.provider-control {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+}
+
+.provider-policy-card.ready,
+.provider-control.ready {
+  border-color: #b8d8c8;
+}
+
+.provider-policy-card.needs-policy,
+.provider-control.needs-policy {
+  border-color: #e9bd87;
+}
+
+.provider-policy-card.blocked,
+.provider-control.blocked {
+  border-color: #e2a7a1;
+}
+
+.provider-policy-card.disabled {
+  border-color: #ccd7df;
+}
+
+.provider-policy-card header,
+.provider-control header {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.provider-policy-card header svg {
+  color: #2362a5;
+}
+
+.provider-policy-card strong,
+.provider-control strong {
+  color: #172431;
+  line-height: 1.25;
+}
+
+.provider-policy-card p,
+.provider-policy-card small,
+.provider-control p,
+.provider-control small,
+.provider-policy-actions span {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.provider-control-list {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.provider-control header {
+  display: grid;
+  gap: 2px;
+}
+
+.provider-policy-actions {
+  align-items: center;
+}
+
 .integration-next-actions {
   display: grid;
   gap: 6px;
@@ -4511,6 +4644,9 @@ textarea {
   .audit-log-facts,
   .evaluation-facts,
   .integration-adapter-grid,
+  .provider-policy-summary,
+  .provider-policy-grid,
+  .provider-control-list,
   .grc-ticket-list,
   .retention-grid,
   .vault-sync-grid,

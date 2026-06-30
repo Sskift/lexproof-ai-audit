@@ -1,14 +1,12 @@
 import { createHash } from "node:crypto";
 import { validateModelGatewayBoundary, type ModelGatewayBoundaryInput } from "../src/lib/phase2ApiContracts.js";
 import type { ModelGatewayProviderMetadata, ModelGatewayRun } from "../src/lib/phase2Types.js";
+import {
+  defaultModelGatewayProviderAdapters,
+  type ModelGatewayProviderPolicyAdapter
+} from "../src/lib/modelGatewayProviderPolicy.js";
 
-export type ModelGatewayAdapterDescriptor = {
-  provider: CreateModelGatewayRunInput["provider"];
-  label: string;
-  enabled: boolean;
-  mode: "local-mock" | "external-provider-placeholder";
-  credentialPolicy: "no credentials accepted" | "deferred until server-side secret policy is approved";
-};
+export type ModelGatewayAdapterDescriptor = ModelGatewayProviderPolicyAdapter;
 
 export type CreateModelGatewayRunInput = ModelGatewayBoundaryInput & {
   workspaceId: string;
@@ -27,29 +25,7 @@ export type ModelGatewayRunResult =
       failureRun: ModelGatewayRun;
     };
 
-const modelGatewayAdapters: ModelGatewayAdapterDescriptor[] = [
-  {
-    provider: "mock",
-    label: "Mock local reviewer gateway",
-    enabled: true,
-    mode: "local-mock",
-    credentialPolicy: "no credentials accepted"
-  },
-  {
-    provider: "openai-compatible",
-    label: "OpenAI-compatible gateway",
-    enabled: false,
-    mode: "external-provider-placeholder",
-    credentialPolicy: "deferred until server-side secret policy is approved"
-  },
-  {
-    provider: "enterprise-proxy",
-    label: "Enterprise model proxy gateway",
-    enabled: false,
-    mode: "external-provider-placeholder",
-    credentialPolicy: "deferred until server-side secret policy is approved"
-  }
-];
+const modelGatewayAdapters: ModelGatewayAdapterDescriptor[] = defaultModelGatewayProviderAdapters;
 
 export function listModelGatewayAdapters(): ModelGatewayAdapterDescriptor[] {
   return modelGatewayAdapters.map((adapter) => ({ ...adapter }));

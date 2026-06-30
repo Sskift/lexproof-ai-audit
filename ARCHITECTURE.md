@@ -75,6 +75,7 @@ lexproof-ai-audit/
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
+      evidenceVaultManifest.ts # Server Evidence Vault persisted metadata manifests
       anchorReceipt.ts       # Local simulated manifest anchor receipt
       phase2Types.ts         # Phase 2 backend-boundary type contracts and pure helpers
       phase2ApiContracts.ts  # Phase 2 API route, boundary, and Prisma schema draft contracts
@@ -140,6 +141,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createHumanReviewQueue(project, reviews, evidence, AI events, regulatorySourceReview)
   -> createEvidenceIntakeGuidance(project, evidenceItems, riskEvidenceCoverage, recommended templates)
   -> createEvidenceManifest(project, audit, evidenceItems)
+  -> createEvidenceVaultManifest(workspace, persisted evidence records) in Phase 2 API
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
   -> createSecurityReviewChecklist(model connect, retention report, data boundary report, manifest hash)
   -> createWorkspaceActionQueue(project validation, source graph, source review, human review, security, data boundary, manifest/export status)
@@ -443,6 +445,16 @@ Owns deterministic manifest behavior:
 - `downloadManifestJson(filename, manifest)` downloads the manifest locally as JSON.
 
 The first-stage manifest is local and simulated. It is not a real chain write or proof of external existence.
+
+### `src/lib/evidenceVaultManifest.ts`
+
+Owns server Evidence Vault manifest behavior for persisted metadata:
+
+- `createEvidenceVaultManifest({ workspaceId, records })` sorts persisted Evidence Vault records, projects metadata-only manifest items, and hashes status, version, lineage, owner, linked-risk, and file-hash metadata.
+- `exportEvidenceVaultManifestJson(manifest)` returns readable JSON for route responses or future downloads.
+- The hash payload excludes `generatedAt`, source-note body text, and raw file bytes, so repeated generation is stable while status, version, and lineage changes still alter the bundle hash.
+
+Evidence Vault manifests are audit preparation metadata only. They do not expose raw document content, raw KYC, personal data, or legal conclusions.
 
 ### `src/lib/anchorReceipt.ts`
 

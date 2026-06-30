@@ -63,7 +63,7 @@ Goal: make evidence handling durable, versioned, and reviewable while staying me
 Build:
 
 - Versioned Evidence Vault records with parent/child relationships, replacement reason, owner, source notes, and linked risk/control IDs.
-- Server-side manifest generation from persisted evidence metadata.
+- Server-side manifest generation from persisted evidence metadata. The first dedicated manifest builder is implemented in `src/lib/evidenceVaultManifest.ts` and the Evidence Vault manifest route: it uses stable ordering, status/version/lineage hashes, and excludes raw bytes plus source-note body content.
 - Evidence state machine: `draft`, `requested`, `received`, `under-review`, `verified`, `rejected`, `superseded`. The first server-enforced transition guard is implemented in `src/lib/evidenceVaultWorkflow.ts` and the Evidence Vault PATCH route; rejected or superseded records cannot be directly reactivated outside replacement recovery.
 - Evidence empty states, invalid upload errors, duplicate hash detection, and rejected-evidence recovery flows. The first empty-ledger guidance is implemented in `src/lib/evidenceIntakeGuidance.ts` and `EvidenceLedger`: it recommends the safest template action and missing risk evidence requests without raw KYC, private keys, credentials, personal data, or legal conclusions.
 - Optional object storage adapter only after retention, privacy, and access policy are documented.

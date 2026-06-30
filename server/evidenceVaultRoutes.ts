@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { createEvidenceVaultManifest } from "../src/lib/evidenceVaultManifest.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
 import { createAuditLogRecord, type EvidenceVaultRecord } from "../src/lib/phase2Types.js";
 import {
@@ -97,38 +98,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
 
   server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/evidence-manifest", async (request) => {
     const records = await repository.listEvidenceVaultRecords(request.params.workspaceId);
-    const items = records.map((record, index) => ({
-      sequence: index + 1,
-      evidenceId: record.id,
-      filename: record.filename,
-      mimeType: record.mimeType,
-      byteSize: record.byteSize,
-      fileHash: record.fileHash,
-      storageMode: record.storageMode,
-      status: record.status,
-      owner: record.owner,
-      version: record.version,
-      linkedRiskFlagIds: record.linkedRiskFlagIds,
-      containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
-      ...(record.parentEvidenceId ? { parentEvidenceId: record.parentEvidenceId } : {}),
-      ...(record.supersededByEvidenceId ? { supersededByEvidenceId: record.supersededByEvidenceId } : {}),
-      ...(record.replacementReason ? { replacementReason: record.replacementReason } : {})
-    }));
-    const hashPayload = {
-      manifestVersion: "lexproof-evidence-vault-manifest-v1",
-      workspaceId: request.params.workspaceId,
-      items
-    };
-
-    return {
-      manifestVersion: "lexproof-evidence-vault-manifest-v1",
-      workspaceId: request.params.workspaceId,
-      generatedAt: new Date().toISOString(),
-      itemCount: records.length,
-      items,
-      bundleHash: sha256Hex(stableStringify(hashPayload)),
-      notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
-    };
+    return createEvidenceVaultManifest({ workspaceId: request.params.workspaceId, records });
   });
 
   server.patch<{ Params: { workspaceId: string; evidenceId: string }; Body: UpdateEvidenceRequestBody }>(

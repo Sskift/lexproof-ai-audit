@@ -48,7 +48,7 @@ Key evidence:
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Switzerland, UAE, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
-- Editable Evidence Ledger with evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, and local evidence change trail.
+- Editable Evidence Ledger with empty-state Evidence Intake Guidance, evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, and local evidence change trail.
 - Evidence Retention Readiness panel that classifies metadata-only evidence, personal-data review needs, and vault-sync blockers for private-key-like material, API keys, and raw KYC references with a metadata-only retention policy JSON export.
 - Evidence Vault versioning with duplicate-hash detection, rejected-record replacement, parent/superseded lineage, replacement reasons, server-enforced status transitions, and metadata-only recovery actions.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
@@ -87,9 +87,11 @@ Model Intake records provider purpose, human review readiness, AI event hashes, 
 
 ![Model Intake JSON export](docs/assets/screenshots/model-intake-json-export.png)
 
-Evidence Ledger records local evidence creation, template application, edits, and removals as audit-prep events with a standalone JSON export.
+Evidence Ledger records local evidence creation, template application, edits, and removals as audit-prep events with a standalone JSON export. When a new project has no evidence, Evidence Intake Guidance recommends the safest next template and concrete metadata-only requests from the current risk coverage. Not legal advice.
 
 ![Evidence Audit Trail](docs/assets/screenshots/evidence-audit-trail.png)
+
+![Evidence Intake Guidance](docs/assets/screenshots/evidence-intake-guidance.png)
 
 Evidence Retention Readiness blocks Evidence Vault sync when evidence contains private-key-like material, API-key-like credentials, or raw KYC references, and exports metadata-only retention policy JSON. Not legal advice.
 
@@ -204,7 +206,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 6. Return to **Model Intake** to assign a reviewer, move AI event records from `needs-review` to `reviewed` or `rejected`, and download Model Intake JSON when the model-event ledger needs a standalone handoff.
 7. Open **Jurisdiction Checklist** to see preparation prompts, jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing for counsel review.
 8. Open **Risk Audit** to see current risk level, source-linked issue cards, trigger facts, weighted flags, evidence workflow coverage, remediation owners, missing evidence request actions, and the metadata-only **GRC Ticket Export** JSON bundle.
-9. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256, while the Evidence Audit Trail records local evidence creation, template application, edits, removals, and a JSON export. Check **Evidence Retention Readiness** before vault sync; private-key-like material, API-key-like credentials, and raw KYC references block Evidence Vault sync until replaced with metadata-only summaries.
+9. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, use Evidence Intake Guidance when the ledger is empty, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256, while the Evidence Audit Trail records local evidence creation, template application, edits, removals, and a JSON export. Check **Evidence Retention Readiness** before vault sync; private-key-like material, API-key-like credentials, and raw KYC references block Evidence Vault sync until replaced with metadata-only summaries.
 10. Open **Human Review** to assign reviewers, adjust due dates, save returned/reviewed/rejected decisions, and download the Human Review timeline JSON for status history with audit log IDs.
 11. Review **Integration Readiness Registry** on the main workspace to see which external adapters are ready, blocked, disabled, or waiting for policy approval. Use its recovery buttons to open Model Connect, Evidence Ledger, Risk Audit, or Counsel Pack before enabling any future real provider, storage, OCR, GRC, or chain adapter.
 12. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.

@@ -63,6 +63,7 @@ import {
   type EvidenceAuditEvent
 } from "./lib/evidenceAuditTrail";
 import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoScenarioLibrary";
+import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
@@ -174,6 +175,17 @@ export default function App() {
   const recommendedEvidenceTemplateIds = useMemo(
     () => recommendEvidenceTemplates(project).map((template) => template.id),
     [project]
+  );
+  const evidenceIntakeGuidance = useMemo(
+    () =>
+      createEvidenceIntakeGuidance({
+        project,
+        evidenceItems: project.evidenceItems,
+        riskEvidenceCoverage,
+        evidenceTemplates,
+        recommendedTemplateIds: recommendedEvidenceTemplateIds
+      }),
+    [evidenceTemplates, project, recommendedEvidenceTemplateIds, riskEvidenceCoverage]
   );
   const validation = useMemo(() => validateProjectProfile(project), [project]);
   const modelSettingsValidation = useMemo(() => validateModelSettings(modelSettings), [modelSettings]);
@@ -819,6 +831,7 @@ export default function App() {
               evidenceItems={project.evidenceItems}
               evidenceAuditEvents={currentEvidenceAuditEvents}
               manifest={manifest}
+              evidenceIntakeGuidance={evidenceIntakeGuidance}
               evidenceTemplates={evidenceTemplates}
               recommendedTemplateIds={recommendedEvidenceTemplateIds}
               onAddEvidence={addEvidence}

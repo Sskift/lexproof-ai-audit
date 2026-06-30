@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { BadgeCheck, CloudUpload, DatabaseZap, Download, FileUp, History, LockKeyhole, RefreshCcw, ShieldAlert, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
+import type { EvidenceIntakeGuidance, EvidenceIntakeGuidanceAction } from "../lib/evidenceIntakeGuidance";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import {
@@ -25,6 +26,7 @@ type EvidenceLedgerProps = {
   evidenceItems: EvidenceItem[];
   evidenceAuditEvents: EvidenceAuditEvent[];
   manifest: EvidenceManifest | null;
+  evidenceIntakeGuidance: EvidenceIntakeGuidance;
   evidenceTemplates: EvidenceTemplate[];
   recommendedTemplateIds: string[];
   onAddEvidence: (item: EvidenceItem) => void;
@@ -50,6 +52,7 @@ export function EvidenceLedger({
   evidenceItems,
   evidenceAuditEvents,
   manifest,
+  evidenceIntakeGuidance,
   evidenceTemplates,
   recommendedTemplateIds,
   onAddEvidence,
@@ -98,6 +101,23 @@ export function EvidenceLedger({
     });
     onAddEvidence(item);
     setFileImportState(`Added ${file.name} as local file metadata`);
+  };
+
+  const startGuidanceAction = (action: EvidenceIntakeGuidanceAction) => {
+    if (action.actionType === "apply-template" && action.templateId) {
+      onApplyEvidenceTemplate(action.templateId);
+      return;
+    }
+
+    setDraft({
+      ...blankEvidence,
+      label: action.title,
+      kind: "Evidence request",
+      content: `Requested: ${action.description} ${evidenceIntakeGuidance.notLegalAdviceBoundary}`,
+      source: action.source ?? "LexProof evidence intake guidance",
+      status: "requested",
+      owner: action.owner
+    });
   };
 
   const syncVault = async () => {
@@ -206,6 +226,10 @@ export function EvidenceLedger({
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
       </div>
+
+      {evidenceItems.length === 0 ? (
+        <EvidenceIntakeGuidancePanel guidance={evidenceIntakeGuidance} onStartAction={startGuidanceAction} />
+      ) : null}
 
       <section className="evidence-audit-trail">
         <div className="split-title compact-title">
@@ -568,6 +592,43 @@ export function EvidenceLedger({
                 <Trash2 size={16} aria-hidden="true" />
               </button>
             </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EvidenceIntakeGuidancePanel({
+  guidance,
+  onStartAction
+}: {
+  guidance: EvidenceIntakeGuidance;
+  onStartAction: (action: EvidenceIntakeGuidanceAction) => void;
+}) {
+  return (
+    <section className={`evidence-intake-guidance ${guidance.status}`} aria-label="Evidence Intake Guidance">
+      <div className="split-title compact-title">
+        <div>
+          <BadgeCheck size={17} aria-hidden="true" />
+          <h3>Evidence Intake Guidance</h3>
+        </div>
+        <span>{guidance.status === "needs-evidence" ? "Start here" : "In progress"}</span>
+      </div>
+      <p>{guidance.summary}</p>
+      <small>{guidance.notLegalAdviceBoundary}</small>
+      <div className="evidence-guidance-actions">
+        {guidance.actions.map((action) => (
+          <article key={action.id} className={`evidence-guidance-action ${action.actionType}`}>
+            <header>
+              {action.priority ? <span className={`priority ${action.priority}`}>{action.priority}</span> : <span>Template</span>}
+              <strong>{action.title}</strong>
+            </header>
+            <p>{action.description}</p>
+            {action.source ? <small>{action.source}</small> : null}
+            <button type="button" className="secondary" onClick={() => onStartAction(action)}>
+              {action.actionType === "apply-template" ? `Apply recommended ${action.title.replace(/^Apply /, "")}` : "Prefill evidence request"}
+            </button>
           </article>
         ))}
       </div>

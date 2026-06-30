@@ -65,6 +65,7 @@ lexproof-ai-audit/
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
       counselReview.ts       # Counsel/compliance review status queue helpers
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
+      evidenceIntakeGuidance.ts # Empty-ledger intake guidance from risk/evidence coverage
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
       evidenceAuditTrail.ts  # Local evidence change events and JSON export
       retentionPolicy.ts     # Evidence retention readiness, vault-sync blockers, and JSON export
@@ -133,6 +134,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createDefaultCounselQuestions(project, audit)
   -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
   -> merge edits into editable CounselReviewItem queue
+  -> createEvidenceIntakeGuidance(project, evidenceItems, riskEvidenceCoverage, recommended templates)
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
   -> createSecurityReviewChecklist(model connect, retention report, data boundary report, manifest hash)
@@ -238,6 +240,16 @@ Owns evidence template behavior:
 - `createEvidenceItemsFromTemplate(templateId)` creates requested evidence items for the ledger.
 
 Templates currently cover tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows. Template content is synthetic-safe and should not include raw KYC, personal records, or secrets.
+
+### `src/lib/evidenceIntakeGuidance.ts`
+
+Owns Evidence Ledger empty-state guidance:
+
+- `createEvidenceIntakeGuidance(input)` turns project facts, risk evidence coverage, and recommended templates into concrete next actions.
+- Guidance actions can apply a recommended evidence template, prefill a missing evidence request, or create a manual metadata-only summary.
+- The output repeats the Not legal advice boundary and must not expose raw evidence content, raw KYC, personal records, credentials, or private keys.
+
+The UI may render these actions and trigger existing ledger/template handlers, but it must not duplicate template ranking or risk requirement selection in components.
 
 ### `src/lib/fileEvidence.ts`
 
@@ -555,6 +567,7 @@ Owns UI state and composition:
 - current regulatory source graph derived from project facts, audit flags, and evidence items
 - current Export Safety Gate report derived from project facts, evidence, counsel queues, and AI event records
 - current Security Review Checklist derived from Model Connect, retention, export boundary, manifest, and evidence state
+- current Evidence Intake Guidance derived from project facts, risk evidence coverage, and recommended templates
 - local server export-record cache filtered by current workspace ID
 - selected Counsel Pack export template
 
@@ -578,7 +591,7 @@ Components are intentionally presentational and interaction-focused:
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
-- `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, exposes recent local evidence audit trail events plus JSON export, renders Evidence Retention Readiness, exports retention policy JSON, and blocks Evidence Vault sync when retention blockers are present.
+- `EvidenceLedger` renders Evidence Intake Guidance when a project has no evidence, applies scenario templates, pre-fills requested evidence rows, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, exposes recent local evidence audit trail events plus JSON export, renders Evidence Retention Readiness, exports retention policy JSON, and blocks Evidence Vault sync when retention blockers are present.
 - `CounselPackPanel` selects an export template, renders the Export Safety Gate, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
@@ -723,6 +736,7 @@ Domain tests live next to the audit engine and cover:
 - jurisdiction pack controls and local-counsel routing
 - simulated anchor receipt export
 - evidence template recommendation and instantiation
+- empty-ledger evidence intake guidance, recommended template actions, and missing risk evidence requests
 - local file SHA-256 hashing and metadata-only evidence creation
 - evidence audit trail create/update/remove events and JSON export
 - evidence retention policy classification, redaction, vault-sync blocker status, and JSON export
@@ -747,6 +761,7 @@ UI tests cover:
 - Risk Audit updates from the new project profile
 - per-risk evidence workflow coverage updates from ledger evidence
 - missing Risk Audit evidence request flow into Evidence Ledger
+- empty Evidence Ledger guidance and recommended template application
 - Evidence Ledger item creation
 - local file evidence import without displaying raw file content
 - long evidence record editing with visible field labels

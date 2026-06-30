@@ -980,6 +980,34 @@ describe("App", () => {
     expect(screen.getByDisplayValue("risk evidence requirement: signer-control")).toBeInTheDocument();
   });
 
+  it("shows concrete empty evidence intake guidance and applies the recommended template", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Empty Evidence RWA Desk" } });
+    fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
+    fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States, European Union" } });
+    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
+    fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Retail investors" } });
+    fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
+    fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "Policy metadata only" } });
+    fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "AI drafts suitability memo" } });
+    fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "Evidence anchor only" } });
+    fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Pilot with planned public launch" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+
+    expect(await screen.findByRole("heading", { name: /Evidence Intake Guidance/i })).toBeInTheDocument();
+    expect(screen.getByText(/Start with tokenized yield \/ RWA evidence/i)).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Evidence intake guidance is audit preparation workflow metadata only./i)).toBeInTheDocument();
+    expect(screen.getByText(/Asset classification memo/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Apply recommended tokenized yield \/ RWA template/i }));
+
+    expect(await screen.findByDisplayValue("RWA disclosure assumptions memo")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("requested");
+  });
+
   it("runs AI Review with mock model settings and exposes missing evidence", async () => {
     render(<App />);
 

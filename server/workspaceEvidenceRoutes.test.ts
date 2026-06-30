@@ -297,4 +297,76 @@ describe("Phase 2 workspace and evidence routes", () => {
 
     await server.close();
   });
+
+  it("syncs evidence-target human review decisions back to Evidence Vault status", async () => {
+    const server = buildServer();
+    const form = new FormData();
+    form.append("file", Buffer.from("evidence memo requiring reviewer follow up"), {
+      filename: "follow-up-evidence.txt",
+      contentType: "text/plain"
+    });
+    form.append("owner", "Compliance");
+    form.append("sourceNote", "Evidence awaiting human review.");
+    form.append("linkedRiskFlagIds", "governance");
+    form.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-review-effects/evidence",
+      headers: form.getHeaders(),
+      payload: form
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const evidence = uploadResponse.json();
+
+    const reviewResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-review-effects/reviews",
+      payload: {
+        targetType: "evidence",
+        targetId: evidence.id,
+        reviewerId: "Counsel",
+        comment: "Review evidence before export readiness."
+      }
+    });
+    expect(reviewResponse.statusCode).toBe(201);
+
+    const returnedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-review-effects/reviews/${reviewResponse.json().id}`,
+      payload: {
+        status: "needs-more-evidence",
+        comment: "Need a clearer board authorization memo."
+      }
+    });
+    expect(returnedResponse.statusCode).toBe(200);
+
+    const recordsResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-review-effects/evidence" });
+    expect(recordsResponse.json()).toEqual([
+      expect.objectContaining({
+        id: evidence.id,
+        status: "requested",
+        version: 2,
+        sourceNote: "Human Review requested more evidence; returned Evidence Vault record to requested."
+      })
+    ]);
+
+    const manifestResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-review-effects/evidence-manifest" });
+    expect(manifestResponse.json().items).toEqual([expect.objectContaining({ evidenceId: evidence.id, status: "requested", version: 2 })]);
+
+    const auditResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-review-effects/audit-log" });
+    expect(auditResponse.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: "human-review.updated", targetId: reviewResponse.json().id }),
+        expect.objectContaining({
+          action: "evidence.review-status.synced",
+          targetType: "evidence",
+          targetId: evidence.id,
+          summary: "Human Review requested more evidence; returned Evidence Vault record to requested."
+        })
+      ])
+    );
+
+    await server.close();
+  });
 });

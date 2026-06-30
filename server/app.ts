@@ -4,6 +4,7 @@ import Fastify from "fastify";
 import { createCounselPackExportRecord } from "./counselPackExportService.js";
 import { createModelGatewayRun, listModelGatewayAdapters } from "./modelGatewayService.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
+import { createEvidenceVaultStatusEffectFromHumanReview } from "../src/lib/serverHumanReviewEffects.js";
 import { createServerHumanReviewQueueView, type ServerHumanReviewQueueFilters } from "../src/lib/serverHumanReviewQueue.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import {
@@ -539,6 +540,29 @@ export function buildServer(options: BuildServerOptions = {}) {
         comment: request.body.comment,
         reviewerId: request.body.reviewerId
       });
+      const evidenceEffect = createEvidenceVaultStatusEffectFromHumanReview(updated);
+      const existingEvidence = evidenceEffect
+        ? await repository.findEvidenceVaultRecord(request.params.workspaceId, evidenceEffect.targetEvidenceId)
+        : null;
+      let updatedEvidence: EvidenceVaultRecord | null = null;
+
+      if (evidenceEffect && existingEvidence && existingEvidence.status !== evidenceEffect.nextStatus) {
+        const transition = validateEvidenceVaultStatusTransition(existingEvidence.status, evidenceEffect.nextStatus);
+
+        if (!transition.valid) {
+          return reply.status(409).send({
+            error: transition.error,
+            recoveryAction: transition.recoveryAction,
+            notLegalAdviceBoundary: transition.notLegalAdviceBoundary
+          });
+        }
+
+        updatedEvidence = updateEvidenceVaultRecord(existingEvidence, {
+          status: evidenceEffect.nextStatus,
+          sourceNote: evidenceEffect.summary
+        });
+      }
+
       await repository.updateHumanReviewRecord(updated);
       await repository.appendAuditLogRecord(
         createAuditLogRecord({
@@ -553,6 +577,22 @@ export function buildServer(options: BuildServerOptions = {}) {
           createdAt: updated.updatedAt
         })
       );
+      if (evidenceEffect && existingEvidence && updatedEvidence) {
+        await repository.updateEvidenceVaultRecord(updatedEvidence);
+        await repository.appendAuditLogRecord(
+          createAuditLogRecord({
+            workspaceId: request.params.workspaceId,
+            actorId: updated.reviewerId,
+            action: "evidence.review-status.synced",
+            targetType: "evidence",
+            targetId: updatedEvidence.id,
+            beforeHash: sha256Hex(stableStringify(existingEvidence)),
+            afterHash: sha256Hex(stableStringify(updatedEvidence)),
+            summary: evidenceEffect.summary,
+            createdAt: updated.updatedAt
+          })
+        );
+      }
       return updated;
     }
   );

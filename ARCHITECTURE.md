@@ -88,6 +88,7 @@ lexproof-ai-audit/
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
       workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
       counselPack.ts         # Markdown pack and browser download helper
+      dataClassification.ts  # Shared security data-classification and redaction rules
       dataBoundary.ts        # Export Safety Gate classification, redaction, and blocker report
       counselPackTemplates.ts # Counsel Pack template definitions and recommendation logic
       counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
@@ -504,6 +505,14 @@ Owns export behavior:
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
 
+### `src/lib/dataClassification.ts`
+
+Owns shared W8 data-classification rules:
+
+- `classifyDataBoundaryText(value)` detects private-key-like material, credential-like tokens, raw KYC references, personal-data references, and confidentiality labels with severity metadata.
+- `redactClassifiedText(value)` redacts reusable snippets before UI, export, or server error surfaces display them.
+- Export and server upload boundaries must reuse this module instead of copying scanner regexes.
+
 ### `src/lib/dataBoundary.ts`
 
 Owns export data-boundary behavior:
@@ -673,7 +682,7 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 `src/lib/evidenceVaultWorkflow.ts` owns the shared Evidence Vault status machine. `server/evidenceVaultRoutes.ts` uses it before PATCH writes so rejected evidence cannot be directly reactivated and superseded records stay historical; users must use the replacement endpoint to preserve parent/child lineage. `server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
 
-`src/lib/evidenceUploadBoundary.ts` is called by `server/evidenceVaultService.ts` before record creation so unsafe metadata is blocked server-side even if a client bypasses the UI retention gate. It returns class-level errors without echoing credentials, private keys, or raw KYC snippets.
+`src/lib/evidenceUploadBoundary.ts` is called by `server/evidenceVaultService.ts` before record creation so unsafe metadata is blocked server-side even if a client bypasses the UI retention gate. It reuses `src/lib/dataClassification.ts` for scanner coverage and returns class-level errors without echoing credentials, private keys, or raw KYC snippets.
 
 ### Human Review Workflow Responsibilities
 

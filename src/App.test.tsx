@@ -118,6 +118,68 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
   });
 
+  it("shows and downloads the judge Submission Pack from Sources", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:submission-pack");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+      const submissionPack = await screen.findByRole("region", { name: /Submission Pack/i });
+      expect(within(submissionPack).getByText(/Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only./i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(within(submissionPack).getByRole("heading", { name: /Known limitations/i })).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/External model providers remain disabled/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/Manifest hash/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/Regulatory Source Pack hash/i)).toBeInTheDocument();
+      });
+
+      const downloadButton = await within(submissionPack).findByRole("button", { name: /Download Submission Pack JSON/i });
+      await waitFor(() => expect(downloadButton).not.toBeDisabled());
+      fireEvent.click(downloadButton);
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:submission-pack");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Submission Pack JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          packVersion: "lexproof-submission-pack-v1",
+          targetHackathon: "BLI Legal Tech Hackathon 2",
+          packHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          notLegalAdviceBoundary:
+            "Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only."
+        })
+      );
+      expect(parsed.knownLimitations.map((item: { id: string }) => item.id)).toEqual(
+        expect.arrayContaining(["not-legal-advice", "local-first-storage", "simulated-anchor"])
+      );
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("shows the Security Review Checklist and updates model and evidence gates from workflow state", async () => {
     render(<App />);
 

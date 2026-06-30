@@ -61,6 +61,7 @@ Key evidence:
 - Counsel Pack version history with manifest hash, Markdown hash, source snapshot, Regulatory Source Pack hash, source review status, review status summary, diff from the previous export, and metadata-only JSON download.
 - Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, Regulatory Source Pack hash, source review status, and audit-log entries without raw Markdown, KYC, personal data, or credentials. Blocked data-boundary findings disable Markdown/PDF, manifest JSON, simulated anchor, version save, and server export actions until remediated.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
+- Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ## Product Screenshots
@@ -181,6 +182,10 @@ Server export records let the demo create a Phase 2 API-backed Counsel Pack hand
 
 ![Counsel Pack server export record](docs/assets/screenshots/counsel-pack-server-export-record.png)
 
+Sources now includes a generated Submission Pack JSON artifact for judges. It summarizes demo readiness, required assets, feature-to-theme mapping, known limitations, manifest hash, Regulatory Source Pack hash, and the Not legal advice boundary.
+
+![Submission Pack artifact](docs/assets/screenshots/submission-pack.png)
+
 ## Hackathon Demo Runbook
 
 The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
@@ -192,6 +197,7 @@ The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.
 5. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
 6. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
 7. Counsel Pack template selection, Source Review Ledger preview, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
+8. Sources tab Submission Pack JSON export with pack hash, known limitations, demo readiness, and hackathon mapping.
 
 Screenshots for the exact demo path:
 
@@ -206,6 +212,8 @@ Screenshots for the exact demo path:
 ![Demo step 5: Secure Review Journey](docs/assets/screenshots/demo-05-secure-review-journey.png)
 
 ![Demo step 6: Counsel Pack Export](docs/assets/screenshots/demo-06-counsel-pack-export.png)
+
+![Demo step 7: Submission Pack](docs/assets/screenshots/submission-pack.png)
 
 Every step is audit preparation only. Not legal advice.
 
@@ -304,7 +312,7 @@ npm run dev
 - Public GitHub repository: this repo
 - Demo video: record the scripted flow in [docs/demo-script.md](docs/demo-script.md), including Model Connect, Evidence Ledger, Risk Audit, Human Review, Secure Review Journey, and Counsel Pack export
 - DoraHacks BUIDL submission: use the generated Counsel Pack and README summary
-- Screenshot-backed submission narrative: see [docs/submission-pack.md](docs/submission-pack.md)
+- Screenshot-backed submission narrative and generated Submission Pack JSON: see [docs/submission-pack.md](docs/submission-pack.md) and the **Sources** tab
 - Source pack: see [docs/research.md](docs/research.md)
 - Demo script: see [docs/demo-script.md](docs/demo-script.md)
 

@@ -26,6 +26,7 @@ import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { RegulatoryCommandCenter } from "./components/RegulatoryCommandCenter";
 import { SecureReviewWorkspace } from "./components/SecureReviewWorkspace";
 import { SecurityReviewChecklistPanel } from "./components/SecurityReviewChecklistPanel";
+import { SubmissionPackPanel } from "./components/SubmissionPackPanel";
 import { demoReadinessScreenshotRefs } from "./data/demoReadiness";
 import { demoScenarios } from "./data/demoScenarios";
 import { sampleProfiles } from "./data/sampleProfiles";
@@ -64,6 +65,7 @@ import {
   type EvidenceAuditEvent
 } from "./lib/evidenceAuditTrail";
 import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoScenarioLibrary";
+import { createDemoReadinessReport } from "./lib/demoReadiness";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
@@ -116,6 +118,7 @@ import {
   type RiskEvidenceRequirement
 } from "./lib/riskEvidence";
 import { createSecurityReviewChecklist } from "./lib/securityReviewChecklist";
+import { createSubmissionPack, type SubmissionPack } from "./lib/submissionPack";
 import { createWorkspaceActionQueue, type WorkspaceActionTarget } from "./lib/workspaceActionQueue";
 
 type TabId = WorkspaceActionTarget;
@@ -151,6 +154,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
+  const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
@@ -184,6 +188,16 @@ export default function App() {
   const regulatorySourceReview = useMemo(() => createRegulatorySourceReview(regulatoryGraph), [regulatoryGraph]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
+  const demoReadinessReport = useMemo(
+    () =>
+      createDemoReadinessReport({
+        scenarioValidation: demoScenarioValidation,
+        scenarioCount: demoScenarioValidation.valid ? demoScenarios.length : 0,
+        screenshotRefs: demoReadinessScreenshotRefs,
+        apiPreflight: { status: "not-checked" }
+      }),
+    [demoScenarioValidation]
+  );
   const evidenceTemplates = useMemo(() => listEvidenceTemplates(), []);
   const recommendedEvidenceTemplateIds = useMemo(
     () => recommendEvidenceTemplates(project).map((template) => template.id),
@@ -223,6 +237,7 @@ export default function App() {
     () => counselPackServerExports.filter((record) => record.workspaceId === project.id).sort((left, right) => right.version - left.version),
     [counselPackServerExports, project.id]
   );
+  const submissionModelConnectStatus = modelConnectReceipt?.status ?? "not-configured";
   const currentEvidenceAuditEvents = useMemo(
     () => evidenceAuditEvents.filter((event) => event.projectId === project.id),
     [evidenceAuditEvents, project.id]
@@ -402,6 +417,47 @@ export default function App() {
       live = false;
     };
   }, [regulatoryGraph, regulatorySourceReview]);
+
+  useEffect(() => {
+    let live = true;
+    setSubmissionPack(null);
+
+    if (!manifest || !regulatorySourcePack) {
+      return () => {
+        live = false;
+      };
+    }
+
+    createSubmissionPack({
+      project,
+      audit,
+      fit,
+      manifest,
+      regulatorySourcePack,
+      demoReadinessReport,
+      counselPackVersionCount: currentCounselPackVersions.length,
+      serverExportRecordCount: currentCounselPackServerExports.length,
+      modelConnectStatus: submissionModelConnectStatus
+    }).then((nextPack) => {
+      if (live) {
+        setSubmissionPack(nextPack);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [
+    audit,
+    currentCounselPackServerExports.length,
+    currentCounselPackVersions.length,
+    demoReadinessReport,
+    fit,
+    manifest,
+    project,
+    regulatorySourcePack,
+    submissionModelConnectStatus
+  ]);
 
   useEffect(() => {
     let live = true;
@@ -942,7 +998,7 @@ export default function App() {
               onCreateServerExport={createServerExportRecord}
             />
           ) : null}
-          {activeTab === "sources" ? <SourcesPanel audit={audit} /> : null}
+          {activeTab === "sources" ? <SourcesPanel audit={audit} submissionPack={submissionPack} /> : null}
         </section>
       </main>
     </div>
@@ -1007,13 +1063,19 @@ function RiskAuditPanel({
   );
 }
 
-function SourcesPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile> }) {
+function SourcesPanel({
+  audit,
+  submissionPack
+}: {
+  audit: ReturnType<typeof analyzeAuditProfile>;
+  submissionPack: SubmissionPack | null;
+}) {
   return (
     <section className="panel stage-panel">
       <SectionHeader icon={BookOpen} title="Sources" subtitle="Research pack used to pick the hackathon and shape this MVP." />
       <div className="source-grid">
         {audit.sourcePack.map((source) => (
-          <a key={source.url} className="source-card" href={source.url} target="_blank" rel="noreferrer">
+          <a key={`${source.title}-${source.url}`} className="source-card" href={source.url} target="_blank" rel="noreferrer">
             <Link2 size={18} aria-hidden="true" />
             <strong>{source.title}</strong>
             <span>{source.relevance}</span>
@@ -1024,6 +1086,7 @@ function SourcesPanel({ audit }: { audit: ReturnType<typeof analyzeAuditProfile>
         <Github size={20} aria-hidden="true" />
         <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
       </div>
+      <SubmissionPackPanel pack={submissionPack} />
     </section>
   );
 }

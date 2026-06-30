@@ -83,6 +83,13 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Download Markdown**. Optionally click **Download Version JSON**, **Download Manifest JSON**, and **Create Simulated Anchor Receipt**.
    - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
 
+8. **Download submission pack**
+   - Open **Sources**.
+   - Show the generated **Submission Pack** with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, hackathon mapping, and known limitations.
+   - Click **Download Submission Pack JSON** for the judge-facing metadata artifact.
+   - Confirm the boundary: Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only.
+   - Screenshot: `docs/assets/screenshots/submission-pack.png`.
+
 ## Error-State Checks
 
 - **Model connection failure:** choose **OpenAI-compatible**, leave Base URL/model/API key incomplete, click **Validate Model Connect**, then run **Secure Review Journey**. The workspace should show a recoverable **Fix Model Connect** action. No API key is persisted.

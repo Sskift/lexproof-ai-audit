@@ -27,6 +27,7 @@ The repository already has:
 - Editable Evidence Ledger, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
 - Demo script, screenshots, Demo Scenario Library launcher, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, and seeded judge paths.
+- Generated Submission Pack JSON in Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, feature-to-theme mapping, known limitations, and Not legal advice boundary.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
 
@@ -332,20 +333,21 @@ Goal: keep the repository always demoable.
 Implemented first slice:
 
 - Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
+- Submission Pack artifact in `src/lib/submissionPack.ts` and `SubmissionPackPanel`: generates a metadata-only judge packet with stable pack hash, manifest/source-pack hashes, demo readiness, required assets, hackathon mapping, known limitations, and JSON download.
 
 Build:
 
 - One canonical demo script for a clean clone.
 - Screenshots for every judge-visible workflow after UI changes.
 - Additional seeded scenario library entries only when they map to real product workflows and remain synthetic.
-- Submission narrative that maps product features to hackathon criteria.
-- Known-limitations section that is honest about local-first, simulated, and deferred features.
+- Expand the generated Submission Pack only when new real workflows need new evidence, readiness, or limitation fields.
 
 Acceptance:
 
 - `npm run verify` passes from a clean install.
 - A judge can run the demo without private credentials.
 - The README points to current screenshots and current commands.
+- The Sources tab Submission Pack JSON repeats Not legal advice and exposes known limitations without raw evidence, credentials, KYC, or legal conclusions.
 
 Do not build:
 

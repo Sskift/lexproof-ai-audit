@@ -4738,6 +4738,169 @@ textarea {
   margin-bottom: 0;
 }
 
+.submission-pack-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #c8d8e6;
+  border-radius: 8px;
+  background: #f6f9fc;
+}
+
+.submission-pack-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.submission-fact,
+.submission-pack-actions,
+.submission-pack-section {
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.submission-fact {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+}
+
+.submission-fact span,
+.submission-fact code {
+  display: block;
+}
+
+.submission-fact span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.submission-fact code {
+  overflow-wrap: anywhere;
+  color: #102a43;
+  font-size: 0.78rem;
+}
+
+.submission-pack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+}
+
+.submission-pack-actions span {
+  color: #53616f;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.submission-pack-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 12px;
+}
+
+.submission-pack-section {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+}
+
+.submission-pack-section h3 {
+  margin-bottom: 0;
+}
+
+.submission-asset-list,
+.submission-mapping-list,
+.submission-limitation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.submission-asset,
+.submission-mapping,
+.submission-limitation {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #e0e7ee;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.submission-asset.ready {
+  border-color: #b9ddc6;
+}
+
+.submission-asset.needs-action {
+  border-color: #e9bd87;
+}
+
+.submission-asset.blocked {
+  border-color: #e6aaa2;
+}
+
+.submission-asset header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.submission-asset header svg {
+  color: #0c7b7b;
+  flex: 0 0 auto;
+}
+
+.submission-asset.needs-action header svg,
+.submission-asset.blocked header svg {
+  color: #a74421;
+}
+
+.submission-asset header strong,
+.submission-mapping strong,
+.submission-limitation strong {
+  color: #102a43;
+  line-height: 1.35;
+}
+
+.submission-asset header span {
+  margin-left: auto;
+  border-radius: 999px;
+  background: #e7edf8;
+  color: #263d73;
+  padding: 4px 7px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.submission-asset p,
+.submission-limitation p,
+.submission-asset small,
+.submission-mapping small,
+.submission-limitation small {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.45;
+}
+
+.submission-mapping ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #31424f;
+  line-height: 1.45;
+}
+
 @media (max-width: 980px) {
   .topbar,
   .workspace,
@@ -4779,6 +4942,8 @@ textarea {
   .retention-grid,
   .vault-sync-grid,
   .vault-error-facts,
+  .submission-pack-summary,
+  .submission-pack-grid,
   .secure-journey-controls {
     grid-template-columns: 1fr;
   }

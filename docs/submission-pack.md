@@ -40,6 +40,12 @@ The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with
 
 ![Counsel Pack export surface](assets/screenshots/counsel-pack-exports.jpg)
 
+### Submission Pack Artifact
+
+The Sources tab generates a metadata-only Submission Pack JSON for judges. It carries the pack hash, manifest hash, Regulatory Source Pack hash, demo readiness status, required DoraHacks assets, feature-to-theme mapping, known limitations, and the Not legal advice boundary. It does not store raw KYC, credentials, raw evidence bytes, legal conclusions, or real chain-write claims.
+
+![Submission Pack artifact](assets/screenshots/submission-pack.png)
+
 ### Evidence Change Trail
 
 The Evidence Ledger records local evidence creation, template application, edits, and removals as audit-prep metadata. The trail is downloadable as JSON and remains separate from signed approvals or real chain anchoring.
@@ -54,6 +60,7 @@ The Evidence Ledger records local evidence creation, template application, edits
 4. Open **Risk Audit** and point to source-linked trigger facts.
 5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, show the Evidence Audit Trail JSON export, and show the manifest bundle hash.
 6. Open **Counsel Pack** and show the Model Intake Summary, AI event hashes, Markdown download, Manifest JSON, and simulated anchor receipt.
+7. Open **Sources** and download **Submission Pack JSON** to show the judge-facing pack hash, known limitations, demo readiness, and hackathon mapping.
 
 ## Boundaries
 

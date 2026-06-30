@@ -46,6 +46,7 @@ lexproof-ai-audit/
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
       CounselPackPanel.tsx   # Markdown, manifest, source pack, and simulated receipt export
+      SubmissionPackPanel.tsx # Judge-facing submission metadata artifact and JSON download
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
       demoScenarios.ts       # Judge-ready paths mapped to seed profiles
@@ -87,6 +88,7 @@ lexproof-ai-audit/
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
       regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
+      submissionPack.ts      # Metadata-only hackathon submission pack artifact and stable hash
       workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
       counselPack.ts         # Markdown pack and browser download helper
       dataClassification.ts  # Shared security data-classification and redaction rules
@@ -154,6 +156,7 @@ demoScenarios, sampleProfiles, or blank project
   -> buildPrintableCounselPackHtml(title, markdown)
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
+  -> createSubmissionPack(project, audit, manifest, source pack, demo readiness) for judge-facing metadata artifact
   -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
 

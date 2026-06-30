@@ -26,6 +26,7 @@ import { ProjectWorkspace } from "./components/ProjectWorkspace";
 import { RegulatoryCommandCenter } from "./components/RegulatoryCommandCenter";
 import { SecureReviewWorkspace } from "./components/SecureReviewWorkspace";
 import { SecurityReviewChecklistPanel } from "./components/SecurityReviewChecklistPanel";
+import { demoScenarios } from "./data/demoScenarios";
 import { sampleProfiles } from "./data/sampleProfiles";
 import { analyzeAuditProfile, createSubmissionFit, type AuditFlag, type AuditProfile, type RemediationItem } from "./lib/auditEngine";
 import { createRedactionReport, type AIReviewResult } from "./lib/aiReview";
@@ -61,6 +62,7 @@ import {
   createEvidenceUpdateEvent,
   type EvidenceAuditEvent
 } from "./lib/evidenceAuditTrail";
+import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoScenarioLibrary";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
@@ -167,6 +169,7 @@ export default function App() {
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
   const fit = useMemo(() => createSubmissionFit(), []);
+  const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
   const evidenceTemplates = useMemo(() => listEvidenceTemplates(), []);
   const recommendedEvidenceTemplateIds = useMemo(
     () => recommendEvidenceTemplates(project).map((template) => template.id),
@@ -415,6 +418,20 @@ export default function App() {
     setSavedAt("");
     setModelConnectReceipt(null);
     setActiveTab("wizard");
+  };
+
+  const loadDemoScenario = (scenarioId: string) => {
+    const scenario = findDemoScenarioById(demoScenarios, scenarioId);
+    const profile = scenario ? sampleProfiles.find((item) => item.projectName === scenario.projectName) : undefined;
+    if (!scenario || !profile || !demoScenarioValidation.valid) {
+      return;
+    }
+
+    setProject(projectFromAuditProfile(profile));
+    setShowValidation(false);
+    setSavedAt("");
+    setModelConnectReceipt(null);
+    setActiveTab(scenario.recommendedStartTab);
   };
 
   const newProject = () => {
@@ -701,12 +718,14 @@ export default function App() {
         <ProjectWorkspace
           project={project}
           sampleProfiles={sampleProfiles}
+          demoScenarios={demoScenarioValidation.valid ? demoScenarios : []}
           fit={fit}
           validation={validation}
           showValidation={showValidation}
           savedAt={savedAt}
           onProjectChange={updateProject}
           onLoadSample={loadSample}
+          onLoadDemoScenario={loadDemoScenario}
           onNewProject={newProject}
           onSave={saveWorkspace}
         />

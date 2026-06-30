@@ -39,6 +39,22 @@ describe("App", () => {
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
   });
 
+  it("loads a judge-ready demo scenario from the seeded scenario library", async () => {
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: /Demo Scenario Library/i })).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Demo scenarios are synthetic audit preparation paths only./i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /High-risk RWA launch/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/GRC Ticket Export/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start High-risk RWA launch/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("YieldPassport");
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+    expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
+  });
+
   it("shows the Security Review Checklist and updates model and evidence gates from workflow state", async () => {
     render(<App />);
 
@@ -1108,7 +1124,7 @@ describe("App", () => {
       fireEvent.change(screen.getAllByLabelText(/^Decision note for /i)[0], { target: { value: "Reviewed for audit-prep handoff." } });
       fireEvent.click(screen.getAllByRole("button", { name: /Save decision for /i })[0]);
 
-      expect(await screen.findByText(/Human Review Timeline/i)).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: /Human Review Timeline/i })).toBeInTheDocument();
       expect(screen.getByText(/2 saved decisions/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Reviewed for audit-prep handoff/i).length).toBeGreaterThan(0);
 

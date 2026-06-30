@@ -32,6 +32,7 @@ lexproof-ai-audit/
     main.tsx                 # React entry point
     components/
       ProjectWorkspace.tsx   # Editable project profile and sample loading
+      DemoScenarioLibrary.tsx # Judge-ready seeded scenario launcher
       AuditWizard.tsx        # Step-by-step project review surface
       AIReviewPanel.tsx      # Controlled model-assisted audit preparation
       ModelSettingsPanel.tsx # Mock/OpenAI-compatible model configuration
@@ -46,10 +47,12 @@ lexproof-ai-audit/
       CounselPackPanel.tsx   # Markdown, manifest, and simulated receipt export
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
+      demoScenarios.ts       # Judge-ready paths mapped to seed profiles
       evidenceTemplates.ts   # Seed evidence request templates
       regulatoryClauses.ts   # Reviewed official-source regulatory clause references
     lib/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
+      demoScenarioLibrary.ts # Demo scenario validation and lookup helpers
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
       modelAccessWorkflow.ts # Model setup, run, and human-review workflow status
@@ -100,7 +103,8 @@ lexproof-ai-audit/
 ## Data Flow
 
 ```text
-sampleProfiles or blank project
+demoScenarios, sampleProfiles, or blank project
+  -> validateDemoScenarioLibrary(demoScenarios, sampleProfiles)
   -> ProjectProfile in App state
   -> localStorage persistence when valid
   -> analyzeAuditProfile(project)
@@ -528,6 +532,16 @@ Owns seeded demo scenarios. Each scenario should represent a realistic legal/com
 
 Do not put scoring logic in this file.
 
+### `src/data/demoScenarios.ts` and `src/lib/demoScenarioLibrary.ts`
+
+Own the judge-ready scenario launcher:
+
+- `demoScenarios` maps seeded synthetic profiles to short runnable demo paths, expected artifacts, focus tags, and recommended starting tabs.
+- `validateDemoScenarioLibrary()` verifies every scenario references an existing sample profile, repeats the Not legal advice boundary, includes enough path steps and artifacts, and blocks unsafe demo text such as raw KYC, private keys, seed phrases, or live API keys.
+- `findDemoScenarioById()` is the UI lookup helper used before loading a sample profile.
+
+Scenario paths are synthetic audit preparation routes only. They must not create parallel scoring logic or require private credentials.
+
 ### `src/App.tsx`
 
 Owns UI state and composition:
@@ -550,7 +564,8 @@ The component calls library modules and renders the workbench surfaces: Regulato
 
 Components are intentionally presentational and interaction-focused:
 
-- `ProjectWorkspace` edits project facts and loads synthetic samples.
+- `ProjectWorkspace` edits project facts, loads synthetic samples, and hosts the Demo Scenario Library launcher.
+- `DemoScenarioLibrary` renders seeded scenario paths, expected artifacts, focus tags, and start actions from `demoScenarioLibrary.ts` validation output.
 - `AuditWizard` displays the step-by-step audit review.
 - `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
@@ -673,6 +688,7 @@ Domain tests live next to the audit engine and cover:
 - counsel review status generation and queue merging
 - hackathon submission fit
 - project validation errors
+- demo scenario validation, lookup, summary text, and blocked unsafe demo text
 - manifest item and bundle hashing
 - manifest JSON export
 - manifest JSON browser download behavior
@@ -724,6 +740,7 @@ Domain tests live next to the audit engine and cover:
 UI tests cover:
 
 - the main workbench shell
+- Demo Scenario Library scenario launch into the recommended workbench surface
 - BLI hackathon targeting
 - required tabs
 - custom project creation

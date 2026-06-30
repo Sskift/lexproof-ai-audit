@@ -26,7 +26,7 @@ The repository already has:
 - Local Human Review operations with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable timeline JSON with audit log IDs.
 - Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
-- Demo script, screenshots, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, and server export-record path.
+- Demo script, screenshots, Demo Scenario Library launcher, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, and seeded judge paths.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
 
@@ -265,11 +265,15 @@ Do not build:
 
 Goal: keep the repository always demoable.
 
+Implemented first slice:
+
+- Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
+
 Build:
 
 - One canonical demo script for a clean clone.
 - Screenshots for every judge-visible workflow after UI changes.
-- A short seeded scenario library with realistic but synthetic data.
+- Additional seeded scenario library entries only when they map to real product workflows and remain synthetic.
 - Submission narrative that maps product features to hackathon criteria.
 - Known-limitations section that is honest about local-first, simulated, and deferred features.
 

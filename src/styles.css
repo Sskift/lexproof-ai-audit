@@ -235,6 +235,141 @@ textarea {
   margin-bottom: 16px;
 }
 
+.demo-scenario-library {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #f8fbfc;
+}
+
+.demo-scenario-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.demo-scenario-header h2 {
+  margin: 0;
+  color: #172431;
+  font-size: 0.96rem;
+}
+
+.demo-scenario-header .eyebrow {
+  margin-bottom: 4px;
+}
+
+.demo-scenario-header svg,
+.demo-scenario-meta svg {
+  color: #0c7b7b;
+  flex: 0 0 auto;
+}
+
+.demo-scenario-boundary {
+  margin: 0;
+  color: #43515e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.demo-scenario-list {
+  display: grid;
+  gap: 10px;
+}
+
+.demo-scenario-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.demo-scenario-card.active {
+  border-color: #9ccfc9;
+  background: #f7fcf9;
+}
+
+.demo-scenario-card header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.demo-scenario-card h3 {
+  margin: 0 0 4px;
+  color: #172431;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.demo-scenario-card p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.demo-scenario-time {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: #e7edf8;
+  color: #263d73;
+  padding: 5px 7px;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.demo-scenario-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.demo-scenario-tags span {
+  border-radius: 999px;
+  background: #eef5f6;
+  color: #245563;
+  padding: 5px 7px;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.demo-scenario-meta {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+  color: #445361;
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+.demo-scenario-meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.demo-scenario-card button {
+  justify-self: start;
+  max-width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-align: left;
+}
+
 .field-stack {
   display: grid;
   gap: 8px;

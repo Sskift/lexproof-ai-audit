@@ -29,7 +29,7 @@ Key evidence:
 
 ## MVP Features
 
-- Custom Project Workspace for creating a local audit project from zero or loading synthetic samples.
+- Custom Project Workspace for creating a local audit project from zero, loading synthetic samples, or launching a judge-ready Demo Scenario Library path.
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
 - Model Intake for registering provider/model purpose, allowed data classes, human-review owner, editable hashed AI event review records, and downloadable Model Intake JSON.
 - AI Review with mock and OpenAI-compatible model settings, Model Access Workflow, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
@@ -62,6 +62,10 @@ Key evidence:
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ## Product Screenshots
+
+The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts and Not legal advice boundaries.
+
+![Demo Scenario Library](docs/assets/screenshots/demo-scenario-library.png)
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
@@ -149,12 +153,13 @@ Server export records let the demo create a Phase 2 API-backed Counsel Pack hand
 
 The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
 
-1. Model Connect validation with the mock local reviewer.
-2. Evidence selection or local metadata-only evidence intake.
-3. Deterministic Risk Audit with source-linked issue cards.
-4. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
-5. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
-6. Counsel Pack template selection, version save, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
+1. Demo Scenario Library launch from a synthetic profile such as **High-risk RWA launch**.
+2. Model Connect validation with the mock local reviewer.
+3. Evidence selection or local metadata-only evidence intake.
+4. Deterministic Risk Audit with source-linked issue cards.
+5. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
+6. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
+7. Counsel Pack template selection, version save, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
 
 Screenshots for the exact demo path:
 
@@ -191,7 +196,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 ## First-Stage Workflow
 
-1. Open the app and click **New project**, or load one of the synthetic sample profiles.
+1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, or **Public source education review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Review the **Regulatory Command Center** for jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.

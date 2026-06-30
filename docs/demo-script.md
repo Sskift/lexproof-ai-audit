@@ -20,45 +20,52 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 
 ## End-To-End Demo Path
 
-0. **Review command center**
+0. **Start from a seeded scenario**
+   - In **Project Workspace**, find **Demo Scenario Library**.
+   - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
+   - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
+   - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
+   - Screenshot: `docs/assets/screenshots/demo-scenario-library.png`.
+
+1. **Review command center**
    - Start on the **Regulatory Command Center** at the top of the workbench.
    - Show jurisdiction readiness, official-source clause triggers, evidence gap queue, manifest status, and the Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
 
-1. **Connect model**
+2. **Connect model**
    - Open **AI Review**.
    - Keep **Mock local reviewer** selected for the live demo, then click **Validate Model Connect**.
    - Show the receipt, Model Access Workflow, Model Connection Readiness, and Redaction Gate.
    - Screenshot: `docs/assets/screenshots/demo-01-model-connect.png`.
 
-2. **Select or upload evidence**
+3. **Select or upload evidence**
    - Open **Evidence Ledger**.
    - Apply the **tokenized yield / RWA** evidence template, or add one local synthetic evidence item.
    - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
    - Show **Evidence Retention Readiness** and confirm normal demo evidence is metadata-only or needs human confirmation before vault sync. Not legal advice.
    - Screenshot: `docs/assets/screenshots/demo-02-evidence-ledger.png`.
 
-3. **Run risk audit**
+4. **Run risk audit**
    - Open **Risk Audit**.
    - Show deterministic flags, source-linked issue cards, evidence workflow coverage, and remediation owners.
    - If a missing item is useful for narration, click **Request evidence** to push a requested item into Evidence Ledger.
    - Screenshot: `docs/assets/screenshots/demo-03-risk-audit.png`.
 
-4. **Route human review**
+5. **Route human review**
    - Open **Human Review**.
    - Set one evidence item to `needs-more-evidence`, adjust the due date if useful for narration, save the decision, and show the return message.
    - Show **Human Review Timeline** with the saved decision, audit log ID, and **Download Review Timeline JSON**.
    - Return to **Evidence Ledger** and show the linked evidence status moved back to `requested`.
    - Screenshot: `docs/assets/screenshots/demo-04-human-review-return.png`.
 
-5. **Sync vault and gateway journey**
+6. **Sync vault and gateway journey**
    - Open the **Secure Review Workspace** panel at the top of the app.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.
    - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
 
-6. **Export counsel pack**
+7. **Export counsel pack**
    - Open **Counsel Pack**.
    - Show the recommended **Export template**, then switch to **AI Governance Review** or another template to show the Markdown agenda and evidence focus update without changing deterministic risk scoring.
    - Show **Export Safety Gate**. In the normal path, warnings are visible for human confirmation and blocked counts must be zero before handoff.

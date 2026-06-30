@@ -12,6 +12,7 @@ import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
 import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile } from "./modelIntake";
 import { createRegulatoryGraph } from "./regulatoryGraph";
+import { createDataBoundaryReport } from "./dataBoundary";
 
 const project: ProjectProfile = {
   id: "project-counsel",
@@ -148,6 +149,52 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("FCA PS23/6 and FG23/3");
     expect(markdown).toContain("Evidence gaps");
     expect(markdown).toContain("Not legal advice. Regulatory graph output is audit preparation material only.");
+  });
+
+  it("includes a data boundary report and does not leak blocked export materials", async () => {
+    const unsafeProject: ProjectProfile = {
+      ...project,
+      evidenceItems: [
+        {
+          id: "unsafe-export",
+          label: "Unsafe export packet",
+          kind: "Text",
+          content:
+            "Developer note includes private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa and sk-live-abcdef1234567890.",
+          status: "draft",
+          owner: "Engineering"
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(unsafeProject);
+    const manifest = await createEvidenceManifest(unsafeProject, audit, unsafeProject.evidenceItems);
+    const dataBoundaryReport = createDataBoundaryReport({
+      project: unsafeProject,
+      evidenceItems: unsafeProject.evidenceItems,
+      counselQuestions: [],
+      counselReviews: [],
+      aiEvents: []
+    });
+    const markdown = buildMarkdownCounselPack(
+      unsafeProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      undefined,
+      undefined,
+      dataBoundaryReport
+    );
+
+    expect(markdown).toContain("## Data Boundary Report");
+    expect(markdown).toContain("Not legal advice");
+    expect(markdown).toContain("- Export status: blocked");
+    expect(markdown).toContain("private-key-material");
+    expect(markdown).toContain("credential-material");
+    expect(markdown).toContain("Remove or replace blocked materials");
+    expect(markdown).not.toContain("0xaaaaaaaa");
+    expect(markdown).not.toContain("sk-live-abcdef");
   });
 });
 

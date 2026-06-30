@@ -2753,6 +2753,163 @@ textarea {
   margin-top: 5px;
 }
 
+.data-boundary-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.data-boundary-panel.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.data-boundary-panel.needs-review {
+  border-color: #e7c673;
+  background: #fffbeb;
+}
+
+.data-boundary-panel.clean {
+  border-color: #a9d5c4;
+  background: #f3fbf7;
+}
+
+.data-boundary-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.boundary-status,
+.boundary-severity {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.boundary-status.blocked,
+.boundary-severity.block {
+  background: #fee4df;
+  color: #9f241a;
+}
+
+.boundary-status.needs-review,
+.boundary-severity.warn {
+  background: #fff0bd;
+  color: #7a4e00;
+}
+
+.boundary-status.clean,
+.boundary-severity.info {
+  background: #dff4eb;
+  color: #0c5f55;
+}
+
+.data-boundary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.data-boundary-metrics > div,
+.data-boundary-findings article {
+  min-width: 0;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.data-boundary-metrics > div {
+  padding: 10px;
+}
+
+.data-boundary-metrics .wide {
+  grid-column: span 2;
+}
+
+.data-boundary-metrics span,
+.data-boundary-remediation > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #41505e;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.data-boundary-metrics strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.92rem;
+}
+
+.data-boundary-findings {
+  display: grid;
+  gap: 10px;
+}
+
+.data-boundary-findings article {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.data-boundary-findings header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.data-boundary-findings strong {
+  color: #172431;
+}
+
+.data-boundary-findings small {
+  color: #657382;
+  line-height: 1.35;
+}
+
+.data-boundary-findings p {
+  margin-bottom: 0;
+  color: #445361;
+  line-height: 1.4;
+}
+
+.data-boundary-findings code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  background: #f4f7f9;
+  color: #263d73;
+  padding: 9px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.data-boundary-remediation ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #31424f;
+  line-height: 1.45;
+}
+
+.data-boundary-remediation li + li {
+  margin-top: 5px;
+}
+
 .counsel-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -3219,6 +3376,7 @@ textarea {
   .server-export-controls,
   .export-template-header,
   .export-template-grid,
+  .data-boundary-metrics,
   .event-review-controls,
   .workflow-mode,
   .workflow-steps,
@@ -3283,6 +3441,10 @@ textarea {
   .run-facts,
   .wizard-steps {
     grid-template-columns: 1fr;
+  }
+
+  .data-boundary-metrics .wide {
+    grid-column: span 1;
   }
 
   .task-row {

@@ -34,6 +34,7 @@ Key evidence:
 - Model Intake for registering provider/model purpose, allowed data classes, human-review owner, editable hashed AI event review records, and downloadable Model Intake JSON.
 - AI Review with mock and OpenAI-compatible model settings, Model Access Workflow, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
 - Redaction Gate before model calls, with evidence payload previews, KYC/personal-data warnings, and blocker handling for private-key-like material.
+- Export Safety Gate before Counsel Pack handoff, with data-boundary findings for private keys, API keys, raw KYC, personal-data references, and confidentiality labels.
 - AI Review Run Ledger with local payload and response hashes for each completed model review.
 - Server Model Gateway receipts with source evidence hashes, allowed data-class policy, safe failure receipts, retry state, and remediation steps without returning raw payloads or credentials.
 - Human Review queue with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable review timeline JSON with audit log IDs.
@@ -52,7 +53,7 @@ Key evidence:
 - Counsel Pack Markdown download and browser Print / Save PDF handoff with non-advice disclaimer, project facts, risk posture, regulatory source graph, editable counsel questions, counsel review statuses, manifest hash, source pack, and remediation queue.
 - Counsel Pack export templates for launch readiness, RWA/tokenized asset review, AI governance review, custody controls, and marketing claims, with template-specific review agendas and evidence focus in the Markdown packet.
 - Counsel Pack version history with manifest hash, Markdown hash, source snapshot, review status summary, diff from the previous export, and metadata-only JSON download.
-- Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, and audit-log entries without raw Markdown, KYC, personal data, or credentials.
+- Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, and audit-log entries without raw Markdown, KYC, personal data, or credentials. Blocked data-boundary findings disable Markdown/PDF, manifest JSON, simulated anchor, version save, and server export actions until remediated.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
@@ -104,6 +105,10 @@ Counsel Pack export templates route the same project facts into launch, RWA/toke
 
 ![Counsel Pack export templates](docs/assets/screenshots/counsel-pack-export-templates.png)
 
+The Export Safety Gate scans the current project, evidence ledger, counsel questions, review notes, and AI event records before export. It shows blocked/warning findings and keeps raw KYC, credentials, and private-key-like material out of export actions.
+
+![Counsel Pack Export Safety Gate](docs/assets/screenshots/export-safety-gate.png)
+
 Counsel Pack version history records the manifest hash, Markdown hash, review-status snapshot, source snapshot, export timestamp, and diff from the previous export without storing raw Markdown content in the version JSON.
 
 ![Counsel Pack version history](docs/assets/screenshots/counsel-pack-version-history.png)
@@ -152,7 +157,7 @@ LexProof uses a controlled BYOM/BYOK model workflow:
 7. Run AI Review only after evidence summaries are clean or reviewed. Private-key-like material blocks model calls.
 8. After a completed run, inspect the **AI Review Run Ledger** for provider/model metadata, redaction status, payload SHA-256, response SHA-256, and a downloadable run JSON receipt. The same run is also recorded in **Model Intake** as a needs-review AI event.
 9. Run **Secure Review Journey** against the Phase 2 API to create a backend workspace, sync metadata-only evidence, create a server Model Gateway receipt, open Human Review, and fetch audit log records. The server request is limited to audit-prep metadata, evidence hashes, and risk flag summaries.
-10. Mark AI events reviewed or rejected in **Model Intake** after human review, download **Model Intake JSON** for the model-event audit trail, then open **Counsel Pack** to choose an export template and export the Model Intake Summary, readiness status, human-review owner, review statuses, AI event hashes, Counsel Pack version metadata, and a server-side export metadata record with the review packet.
+10. Mark AI events reviewed or rejected in **Model Intake** after human review, download **Model Intake JSON** for the model-event audit trail, then open **Counsel Pack** to choose an export template, review the Export Safety Gate, and export the Model Intake Summary, readiness status, human-review owner, review statuses, AI event hashes, Counsel Pack version metadata, and a server-side export metadata record with the review packet.
 
 Model output is draft audit preparation only. It does not change deterministic risk scoring, make legal conclusions, perform KYC, or replace counsel review. Model Intake records are local audit-prep metadata, not final adjudication.
 
@@ -169,9 +174,9 @@ Model output is draft audit preparation only. It does not change deterministic r
 9. Add or edit records in **Evidence Ledger**, hash a local file into metadata-only evidence, request missing evidence from Risk Audit, or apply one of the scenario templates for tokenized yield/RWA, DAO governance/multisig, or AI compliance workflows. The manifest updates with per-item hashes and a bundle SHA-256, while the Evidence Audit Trail records local evidence creation, template application, edits, removals, and a JSON export.
 10. Open **Human Review** to assign reviewers, adjust due dates, save returned/reviewed/rejected decisions, and download the Human Review timeline JSON for status history with audit log IDs.
 11. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.
-12. Open **Counsel Pack** to choose an export template, edit the counsel question queue, update review status for each risk flag, save a Pack Version to capture manifest/Markdown hashes and review-status diff, create a server export record from that latest version when the Phase 2 API is running, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download version JSON, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review.
+12. Open **Counsel Pack** to choose an export template, inspect the Export Safety Gate, edit the counsel question queue, update review status for each risk flag, save a Pack Version to capture manifest/Markdown hashes and review-status diff, create a server export record from that latest version when the Phase 2 API is running, then download the Markdown audit-prep packet with Regulatory Source Graph, Model Intake summary and AI event hashes, use browser Print / Save PDF, download version JSON, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review. If the gate detects private keys, API keys, or raw KYC materials, these export actions are disabled until the evidence is replaced with metadata-only summaries.
 
-Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, audit-log, and Counsel Pack export metadata records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, raw Markdown, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Counsel Pack version JSON, Model Gateway receipts, server export records, and model-run ledger exports store hashes and metadata, not credentials or raw Markdown content. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, audit-log, and Counsel Pack export metadata records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, raw Markdown, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Counsel Pack version JSON, Model Gateway receipts, server export records, and model-run ledger exports store hashes and metadata, not credentials or raw Markdown content. The Export Safety Gate redacts detected secrets in the preview and blocks export handoff for private-key-like material, credential-like tokens, and raw KYC references. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 

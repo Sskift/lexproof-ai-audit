@@ -125,6 +125,35 @@ describe("App", () => {
     expect(screen.queryByDisplayValue(/Confidential launch memo body/i)).not.toBeInTheDocument();
   });
 
+  it("blocks Counsel Pack export actions when evidence contains secret or raw KYC materials", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe export packet" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: {
+        value:
+          "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
+      }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await screen.findByText("Unsafe export packet")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    expect(await screen.findByRole("heading", { name: /Export Safety Gate/i })).toBeInTheDocument();
+    expect(screen.getByText(/Blocked for export/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Remove or replace blocked materials/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Not legal advice. Data boundary output is audit preparation material only./i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /Download Markdown/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Print \/ Save PDF/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Save Pack Version/i })).toBeDisabled();
+    expect(screen.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+  });
+
   it("syncs Evidence Ledger metadata to the backend Evidence Vault and displays the vault manifest hash", async () => {
     const uploadedForms: FormData[] = [];
     const vaultRecord = {

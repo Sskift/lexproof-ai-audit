@@ -62,6 +62,7 @@ lexproof-ai-audit/
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       counselPack.ts         # Markdown pack and browser download helper
+      dataBoundary.ts        # Export Safety Gate classification, redaction, and blocker report
       counselPackTemplates.ts # Counsel Pack template definitions and recommendation logic
       counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
       counselPackExportClient.ts # Browser client for Phase 2 Counsel Pack export records
@@ -104,9 +105,10 @@ sampleProfiles or blank project
   -> createDefaultCounselReviewItems(project, audit, evidenceCoverage)
   -> merge edits into editable CounselReviewItem queue
   -> createEvidenceManifest(project, audit, evidenceItems)
+  -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
   -> createSimulatedAnchorReceipt(manifest)
   -> recommendCounselPackTemplate(project, audit)
-  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate)
+  -> buildMarkdownCounselPack(project, audit, manifest, questions, reviews, modelIntake, regulatoryGraph, selectedTemplate, dataBoundaryReport)
   -> buildPrintableCounselPackHtml(title, markdown)
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
@@ -377,10 +379,20 @@ The contracts are executable design artifacts. They do not start a server, add b
 
 Owns export behavior:
 
-- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph, exportTemplate)` generates audit preparation Markdown with the non-advice boundary, optional export-template agenda, regulatory source graph, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
+- `buildMarkdownCounselPack(project, audit, manifest, counselQuestions, counselReviews, modelIntake, regulatoryGraph, exportTemplate, dataBoundaryReport)` generates audit preparation Markdown with the non-advice boundary, optional export-template agenda, Export Safety Gate summary, regulatory source graph, editable counsel questions, review statuses, model intake summary, AI event hashes, and evidence manifest context.
 - `downloadMarkdownFile(filename, content)` uses a browser Blob download and does not upload content.
 - `buildPrintableCounselPackHtml(title, markdown)` wraps the Markdown pack in escaped, print-oriented HTML.
 - `printCounselPackPdf(title, markdown)` opens a browser print window so the user can save the local pack as PDF without uploading content.
+
+### `src/lib/dataBoundary.ts`
+
+Owns export data-boundary behavior:
+
+- `createDataBoundaryReport(input)` scans project facts, evidence metadata/content, counsel questions, counsel review notes, and AI event records for private-key-like material, credential-like tokens, raw KYC references, personal-data references, and confidentiality labels.
+- `summarizeDataBoundaryForExport(report)` produces the Markdown-safe Export Safety Gate section for Counsel Pack output.
+- `redactDataBoundaryText(value)` redacts private keys, API keys, raw KYC phrases, and direct personal-data identifiers before preview/export strings are rendered.
+
+Blocked findings disable Counsel Pack Markdown download, browser Print / Save PDF, manifest JSON, simulated anchor receipt, Pack Version save, and server export-record creation in `CounselPackPanel`. Warnings keep export available but visible for human confirmation. The module is audit preparation data classification only; it does not perform legal review or KYC.
 
 ### `src/lib/counselPackTemplates.ts`
 
@@ -431,6 +443,7 @@ Owns UI state and composition:
 - active tab
 - async evidence manifest state
 - current regulatory source graph derived from project facts, audit flags, and evidence items
+- current Export Safety Gate report derived from project facts, evidence, counsel queues, and AI event records
 - local server export-record cache filtered by current workspace ID
 - selected Counsel Pack export template
 
@@ -452,7 +465,7 @@ Components are intentionally presentational and interaction-focused:
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
 - `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, and exposes recent local evidence audit trail events plus JSON export.
-- `CounselPackPanel` selects an export template, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
+- `CounselPackPanel` selects an export template, renders the Export Safety Gate, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
 
@@ -568,6 +581,7 @@ Domain tests live next to the audit engine and cover:
 - Model Intake JSON browser download behavior
 - AI Review run conversion into Model Intake events
 - AI event reviewer and review-status editing
+- data boundary report classification, blocker handling, redacted snippets, and export Markdown summary
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export
@@ -614,6 +628,7 @@ UI tests cover:
 - editable counsel questions in Counsel Pack
 - editable counsel review statuses in Counsel Pack
 - Counsel Pack export template switching and Markdown agenda update
+- Export Safety Gate blocking Counsel Pack export actions for private keys, API keys, and raw KYC materials
 - Counsel Pack version save, diff visibility, and version JSON download action
 - Counsel Pack server export-record creation from saved Pack Version metadata
 - Jurisdiction Checklist tab with policy controls and local-counsel routing

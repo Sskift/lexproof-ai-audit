@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Anchor, CheckCircle2, Download, FileText, History, Printer, Save, ServerCog } from "lucide-react";
+import { Anchor, CheckCircle2, Download, FileText, History, Printer, Save, ServerCog, ShieldAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   createSimulatedAnchorReceipt,
@@ -15,6 +15,7 @@ import {
 import type { CounselPackTemplate, CounselPackTemplateId } from "../lib/counselPackTemplates";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
 import type { CounselQuestion } from "../lib/counselQuestions";
+import type { DataBoundaryReport } from "../lib/dataBoundary";
 import type { SubmissionFit } from "../lib/auditEngine";
 import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
 import type { CounselPackExportRecord } from "../lib/phase2Types";
@@ -29,6 +30,7 @@ type CounselPackPanelProps = {
   exportTemplates: CounselPackTemplate[];
   selectedExportTemplate: CounselPackTemplate;
   recommendedExportTemplateId: CounselPackTemplateId;
+  dataBoundaryReport: DataBoundaryReport;
   counselPackVersions: CounselPackVersionRecord[];
   serverExportRecords: CounselPackExportRecord[];
   onSelectExportTemplate: (id: CounselPackTemplateId) => void;
@@ -50,6 +52,7 @@ export function CounselPackPanel({
   exportTemplates,
   selectedExportTemplate,
   recommendedExportTemplateId,
+  dataBoundaryReport,
   counselPackVersions,
   serverExportRecords,
   onSelectExportTemplate,
@@ -67,6 +70,8 @@ export function CounselPackPanel({
   const [serverExportApiBaseUrl, setServerExportApiBaseUrl] = useState("");
   const [serverExportError, setServerExportError] = useState("");
   const [isCreatingServerExport, setIsCreatingServerExport] = useState(false);
+  const exportBlocked = !dataBoundaryReport.exportAllowed;
+  const exportBlockReason = "Resolve blocked data boundary findings before export handoff.";
 
   const createReceipt = () => {
     if (!manifest) {
@@ -132,6 +137,8 @@ export function CounselPackPanel({
         onSelectTemplate={onSelectExportTemplate}
       />
 
+      <ExportSafetyGatePanel report={dataBoundaryReport} />
+
       <CounselQuestionsPanel
         questions={counselQuestions}
         onAddQuestion={onAddQuestion}
@@ -147,32 +154,42 @@ export function CounselPackPanel({
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
         <div className="export-buttons">
-          <button type="button" onClick={() => downloadMarkdownFile(`${slug(projectName)}-counsel-pack.md`, markdown)}>
+          <button
+            type="button"
+            disabled={exportBlocked}
+            onClick={() => downloadMarkdownFile(`${slug(projectName)}-counsel-pack.md`, markdown)}
+          >
             <Download size={16} aria-hidden="true" />
             Download Markdown
           </button>
-          <button type="button" className="secondary" onClick={printCounselPack}>
+          <button type="button" className="secondary" disabled={exportBlocked} onClick={printCounselPack}>
             <Printer size={16} aria-hidden="true" />
             Print / Save PDF
           </button>
           <button
             type="button"
             className="secondary"
-            disabled={!manifest}
+            disabled={!manifest || exportBlocked}
             onClick={() => manifest && downloadManifestJson(`${slug(projectName)}-manifest.json`, manifest)}
           >
             <Download size={16} aria-hidden="true" />
             Download Manifest JSON
           </button>
-          <button type="button" className="secondary" disabled={!manifest} onClick={createReceipt}>
+          <button type="button" className="secondary" disabled={!manifest || exportBlocked} onClick={createReceipt}>
             <Anchor size={16} aria-hidden="true" />
             {!manifest ? "Calculating Anchor Receipt" : receipt ? "Refresh Receipt" : "Create Simulated Anchor Receipt"}
           </button>
-          <button type="button" className="secondary" disabled={!manifest || isSavingVersion} onClick={saveVersion}>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!manifest || isSavingVersion || exportBlocked}
+            onClick={saveVersion}
+          >
             <Save size={16} aria-hidden="true" />
             {isSavingVersion ? "Saving Version" : "Save Pack Version"}
           </button>
         </div>
+        {exportBlocked ? <p className="save-state">{exportBlockReason}</p> : null}
         {printError ? <p className="save-state">{printError}</p> : null}
         {versionError ? <p className="save-state">{versionError}</p> : null}
       </div>
@@ -183,7 +200,10 @@ export function CounselPackPanel({
         error={serverExportError}
         isCreating={isCreatingServerExport}
         records={serverExportRecords}
-        canCreate={counselPackVersions.length > 0}
+        canCreate={counselPackVersions.length > 0 && dataBoundaryReport.exportAllowed}
+        disabledReason={
+          dataBoundaryReport.exportAllowed ? "Save a Pack Version before creating a server export record." : exportBlockReason
+        }
         onApiBaseUrlChange={setServerExportApiBaseUrl}
         onCreate={createServerExport}
       />
@@ -263,6 +283,68 @@ function ExportTemplatePanel({
   );
 }
 
+function ExportSafetyGatePanel({ report }: { report: DataBoundaryReport }) {
+  const statusLabel =
+    report.status === "blocked" ? "Blocked for export" : report.status === "needs-review" ? "Needs human review" : "Clean for export";
+  const visibleFindings = report.findings.slice(0, 5);
+
+  return (
+    <section className={`data-boundary-panel ${report.status}`}>
+      <div className="data-boundary-header">
+        <div className="panel-title compact-title">
+          <ShieldAlert size={17} aria-hidden="true" />
+          <h3>Export Safety Gate</h3>
+        </div>
+        <span className={`boundary-status ${report.status}`}>{statusLabel}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="data-boundary-metrics">
+        <BoundaryFact label="Blockers" value={String(report.blockerCount)} />
+        <BoundaryFact label="Warnings" value={String(report.warningCount)} />
+        <BoundaryFact label="Export allowed" value={report.exportAllowed ? "yes" : "no"} />
+        <BoundaryFact label="Classes" value={report.detectedClasses.join(", ") || "none"} wide />
+      </div>
+      {visibleFindings.length === 0 ? (
+        <p className="empty-state">No blocked export findings detected. Review before external handoff.</p>
+      ) : (
+        <div className="data-boundary-findings">
+          {visibleFindings.map((finding, index) => (
+            <article key={`${finding.sourceType}-${finding.sourceLabel}-${finding.dataClass}-${finding.severity}-${index}`}>
+              <header>
+                <span className={`boundary-severity ${finding.severity}`}>{finding.severity}</span>
+                <strong>{finding.dataClass}</strong>
+                <small>
+                  {finding.sourceType} · {finding.sourceLabel} · {finding.matchCount} match
+                  {finding.matchCount === 1 ? "" : "es"}
+                </small>
+              </header>
+              <p>{finding.message}</p>
+              <code>{finding.redactedSnippet}</code>
+            </article>
+          ))}
+        </div>
+      )}
+      <div className="data-boundary-remediation">
+        <span>Remediation</span>
+        <ul>
+          {report.remediation.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function BoundaryFact({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return (
+    <div className={wide ? "wide" : ""}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 function TemplateList({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
@@ -282,6 +364,7 @@ function ServerExportRecordsPanel({
   isCreating,
   records,
   canCreate,
+  disabledReason,
   onApiBaseUrlChange,
   onCreate
 }: {
@@ -290,6 +373,7 @@ function ServerExportRecordsPanel({
   isCreating: boolean;
   records: CounselPackExportRecord[];
   canCreate: boolean;
+  disabledReason: string;
   onApiBaseUrlChange: (value: string) => void;
   onCreate: () => Promise<void> | void;
 }) {
@@ -317,7 +401,7 @@ function ServerExportRecordsPanel({
           {isCreating ? "Creating Server Export Record" : "Create Server Export Record"}
         </button>
       </div>
-      {!canCreate ? <p className="empty-state">Save a Pack Version before creating a server export record.</p> : null}
+      {!canCreate ? <p className="empty-state">{disabledReason}</p> : null}
       {error ? <p className="save-state">{error}</p> : null}
       {records.length === 0 ? (
         <p className="empty-state">No server Counsel Pack export records have been created for this project yet.</p>

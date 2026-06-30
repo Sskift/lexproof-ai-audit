@@ -2,6 +2,7 @@ import type { AuditResult } from "./auditEngine";
 import type { CounselReviewItem } from "./counselReview";
 import type { CounselQuestion } from "./counselQuestions";
 import type { CounselPackTemplate } from "./counselPackTemplates";
+import { redactDataBoundaryText, summarizeDataBoundaryForExport, type DataBoundaryReport } from "./dataBoundary";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
@@ -21,37 +22,39 @@ export function buildMarkdownCounselPack(
   counselReviews: CounselReviewItem[] = [],
   modelIntake?: CounselPackModelIntake,
   regulatoryGraph?: RegulatoryGraph,
-  exportTemplate?: CounselPackTemplate
+  exportTemplate?: CounselPackTemplate,
+  dataBoundaryReport?: DataBoundaryReport
 ): string {
-  const flags = audit.flags.map((flag) => `- [${flag.severity}] ${flag.title}: ${flag.rationale}`).join("\n");
-  const remediation = audit.remediation.map((item) => `- ${item.priority} ${item.owner}: ${item.action}`).join("\n");
+  const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
+  const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
   const evidence = manifest.items
-    .map((item) => `- ${item.sequence}. ${item.label} (${item.kind}, ${item.status}) — ${item.contentHash}`)
+    .map((item) => `- ${item.sequence}. ${safe(item.label)} (${safe(item.kind)}, ${safe(item.status)}) — ${item.contentHash}`)
     .join("\n");
   const questions = counselQuestions
-    .map((item) => `- ${item.priority} ${item.status} [${item.relatedFlagId ?? item.source}] ${item.question}`)
+    .map((item) => `- ${item.priority} ${item.status} [${safe(item.relatedFlagId ?? item.source)}] ${safe(item.question)}`)
     .join("\n");
   const reviews = counselReviews.map(formatReviewItem).join("\n");
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
   const exportTemplateSection = exportTemplate ? formatExportTemplateSection(exportTemplate) : "";
-  const sources = audit.sourcePack.map((source) => `- ${source.title}: ${source.url}`).join("\n");
+  const dataBoundarySection = dataBoundaryReport ? summarizeDataBoundaryForExport(dataBoundaryReport) : "";
+  const sources = audit.sourcePack.map((source) => `- ${safe(source.title)}: ${source.url}`).join("\n");
 
   return [
-    `# ${project.projectName} Counsel Pack`,
+    `# ${safe(project.projectName)} Counsel Pack`,
     "",
     "Not legal advice. This document is audit preparation material for counsel and compliance review.",
     "",
     "## Project Profile",
-    `- Entity type: ${project.entityType}`,
-    `- Jurisdictions: ${project.jurisdictions.join(", ")}`,
-    `- Asset model: ${project.assetModel}`,
-    `- User exposure: ${project.userType}`,
-    `- Custody model: ${project.custodyModel}`,
-    `- Data boundary: ${project.dataSensitivity}`,
-    `- AI usage: ${project.aiUsage}`,
-    `- Blockchain use: ${project.blockchainUse}`,
-    `- Operating stage: ${project.operatingStage}`,
+    `- Entity type: ${safe(project.entityType)}`,
+    `- Jurisdictions: ${safe(project.jurisdictions.join(", "))}`,
+    `- Asset model: ${safe(project.assetModel)}`,
+    `- User exposure: ${safe(project.userType)}`,
+    `- Custody model: ${safe(project.custodyModel)}`,
+    `- Data boundary: ${safe(project.dataSensitivity)}`,
+    `- AI usage: ${safe(project.aiUsage)}`,
+    `- Blockchain use: ${safe(project.blockchainUse)}`,
+    `- Operating stage: ${safe(project.operatingStage)}`,
     "",
     "## Risk Summary",
     `- Risk level: ${audit.riskLevel}`,
@@ -59,6 +62,7 @@ export function buildMarkdownCounselPack(
     `- Manifest bundle SHA-256: ${manifest.bundleHash}`,
     "",
     ...(exportTemplateSection ? ["## Export Template", exportTemplateSection, ""] : []),
+    ...(dataBoundarySection ? ["## Data Boundary Report", dataBoundarySection, ""] : []),
     "## Risk Flags",
     flags || "- No material flags detected in the current facts.",
     "",
@@ -85,14 +89,14 @@ export function buildMarkdownCounselPack(
 }
 
 function formatExportTemplateSection(template: CounselPackTemplate): string {
-  const agenda = template.reviewAgenda.map((item) => `- ${item}`).join("\n");
-  const evidenceFocus = template.evidenceFocus.map((item) => `- ${item}`).join("\n");
-  const assumptionChecks = template.assumptionChecks.map((item) => `- ${item}`).join("\n");
+  const agenda = template.reviewAgenda.map((item) => `- ${safe(item)}`).join("\n");
+  const evidenceFocus = template.evidenceFocus.map((item) => `- ${safe(item)}`).join("\n");
+  const assumptionChecks = template.assumptionChecks.map((item) => `- ${safe(item)}`).join("\n");
 
   return [
     template.notLegalAdviceBoundary,
-    `- Template: ${template.title}`,
-    `- Focus: ${template.summary}`,
+    `- Template: ${safe(template.title)}`,
+    `- Focus: ${safe(template.summary)}`,
     "",
     "### Template Review Agenda",
     agenda,
@@ -109,19 +113,19 @@ function formatRegulatoryGraphSection(graph: RegulatoryGraph): string {
   const summaries = graph.jurisdictionSummaries
     .map(
       (summary) =>
-        `- ${summary.jurisdiction}: ${summary.readiness}; ${summary.matchedClauseCount} source triggers; ${summary.missingEvidenceCount} Evidence gaps; local counsel: ${summary.localCounselRole}`
+        `- ${safe(summary.jurisdiction)}: ${summary.readiness}; ${summary.matchedClauseCount} source triggers; ${summary.missingEvidenceCount} Evidence gaps; local counsel: ${safe(summary.localCounselRole)}`
     )
     .join("\n");
   const clauses = graph.matchedClauses
     .map(
       (clause) =>
-        `- ${clause.jurisdiction} ${clause.coverageStatus} [${clause.citation}] ${clause.summary} Source: ${clause.sourceUrl}`
+        `- ${safe(clause.jurisdiction)} ${clause.coverageStatus} [${safe(clause.citation)}] ${safe(clause.summary)} Source: ${clause.sourceUrl}`
     )
     .join("\n");
   const gaps = graph.evidenceGaps
-    .map((gap) => `- ${gap.priority} ${gap.jurisdiction} [${gap.citation}] ${gap.title}: ${gap.reason}`)
+    .map((gap) => `- ${gap.priority} ${safe(gap.jurisdiction)} [${safe(gap.citation)}] ${safe(gap.title)}: ${safe(gap.reason)}`)
     .join("\n");
-  const actions = graph.topActions.map((action) => `- ${action.priority} ${action.jurisdiction}: ${action.action}`).join("\n");
+  const actions = graph.topActions.map((action) => `- ${action.priority} ${safe(action.jurisdiction)}: ${safe(action.action)}`).join("\n");
 
   return [
     graph.notLegalAdviceBoundary,
@@ -148,21 +152,21 @@ function formatModelIntakeSection({ profile, events, summary }: CounselPackModel
   const eventLines = events
     .map((event) => {
       const eventHash = eventHashes.get(event.id) ?? "pending";
-      const reviewer = event.humanReviewer.trim() || "unassigned";
-      return `- ${event.reviewStatus} ${event.eventType}: ${event.outputSummary || "No output summary recorded."} (reviewer: ${reviewer}; Event SHA-256: ${eventHash})`;
+      const reviewer = safe(event.humanReviewer.trim() || "unassigned");
+      return `- ${event.reviewStatus} ${safe(event.eventType)}: ${safe(event.outputSummary || "No output summary recorded.")} (reviewer: ${reviewer}; Event SHA-256: ${eventHash})`;
     })
     .join("\n");
-  const blockers = summary.blockers.map((blocker) => `- ${blocker}`).join("\n");
-  const checklist = summary.handoffChecklist.map((item) => `- ${item}`).join("\n");
+  const blockers = summary.blockers.map((blocker) => `- ${safe(blocker)}`).join("\n");
+  const checklist = summary.handoffChecklist.map((item) => `- ${safe(item)}`).join("\n");
 
   return [
-    `- Provider: ${profile.providerName}`,
-    `- Model: ${profile.modelName}`,
+    `- Provider: ${safe(profile.providerName)}`,
+    `- Model: ${safe(profile.modelName)}`,
     `- Endpoint type: ${profile.endpointType}`,
-    `- Use case: ${profile.useCase}`,
+    `- Use case: ${safe(profile.useCase)}`,
     `- Decision role: ${profile.decisionRole}`,
-    `- Allowed data classes: ${profile.dataClasses.join(", ") || "none recorded"}`,
-    `- Human review owner: ${profile.humanReviewOwner}`,
+    `- Allowed data classes: ${safe(profile.dataClasses.join(", ") || "none recorded")}`,
+    `- Human review owner: ${safe(profile.humanReviewOwner)}`,
     `- Readiness: ${summary.readiness}`,
     `- AI event count: ${summary.eventCount}`,
     `- Unresolved AI events: ${summary.unresolvedEventCount}`,
@@ -181,9 +185,13 @@ function formatModelIntakeSection({ profile, events, summary }: CounselPackModel
 }
 
 function formatReviewItem(item: CounselReviewItem): string {
-  const reviewer = item.reviewer.trim() || "unassigned";
-  const note = item.reviewerNote.trim() ? `\n  - note: ${item.reviewerNote.trim()}` : "";
-  return `- ${item.priority} ${item.status} [${item.flagId}] ${item.title} (${item.owner}; ${item.evidenceSummary}; reviewer: ${reviewer})${note}`;
+  const reviewer = safe(item.reviewer.trim() || "unassigned");
+  const note = item.reviewerNote.trim() ? `\n  - note: ${safe(item.reviewerNote.trim())}` : "";
+  return `- ${item.priority} ${item.status} [${safe(item.flagId)}] ${safe(item.title)} (${safe(item.owner)}; ${safe(item.evidenceSummary)}; reviewer: ${reviewer})${note}`;
+}
+
+function safe(value: string): string {
+  return redactDataBoundaryText(value);
 }
 
 export function downloadMarkdownFile(filename: string, content: string): void {

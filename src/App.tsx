@@ -51,6 +51,7 @@ import {
   sortCounselQuestionsForReview,
   type CounselQuestion
 } from "./lib/counselQuestions";
+import { createDataBoundaryReport } from "./lib/dataBoundary";
 import {
   createEvidenceCreatedEvent,
   createEvidenceRemovedEvent,
@@ -206,6 +207,17 @@ export default function App() {
       }),
     [currentAIEvents, currentCounselReviews, currentHumanReviewDecisions, project.evidenceItems, project.id]
   );
+  const dataBoundaryReport = useMemo(
+    () =>
+      createDataBoundaryReport({
+        project,
+        evidenceItems: project.evidenceItems,
+        counselQuestions: currentCounselQuestions,
+        counselReviews: currentCounselReviews,
+        aiEvents: currentAIEvents
+      }),
+    [currentAIEvents, currentCounselQuestions, currentCounselReviews, project]
+  );
   const markdown = useMemo(
     () => {
       if (!manifest) {
@@ -228,7 +240,8 @@ export default function App() {
         currentCounselReviews,
         modelIntakeExport,
         regulatoryGraph,
-        selectedCounselPackTemplate
+        selectedCounselPackTemplate,
+        dataBoundaryReport
       );
     },
     [
@@ -236,6 +249,7 @@ export default function App() {
       currentAIEvents,
       currentCounselQuestions,
       currentCounselReviews,
+      dataBoundaryReport,
       manifest,
       modelIntakeProfile,
       modelIntakeSummary,
@@ -540,6 +554,9 @@ export default function App() {
     if (!manifest) {
       throw new Error("Evidence manifest is still calculating.");
     }
+    if (!dataBoundaryReport.exportAllowed) {
+      throw new Error("Export Safety Gate blocked this Counsel Pack. Remove blocked materials before saving a version.");
+    }
 
     const record = await createCounselPackVersionRecord({
       project,
@@ -554,6 +571,10 @@ export default function App() {
   };
 
   const createServerExportRecord = async (apiBaseUrl: string) => {
+    if (!dataBoundaryReport.exportAllowed) {
+      throw new Error("Export Safety Gate blocked this Counsel Pack. Remove blocked materials before server export.");
+    }
+
     const latestVersion = currentCounselPackVersions[0];
     if (!latestVersion) {
       throw new Error("Save a Counsel Pack version before creating a server export record.");
@@ -743,6 +764,7 @@ export default function App() {
               exportTemplates={counselPackTemplates}
               selectedExportTemplate={selectedCounselPackTemplate}
               recommendedExportTemplateId={recommendedCounselPackTemplate.id}
+              dataBoundaryReport={dataBoundaryReport}
               counselPackVersions={currentCounselPackVersions}
               serverExportRecords={currentCounselPackServerExports}
               onSelectExportTemplate={setSelectedCounselPackTemplateId}

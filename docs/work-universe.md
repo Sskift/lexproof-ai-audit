@@ -24,7 +24,7 @@ The repository already has:
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
 - Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts, Human Review, server-side Counsel Pack export metadata records, and Audit Log listing.
 - Local Human Review operations with reviewer assignment, due dates, saved status history, linked evidence updates, and downloadable timeline JSON with audit log IDs.
-- Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, local Counsel Pack version history with manifest/Markdown hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
+- Editable Evidence Ledger, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, local Counsel Pack version history with manifest/Markdown hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE routing.
 - Demo script, screenshots, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, and server export-record path.
 
@@ -138,6 +138,7 @@ Build:
 - Versioned Counsel Pack records with manifest hash, review status, source pack, export timestamp, and metadata-only server export records.
 - Markdown and print/PDF flows that share the same export builder.
 - Export templates for launch review, RWA/tokenized asset review, AI governance review, custody review, and marketing review; the initial five-template set is implemented and should be extended only when new review scenarios need it.
+- Export Safety Gate that routes the same data-boundary report into Markdown preview, Markdown/PDF download gating, manifest JSON gating, simulated anchor gating, version-save gating, and server export-record gating.
 - Download receipts for manifest JSON, model-run receipts, evidence audit trail, and simulated/real anchor receipts.
 - Export diff view between pack versions.
 
@@ -145,6 +146,7 @@ Acceptance:
 
 - A judge can reproduce the demo export from a clean project.
 - Counsel can see facts, assumptions, source links, evidence gaps, review status, and hashes in one packet.
+- Blocked private-key, credential, or raw-KYC findings stop export handoff until remediated.
 - Every export repeats the Not legal advice boundary.
 
 Do not build:
@@ -206,7 +208,7 @@ Goal: make the workspace safe enough for realistic demos and future pilots.
 Build:
 
 - Data classification rules for public, confidential, personal data, KYC, secrets, and private keys.
-- Secret scanning in model settings, evidence notes, and export payloads.
+- Secret scanning in model settings, evidence notes, and export payloads. The first export-side classifier is implemented in `src/lib/dataBoundary.ts` for private-key-like values, API-key-like credentials, raw KYC references, personal-data references, and confidentiality labels.
 - Retention and deletion policy before storing raw files.
 - Audit log export with actor, action, target, timestamp, before/after hashes, and non-secret summaries.
 - Security review checklist for model providers, evidence storage, and anchor integrations.
@@ -278,7 +280,7 @@ Use this sequence unless a user asks for a narrower urgent slice:
 2. Evidence Vault hardening: evidence versioning, server manifest, duplicate/rejection recovery.
 3. Model Gateway production boundary: server-side provider policy, secret handling, error states, run evaluation records.
 4. Review operations: reviewer queues, status history, returned/rejected recovery, export readiness.
-5. Export versioning: persisted counsel packs, diffing, server-side export records.
+5. Export versioning and safety: persisted counsel packs, diffing, server-side export records, and data-boundary export blockers.
 6. Auth/RBAC and organizations: only after single-user workflows are stable.
 7. Optional real anchoring and raw document storage: only after privacy, wallet, and retention boundaries are written and tested.
 

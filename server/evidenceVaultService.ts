@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { validateEvidenceMetadataBoundary } from "../src/lib/evidenceUploadBoundary.js";
 import { validateEvidenceUploadBoundary } from "../src/lib/phase2ApiContracts.js";
 import type { EvidenceVaultRecord } from "../src/lib/phase2Types.js";
 
@@ -19,6 +20,13 @@ export type EvidenceVaultUploadInput = {
 
 export function createEvidenceVaultRecordFromUpload(input: EvidenceVaultUploadInput): EvidenceVaultRecord {
   const fileHash = createHash("sha256").update(input.bytes).digest("hex");
+  const metadataBoundary = validateEvidenceMetadataBoundary({
+    filename: input.filename,
+    owner: input.owner,
+    sourceNote: input.sourceNote,
+    linkedRiskFlagIds: input.linkedRiskFlagIds,
+    replacementReason: input.replacementReason
+  });
   const validation = validateEvidenceUploadBoundary({
     workspaceId: input.workspaceId,
     filename: input.filename,
@@ -28,6 +36,10 @@ export function createEvidenceVaultRecordFromUpload(input: EvidenceVaultUploadIn
     includesRawDocumentContentInApiJson: false,
     containsRawKycOrPersonalData: input.containsRawKycOrPersonalData
   });
+
+  if (!metadataBoundary.valid) {
+    throw new Error(metadataBoundary.errors.join(" "));
+  }
 
   if (!validation.valid) {
     throw new Error(validation.errors.join(" "));

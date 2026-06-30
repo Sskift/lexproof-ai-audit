@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { registerEvidenceVaultRoutes } from "./evidenceVaultRoutes";
 import { createMemoryReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+
 describe("Evidence Vault route module", () => {
   it("registers metadata-only upload, list, update, manifest, and duplicate-blocker routes", async () => {
     const server = Fastify({ logger: false });
@@ -112,6 +114,45 @@ describe("Evidence Vault route module", () => {
         expect.objectContaining({ action: "evidence.duplicate.blocked", targetId: evidence.id })
       ])
     );
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("blocks unsafe evidence metadata before storage without echoing secrets", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await server.register(multipart);
+    registerEvidenceVaultRoutes(server, { repository });
+
+    const unsafeForm = new FormData();
+    unsafeForm.append("file", Buffer.from("board approval memo"), {
+      filename: "approval-memo.txt",
+      contentType: "text/plain"
+    });
+    unsafeForm.append("owner", "Compliance");
+    unsafeForm.append("sourceNote", `Do not store API key ${apiKey} or raw KYC packet in metadata.`);
+    unsafeForm.append("containsRawKycOrPersonalData", "false");
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-boundary/evidence",
+      headers: unsafeForm.getHeaders(),
+      payload: unsafeForm
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        code: "EVIDENCE_UPLOAD_FAILED",
+        error: expect.stringContaining("credential-material"),
+        recoveryAction: "Retry with a multipart evidence file and metadata-only fields.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+    expect(response.body).not.toContain(apiKey);
+    expect(response.body.toLowerCase()).not.toContain("api_key");
+    expect(await repository.listEvidenceVaultRecords("workspace-evidence-boundary")).toEqual([]);
 
     await server.close();
     await repository.close();

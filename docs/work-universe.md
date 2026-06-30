@@ -211,7 +211,7 @@ Goal: make the workspace safe enough for realistic demos and future pilots.
 Build:
 
 - Data classification rules for public, confidential, personal data, KYC, secrets, and private keys.
-- Secret scanning in model settings, evidence notes, and export payloads. The first export-side classifier is implemented in `src/lib/dataBoundary.ts` for private-key-like values, API-key-like credentials, raw KYC references, personal-data references, and confidentiality labels.
+- Secret scanning in model settings, evidence notes, Evidence Vault upload metadata, and export payloads. The first export-side classifier is implemented in `src/lib/dataBoundary.ts` for private-key-like values, API-key-like credentials, raw KYC references, personal-data references, and confidentiality labels. The first server Evidence Vault metadata boundary is implemented in `src/lib/evidenceUploadBoundary.ts` and blocks credential material, private-key-like values, and raw KYC references before record creation.
 - Retention and deletion policy before storing raw files. The first Evidence Ledger retention gate is implemented in `src/lib/retentionPolicy.ts` and `EvidenceLedger`: it blocks Evidence Vault sync for private-key-like material, API-key-like credentials, and raw KYC references, shows recoverable remediation, and exports metadata-only retention policy JSON.
 - Audit log export with actor, action, target, timestamp, before/after hashes, and non-secret summaries. The first Secure Review Audit Log Export is implemented in `src/lib/auditLogExport.ts` and `SecureReviewWorkspace` with metadata-only JSON download.
 - Security review checklist for model providers, evidence storage, and anchor integrations.
@@ -221,6 +221,7 @@ Acceptance:
 - Blocked data classes produce explicit, recoverable UI messages.
 - Exports do not contain credentials, private keys, or raw KYC.
 - Evidence Vault sync cannot run while retention blockers are present.
+- Evidence Vault API uploads reject unsafe metadata without echoing secrets or raw KYC snippets.
 - Secure Review audit logs can be exported without raw secrets, raw KYC, or legal conclusions.
 - Tests cover boundary validators and redaction blockers.
 

@@ -93,6 +93,8 @@ The backend adapter registry currently lists:
 
 The first backend implementation accepts multipart upload streams, computes the file hash server-side, persists metadata, and keeps raw file bytes out of JSON API bodies and Counsel Pack exports. External-reference metadata can be added later behind the same boundary.
 
+`validateEvidenceMetadataBoundary()` in `src/lib/evidenceUploadBoundary.ts` adds the server-side metadata scanner used by `server/evidenceVaultService.ts`. It checks filename, owner, source note, linked risk IDs, and replacement reason before record creation, blocks credential material, private-key-like material, and raw KYC references, and returns class-level errors without echoing secret values or raw KYC snippets.
+
 ## Health Endpoint
 
 The first backend route is implemented in `server/app.ts`:
@@ -120,6 +122,7 @@ It:
 - computes server-side SHA-256
 - returns metadata-only `EvidenceVaultRecord` values
 - blocks raw KYC or personal-data markers
+- blocks credential material, private-key-like material, and raw KYC references in metadata before record creation
 - does not persist uploaded file bytes
 - does not return raw document content in JSON
 
@@ -143,7 +146,7 @@ The first Evidence Vault routes are implemented in `server/evidenceVaultRoutes.t
 - `POST /api/workspaces/:workspaceId/evidence/:evidenceId/replacement`
 - `GET /api/workspaces/:workspaceId/evidence-manifest`
 
-The upload route accepts multipart files, computes SHA-256 server-side, persists metadata-only records, and appends audit-log records. Duplicate active hashes are rejected with a typed error code and actionable recovery message before a second record is stored. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records; missing records, invalid statuses, and blocked status transitions return typed errors before mutation. The replacement route lets rejected evidence create a child metadata record with `parentEvidenceId` and `replacementReason`, while the rejected parent remains visible as `superseded` with `supersededByEvidenceId`; invalid replacement attempts return typed recovery guidance. The manifest route returns current evidence versions, parent/superseded lineage when present, item hashes, and a bundle hash.
+The upload route accepts multipart files, computes SHA-256 server-side, validates metadata boundaries before persistence, persists metadata-only records, and appends audit-log records. Duplicate active hashes are rejected with a typed error code and actionable recovery message before a second record is stored. The update route changes workflow metadata such as status and owner, increments the evidence version, and appends audit-log records; missing records, invalid statuses, and blocked status transitions return typed errors before mutation. The replacement route lets rejected evidence create a child metadata record with `parentEvidenceId` and `replacementReason`, while the rejected parent remains visible as `superseded` with `supersededByEvidenceId`; invalid replacement attempts return typed recovery guidance. The manifest route returns current evidence versions, parent/superseded lineage when present, item hashes, and a bundle hash.
 
 ## Model Gateway Routes
 
@@ -214,6 +217,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - Model Gateway adapter readiness with only the mock adapter enabled
 - server-side SHA-256 evidence metadata hashing
 - raw KYC/personal-data blocking before evidence vault record creation
+- credential, private-key, and raw KYC metadata boundary blocking before Evidence Vault record creation without secret echo
 - duplicate evidence hash blocking and rejected-evidence replacement lineage
 - mock Model Gateway route creation, listing, safe failure receipts, and boundary blocking
 - Human Review route creation, status update, listing, filtered queue summary, and linked Evidence Vault / Model Gateway status sync

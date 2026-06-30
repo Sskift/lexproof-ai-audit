@@ -6,6 +6,9 @@ import {
   supersedeEvidenceVaultRecord
 } from "./evidenceVaultService";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 describe("Phase 2 evidence vault service", () => {
   it("creates metadata-only evidence records with server-side SHA-256 hashes", () => {
     const bytes = new TextEncoder().encode("board approval memo");
@@ -59,6 +62,41 @@ describe("Phase 2 evidence vault service", () => {
         createdAt: "2026-06-29T10:00:00.000Z"
       })
     ).toThrow("Raw KYC or personal data cannot be accepted in the Phase 2 evidence upload draft.");
+  });
+
+  it("blocks credential, private-key, and raw KYC text in metadata before creating evidence vault records", () => {
+    expect(() =>
+      createEvidenceVaultRecordFromUpload({
+        workspaceId: "workspace-1",
+        filename: "approval-memo.txt",
+        mimeType: "text/plain",
+        bytes: new TextEncoder().encode("board approval memo"),
+        owner: "Compliance",
+        sourceNote: `Do not persist API key ${apiKey}, private key ${privateKey}, or raw KYC packet.`,
+        linkedRiskFlagIds: ["governance"],
+        containsRawKycOrPersonalData: false,
+        createdAt: "2026-06-29T10:00:00.000Z"
+      })
+    ).toThrow(/credential-material.*private-key-material.*raw-kyc/);
+
+    try {
+      createEvidenceVaultRecordFromUpload({
+        workspaceId: "workspace-1",
+        filename: "approval-memo.txt",
+        mimeType: "text/plain",
+        bytes: new TextEncoder().encode("board approval memo"),
+        owner: "Compliance",
+        sourceNote: `Do not persist API key ${apiKey}, private key ${privateKey}, or raw KYC packet.`,
+        linkedRiskFlagIds: ["governance"],
+        containsRawKycOrPersonalData: false,
+        createdAt: "2026-06-29T10:00:00.000Z"
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).not.toContain(apiKey);
+      expect((error as Error).message).not.toContain(privateKey);
+      expect((error as Error).message).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
   });
 
   it("links replacement records to a rejected parent without hiding the superseded record", () => {

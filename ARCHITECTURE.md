@@ -62,6 +62,7 @@ lexproof-ai-audit/
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
       evidenceAuditTrail.ts  # Local evidence change events and JSON export
       retentionPolicy.ts     # Evidence retention readiness, vault-sync blockers, and JSON export
+      evidenceUploadBoundary.ts # Server Evidence Vault metadata boundary scanner
       evidenceVaultWorkflow.ts # Evidence Vault status transition guardrails
       missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
@@ -256,6 +257,16 @@ Owns Evidence Retention Readiness behavior:
 - `exportRetentionPolicyJson(report)` and `downloadRetentionPolicyJson(filename, report)` export a metadata-only retention policy report with redacted snippets, retention window, deletion trigger, and the Not legal advice boundary.
 
 The module does not delete user-entered ledger content, perform KYC, store files, or make legal conclusions. It controls whether Evidence Vault sync can run and gives recoverable remediation steps before metadata leaves the local ledger.
+
+### `src/lib/evidenceUploadBoundary.ts`
+
+Owns server Evidence Vault metadata boundary behavior:
+
+- `validateEvidenceMetadataBoundary(input)` scans filenames, owners, source notes, linked risk IDs, and replacement reasons for private-key-like material, credential-like tokens, and raw KYC references before an Evidence Vault record is created.
+- The result returns deterministic blocked classes, sanitized error messages, and the Not legal advice boundary.
+- Clean metadata can mention the absence of raw KYC without being blocked.
+
+This module is metadata-only audit preparation guardrail logic. It does not inspect or persist raw file bytes, perform KYC, or create legal conclusions.
 
 ### `src/lib/jurisdictionChecklist.ts`
 
@@ -557,6 +568,8 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 `src/lib/evidenceVaultWorkflow.ts` owns the shared Evidence Vault status machine. `server/evidenceVaultRoutes.ts` uses it before PATCH writes so rejected evidence cannot be directly reactivated and superseded records stay historical; users must use the replacement endpoint to preserve parent/child lineage. `server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
 
+`src/lib/evidenceUploadBoundary.ts` is called by `server/evidenceVaultService.ts` before record creation so unsafe metadata is blocked server-side even if a client bypasses the UI retention gate. It returns class-level errors without echoing credentials, private keys, or raw KYC snippets.
+
 ### Human Review Workflow Responsibilities
 
 - create review requests for deterministic risk flags, evidence records, model runs, and counsel packs
@@ -655,6 +668,7 @@ Domain tests live next to the audit engine and cover:
 - local file SHA-256 hashing and metadata-only evidence creation
 - evidence audit trail create/update/remove events and JSON export
 - evidence retention policy classification, redaction, vault-sync blocker status, and JSON export
+- Evidence Vault metadata boundary scanning for credential material, private-key-like values, raw KYC references, negated clean KYC references, and sanitized errors
 - Evidence Vault status transition guardrails and rejected/superseded recovery errors
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope

@@ -2160,6 +2160,158 @@ textarea {
   padding: 9px 12px;
 }
 
+.retention-policy-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.retention-policy-panel.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.retention-policy-panel.needs-review {
+  border-color: #e7c673;
+  background: #fffbeb;
+}
+
+.retention-policy-panel.ready {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.retention-status,
+.retention-severity {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.retention-status.blocked,
+.retention-severity.block {
+  background: #fee4df;
+  color: #9f241a;
+}
+
+.retention-status.needs-review,
+.retention-severity.warn {
+  background: #fff0bd;
+  color: #7a4e00;
+}
+
+.retention-status.ready,
+.retention-severity.info {
+  background: #dff4eb;
+  color: #0c5f55;
+}
+
+.retention-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.retention-grid > div,
+.retention-actions article {
+  min-width: 0;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.retention-grid > div {
+  padding: 10px;
+}
+
+.retention-grid span,
+.retention-grid strong {
+  display: block;
+}
+
+.retention-grid span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.retention-grid strong {
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.95rem;
+}
+
+.retention-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.retention-actions article {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.retention-actions header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.retention-actions strong {
+  color: #172431;
+}
+
+.retention-actions p {
+  margin-bottom: 0;
+  color: #445361;
+  line-height: 1.4;
+}
+
+.retention-actions small {
+  color: #657382;
+  line-height: 1.35;
+}
+
+.retention-actions code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  background: #f4f7f9;
+  color: #263d73;
+  padding: 9px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.retention-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.retention-footer ul {
+  flex: 1 1 360px;
+  margin: 0;
+  padding-left: 18px;
+  color: #31424f;
+  line-height: 1.45;
+}
+
 .evidence-vault-sync {
   display: grid;
   gap: 12px;
@@ -3388,6 +3540,7 @@ textarea {
   .human-review-card header,
   .human-review-grid,
   .template-grid,
+  .retention-grid,
   .vault-sync-grid,
   .secure-journey-controls {
     grid-template-columns: 1fr;

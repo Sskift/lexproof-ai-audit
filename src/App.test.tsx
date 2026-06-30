@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
@@ -152,6 +152,34 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /Save Pack Version/i })).toBeDisabled();
     expect(screen.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+  });
+
+  it("blocks Evidence Vault sync when retention policy detects private keys or raw KYC materials", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe retention packet" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: {
+        value:
+          "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
+      }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    const retentionHeading = await screen.findByRole("heading", { name: /Evidence Retention Readiness/i });
+    const retentionPanel = retentionHeading.closest("section");
+
+    expect(retentionPanel).not.toBeNull();
+    expect(screen.getByText(/Blocked retention/i)).toBeInTheDocument();
+    expect(screen.getByText(/Vault sync blocked until retention blockers are remediated/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sync Evidence Vault/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Download Retention Policy JSON/i })).toBeInTheDocument();
+    const retention = within(retentionPanel as HTMLElement);
+    expect(retention.getByText(/\[redacted-private-key\]/i)).toBeInTheDocument();
+    expect(retention.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
+    expect(retention.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   });
 
   it("syncs Evidence Ledger metadata to the backend Evidence Vault and displays the vault manifest hash", async () => {

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BadgeCheck, CloudUpload, DatabaseZap, Download, FileUp, History, LockKeyhole, RefreshCcw, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BadgeCheck, CloudUpload, DatabaseZap, Download, FileUp, History, LockKeyhole, RefreshCcw, ShieldAlert, Trash2 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
@@ -14,6 +14,11 @@ import {
 } from "../lib/evidenceVaultClient";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
+import {
+  createRetentionPolicyReport,
+  downloadRetentionPolicyJson,
+  type RetentionPolicyReport
+} from "../lib/retentionPolicy";
 
 type EvidenceLedgerProps = {
   projectId: string;
@@ -61,9 +66,18 @@ export function EvidenceLedger({
   const [vaultReplacementReasons, setVaultReplacementReasons] = useState<Record<string, string>>({});
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
+  const retentionReport = useMemo(
+    () =>
+      createRetentionPolicyReport({
+        workspaceId: projectId,
+        evidenceItems
+      }),
+    [evidenceItems, projectId]
+  );
 
   const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
-  const canSyncVault = evidenceItems.length > 0 && projectId.trim().length > 0 && vaultStatus !== "syncing";
+  const canSyncVault =
+    evidenceItems.length > 0 && projectId.trim().length > 0 && retentionReport.vaultSyncAllowed && vaultStatus !== "syncing";
 
   const addEvidence = () => {
     if (!canAdd) {
@@ -274,6 +288,8 @@ export function EvidenceLedger({
         {fileImportState ? <p className="save-state">{fileImportState}</p> : null}
       </section>
 
+      <RetentionPolicyPanel report={retentionReport} />
+
       <section className={`evidence-vault-sync ${vaultStatus}`}>
         <div className="split-title compact-title">
           <div>
@@ -315,6 +331,9 @@ export function EvidenceLedger({
             Refresh Vault Manifest
           </button>
         </div>
+        {!retentionReport.vaultSyncAllowed && evidenceItems.length > 0 ? (
+          <p className="empty-state">Vault sync blocked until retention blockers are remediated. Not legal advice.</p>
+        ) : null}
         {vaultStatus === "syncing" ? <p className="save-state">Syncing metadata-only evidence snapshots to the vault...</p> : null}
         {evidenceItems.length === 0 ? (
           <p className="empty-state">
@@ -553,6 +572,74 @@ export function EvidenceLedger({
         ))}
       </div>
     </section>
+  );
+}
+
+function RetentionPolicyPanel({ report }: { report: RetentionPolicyReport }) {
+  const statusLabel =
+    report.status === "blocked" ? "Blocked retention" : report.status === "needs-review" ? "Needs retention review" : "Ready";
+  const visibleActions = report.actions.slice(0, 5);
+
+  return (
+    <section className={`retention-policy-panel ${report.status}`}>
+      <div className="split-title compact-title">
+        <div>
+          <ShieldAlert size={17} aria-hidden="true" />
+          <h3>Evidence Retention Readiness</h3>
+        </div>
+        <span className={`retention-status ${report.status}`}>{statusLabel}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="retention-grid">
+        <RetentionFact label="Evidence items" value={String(report.evidenceCount)} />
+        <RetentionFact label="Blockers" value={String(report.blockerCount)} />
+        <RetentionFact label="Needs review" value={String(report.reviewCount)} />
+        <RetentionFact label="Vault sync" value={report.vaultSyncAllowed ? "allowed" : "blocked"} />
+      </div>
+      <div className="retention-actions">
+        {visibleActions.map((action, index) => (
+          <article key={`${action.evidenceLabel}-${action.action}-${action.dataClass}-${index}`}>
+            <header>
+              <span className={`retention-severity ${action.severity}`}>{action.severity}</span>
+              <strong>{`Evidence item: ${action.evidenceLabel}`}</strong>
+              <small>
+                {action.dataClass} · {action.action} · {action.owner}
+              </small>
+            </header>
+            <p>{action.reason}</p>
+            <code>{action.redactedSnippet}</code>
+            <small>
+              Retention: {action.retentionWindow}. Deletion trigger: {action.deletionTrigger}.
+            </small>
+          </article>
+        ))}
+      </div>
+      <div className="retention-footer">
+        <ul>
+          {report.nextSteps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          className="secondary"
+          disabled={report.evidenceCount === 0}
+          onClick={() => downloadRetentionPolicyJson("evidence-retention-policy.json", report)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Retention Policy JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function RetentionFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 

@@ -209,7 +209,7 @@ Build:
 
 - Data classification rules for public, confidential, personal data, KYC, secrets, and private keys.
 - Secret scanning in model settings, evidence notes, and export payloads. The first export-side classifier is implemented in `src/lib/dataBoundary.ts` for private-key-like values, API-key-like credentials, raw KYC references, personal-data references, and confidentiality labels.
-- Retention and deletion policy before storing raw files.
+- Retention and deletion policy before storing raw files. The first Evidence Ledger retention gate is implemented in `src/lib/retentionPolicy.ts` and `EvidenceLedger`: it blocks Evidence Vault sync for private-key-like material, API-key-like credentials, and raw KYC references, shows recoverable remediation, and exports metadata-only retention policy JSON.
 - Audit log export with actor, action, target, timestamp, before/after hashes, and non-secret summaries.
 - Security review checklist for model providers, evidence storage, and anchor integrations.
 
@@ -217,6 +217,7 @@ Acceptance:
 
 - Blocked data classes produce explicit, recoverable UI messages.
 - Exports do not contain credentials, private keys, or raw KYC.
+- Evidence Vault sync cannot run while retention blockers are present.
 - Tests cover boundary validators and redaction blockers.
 
 Do not build:

@@ -51,6 +51,7 @@ lexproof-ai-audit/
       evidenceTemplates.ts   # Template recommendation and instantiation helpers
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
       evidenceAuditTrail.ts  # Local evidence change events and JSON export
+      retentionPolicy.ts     # Evidence retention readiness, vault-sync blockers, and JSON export
       missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
@@ -87,6 +88,7 @@ sampleProfiles or blank project
   -> createEvidenceRequestFromRequirement(requirement) for missing Risk Audit evidence
   -> createEvidenceItemFromFile(file) for browser-side local file metadata evidence
   -> createEvidenceAuditEvent(...) for local ledger create/update/remove metadata
+  -> createRetentionPolicyReport(project.id, evidenceItems) for Evidence Vault sync readiness
   -> createJurisdictionChecklist(project, audit)
   -> createJurisdictionPacks(project, audit)
   -> createRegulatoryGraph(project, audit, evidenceItems)
@@ -228,6 +230,16 @@ Owns local evidence event behavior:
 - `exportEvidenceAuditTrailJson(events)` and `downloadEvidenceAuditTrailJson(filename, events)` export the trail as local JSON.
 
 Evidence audit trail events are audit-prep metadata only. They are not signed approvals, legal conclusions, external timestamps, uploaded documents, or real chain writes.
+
+### `src/lib/retentionPolicy.ts`
+
+Owns Evidence Retention Readiness behavior:
+
+- `createRetentionPolicyReport({ workspaceId, evidenceItems })` classifies ledger evidence as metadata-only, needs human retention review, or blocked before Evidence Vault sync.
+- Blockers include private-key-like material, API-key-like credentials, and raw KYC references. Warning classes include personal-data, KYC, and confidentiality references that require human confirmation before metadata-only sync.
+- `exportRetentionPolicyJson(report)` and `downloadRetentionPolicyJson(filename, report)` export a metadata-only retention policy report with redacted snippets, retention window, deletion trigger, and the Not legal advice boundary.
+
+The module does not delete user-entered ledger content, perform KYC, store files, or make legal conclusions. It controls whether Evidence Vault sync can run and gives recoverable remediation steps before metadata leaves the local ledger.
 
 ### `src/lib/jurisdictionChecklist.ts`
 
@@ -464,7 +476,7 @@ Components are intentionally presentational and interaction-focused:
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
-- `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, and exposes recent local evidence audit trail events plus JSON export.
+- `EvidenceLedger` applies scenario templates, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, exposes recent local evidence audit trail events plus JSON export, renders Evidence Retention Readiness, exports retention policy JSON, and blocks Evidence Vault sync when retention blockers are present.
 - `CounselPackPanel` selects an export template, renders the Export Safety Gate, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`
@@ -598,6 +610,7 @@ Domain tests live next to the audit engine and cover:
 - evidence template recommendation and instantiation
 - local file SHA-256 hashing and metadata-only evidence creation
 - evidence audit trail create/update/remove events and JSON export
+- evidence retention policy classification, redaction, vault-sync blocker status, and JSON export
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing
@@ -635,6 +648,7 @@ UI tests cover:
 - source-linked Risk Audit trigger explanations
 - evidence template application
 - Evidence Audit Trail visibility and JSON download action
+- Evidence Retention Readiness blocker state and disabled Evidence Vault sync action
 - manifest JSON download action
 - Counsel Pack Print / Save PDF action
 - simulated anchor receipt creation

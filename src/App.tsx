@@ -18,6 +18,7 @@ import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
 import { HumanReviewPanel } from "./components/HumanReviewPanel";
+import { IntegrationReadinessPanel } from "./components/IntegrationReadinessPanel";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
 import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
@@ -61,6 +62,7 @@ import {
 } from "./lib/evidenceAuditTrail";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
+import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
   createHumanReviewDecision,
   createHumanReviewQueue,
@@ -235,6 +237,25 @@ export default function App() {
         evidenceCount: project.evidenceItems.length
       }),
     [dataBoundaryReport, manifest?.bundleHash, modelConnectReceipt, project.evidenceItems.length, retentionPolicyReport]
+  );
+  const integrationReadinessRegistry = useMemo(
+    () =>
+      createIntegrationReadinessRegistry({
+        securityReviewChecklist,
+        modelConnectReceipt,
+        evidenceCount: project.evidenceItems.length,
+        manifestHash: manifest?.bundleHash,
+        remediationItemCount: audit.remediation.length,
+        counselPackVersionCount: currentCounselPackVersions.length
+      }),
+    [
+      audit.remediation.length,
+      currentCounselPackVersions.length,
+      manifest?.bundleHash,
+      modelConnectReceipt,
+      project.evidenceItems.length,
+      securityReviewChecklist
+    ]
   );
   const markdown = useMemo(
     () => {
@@ -702,6 +723,8 @@ export default function App() {
           />
 
           <SecurityReviewChecklistPanel report={securityReviewChecklist} onNavigate={setActiveTab} />
+
+          <IntegrationReadinessPanel registry={integrationReadinessRegistry} onNavigate={setActiveTab} />
 
           <nav className="tabs" aria-label="Workbench tabs">
             {tabs.map((tab) => {

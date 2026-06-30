@@ -38,6 +38,7 @@ lexproof-ai-audit/
       ModelIntakePanel.tsx   # Model connection profile and AI event intake records
       RegulatoryCommandCenter.tsx # Source-backed jurisdiction graph and evidence gap cockpit
       SecurityReviewChecklistPanel.tsx # Security readiness gates for integrations
+      IntegrationReadinessPanel.tsx # Adapter-level readiness registry for external integration gates
       CounselQuestionsPanel.tsx # Editable counsel question queue
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
@@ -84,6 +85,7 @@ lexproof-ai-audit/
       counselPackExportClient.ts # Browser client for Phase 2 Counsel Pack export records
       auditLogFilters.ts    # Server audit-log query normalization and filtering
       securityReviewChecklist.ts # Integration security readiness checklist
+      integrationReadiness.ts # Adapter readiness registry for model, storage, anchor, OCR, and GRC integrations
       auditEngine.test.ts    # Domain tests
     App.test.tsx             # UI smoke test
   docs/
@@ -466,6 +468,16 @@ Owns integration security readiness behavior:
 
 The checklist is audit preparation metadata only. It does not store credentials, persist raw files, call model providers, write to a blockchain, or create legal conclusions.
 
+### `src/lib/integrationReadiness.ts`
+
+Owns W9 adapter readiness behavior:
+
+- `createIntegrationReadinessRegistry(input)` maps the Security Review Checklist plus manifest, evidence, remediation, Model Connect, and Counsel Pack version state into five adapter records: server model provider, object storage vault, chain anchor, document parser/OCR, and GRC ticket export.
+- Each adapter returns one of `ready`, `needs-policy`, `blocked`, or `disabled`, plus sanitized readiness evidence, validation errors, recovery action, required policy, and the Not legal advice boundary.
+- The registry makes deferred integrations visible without enabling them. Local mock model routing can make the server provider adapter explicitly disabled; metadata-only remediation queues can make GRC ticket export ready; object storage, chain anchoring, and OCR stay behind policy or blocker states.
+
+The registry is audit preparation metadata only. It does not call external providers, persist secrets, upload raw files, run OCR, create GRC tickets, write chain transactions, or change deterministic audit scoring.
+
 ### `src/lib/counselPackTemplates.ts`
 
 Owns Counsel Pack export template behavior:
@@ -665,6 +677,7 @@ Domain tests live next to the audit engine and cover:
 - AI event reviewer and review-status editing
 - data boundary report classification, blocker handling, redacted snippets, and export Markdown summary
 - security review checklist status, sanitized blockers, session-model review state, and simulated-anchor requirements
+- integration readiness registry status, disabled adapters, policy blockers, safe GRC readiness, and sanitized unsafe evidence blockers
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export

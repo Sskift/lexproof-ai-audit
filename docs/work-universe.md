@@ -236,6 +236,10 @@ Do not build:
 
 Goal: connect to useful external systems only after boundaries are explicit.
 
+Implemented first slice:
+
+- Integration Readiness Registry in `src/lib/integrationReadiness.ts` and `IntegrationReadinessPanel`: maps security-review gates into adapter-level ready, needs-policy, blocked, and disabled states for server model providers, object storage, chain anchors, document parser/OCR, and GRC ticket export. It exposes sanitized validation errors and recovery actions without enabling external providers, raw uploads, OCR, ticket creation, or chain writes.
+
 Build candidates:
 
 - OpenAI-compatible server provider adapter after secret policy approval.

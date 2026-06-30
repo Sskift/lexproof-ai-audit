@@ -73,6 +73,43 @@ describe("App", () => {
     expect(security.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   });
 
+  it("shows Integration Readiness Registry adapter states and blocked recovery without leaking unsafe evidence", async () => {
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registryPanel = registryHeading.closest("section");
+
+    expect(registryPanel).not.toBeNull();
+    const registry = within(registryPanel as HTMLElement);
+    expect(registry.getByText(/Not legal advice. Integration readiness output is audit preparation metadata only./i)).toBeInTheDocument();
+    expect(registry.getByText(/Server model provider blocked/i)).toBeInTheDocument();
+    expect(registry.getByText(/Object storage vault needs policy/i)).toBeInTheDocument();
+    expect(registry.getByText(/GRC ticket export ready/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+    expect(await registry.findByText(/Server model provider disabled/i)).toBeInTheDocument();
+    expect(registry.getByText(/Local mock route is ready; the real server provider remains disabled by default./i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe adapter packet" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: {
+        value:
+          "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
+      }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await registry.findByText(/Object storage vault blocked/i)).toBeInTheDocument();
+    expect(registry.getByText(/Document parser \/ OCR blocked/i)).toBeInTheDocument();
+    expect(registry.getAllByText(/Remove blocked materials before enabling this adapter./i).length).toBeGreaterThan(0);
+    expect(registry.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
+    expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+  });
+
   it("creates a custom project, updates the risk audit, and displays editable evidence in the ledger", async () => {
     render(<App />);
 

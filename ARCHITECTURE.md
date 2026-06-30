@@ -13,6 +13,7 @@ lexproof-ai-audit/
     index.ts                 # API process entry point
     modelGatewayRoutes.ts    # Model Gateway adapter, run, lookup, and summary routes
     counselPackExportRoutes.ts # Counsel Pack export-record create/list/lookup routes
+    humanReviewRoutes.ts     # Human Review create/list/queue/update and linked target sync routes
     evidenceVaultService.ts  # Server-side evidence metadata and SHA-256 hashing service
     modelGatewayService.ts   # Mock Model Gateway success/failure receipts and boundary checks
     humanReviewService.ts    # Human review record helpers
@@ -520,7 +521,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/modelGatewayRoutes.ts` and `server/counselPackExportRoutes.ts` are the first W7 domain route modules split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing. `server/app.ts` composes shared hooks and route modules; `server/modelGatewayRoutes.ts`, `server/counselPackExportRoutes.ts`, and `server/humanReviewRoutes.ts` are the first W7 domain route modules split out of the monolithic app while preserving repository-backed audit logging. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -563,7 +564,7 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
 
-`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `src/lib/serverHumanReviewQueue.ts` creates metadata-only server queue views with target/status/reviewer counts and next actions. `src/lib/serverHumanReviewEffects.ts` maps evidence-target review decisions to Evidence Vault status updates and model-run-target decisions to Model Gateway `humanReviewStatus` updates without treating review as legal approval. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. The route persists records through the repository, returns filtered queue views, syncs linked evidence/model-run status when applicable, and appends audit-log records for create/update/sync actions.
+`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `src/lib/serverHumanReviewQueue.ts` creates metadata-only server queue views with target/status/reviewer counts and next actions. `src/lib/serverHumanReviewEffects.ts` maps evidence-target review decisions to Evidence Vault status updates and model-run-target decisions to Model Gateway `humanReviewStatus` updates without treating review as legal approval. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. `server/humanReviewRoutes.ts` persists records through the repository, returns filtered queue views, syncs linked evidence/model-run status when applicable, and appends audit-log records for create/update/sync actions.
 
 ### Counsel Pack Export Record Responsibilities
 
@@ -651,7 +652,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify health endpoint, Workspace routes, and server-side Evidence Vault metadata hashing
-- Phase 2 Model Gateway adapter readiness, mock run routes, persisted Human Review routes, filtered server-side review queue views, and linked evidence/model-run review status sync
+- Phase 2 Model Gateway adapter readiness, mock run routes, Human Review route-module registration, persisted review routes, filtered server-side review queue views, and linked evidence/model-run review status sync
 - Phase 2 Counsel Pack export-record creation, route validation, repository persistence, and audit-log creation
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation

@@ -160,7 +160,7 @@ Successful mock runs persist a receipt with payload hash, response hash, source 
 
 ## Human Review Routes
 
-The first Human Review routes are implemented in `server/app.ts` and backed by `server/humanReviewService.ts`:
+The first Human Review routes are implemented in `server/humanReviewRoutes.ts` and backed by `server/humanReviewService.ts`, `src/lib/serverHumanReviewQueue.ts`, `src/lib/serverHumanReviewEffects.ts`, and `server/reviewWorkspaceRepository.ts`:
 
 - `POST /api/workspaces/:workspaceId/reviews`
 - `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`
@@ -171,7 +171,7 @@ The current routes support create, update, list, filtered queue-view behavior, a
 
 ## Counsel Pack Export Record Routes
 
-The first Counsel Pack export-record routes are implemented in `server/app.ts` and backed by `server/counselPackExportService.ts` and `server/reviewWorkspaceRepository.ts`:
+The first Counsel Pack export-record routes are implemented in `server/counselPackExportRoutes.ts` and backed by `server/counselPackExportService.ts` and `server/reviewWorkspaceRepository.ts`:
 
 - `POST /api/workspaces/:workspaceId/exports/counsel-pack`
 - `GET /api/workspaces/:workspaceId/exports`
@@ -223,6 +223,7 @@ Workspace creation/update, Evidence Vault upload/update/replacement, Model Gatew
 - Audit Log listing after workspace, evidence, model, review, and export workflow actions
 - Model Gateway route-module registration independently from the full app composition
 - Counsel Pack export route-module registration independently from the full app composition
+- Human Review route-module registration independently from the full app composition
 
 `server/reviewWorkspaceRepository.test.ts` covers:
 

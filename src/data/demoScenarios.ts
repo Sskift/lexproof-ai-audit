@@ -55,5 +55,23 @@ export const demoScenarios: DemoScenario[] = [
     expectedArtifacts: ["Regulatory Source Graph", "Counsel Pack Markdown", "Manifest JSON"],
     focusTags: ["Public materials", "Source graph", "Export safety"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
+    id: "lexassist-ai-workflow-path",
+    projectName: "LexAssist Evidence Desk",
+    title: "AI legal workflow review",
+    summary: "Model-connect governance, AI event intake, source review, human review, and counsel export.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "model",
+    judgePath: [
+      "Connect model",
+      "Register AI event",
+      "Route human review",
+      "Inspect source review",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Model Intake JSON", "Human Review Timeline", "Counsel Pack Markdown"],
+    focusTags: ["AI legal workflow", "Model governance", "Counsel handoff"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   }
 ];

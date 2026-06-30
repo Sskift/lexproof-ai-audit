@@ -70,7 +70,7 @@ const demoReadinessReport: DemoReadinessReport = {
       id: "scenario-library",
       label: "Scenario library",
       status: "ready",
-      detail: "3 synthetic judge paths are available and validated.",
+      detail: "4 synthetic judge paths are available and validated.",
       recoveryAction: "Keep demo scenarios synthetic and source-linked."
     },
     {

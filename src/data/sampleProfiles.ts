@@ -50,5 +50,22 @@ export const sampleProfiles: AuditProfile[] = [
       { label: "Public syllabus", kind: "Markdown", content: "Blockchain legal education outline" },
       { label: "Source bibliography", kind: "CSV", content: "BLI, SEC, FinCEN, UK manual, educator notes" }
     ]
+  },
+  {
+    projectName: "LexAssist Evidence Desk",
+    entityType: "Legal operations AI workflow",
+    jurisdictions: ["United States", "European Union", "United Kingdom"],
+    assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
+    userType: "In-house counsel, compliance reviewers, and outside counsel",
+    custodyModel: "No custody; workspace stores metadata-only evidence records",
+    dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
+    aiUsage: "AI drafts issue-spotting notes, evidence requests, and source-linked counsel questions for human review",
+    blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
+    operatingStage: "Internal pilot before counsel-supervised rollout",
+    evidenceItems: [
+      { label: "AI review SOP", kind: "Policy", content: "Human review owner, model use limits, redaction checks, escalation path" },
+      { label: "Matter intake schema", kind: "JSON", content: "Synthetic intake fields, evidence metadata, reviewer assignment states" },
+      { label: "Source review log", kind: "CSV", content: "Official-source citation, review date, reviewer notes, next review date" }
+    ]
   }
 ];

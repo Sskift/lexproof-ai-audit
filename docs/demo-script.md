@@ -30,9 +30,10 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 0. **Start from a seeded scenario**
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
+   - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, source review, and counsel export.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
-   - Screenshot: `docs/assets/screenshots/demo-scenario-library.png`.
+   - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
 
 1. **Review command center**
    - Start on the **Regulatory Command Center** at the top of the workbench.

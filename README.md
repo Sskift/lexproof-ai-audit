@@ -67,9 +67,9 @@ Key evidence:
 
 ## Product Screenshots
 
-The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts and Not legal advice boundaries.
+The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts and Not legal advice boundaries, including RWA launch, DAO review, public-source review, and AI legal workflow review paths.
 
-![Demo Scenario Library](docs/assets/screenshots/demo-scenario-library.png)
+![Demo Scenario Library](docs/assets/screenshots/demo-scenario-library-ai-workflow.png)
 
 Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, validated synthetic scenarios, no private credentials, current screenshot set, and a `/api/health` preflight for the Phase 2 API. Not legal advice.
 
@@ -243,7 +243,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 
 ## First-Stage Workflow
 
-1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, or **Public source education review**.
+1. Open the app and click **New project**, load one of the synthetic sample profiles, or use **Demo Scenario Library** to start a judge-ready path such as **High-risk RWA launch**, **DAO proposal review**, **Public source education review**, or **AI legal workflow review**.
 2. Fill in project facts in the Project Workspace. Do not enter raw KYC, private keys, or personal data.
 3. Review the **Regulatory Command Center** for the **Workspace Action Queue**, **Regulatory Control Matrix**, jurisdiction readiness, official-source triggers, evidence gaps, and the non-advice handoff boundary. Download the Control Matrix JSON when counsel needs a metadata-only source/evidence/source-review handoff. Use queue buttons to jump directly to evidence, model, review, or export recovery work.
 4. Open **Model Intake** to document model purpose, allowed data classes, human review owner, and any AI event records that need traceability.

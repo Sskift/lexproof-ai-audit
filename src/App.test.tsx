@@ -118,6 +118,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Demo Scenario Library/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Demo scenarios are synthetic audit preparation paths only./i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /High-risk RWA launch/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /AI legal workflow review/i })).toBeInTheDocument();
     expect(screen.getAllByText(/GRC Ticket Export/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Start High-risk RWA launch/i }));
@@ -126,6 +127,17 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
+  });
+
+  it("starts the AI legal workflow scenario in Model Intake with synthetic facts", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start AI legal workflow review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("LexAssist Evidence Desk");
+    expect(await screen.findByRole("heading", { name: /Model Intake/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Download Model Intake JSON/i })).toBeInTheDocument();
+    expect(screen.getByText(/AI events are audit-prep records for human review. Not legal advice/i)).toBeInTheDocument();
   });
 
   it("shows judge demo readiness and checks the Phase 2 API without private credentials", async () => {

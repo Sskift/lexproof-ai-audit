@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { demoScenarios } from "../data/demoScenarios";
 import { sampleProfiles } from "../data/sampleProfiles";
 import {
   findDemoScenarioById,
@@ -52,6 +53,26 @@ describe("validateDemoScenarioLibrary", () => {
         "unsafe-demo includes blocked demo text: private key."
       ])
     );
+  });
+
+  it("keeps a seeded AI legal workflow path for model governance and counsel handoff demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const aiWorkflowScenario = findDemoScenarioById(demoScenarios, "lexassist-ai-workflow-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(aiWorkflowScenario).toEqual(
+      expect.objectContaining({
+        title: "AI legal workflow review",
+        projectName: "LexAssist Evidence Desk",
+        recommendedStartTab: "model",
+        focusTags: expect.arrayContaining(["AI legal workflow", "Model governance", "Counsel handoff"]),
+        expectedArtifacts: expect.arrayContaining(["Model Intake JSON", "Human Review Timeline", "Counsel Pack Markdown"])
+      })
+    );
+    expect(aiWorkflowScenario?.judgePath).toEqual(
+      expect.arrayContaining(["Connect model", "Register AI event", "Route human review", "Inspect source review", "Export counsel pack"])
+    );
+    expect(aiWorkflowScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 });
 

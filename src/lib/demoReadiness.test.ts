@@ -29,7 +29,7 @@ describe("demo readiness", () => {
   it("keeps a clean-clone judge run in needs-api state until Phase 2 API preflight is checked", () => {
     const report = createDemoReadinessReport({
       scenarioValidation: validScenarioValidation,
-      scenarioCount: 3,
+      scenarioCount: 4,
       screenshotRefs: ["demo-01-model-connect.png", "demo-02-evidence-ledger.png"],
       apiPreflight: { status: "not-checked" }
     });
@@ -49,6 +49,9 @@ describe("demo readiness", () => {
       ["phase-2-api-preflight", "not-checked"]
     ]);
     expect(report.nextActions).toContain("Run the Phase 2 API and click Check Demo API before judging.");
+    expect(report.checks.find((check) => check.id === "scenario-library")?.detail).toBe(
+      "4 synthetic judge paths are available and validated."
+    );
     expect(demoReadinessCommands).toContain("npm run verify");
     expect(JSON.stringify(report)).toContain("Not legal advice");
     expect(JSON.stringify(report).toLowerCase()).not.toContain("legal opinion");

@@ -124,8 +124,17 @@ describe("createRegulatoryGraph", () => {
   it("creates a prioritized evidence gap queue for unmatched source controls", () => {
     const audit = analyzeAuditProfile(baseProject);
     const graph = createRegulatoryGraph(baseProject, audit, baseProject.evidenceItems);
+    const firstP1Index = graph.evidenceGaps.findIndex((gap) => gap.priority === "P1");
+    const usAssetClassificationGapIndex = graph.evidenceGaps.findIndex(
+      (gap) => gap.clauseId === "us-sec-cftc-crypto-asset-interpretation"
+    );
 
-    expect(graph.evidenceGaps[0]).toMatchObject({
+    expect(graph.evidenceGaps[0]?.priority).toBe("P0");
+    expect(usAssetClassificationGapIndex).toBeGreaterThanOrEqual(0);
+    if (firstP1Index !== -1) {
+      expect(usAssetClassificationGapIndex).toBeLessThan(firstP1Index);
+    }
+    expect(graph.evidenceGaps[usAssetClassificationGapIndex]).toMatchObject({
       priority: "P0",
       jurisdiction: "United States",
       clauseId: "us-sec-cftc-crypto-asset-interpretation"
@@ -398,5 +407,47 @@ describe("createRegulatoryGraph", () => {
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "sg-mas-dpt-customer-asset-safeguards" })])
     );
+  });
+
+  it("matches US advertising disclosure controls for cross-border marketing claims without legal conclusions", () => {
+    const marketingProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-cross-border-marketing-us",
+      projectName: "SignalBridge Marketing Review",
+      jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+      assetModel: "Virtual asset public education and product-positioning campaign with paid creator endorsements and no token sale",
+      userType: "US retail audience segments, community followers, and exchange listing reviewers",
+      custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
+      dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
+      aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
+      blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
+      operatingStage: "Planned public marketing campaign with influencer endorsements before US, UK, and UAE counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const graph = createRegulatoryGraph(marketingProject, audit, marketingProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining([
+        "us-ftc-endorsement-advertising-guides",
+        "uk-fca-crypto-financial-promotions",
+        "uae-vara-va-regulations-activity-scope"
+      ])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ftc-endorsement-advertising-guides")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "Federal Trade Commission",
+      citation: "16 C.F.R. Part 255",
+      sourceUrl: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-255",
+      coverageStatus: "missing",
+      localCounselRole: "US advertising / consumer protection counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US advertising claims substantiation and disclosure evidence",
+        "US endorsement and material-connection disclosure evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

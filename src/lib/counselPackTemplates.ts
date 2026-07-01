@@ -93,6 +93,7 @@ export const counselPackTemplates: CounselPackTemplate[] = [
     ],
     evidenceFocus: [
       "Marketing copy approval log",
+      "Creator endorsement and material-connection disclosure log",
       "Website and social claims archive",
       "Risk disclosure checklist",
       "Audience and jurisdiction targeting notes"

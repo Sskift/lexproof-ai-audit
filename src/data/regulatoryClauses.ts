@@ -119,6 +119,59 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-ftc-endorsement-advertising-guides",
+    jurisdiction: "United States",
+    regulator: "Federal Trade Commission",
+    sourceName: "Guides Concerning the Use of Endorsements and Testimonials in Advertising",
+    sourceUrl: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-255",
+    citation: "16 C.F.R. Part 255",
+    topic: "marketing",
+    summary:
+      "Prepare advertising claims, endorsement, testimonial, material-connection, disclosure, and substantiation evidence for US marketing and consumer-protection counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "marketing",
+      "promotion",
+      "promotional",
+      "claim",
+      "claims",
+      "advertising",
+      "endorsement",
+      "testimonial",
+      "influencer",
+      "creator",
+      "material connection"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-advertising-claims-substantiation-disclosure",
+        title: "US advertising claims substantiation and disclosure evidence",
+        reason:
+          "US marketing review needs claim inventory, substantiation source, risk disclosure, channel, audience, and reviewer evidence before external reliance.",
+        priority: "P0",
+        keywords: ["claim inventory", "claims substantiation", "advertising claim", "risk disclosure", "reviewer", "channel", "audience"]
+      },
+      {
+        id: "us-endorsement-material-connection-disclosure",
+        title: "US endorsement and material-connection disclosure evidence",
+        reason:
+          "Endorsement or creator-led campaigns should retain material-connection disclosures, testimonial controls, approval routing, and monitoring evidence for counsel review.",
+        priority: "P0",
+        keywords: ["endorsement", "testimonial", "material connection", "creator", "influencer", "approval routing", "monitoring"]
+      }
+    ],
+    counselQuestions: [
+      "Which advertising claims, endorsements, testimonials, or creator disclosures should US advertising counsel review?",
+      "What evidence supports claim substantiation, material-connection disclosures, channel approvals, and monitoring before launch?"
+    ],
+    localCounselRole: "US advertising / consumer protection counsel",
+    effectiveAsOf: "2023-07-26",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against FTC Endorsement Guides, 16 C.F.R. Part 255, for claims, endorsements, material connections, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-casp-custody-administration",
     jurisdiction: "European Union",
     regulator: "European Union / ESMA",

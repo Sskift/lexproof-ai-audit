@@ -133,13 +133,13 @@ describe("validateDemoScenarioLibrary", () => {
         title: "Marketing claims review",
         projectName: "SignalBridge Marketing Review",
         recommendedStartTab: "counsel",
-        focusTags: expect.arrayContaining(["Marketing claims", "UK FCA", "UAE VARA"]),
+        focusTags: expect.arrayContaining(["Marketing claims", "US FTC", "UK FCA", "UAE VARA"]),
         expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Marketing Claims Counsel Pack", "Source Pack JSON"])
       })
     );
     expect(marketingScenario?.judgePath).toEqual(
       expect.arrayContaining([
-        "Inspect UK and UAE marketing source controls",
+        "Inspect US, UK, and UAE marketing source controls",
         "Review promotion approval evidence gaps",
         "Export Marketing Claims counsel pack"
       ])

@@ -1,4 +1,10 @@
 import { redactDataBoundaryText } from "./dataBoundary";
+import {
+  classifyDataBoundaryText,
+  type ClassifiedDataClass,
+  type ClassifiedDataFinding,
+  type ClassifiedDataSeverity
+} from "./dataClassification";
 import type { EvidenceItem } from "./projectModel";
 
 export type RetentionPolicyStatus = "ready" | "needs-review" | "blocked";
@@ -14,13 +20,19 @@ export type RetentionPolicyAction = {
   evidenceLabel: string;
   evidenceStatus: string;
   owner: string;
-  dataClass: "metadata-only" | "confidential" | "personal-data" | "raw-kyc" | "credential-material" | "private-key-material";
+  dataClass: "metadata-only" | Exclude<ClassifiedDataClass, "public">;
   action: RetentionPolicyActionType;
   severity: RetentionPolicySeverity;
   reason: string;
   redactedSnippet: string;
   retentionWindow: string;
   deletionTrigger: string;
+};
+
+type RetentionDataClass = Exclude<ClassifiedDataClass, "public">;
+
+type RetentionDataFinding = ClassifiedDataFinding & {
+  dataClass: RetentionDataClass;
 };
 
 export type RetentionPolicyReport = {
@@ -42,79 +54,9 @@ export type RetentionPolicyInput = {
   evidenceItems: EvidenceItem[];
 };
 
-type RetentionScanner = {
-  dataClass: Exclude<RetentionPolicyAction["dataClass"], "metadata-only">;
-  severity: Exclude<RetentionPolicySeverity, "info">;
-  action: Exclude<RetentionPolicyActionType, "keep-metadata-only">;
-  pattern: RegExp;
-  reason: string;
-  allowNegatedKyc?: boolean;
-};
-
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Retention policy output is audit preparation metadata only.";
 const METADATA_ONLY_RETENTION_WINDOW = "metadata-only until audit workspace deletion";
 const RAW_MATERIAL_DELETION_TRIGGER = "delete or replace before Evidence Vault sync";
-
-const scanners: RetentionScanner[] = [
-  {
-    dataClass: "private-key-material",
-    severity: "block",
-    action: "block-vault-sync",
-    pattern: /0x[a-fA-F0-9]{64}/g,
-    reason: "Private-key-like material cannot enter vault sync or retention exports."
-  },
-  {
-    dataClass: "private-key-material",
-    severity: "block",
-    action: "block-vault-sync",
-    pattern: /\b(seed phrase|mnemonic|private key)\b/gi,
-    reason: "Secret phrase or private-key references must be removed before retention."
-  },
-  {
-    dataClass: "credential-material",
-    severity: "block",
-    action: "block-vault-sync",
-    pattern: /\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g,
-    reason: "Credential-like tokens must be removed before vault sync."
-  },
-  {
-    dataClass: "credential-material",
-    severity: "block",
-    action: "block-vault-sync",
-    pattern: /\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)\s*[:=]\s*[\w.\-]{8,}/gi,
-    reason: "Credential fields must be removed before retention."
-  },
-  {
-    dataClass: "raw-kyc",
-    severity: "block",
-    action: "block-vault-sync",
-    pattern: /\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi,
-    reason: "Raw KYC material must be deleted or replaced with metadata before vault sync.",
-    allowNegatedKyc: true
-  },
-  {
-    dataClass: "personal-data",
-    severity: "warn",
-    action: "review-before-vault-sync",
-    pattern: /\b(passport\s+number|social security number|ssn|personal data|direct identifier|direct identifiers)\b/gi,
-    reason: "Personal-data references require human confirmation before metadata-only sync."
-  },
-  {
-    dataClass: "personal-data",
-    severity: "warn",
-    action: "review-before-vault-sync",
-    pattern: /\bkyc\b/gi,
-    reason: "KYC references require confirmation that only metadata is retained.",
-    allowNegatedKyc: true
-  },
-  {
-    dataClass: "confidential",
-    severity: "warn",
-    action: "review-before-vault-sync",
-    pattern: /\b(confidential|privileged|attorney-client|internal only)\b/gi,
-    reason: "Confidentiality labels require recipient and retention-scope review."
-  }
-];
 
 export function createRetentionPolicyReport(input: RetentionPolicyInput): RetentionPolicyReport {
   const actions =
@@ -159,30 +101,9 @@ export function downloadRetentionPolicyJson(filename: string, report: RetentionP
 
 function createRetentionActionsForEvidence(item: EvidenceItem): RetentionPolicyAction[] {
   const sourceText = [item.label, item.kind, item.source, item.status, item.owner, item.content].filter(Boolean).join(" ");
-  const matchedActions = scanners.flatMap((scanner) => {
-    const matches = Array.from(sourceText.matchAll(scanner.pattern)).filter((match) => {
-      return !scanner.allowNegatedKyc || !isNegatedKycReference(sourceText, match.index ?? 0);
-    });
-
-    if (matches.length === 0) {
-      return [];
-    }
-
-    return [
-      {
-        evidenceLabel: createSafeLabel(item.label),
-        evidenceStatus: item.status ?? "draft",
-        owner: item.owner ?? "Founder",
-        dataClass: scanner.dataClass,
-        action: scanner.action,
-        severity: scanner.severity,
-        reason: scanner.reason,
-        redactedSnippet: createMatchedRedactedSnippet(scanner.dataClass, matches[0][0]),
-        retentionWindow: scanner.severity === "block" ? "none until remediated" : METADATA_ONLY_RETENTION_WINDOW,
-        deletionTrigger: scanner.severity === "block" ? RAW_MATERIAL_DELETION_TRIGGER : "confirm metadata-only scope before handoff"
-      } satisfies RetentionPolicyAction
-    ];
-  });
+  const matchedActions = classifyDataBoundaryText(sourceText)
+    .filter(isRetentionDataFinding)
+    .map((finding) => createRetentionActionFromFinding(item, finding));
 
   if (matchedActions.length > 0) {
     return matchedActions;
@@ -233,7 +154,7 @@ function createNextSteps(status: RetentionPolicyStatus, evidenceCount: number): 
 
   if (status === "needs-review") {
     return [
-      "Confirm personal-data, KYC, or confidentiality references are metadata-only before sync.",
+      "Confirm wallet-address, personal-data, KYC, or confidentiality references are metadata-only before sync.",
       "Keep raw files outside LexProof until a retention and deletion policy is approved."
     ];
   }
@@ -241,21 +162,56 @@ function createNextSteps(status: RetentionPolicyStatus, evidenceCount: number): 
   return ["Evidence retention is metadata-only; continue to Evidence Vault sync when ready."];
 }
 
-function isNegatedKycReference(text: string, matchIndex: number): boolean {
-  const windowStart = Math.max(0, matchIndex - 32);
-  const windowEnd = Math.min(text.length, matchIndex + 48);
-  const window = text.slice(windowStart, windowEnd).toLowerCase();
-  return /\b(no|without|exclude|excluded|excludes|excluding|not)\b.{0,24}\b(raw\s+)?kyc\b/.test(window);
-}
-
 function createSafeLabel(label: string): string {
   const redacted = redactDataBoundaryText(label.trim() || "Untitled evidence");
   return redacted.length > 96 ? `${redacted.slice(0, 93)}...` : redacted;
 }
 
-function createMatchedRedactedSnippet(dataClass: RetentionPolicyAction["dataClass"], matchValue: string): string {
-  const redacted = redactDataBoundaryText(matchValue.replace(/\s+/g, " ").trim());
-  return `${dataClass}: ${redacted || "matched metadata"}`;
+function createRetentionActionFromFinding(
+  item: EvidenceItem,
+  finding: RetentionDataFinding
+): RetentionPolicyAction {
+  const severity = mapRetentionSeverity(finding.severity);
+
+  return {
+    evidenceLabel: createSafeLabel(item.label),
+    evidenceStatus: item.status ?? "draft",
+    owner: item.owner ?? "Founder",
+    dataClass: finding.dataClass,
+    action: severity === "block" ? "block-vault-sync" : "review-before-vault-sync",
+    severity,
+    reason: createRetentionReason(finding.dataClass, finding.message),
+    redactedSnippet: `${finding.dataClass}: ${finding.redactedSnippet || "matched metadata"}`,
+    retentionWindow: severity === "block" ? "none until remediated" : METADATA_ONLY_RETENTION_WINDOW,
+    deletionTrigger: severity === "block" ? RAW_MATERIAL_DELETION_TRIGGER : "confirm metadata-only scope before handoff"
+  };
+}
+
+function mapRetentionSeverity(severity: ClassifiedDataSeverity): RetentionPolicySeverity {
+  return severity === "block" ? "block" : "warn";
+}
+
+function createRetentionReason(dataClass: RetentionDataClass, fallback: string): string {
+  switch (dataClass) {
+    case "private-key-material":
+      return "Private-key-like material cannot enter vault sync or retention exports.";
+    case "credential-material":
+      return "Credential-like material must be removed before vault sync.";
+    case "raw-kyc":
+      return "Raw KYC material must be deleted or replaced with metadata before vault sync.";
+    case "wallet-address":
+      return "Wallet addresses can be linkable Web3 identifiers and require human confirmation before metadata-only sync.";
+    case "personal-data":
+      return "Personal-data references require human confirmation before metadata-only sync.";
+    case "confidential":
+      return "Confidentiality labels require recipient and retention-scope review.";
+    default:
+      return fallback;
+  }
+}
+
+function isRetentionDataFinding(finding: ClassifiedDataFinding): finding is RetentionDataFinding {
+  return finding.dataClass !== "public";
 }
 
 function createRedactedSnippet(text: string, matchIndex: number): string {

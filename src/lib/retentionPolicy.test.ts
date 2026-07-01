@@ -8,6 +8,7 @@ import type { EvidenceItem } from "./projectModel";
 
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const walletAddress = "0x1111111111111111111111111111111111111111";
 
 describe("createRetentionPolicyReport", () => {
   it("blocks vault sync when evidence includes private keys, credentials, or raw KYC without leaking raw values", () => {
@@ -95,6 +96,45 @@ describe("createRetentionPolicyReport", () => {
         })
       ])
     );
+  });
+
+  it("uses shared classification warnings for wallet addresses and direct identifiers before vault sync", () => {
+    const report = createRetentionPolicyReport(
+      withInput([
+        {
+          label: "Wallet signer memo",
+          kind: "Markdown",
+          content: `Treasury signer wallet ${walletAddress} and contact jane.founder@example.com require review before handoff.`,
+          status: "received",
+          owner: "Compliance"
+        }
+      ])
+    );
+
+    expect(report.status).toBe("needs-review");
+    expect(report.vaultSyncAllowed).toBe(true);
+    expect(report.reviewCount).toBe(2);
+    expect(report.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dataClass: "wallet-address",
+          action: "review-before-vault-sync",
+          severity: "warn",
+          redactedSnippet: expect.stringContaining("[redacted-wallet-address]")
+        }),
+        expect.objectContaining({
+          dataClass: "personal-data",
+          action: "review-before-vault-sync",
+          severity: "warn",
+          redactedSnippet: expect.stringContaining("[redacted-email]")
+        })
+      ])
+    );
+    expect(report.nextSteps).toContain(
+      "Confirm wallet-address, personal-data, KYC, or confidentiality references are metadata-only before sync."
+    );
+    expect(JSON.stringify(report)).not.toContain(walletAddress);
+    expect(JSON.stringify(report)).not.toContain("jane.founder@example.com");
   });
 });
 

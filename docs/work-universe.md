@@ -8,7 +8,7 @@ LexProof remains **Not legal advice**. Every item below must produce audit prepa
 
 Treat this document as the complete build universe and product direction file. A new feature, issue, or agent prompt must either map to an existing workstream below or first amend this file with a clear capability area, owner layer, proof path, and non-goals.
 
-Start from `docs/project-governance.md` when turning this universe into implementation work. This file answers **what can be built**; `docs/architecture-guardrails.md` answers **where it belongs**; `docs/engineering-workflow.md` answers **how to verify and hand off**.
+Start from `docs/constraints-index.md` for the complete constraint map, then use `docs/project-governance.md` when turning this universe into implementation work. This file answers **what can be built**; `docs/architecture-guardrails.md` answers **where it belongs**; `docs/engineering-workflow.md` answers **how to verify and hand off**.
 
 Rules:
 
@@ -18,6 +18,50 @@ Rules:
 - Do not add parallel demo-only features when the same behavior belongs in an existing module.
 - Do not promote a later-horizon capability, such as auth, raw document storage, or real chain anchoring, unless its privacy, retention, and verification boundaries are already written and tested.
 - If a requested feature does not fit any workstream, add it to `Backlog Intake Rules` below before implementation so future work does not drift.
+
+## Master Inventory Contract
+
+This file is exhaustive at the capability level. It is not a ticket list with every possible small task; it is the boundary that every ticket, agent prompt, and feature slice must map back to.
+
+Every new item must name:
+
+- **Workstream:** one W1-W12 lane below.
+- **User journey:** the exact flow being improved, for example `Model Connect -> Evidence Vault -> Human Review -> Counsel Pack`.
+- **Frontend owner:** existing or new surface under `src/components` or `src/App.tsx`.
+- **Domain owner:** focused module under `src/lib`.
+- **Backend owner:** route/service/repository under `server`, or `none` for local-first work.
+- **Data owner:** seed/source/template file under `src/data`, or `none`.
+- **Proof:** targeted test, route test, UI workflow test, screenshot, demo script update, or full `npm run verify`.
+- **Boundary:** Not legal advice wording plus privacy/security exclusions.
+
+If an item needs a new workstream, add it here with product outcome, frontend surface, backend/domain/data owner, required proof, and non-goals before implementation.
+
+## Complete Scope By Layer
+
+Use this table to keep feature ideas from drifting into the wrong layer.
+
+| Layer | Complete work scope | Direction |
+| --- | --- | --- |
+| Product | Project intake, risk/source review, evidence operations, model governance, human review, vault/manifest, counsel/submission export, demo readiness | Make one continuous audit-prep journey, not disconnected tools |
+| Frontend | Command Center, journey rail, tabs, panels, status chips, empty/error/recovery states, export surfaces, screenshots | Dense professional workbench; no marketing landing page |
+| Domain | Validation, deterministic audit, source matching, evidence hashes, workflow transitions, model policy, export builders, privacy gates | Pure or side-effect-light `src/lib` functions with focused tests |
+| Backend | Fastify route families, services, repository adapters, audit logs, model gateway receipts, vault metadata, human review, export records | Thin routes, testable services, metadata-only responses by default |
+| Data | Synthetic profiles, demo scenarios, evidence templates, reviewed regulatory/source metadata | Realistic but synthetic, reviewed, source-linked, and safe |
+| Security | Data classification, redaction, retention, export blockers, model/storage/parser/GRC/chain readiness gates | Block secrets, private keys, raw KYC, personal data, and raw evidence leakage |
+| Integrations | Model provider proxy, object storage, parser/OCR, GRC/ticket sync, optional chain anchoring | Disabled by default until policy, retention, audit, and failure states exist |
+| Demo | Clean-clone commands, demo script, scenario library, screenshots, submission pack, known limitations | Judge can reproduce the story without secrets or private data |
+
+## Construction Direction
+
+Build in this order unless the user narrows a smaller urgent slice:
+
+1. **Demo certainty:** keep the judge path runnable from clean clone, with clear screenshots, Not legal advice boundaries, and no credentials.
+2. **Regulatory depth:** expand source-backed jurisdiction controls for RWA, DAO governance, custody, AI legal workflow, marketing claims, and selected non-US routes.
+3. **Review reliability:** make model receipts, evidence routes, human review, vault manifests, audit logs, and Counsel Pack exports behave as one recoverable journey.
+4. **Security hardening:** deepen data-boundary blockers, retention controls, error states, and metadata-only export guarantees before external adapters.
+5. **Pilot readiness:** add auth, orgs, permissions, sharing, raw document intake, and real integrations only after the single-user secure flow remains stable.
+
+Rejected direction remains explicit: no legal advice chatbot, no real KYC processor, no private-key custody tool, no source-free legal classifier, no simulated-chain-proof marketing, and no generic GRC clone that loses the AI/Web3 evidence focus.
 
 ## Product Direction
 

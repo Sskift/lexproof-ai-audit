@@ -4,6 +4,8 @@ LexProof AuditOS is a Vite React single-page application. The app is intentional
 
 Start future work from [docs/project-governance.md](docs/project-governance.md). It defines the authority order for work intake, architecture ownership, workflow, verification, and clean handoff.
 
+Use [docs/constraints-index.md](docs/constraints-index.md) as the quick entry point for the complete constraint file set. It links the work universe, architecture guardrails, engineering workflow, clean repository rules, and demo runbooks.
+
 For future feature placement and anti-drift rules, use [docs/architecture-guardrails.md](docs/architecture-guardrails.md) with this file. For the approved backlog direction, use [docs/work-universe.md](docs/work-universe.md).
 
 ## Top-Level Shape

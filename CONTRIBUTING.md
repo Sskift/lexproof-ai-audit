@@ -12,6 +12,7 @@ This is a hackathon MVP, so the codebase should stay easy to inspect, demo, and 
 
 ## Engineering Guardrails
 
+- Start from [docs/constraints-index.md](docs/constraints-index.md) to choose the correct work universe, architecture, workflow, and clean handoff rules.
 - Start feature, backend, UI, test, and documentation work from [docs/project-governance.md](docs/project-governance.md) so scope, ownership, verification, and handoff stay aligned.
 - Put domain rules in `src/lib/auditEngine.ts`.
 - Put seeded demo profiles in `src/data/sampleProfiles.ts`.

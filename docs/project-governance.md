@@ -10,6 +10,7 @@ Use these files as the single source of truth:
 
 | Question | Authority file | Purpose |
 | --- | --- | --- |
+| Where do I start? | `docs/constraints-index.md` | Quick map of the work universe, architecture, workflow, verification, and clean handoff constraint files |
 | What should be built? | `docs/work-universe.md` | Complete product, frontend, backend, data, security, integration, and demo work universe |
 | Where should it live? | `docs/architecture-guardrails.md` and `ARCHITECTURE.md` | Layer boundaries, module ownership, dependency direction, and anti-drift rules |
 | How should it be built and verified? | `docs/engineering-workflow.md` and `WORKFLOW.md` | Direct-to-main loop, targeted tests, full verification, screenshots, staging, and push rules |

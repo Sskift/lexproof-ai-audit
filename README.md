@@ -4,6 +4,15 @@ LexProof AuditOS is a legal and compliance audit MVP for **BLI Legal Tech Hackat
 
 This project is not legal advice. It is an audit preparation workflow for lawyers, compliance teams, and builders.
 
+## Operating Docs
+
+Start future agent or contributor work from [docs/constraints-index.md](docs/constraints-index.md). It points to the complete build universe, architecture guardrails, workflow/test rules, and clean repository handoff contract.
+
+- [docs/work-universe.md](docs/work-universe.md) is the complete product, frontend, backend, data, security, integration, and demo work inventory.
+- [docs/architecture-guardrails.md](docs/architecture-guardrails.md) and [ARCHITECTURE.md](ARCHITECTURE.md) define where new functionality belongs so the app does not drift.
+- [docs/engineering-workflow.md](docs/engineering-workflow.md) and [WORKFLOW.md](WORKFLOW.md) define test launch recipes, screenshot policy, staging rules, and direct-to-main hygiene.
+- [docs/project-governance.md](docs/project-governance.md) resolves conflicts between scope, architecture, verification, privacy, and Not legal advice boundaries.
+
 ## Pitch
 
 **Problem:** early Web3 teams often approach counsel with scattered token terms, custody assumptions, KYC policies, AI drafts, governance notes, and launch claims. That makes legal/compliance review slower, more expensive, and harder to verify.

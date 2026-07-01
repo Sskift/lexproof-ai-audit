@@ -75,6 +75,40 @@ Use this protocol before creating or moving files:
 
 If a slice needs more than one new domain module, one new route family, and one new panel, split it unless the pieces are inseparable for a runnable journey.
 
+## Architecture Registration Checklist
+
+Before implementing a non-trivial feature, write down this placement record in the issue, agent prompt, or implementation note:
+
+```text
+Feature:
+Workstream:
+User journey:
+Frontend surface:
+Domain module:
+Backend route/service:
+Data file:
+Shared contract:
+Tests:
+Screenshot:
+Not legal advice boundary:
+Privacy/security boundary:
+Commit scope:
+```
+
+Use `none` when a layer is intentionally not touched. If a field cannot be filled without guessing, the feature is too broad or not ready for implementation.
+
+## Drift Control Rules
+
+These rules keep new functionality aligned with the current structure:
+
+- Prefer one bounded context per commit. Do not mix a broad CSS redesign, new backend route family, regulatory data expansion, and export changes unless they are required for one runnable user journey.
+- Add the domain function before UI wiring when behavior changes.
+- Add the typed API client before React calls a new server route.
+- Add server services before route handlers accumulate validation, hashing, or transition logic.
+- Add static source/demo data only in `src/data`, never inside JSX.
+- Update docs only when user behavior, architecture rules, API boundaries, workflow rules, or demo paths change.
+- Do not add a test only because a file changed. Add a test because a user-visible behavior, core function, route contract, or privacy boundary could regress.
+
 ## Architecture Contract
 
 LexProof should grow as a layered review workspace, not as a collection of disconnected demos. New work must preserve these contracts:

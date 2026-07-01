@@ -112,6 +112,32 @@ If ignored local databases or build folders exist, they may stay on disk. They m
 | Model, evidence, or export boundary | targeted lib + server tests for validators and receipts | `npm run verify` |
 | UI layout redesign | App tests, manual desktop/mobile smoke, screenshot | `npm run verify` |
 
+## Concrete Verification Pull-Up Plan
+
+Use this order to pull up the right level of verification without adding useless tests:
+
+1. **Inspect:** `git status -sb`, `git diff --stat`, and `git diff --check`.
+2. **Target:** run the smallest test that can fail for the behavior changed.
+3. **Launch:** run the local app or API only when the slice changes a visible workflow or server route.
+4. **Screenshot:** capture a durable screenshot only for judge-visible UI states, important empty states, error states, recovery states, or end-to-end journeys.
+5. **Full gate:** run `npm run verify` before any pushed commit.
+6. **Stage:** stage explicit files only after inspecting the diff.
+
+Do not widen the test suite just to make a docs-only or copy-only change look more substantial. The repository stays healthier when tests prove real contracts.
+
+### Verification Tiers
+
+| Tier | Use when | Command |
+| --- | --- | --- |
+| T0 docs/copy inspection | Docs-only or copy-only changes | Inspect changed files, links, commands, and cross-references; then run `npm run verify` before push |
+| T1 domain unit | `src/lib` behavior changes | `npm test -- src/lib/<feature>.test.ts` |
+| T2 UI workflow | A user can click into a new state or blocker | `npm test -- src/App.test.tsx` plus browser smoke for the affected path |
+| T3 server route/service | API validation, persistence, audit log, or metadata response changes | `npm test -- server/<feature>.test.ts` and `npm run build:server` |
+| T4 full workbench plus API | Model Gateway, Evidence Vault, Human Review, audit logs, or Counsel Pack server export flows connect end to end | API launch, frontend launch, `curl /api/health`, affected browser journey |
+| T5 release gate | Anything that will be pushed to `main` | `npm run verify` |
+
+If a targeted test fails, fix the current slice before moving up a tier. If `npm run verify` fails because of unrelated dirty files, do not hide that failure; either isolate the current slice safely or report the dirty-file blocker.
+
 ### Exact Test Launch Recipes
 
 Use the narrowest command that proves the changed behavior before running the full gate.

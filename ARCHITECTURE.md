@@ -645,7 +645,8 @@ Blocked findings disable Counsel Pack Markdown download, browser Print / Save PD
 
 Owns Sources-level export handoff readiness:
 
-- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, and Submission Pack.
+- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Source Freshness Board, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, and Submission Pack.
+- `createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard)` converts the Source Freshness Board into a metadata-only export artifact with board hash, review warning status, and the Not legal advice boundary for the Sources-level safety inventory.
 - The inventory returns a stable SHA-256 inventory hash, artifact statuses, blocker counts, recovery actions, and `exportHandoffAllowed`.
 - `exportExportSafetyInventoryJson(inventory)` and `downloadExportSafetyInventoryJson(filename, inventory)` export redacted metadata only.
 

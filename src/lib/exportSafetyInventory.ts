@@ -1,5 +1,6 @@
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
+import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type ExportSafetyArtifactCategory =
   | "evidence"
@@ -153,6 +154,36 @@ export function downloadExportSafetyInventoryJson(filename: string, inventory: E
   URL.revokeObjectURL(url);
 }
 
+export function createSourceFreshnessBoardExportArtifact(
+  sourceFreshnessBoard: SourceFreshnessBoard | null | undefined
+): ExportSafetyArtifactInput {
+  const hasBoard = Boolean(sourceFreshnessBoard?.boardHash);
+  const status = sourceFreshnessBoard?.status;
+  const warnings =
+    hasBoard && status && status !== "current"
+      ? [`Source Freshness Board status is ${status}; review lanes before counsel handoff.`]
+      : [];
+
+  return {
+    id: "source-freshness-board",
+    label: "Source Freshness Board JSON",
+    category: "source-lineage",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasBoard,
+    artifactHash: sourceFreshnessBoard?.boardHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: hasBoard
+      ? "Review the Source Freshness Board lanes before external handoff."
+      : "Open the Regulatory Command Center after source review calculation completes.",
+    notLegalAdviceBoundary:
+      sourceFreshnessBoard?.notLegalAdviceBoundary ??
+      "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+  };
+}
+
 function normalizeArtifact(
   artifact: ExportSafetyArtifactInput,
   dataBoundaryReport: DataBoundaryReport
@@ -272,8 +303,13 @@ function sanitizeId(value: string): string {
 }
 
 function sanitizeHash(value?: string): string | undefined {
-  const normalized = sanitize(value ?? "").toLowerCase();
-  return /^[a-f0-9]{8,128}$/.test(normalized) ? normalized : undefined;
+  const normalized = (value ?? "").replace(/\s+/g, "").trim().toLowerCase();
+  if (/^[a-f0-9]{8,128}$/.test(normalized)) {
+    return normalized;
+  }
+
+  const redacted = sanitize(value ?? "").toLowerCase();
+  return /^[a-f0-9]{8,128}$/.test(redacted) ? redacted : undefined;
 }
 
 function unique(values: string[]): string[] {

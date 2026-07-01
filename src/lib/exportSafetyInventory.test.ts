@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { createDataBoundaryReport } from "./dataBoundary";
 import {
   createExportSafetyInventory,
+  createSourceFreshnessBoardExportArtifact,
   exportSafetyInventoryJson,
   type ExportSafetyArtifactInput
 } from "./exportSafetyInventory";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
+import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 describe("createExportSafetyInventory", () => {
   it("creates a stable ready inventory hash for available safe export artifacts", async () => {
@@ -128,6 +130,37 @@ describe("createExportSafetyInventory", () => {
       expect.arrayContaining(["Regulatory Source Pack JSON: Open Counsel Pack after source graph calculation completes."])
     );
   });
+
+  it("adds Source Freshness Board as a metadata-only source-lineage artifact with board hash", async () => {
+    const board = sourceFreshnessBoard();
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-source-freshness",
+      projectName: "Source Freshness Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createSourceFreshnessBoardExportArtifact(board)],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "source-freshness-board");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Source Freshness Board JSON",
+        category: "source-lineage",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: board.boardHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        notLegalAdviceBoundary: "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."]);
+    expect(inventory.exportHandoffAllowed).toBe(true);
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
 });
 
 function safeArtifacts(): ExportSafetyArtifactInput[] {
@@ -231,4 +264,24 @@ function safeEvidence(): EvidenceItem[] {
       owner: "Compliance"
     }
   ];
+}
+
+function sourceFreshnessBoard(overrides: Partial<SourceFreshnessBoard> = {}): SourceFreshnessBoard {
+  return {
+    boardVersion: "lexproof-source-freshness-board-v1",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    asOf: "2026-07-01",
+    dueSoonDays: 30,
+    boardHash: "e".repeat(64),
+    status: "attention-needed",
+    laneCount: 4,
+    totalSourceCount: 2,
+    metadataMissingCount: 0,
+    overdueCount: 1,
+    dueSoonCount: 1,
+    scheduledCount: 0,
+    lanes: [],
+    notLegalAdviceBoundary: "Not legal advice. Source freshness boards are audit preparation scheduling metadata only.",
+    ...overrides
+  };
 }

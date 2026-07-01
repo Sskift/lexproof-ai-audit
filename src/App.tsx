@@ -95,6 +95,7 @@ import {
 } from "./lib/evidenceRecertification";
 import {
   createExportSafetyInventory,
+  createSourceFreshnessBoardExportArtifact,
   type ExportSafetyArtifactInput,
   type ExportSafetyInventory
 } from "./lib/exportSafetyInventory";
@@ -1030,6 +1031,7 @@ export default function App() {
         recoveryAction: "Use the command center Source Review Packet export when source refresh actions need handoff.",
         notLegalAdviceBoundary: "Not legal advice. Source review packets are audit preparation source-lineage metadata only."
       },
+      createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard),
       {
         id: "local-counsel-routing",
         label: "Local Counsel Routing JSON",
@@ -1095,6 +1097,7 @@ export default function App() {
     manifest?.bundleHash,
     regulatorySourcePack,
     regulatorySourceReviewPacket,
+    sourceFreshnessBoard,
     submissionPack
   ]);
 

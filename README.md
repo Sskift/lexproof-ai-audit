@@ -84,7 +84,7 @@ Key evidence:
 - Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, Regulatory Source Pack hash, source review status, and audit-log entries without raw Markdown, KYC, personal data, or credentials. Blocked data-boundary findings disable Markdown/PDF, manifest JSON, simulated anchor, version save, and server export actions until remediated.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
-- Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
+- Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Source Freshness Board hash/status, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ## Product Screenshots
@@ -335,9 +335,11 @@ Sources now includes a generated Submission Pack JSON artifact for judges. It su
 
 ![Submission Pack artifact](docs/assets/screenshots/submission-pack.png)
 
-Sources also includes an Export Safety Inventory that consolidates the handoff state for manifest, source pack, Counsel Pack version, source review, local counsel routing, GRC ticket export, integration dossier, and submission pack artifacts. It blocks external handoff when the data boundary detects private keys, credential-like tokens, or raw KYC references, and downloads only redacted metadata. Not legal advice.
+Sources also includes an Export Safety Inventory that consolidates the handoff state for manifest, source pack, Counsel Pack version, source review, Source Freshness Board, local counsel routing, GRC ticket export, integration dossier, and submission pack artifacts. It carries the Source Freshness Board artifact hash/status when available, blocks external handoff when the data boundary detects private keys, credential-like tokens, or raw KYC references, and downloads only redacted metadata. Not legal advice.
 
 ![Export Safety Inventory](docs/assets/screenshots/export-safety-inventory.png)
+
+![Export Safety Inventory Source Freshness Board](docs/assets/screenshots/export-safety-source-freshness-board.jpg)
 
 ## Hackathon Demo Runbook
 

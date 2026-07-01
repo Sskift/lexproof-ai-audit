@@ -2929,6 +2929,75 @@ describe("App", () => {
     }
   });
 
+  it("includes Source Freshness Board in the Export Safety Inventory handoff", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn(() => "blob:export-safety-source-freshness");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+      const inventoryRegion = await screen.findByRole("region", { name: /Export Safety Inventory/i });
+      const inventory = within(inventoryRegion);
+      await waitFor(() => expect(inventory.getByText(/Source Freshness Board JSON/i)).toBeInTheDocument());
+      await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
+      expect(
+        inventory.getByText(/Not legal advice. Export Safety Inventory is audit preparation handoff metadata only./i)
+      ).toBeInTheDocument();
+
+      fireEvent.click(inventory.getByRole("button", { name: /Download Export Inventory JSON/i }));
+
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Export Safety Inventory did not create a Source Freshness Board blob.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+      const sourceFreshnessArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "source-freshness-board");
+
+      expect(sourceFreshnessArtifact).toEqual(
+        expect.objectContaining({
+          label: "Source Freshness Board JSON",
+          category: "source-lineage",
+          exportMode: "metadata-only-json",
+          status: "needs-review",
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+        })
+      );
+      expect(sourceFreshnessArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(sourceFreshnessArtifact.warnings).toEqual(
+        expect.arrayContaining(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."])
+      );
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:export-safety-source-freshness");
+      expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it("requests missing risk evidence into the Evidence Ledger as an in-progress item", async () => {
     render(<App />);
 

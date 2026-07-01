@@ -872,6 +872,107 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("evaluates document parser policy readiness without enabling external parsing", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/integrations/document-parser/policy");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body.policy).toEqual({
+        policyOwner: "Document owner",
+        maxDocumentSizeMb: 10,
+        rawDocumentRetentionDays: 14,
+        deletionSlaDays: 7,
+        parsingPurpose: "Extract source citations for audit preparation.",
+        redactionBeforeParsingApproved: true,
+        noTrainingUseConfirmed: true,
+        accessLoggingApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Policy approved for future document parser review."
+      });
+      expect(body.context).toEqual(
+        expect.objectContaining({
+          evidenceCount: expect.any(Number),
+          retentionStatus: expect.any(String),
+          vaultSyncAllowed: expect.any(Boolean),
+          blockerCount: expect.any(Number),
+          exportBlockerCount: expect.any(Number),
+          manifestHash: expect.stringMatching(/^[a-f0-9]{64}$/)
+        })
+      );
+      expect(String(init?.body)).not.toContain("rawDocumentBytes");
+      expect(String(init?.body)).not.toContain("rawDocumentBody");
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("sk-");
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-document-parser-policy-v1",
+          generatedAt: "2026-07-01T00:00:00.000Z",
+          overallStatus: "ready",
+          requiredControlCount: 10,
+          approvedControlCount: 10,
+          externalDocumentParsingAllowed: false,
+          externalDocumentParsingStatus: "policy-ready-not-enabled",
+          controls: [
+            {
+              id: "retention-boundary",
+              label: "Retention boundary",
+              status: "ready",
+              evidence: "Retention policy is ready for metadata-only parser review.",
+              recoveryAction: "Keep raw document parsing disabled until adapter enablement review."
+            },
+            {
+              id: "redaction-before-parsing",
+              label: "Redaction before parsing",
+              status: "ready",
+              evidence: "Redaction before parsing is approved.",
+              recoveryAction: "Keep redaction mandatory before parser adapter enablement."
+            }
+          ],
+          nextActions: ["Keep external document parsing disabled until a separate raw-document adapter enablement review."],
+          notLegalAdviceBoundary: "Not legal advice. Document parser policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const parserPolicy = within(registry.getByRole("region", { name: /Document Parser Policy Evaluation/i }));
+
+    fireEvent.change(parserPolicy.getByLabelText(/Document Parser API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.change(parserPolicy.getByLabelText(/Parser policy owner/i), { target: { value: "Document owner" } });
+    fireEvent.change(parserPolicy.getByLabelText(/Max document size MB/i), { target: { value: "10" } });
+    fireEvent.change(parserPolicy.getByLabelText(/Raw document retention days/i), { target: { value: "14" } });
+    fireEvent.change(parserPolicy.getByLabelText(/Parser deletion SLA days/i), { target: { value: "7" } });
+    fireEvent.change(parserPolicy.getByLabelText(/Parsing purpose/i), {
+      target: { value: "Extract source citations for audit preparation." }
+    });
+    fireEvent.click(parserPolicy.getByLabelText(/Redaction before parsing/i));
+    fireEvent.click(parserPolicy.getByLabelText(/No model training use/i));
+    fireEvent.click(parserPolicy.getByLabelText(/Parser access logging/i));
+    await waitFor(() => {
+      expect(parserPolicy.getByLabelText(/Redaction before parsing/i)).toBeChecked();
+      expect(parserPolicy.getByLabelText(/No model training use/i)).toBeChecked();
+      expect(parserPolicy.getByLabelText(/Parser access logging/i)).toBeChecked();
+      expect(parserPolicy.getByText("9/10")).toBeInTheDocument();
+    });
+    fireEvent.change(parserPolicy.getByLabelText(/Parser policy notes/i), {
+      target: { value: "Policy approved for future document parser review." }
+    });
+    fireEvent.click(parserPolicy.getByRole("button", { name: /Evaluate Server Parser Policy/i }));
+
+    expect(await parserPolicy.findByText(/Parser policy report synced/i)).toBeInTheDocument();
+    expect(parserPolicy.getAllByText(/External document parsing remains disabled/i).length).toBeGreaterThan(0);
+    expect(parserPolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
     const fetchMock = vi.fn(async () =>
       appJsonResponse(

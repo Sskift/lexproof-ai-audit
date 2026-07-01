@@ -104,6 +104,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "ObjectStoragePolicyReport",
       true
     ),
+    createRoute(
+      "POST",
+      "/api/integrations/document-parser/policy",
+      "integrations",
+      "DocumentParserPolicyRequest",
+      "DocumentParserPolicyReport",
+      true
+    ),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),

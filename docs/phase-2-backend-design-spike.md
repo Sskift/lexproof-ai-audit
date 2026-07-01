@@ -167,11 +167,14 @@ Successful mock runs persist a receipt with payload hash, response hash, source 
 
 ## Integration Policy Routes
 
-The first integration policy route is implemented in `server/integrationPolicyRoutes.ts` and backed by `src/lib/objectStoragePolicy.ts`:
+The first integration policy routes are implemented in `server/integrationPolicyRoutes.ts` and backed by pure `src/lib` policy modules:
 
 - `POST /api/integrations/object-storage/policy`
+- `POST /api/integrations/document-parser/policy`
 
 The route accepts only metadata-only context and policy fields: workspace ID, evidence count, retention readiness, vault sync allowance, blocker count, manifest hash, policy owner, retention/deletion windows, encryption approval, bucket allowlist approval, access logging approval, lifecycle approval, sensitive-material confirmation, human-review enforcement, and notes. It drops unrecognized raw evidence, API key, credential, bucket-object, and personal-data fields before evaluation. The response includes required controls, next actions, JSON-exportable policy metadata, and the Not legal advice boundary. It does not persist records, upload objects, collect credentials, create buckets, or enable external object storage.
+
+The document-parser policy route accepts only metadata-only context and policy fields: workspace ID, evidence count, retention readiness, vault sync allowance, retention blocker count, export blocker count, manifest hash, policy owner, document size cap, raw-document retention days, deletion SLA, parser purpose, redaction-before-parsing approval, no-training-use confirmation, access logging approval, sensitive-material confirmation, human-review enforcement, and notes. It drops unrecognized raw document bytes, raw document body, API key, credential, private-key, and personal-data fields before evaluation. The response includes required controls, next actions, JSON-exportable policy metadata, and the Not legal advice boundary. It does not persist records, parse documents, run OCR, collect credentials, accept raw document content, enable parser adapters, or make legal decisions.
 
 ## Human Review Routes
 

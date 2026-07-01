@@ -97,6 +97,7 @@ Week 2 design-spike artifacts:
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
 - `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock success/failure receipts behind redaction, allowed-data-class, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
 - `server/integrationPolicyRoutes.ts` adds Object Storage Policy Evaluation for metadata-only retention, manifest, storage-control, and human-review readiness without enabling external object storage.
+- `server/integrationPolicyRoutes.ts` adds Document Parser Policy Evaluation for metadata-only parser purpose, retention, manifest, Export Safety, redaction, no-training-use, access logging, and human-review readiness without accepting raw document bytes, running OCR, or enabling external parsing.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
 - `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.
 
@@ -175,6 +176,11 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - accepts only evidence count, retention status, vault-sync allowance, manifest hash, policy owner, retention/deletion windows, encryption, bucket allowlist, access logging, lifecycle, sensitive-material confirmation, human-review enforcement, and notes
   - does not accept raw evidence bytes, object contents, credentials, private keys, raw KYC, personal data, bucket writes, adapter enablement, or legal-advice output
   - returns `externalObjectStorageAllowed: false` even when all required controls evaluate ready
+- `POST /api/integrations/document-parser/policy`
+  - evaluates future document-parser readiness from metadata-only context and policy fields
+  - accepts only evidence count, retention status, vault-sync allowance, export blocker count, manifest hash, policy owner, document size cap, raw-document retention days, deletion SLA, parser purpose, redaction-before-parsing approval, no-training-use confirmation, access logging, sensitive-material confirmation, human-review enforcement, and notes
+  - does not accept raw document bytes, raw document body, credentials, private keys, raw KYC, personal data, OCR execution, parser adapter enablement, or legal-advice output
+  - returns `externalDocumentParsingAllowed: false` even when all required controls evaluate ready
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate

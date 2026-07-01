@@ -16,6 +16,12 @@ import {
   type ModelGatewaySecretPolicyReport
 } from "../lib/modelGatewaySecretPolicy";
 import {
+  exportDocumentParserPolicyJson,
+  type DocumentParserPolicyContext,
+  type DocumentParserPolicyDraft,
+  type DocumentParserPolicyReport
+} from "../lib/documentParserPolicy";
+import {
   exportObjectStoragePolicyJson,
   type ObjectStoragePolicyContext,
   type ObjectStoragePolicyDraft,
@@ -44,6 +50,14 @@ type IntegrationReadinessPanelProps = {
   storagePolicySyncStatus: "idle" | "syncing" | "synced" | "error";
   storagePolicySyncError: string;
   storagePolicySyncRecoveryAction: string;
+  parserPolicyDraft: DocumentParserPolicyDraft;
+  parserPolicyContext: DocumentParserPolicyContext;
+  parserPolicyReport: DocumentParserPolicyReport;
+  parserPolicySource: "local" | "server";
+  parserPolicyApiBaseUrl: string;
+  parserPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  parserPolicySyncError: string;
+  parserPolicySyncRecoveryAction: string;
   onProviderPolicyApiBaseUrlChange: (value: string) => void;
   onRefreshProviderPolicy: () => Promise<void> | void;
   onSecretPolicyDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
@@ -51,6 +65,9 @@ type IntegrationReadinessPanelProps = {
   onStoragePolicyApiBaseUrlChange: (value: string) => void;
   onStoragePolicyDraftChange: (updates: Partial<ObjectStoragePolicyDraft>) => void;
   onEvaluateStoragePolicy: () => Promise<void> | void;
+  onParserPolicyApiBaseUrlChange: (value: string) => void;
+  onParserPolicyDraftChange: (updates: Partial<DocumentParserPolicyDraft>) => void;
+  onEvaluateParserPolicy: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -86,6 +103,14 @@ export function IntegrationReadinessPanel({
   storagePolicySyncStatus,
   storagePolicySyncError,
   storagePolicySyncRecoveryAction,
+  parserPolicyDraft,
+  parserPolicyContext,
+  parserPolicyReport,
+  parserPolicySource,
+  parserPolicyApiBaseUrl,
+  parserPolicySyncStatus,
+  parserPolicySyncError,
+  parserPolicySyncRecoveryAction,
   onProviderPolicyApiBaseUrlChange,
   onRefreshProviderPolicy,
   onSecretPolicyDraftChange,
@@ -93,6 +118,9 @@ export function IntegrationReadinessPanel({
   onStoragePolicyApiBaseUrlChange,
   onStoragePolicyDraftChange,
   onEvaluateStoragePolicy,
+  onParserPolicyApiBaseUrlChange,
+  onParserPolicyDraftChange,
+  onEvaluateParserPolicy,
   onNavigate
 }: IntegrationReadinessPanelProps) {
   return (
@@ -128,6 +156,19 @@ export function IntegrationReadinessPanel({
         onApiBaseUrlChange={onStoragePolicyApiBaseUrlChange}
         onDraftChange={onStoragePolicyDraftChange}
         onEvaluate={onEvaluateStoragePolicy}
+      />
+      <DocumentParserPolicyPanel
+        draft={parserPolicyDraft}
+        context={parserPolicyContext}
+        report={parserPolicyReport}
+        source={parserPolicySource}
+        apiBaseUrl={parserPolicyApiBaseUrl}
+        syncStatus={parserPolicySyncStatus}
+        syncError={parserPolicySyncError}
+        syncRecoveryAction={parserPolicySyncRecoveryAction}
+        onApiBaseUrlChange={onParserPolicyApiBaseUrlChange}
+        onDraftChange={onParserPolicyDraftChange}
+        onEvaluate={onEvaluateParserPolicy}
       />
       <ModelGatewayProviderPolicyPanel
         report={providerPolicyReport}
@@ -322,6 +363,187 @@ function ObjectStoragePolicyPanel({
         >
           <Download size={16} aria-hidden="true" />
           Download Storage Policy JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function DocumentParserPolicyPanel({
+  draft,
+  context,
+  report,
+  source,
+  apiBaseUrl,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onApiBaseUrlChange,
+  onDraftChange,
+  onEvaluate
+}: {
+  draft: DocumentParserPolicyDraft;
+  context: DocumentParserPolicyContext;
+  report: DocumentParserPolicyReport;
+  source: "local" | "server";
+  apiBaseUrl: string;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onDraftChange: (updates: Partial<DocumentParserPolicyDraft>) => void;
+  onEvaluate: () => Promise<void> | void;
+}) {
+  return (
+    <section className={`secret-policy-panel parser-policy-panel ${report.overallStatus}`} aria-label="Document Parser Policy Evaluation">
+      <div className="split-title compact-title">
+        <div>
+          <FileText size={17} aria-hidden="true" />
+          <h4>Document Parser Policy Evaluation</h4>
+        </div>
+        <span className={`workflow-status ${report.overallStatus}`}>{policyStatusLabel(report.overallStatus)}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Approved controls" value={`${report.approvedControlCount}/${report.requiredControlCount}`} />
+        <ProviderPolicyFact label="Policy source" value={source === "server" ? "Server" : "Local"} />
+        <ProviderPolicyFact label="External parsing" value={report.externalDocumentParsingAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Evidence records" value={String(context.evidenceCount)} />
+        <ProviderPolicyFact label="Retention" value={context.retentionStatus} />
+        <ProviderPolicyFact label="Manifest" value={context.manifestHash ? `${context.manifestHash.slice(0, 12)}...` : "Missing"} />
+      </div>
+      <div className={`secret-policy-form ${syncStatus}`}>
+        <label className="editor-field">
+          <span>Document Parser API base URL</span>
+          <input
+            type="url"
+            value={apiBaseUrl}
+            placeholder="http://127.0.0.1:8787"
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Parser policy owner</span>
+          <input
+            type="text"
+            value={draft.policyOwner}
+            placeholder="Document operations"
+            onChange={(event) => onDraftChange({ policyOwner: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Max document size MB</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.maxDocumentSizeMb}
+            onChange={(event) => onDraftChange({ maxDocumentSizeMb: Number(event.target.value) })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Raw document retention days</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.rawDocumentRetentionDays}
+            onChange={(event) => onDraftChange({ rawDocumentRetentionDays: Number(event.target.value) })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Parser deletion SLA days</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.deletionSlaDays}
+            onChange={(event) => onDraftChange({ deletionSlaDays: Number(event.target.value) })}
+          />
+        </label>
+        <label className="editor-field secret-policy-notes">
+          <span>Parsing purpose</span>
+          <textarea
+            value={draft.parsingPurpose}
+            placeholder="Extract citations and evidence summaries for audit preparation. Do not request legal opinions."
+            onChange={(event) => onDraftChange({ parsingPurpose: event.target.value })}
+          />
+        </label>
+        <div className="secret-policy-checklist" aria-label="Document parser policy controls">
+          <SecretPolicyToggle
+            label="Redaction before parsing"
+            checked={draft.redactionBeforeParsingApproved}
+            onChange={(checked) => onDraftChange({ redactionBeforeParsingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="No model training use"
+            checked={draft.noTrainingUseConfirmed}
+            onChange={(checked) => onDraftChange({ noTrainingUseConfirmed: checked })}
+          />
+          <SecretPolicyToggle
+            label="Parser access logging"
+            checked={draft.accessLoggingApproved}
+            onChange={(checked) => onDraftChange({ accessLoggingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="No sensitive material"
+            checked={draft.noSensitiveMaterialConfirmed}
+            onChange={(checked) => onDraftChange({ noSensitiveMaterialConfirmed: checked })}
+          />
+          <SecretPolicyToggle
+            label="Human review required"
+            checked={draft.humanReviewRequired}
+            onChange={(checked) => onDraftChange({ humanReviewRequired: checked })}
+          />
+        </div>
+        <label className="editor-field secret-policy-notes">
+          <span>Parser policy notes</span>
+          <textarea
+            value={draft.notes}
+            placeholder="Metadata only. Do not paste raw documents, API keys, private keys, raw KYC, or personal data."
+            onChange={(event) => onDraftChange({ notes: event.target.value })}
+          />
+        </label>
+        <div className="inline-actions secret-policy-actions">
+          <span>
+            {report.externalDocumentParsingStatus === "policy-ready-not-enabled"
+              ? "External document parsing remains disabled until a separate raw-document adapter enablement review."
+              : report.nextActions[0]}
+          </span>
+          <button type="button" className="secondary" onClick={onEvaluate} disabled={syncStatus === "syncing"}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            {syncStatus === "syncing" ? "Evaluating Server Parser Policy" : "Evaluate Server Parser Policy"}
+          </button>
+        </div>
+        {syncStatus === "synced" ? <span className="save-state">Parser policy report synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. Document parser policy evaluation is audit preparation metadata only.</small>
+          </div>
+        ) : null}
+      </div>
+      <div className="provider-control-list secret-policy-control-list">
+        {report.controls.map((control) => (
+          <article key={control.id} className={`provider-control ${control.status}`}>
+            <header>
+              <span>{policyStatusLabel(control.status)}</span>
+              <strong>{control.label}</strong>
+            </header>
+            <p>{control.evidence}</p>
+            <small>{control.recoveryAction}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>External document parsing remains disabled by default. Raw document bytes are not parsed or uploaded here.</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadDocumentParserPolicyJson("document-parser-policy.json", report)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Parser Policy JSON
         </button>
       </div>
     </section>
@@ -643,6 +865,16 @@ function downloadSecretPolicyJson(filename: string, report: ModelGatewaySecretPo
 
 function downloadObjectStoragePolicyJson(filename: string, report: ObjectStoragePolicyReport): void {
   const blob = new Blob([exportObjectStoragePolicyJson(report)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadDocumentParserPolicyJson(filename: string, report: DocumentParserPolicyReport): void {
+  const blob = new Blob([exportDocumentParserPolicyJson(report)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

@@ -64,6 +64,16 @@ import {
   createEvidenceUpdateEvent,
   type EvidenceAuditEvent
 } from "./lib/evidenceAuditTrail";
+import {
+  createDocumentParserPolicyReport,
+  type DocumentParserPolicyContext,
+  type DocumentParserPolicyDraft,
+  type DocumentParserPolicyReport
+} from "./lib/documentParserPolicy";
+import {
+  DocumentParserPolicyClientError,
+  fetchDocumentParserPolicyReport
+} from "./lib/documentParserPolicyClient";
 import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoScenarioLibrary";
 import { createDemoReadinessReport } from "./lib/demoReadiness";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
@@ -192,6 +202,20 @@ const defaultObjectStoragePolicyDraft: ObjectStoragePolicyDraft = {
   notes: ""
 };
 
+const defaultDocumentParserPolicyDraft: DocumentParserPolicyDraft = {
+  policyOwner: "",
+  maxDocumentSizeMb: 0,
+  rawDocumentRetentionDays: 0,
+  deletionSlaDays: 0,
+  parsingPurpose: "",
+  redactionBeforeParsingApproved: false,
+  noTrainingUseConfirmed: false,
+  accessLoggingApproved: false,
+  noSensitiveMaterialConfirmed: true,
+  humanReviewRequired: true,
+  notes: ""
+};
+
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
@@ -248,6 +272,12 @@ export default function App() {
   const [storagePolicySyncStatus, setStoragePolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [storagePolicySyncError, setStoragePolicySyncError] = useState("");
   const [storagePolicySyncRecoveryAction, setStoragePolicySyncRecoveryAction] = useState("");
+  const [parserPolicyApiBaseUrl, setParserPolicyApiBaseUrl] = useState("");
+  const [parserPolicyDraft, setParserPolicyDraft] = useState<DocumentParserPolicyDraft>(defaultDocumentParserPolicyDraft);
+  const [serverParserPolicyReport, setServerParserPolicyReport] = useState<DocumentParserPolicyReport | null>(null);
+  const [parserPolicySyncStatus, setParserPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [parserPolicySyncError, setParserPolicySyncError] = useState("");
+  const [parserPolicySyncRecoveryAction, setParserPolicySyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -419,6 +449,31 @@ export default function App() {
     [objectStoragePolicyContext, storagePolicyDraft]
   );
   const activeObjectStoragePolicyReport = serverStoragePolicyReport ?? objectStoragePolicyReport;
+  const documentParserPolicyContext = useMemo<DocumentParserPolicyContext>(
+    () => ({
+      workspaceId: project.id,
+      evidenceCount: project.evidenceItems.length,
+      retentionStatus: retentionPolicyReport.status,
+      vaultSyncAllowed: retentionPolicyReport.vaultSyncAllowed,
+      blockerCount: retentionPolicyReport.blockerCount,
+      exportBlockerCount: dataBoundaryReport.blockerCount,
+      manifestHash: manifest?.bundleHash
+    }),
+    [
+      dataBoundaryReport.blockerCount,
+      manifest?.bundleHash,
+      project.evidenceItems.length,
+      project.id,
+      retentionPolicyReport.blockerCount,
+      retentionPolicyReport.status,
+      retentionPolicyReport.vaultSyncAllowed
+    ]
+  );
+  const documentParserPolicyReport = useMemo(
+    () => createDocumentParserPolicyReport({ context: documentParserPolicyContext, policy: parserPolicyDraft }),
+    [documentParserPolicyContext, parserPolicyDraft]
+  );
+  const activeDocumentParserPolicyReport = serverParserPolicyReport ?? documentParserPolicyReport;
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -1046,6 +1101,39 @@ export default function App() {
     }
   };
 
+  const updateParserPolicyDraft = (updates: Partial<DocumentParserPolicyDraft>) => {
+    setParserPolicyDraft((current) => ({ ...current, ...updates }));
+    setServerParserPolicyReport(null);
+    setParserPolicySyncStatus("idle");
+    setParserPolicySyncError("");
+    setParserPolicySyncRecoveryAction("");
+  };
+
+  const evaluateParserPolicyReport = async () => {
+    setParserPolicySyncStatus("syncing");
+    setParserPolicySyncError("");
+    setParserPolicySyncRecoveryAction("");
+
+    try {
+      const report = await fetchDocumentParserPolicyReport({
+        apiBaseUrl: parserPolicyApiBaseUrl,
+        context: documentParserPolicyContext,
+        policy: parserPolicyDraft
+      });
+      setServerParserPolicyReport(report);
+      setParserPolicySyncStatus("synced");
+    } catch (error) {
+      setParserPolicySyncStatus("error");
+      if (error instanceof DocumentParserPolicyClientError) {
+        setParserPolicySyncError(error.message);
+        setParserPolicySyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setParserPolicySyncError(error instanceof Error ? error.message : "Document parser policy evaluation failed.");
+      setParserPolicySyncRecoveryAction("Start the Phase 2 API and retry document parser policy evaluation.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1177,6 +1265,14 @@ export default function App() {
             storagePolicySyncStatus={storagePolicySyncStatus}
             storagePolicySyncError={storagePolicySyncError}
             storagePolicySyncRecoveryAction={storagePolicySyncRecoveryAction}
+            parserPolicyDraft={parserPolicyDraft}
+            parserPolicyContext={documentParserPolicyContext}
+            parserPolicyReport={activeDocumentParserPolicyReport}
+            parserPolicySource={serverParserPolicyReport ? "server" : "local"}
+            parserPolicyApiBaseUrl={parserPolicyApiBaseUrl}
+            parserPolicySyncStatus={parserPolicySyncStatus}
+            parserPolicySyncError={parserPolicySyncError}
+            parserPolicySyncRecoveryAction={parserPolicySyncRecoveryAction}
             onProviderPolicyApiBaseUrlChange={setProviderPolicyApiBaseUrl}
             onRefreshProviderPolicy={refreshProviderPolicyReport}
             onSecretPolicyDraftChange={updateSecretPolicyDraft}
@@ -1184,6 +1280,9 @@ export default function App() {
             onStoragePolicyApiBaseUrlChange={setStoragePolicyApiBaseUrl}
             onStoragePolicyDraftChange={updateStoragePolicyDraft}
             onEvaluateStoragePolicy={evaluateStoragePolicyReport}
+            onParserPolicyApiBaseUrlChange={setParserPolicyApiBaseUrl}
+            onParserPolicyDraftChange={updateParserPolicyDraft}
+            onEvaluateParserPolicy={evaluateParserPolicyReport}
             onNavigate={setActiveTab}
           />
 

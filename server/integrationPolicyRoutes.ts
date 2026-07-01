@@ -1,5 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import {
+  createDocumentParserPolicyReport,
+  type DocumentParserPolicyContext,
+  type DocumentParserPolicyDraft
+} from "../src/lib/documentParserPolicy.js";
+import {
   createObjectStoragePolicyReport,
   type ObjectStoragePolicyContext,
   type ObjectStoragePolicyDraft
@@ -10,11 +15,23 @@ type ObjectStoragePolicyRequestBody = {
   policy?: unknown;
 };
 
+type DocumentParserPolicyRequestBody = {
+  context?: unknown;
+  policy?: unknown;
+};
+
 export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
   server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request) =>
     createObjectStoragePolicyReport({
       context: toObjectStoragePolicyContext(request.body?.context),
       policy: toObjectStoragePolicyDraft(request.body?.policy)
+    })
+  );
+
+  server.post<{ Body: DocumentParserPolicyRequestBody }>("/api/integrations/document-parser/policy", async (request) =>
+    createDocumentParserPolicyReport({
+      context: toDocumentParserPolicyContext(request.body?.context),
+      policy: toDocumentParserPolicyDraft(request.body?.policy)
     })
   );
 }
@@ -43,6 +60,38 @@ function toObjectStoragePolicyDraft(value: unknown): ObjectStoragePolicyDraft {
     bucketAllowlistApproved: policy.bucketAllowlistApproved === true,
     accessLoggingApproved: policy.accessLoggingApproved === true,
     lifecyclePolicyApproved: policy.lifecyclePolicyApproved === true,
+    noSensitiveMaterialConfirmed: policy.noSensitiveMaterialConfirmed === true,
+    humanReviewRequired: policy.humanReviewRequired === true,
+    notes: stringField(policy.notes)
+  };
+}
+
+function toDocumentParserPolicyContext(value: unknown): DocumentParserPolicyContext {
+  const context = isRecord(value) ? value : {};
+
+  return {
+    workspaceId: stringField(context.workspaceId),
+    evidenceCount: numberField(context.evidenceCount),
+    retentionStatus: isRetentionPolicyStatus(context.retentionStatus) ? context.retentionStatus : "needs-review",
+    vaultSyncAllowed: context.vaultSyncAllowed === true,
+    blockerCount: numberField(context.blockerCount),
+    exportBlockerCount: numberField(context.exportBlockerCount),
+    manifestHash: stringField(context.manifestHash) || undefined
+  };
+}
+
+function toDocumentParserPolicyDraft(value: unknown): DocumentParserPolicyDraft {
+  const policy = isRecord(value) ? value : {};
+
+  return {
+    policyOwner: stringField(policy.policyOwner),
+    maxDocumentSizeMb: numberField(policy.maxDocumentSizeMb),
+    rawDocumentRetentionDays: numberField(policy.rawDocumentRetentionDays),
+    deletionSlaDays: numberField(policy.deletionSlaDays),
+    parsingPurpose: stringField(policy.parsingPurpose),
+    redactionBeforeParsingApproved: policy.redactionBeforeParsingApproved === true,
+    noTrainingUseConfirmed: policy.noTrainingUseConfirmed === true,
+    accessLoggingApproved: policy.accessLoggingApproved === true,
     noSensitiveMaterialConfirmed: policy.noSensitiveMaterialConfirmed === true,
     humanReviewRequired: policy.humanReviewRequired === true,
     notes: stringField(policy.notes)

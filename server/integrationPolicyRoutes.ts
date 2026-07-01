@@ -5,6 +5,11 @@ import {
   type ChainAnchorPolicyDraft
 } from "../src/lib/chainAnchorPolicy.js";
 import {
+  createGrcDestinationPolicyReport,
+  type GrcDestinationPolicyContext,
+  type GrcDestinationPolicyDraft
+} from "../src/lib/grcDestinationPolicy.js";
+import {
   createDocumentParserPolicyReport,
   type DocumentParserPolicyContext,
   type DocumentParserPolicyDraft
@@ -30,6 +35,11 @@ type ChainAnchorPolicyRequestBody = {
   policy?: unknown;
 };
 
+type GrcDestinationPolicyRequestBody = {
+  context?: unknown;
+  policy?: unknown;
+};
+
 export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
   server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request) =>
     createObjectStoragePolicyReport({
@@ -49,6 +59,13 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
     createChainAnchorPolicyReport({
       context: toChainAnchorPolicyContext(request.body?.context),
       policy: toChainAnchorPolicyDraft(request.body?.policy)
+    })
+  );
+
+  server.post<{ Body: GrcDestinationPolicyRequestBody }>("/api/integrations/grc-destination/policy", async (request) =>
+    createGrcDestinationPolicyReport({
+      context: toGrcDestinationPolicyContext(request.body?.context),
+      policy: toGrcDestinationPolicyDraft(request.body?.policy)
     })
   );
 }
@@ -149,8 +166,47 @@ function toChainAnchorPolicyDraft(value: unknown): ChainAnchorPolicyDraft {
   };
 }
 
+function toGrcDestinationPolicyContext(value: unknown): GrcDestinationPolicyContext {
+  const context = isRecord(value) ? value : {};
+
+  return {
+    workspaceId: stringField(context.workspaceId),
+    remediationItemCount: numberField(context.remediationItemCount),
+    exportSafetyStatus: isGrcDestinationExportSafetyStatus(context.exportSafetyStatus) ? context.exportSafetyStatus : "needs-review",
+    exportBlockerCount: numberField(context.exportBlockerCount),
+    integrationAdapterStatus: isIntegrationAdapterStatus(context.integrationAdapterStatus) ? context.integrationAdapterStatus : "blocked",
+    localTicketExportAvailable: context.localTicketExportAvailable === true
+  };
+}
+
+function toGrcDestinationPolicyDraft(value: unknown): GrcDestinationPolicyDraft {
+  const policy = isRecord(value) ? value : {};
+
+  return {
+    policyOwner: stringField(policy.policyOwner),
+    destinationSystem: stringField(policy.destinationSystem),
+    destinationQueue: stringField(policy.destinationQueue),
+    fieldMappingApproved: policy.fieldMappingApproved === true,
+    authenticationPolicyApproved: policy.authenticationPolicyApproved === true,
+    redactionPolicyApproved: policy.redactionPolicyApproved === true,
+    ticketOwnershipApproved: policy.ticketOwnershipApproved === true,
+    retryAndAuditLoggingApproved: policy.retryAndAuditLoggingApproved === true,
+    noSensitiveMaterialConfirmed: policy.noSensitiveMaterialConfirmed === true,
+    humanReviewRequired: policy.humanReviewRequired === true,
+    notes: stringField(policy.notes)
+  };
+}
+
 function isRetentionPolicyStatus(value: unknown): value is ObjectStoragePolicyContext["retentionStatus"] {
   return value === "ready" || value === "needs-review" || value === "blocked";
+}
+
+function isGrcDestinationExportSafetyStatus(value: unknown): value is GrcDestinationPolicyContext["exportSafetyStatus"] {
+  return value === "clean" || value === "needs-review" || value === "blocked";
+}
+
+function isIntegrationAdapterStatus(value: unknown): value is GrcDestinationPolicyContext["integrationAdapterStatus"] {
+  return value === "ready" || value === "needs-policy" || value === "blocked" || value === "disabled";
 }
 
 function stringField(value: unknown): string {

@@ -28,6 +28,12 @@ import {
   type ChainAnchorPolicyReport
 } from "../lib/chainAnchorPolicy";
 import {
+  exportGrcDestinationPolicyJson,
+  type GrcDestinationPolicyContext,
+  type GrcDestinationPolicyDraft,
+  type GrcDestinationPolicyReport
+} from "../lib/grcDestinationPolicy";
+import {
   exportObjectStoragePolicyJson,
   type ObjectStoragePolicyContext,
   type ObjectStoragePolicyDraft,
@@ -72,6 +78,14 @@ type IntegrationReadinessPanelProps = {
   anchorPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
   anchorPolicySyncError: string;
   anchorPolicySyncRecoveryAction: string;
+  grcDestinationPolicyDraft: GrcDestinationPolicyDraft;
+  grcDestinationPolicyContext: GrcDestinationPolicyContext;
+  grcDestinationPolicyReport: GrcDestinationPolicyReport;
+  grcDestinationPolicySource: "local" | "server";
+  grcDestinationPolicyApiBaseUrl: string;
+  grcDestinationPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  grcDestinationPolicySyncError: string;
+  grcDestinationPolicySyncRecoveryAction: string;
   onProviderPolicyApiBaseUrlChange: (value: string) => void;
   onRefreshProviderPolicy: () => Promise<void> | void;
   onSecretPolicyDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
@@ -85,6 +99,9 @@ type IntegrationReadinessPanelProps = {
   onAnchorPolicyApiBaseUrlChange: (value: string) => void;
   onAnchorPolicyDraftChange: (updates: Partial<ChainAnchorPolicyDraft>) => void;
   onEvaluateAnchorPolicy: () => Promise<void> | void;
+  onGrcDestinationPolicyApiBaseUrlChange: (value: string) => void;
+  onGrcDestinationPolicyDraftChange: (updates: Partial<GrcDestinationPolicyDraft>) => void;
+  onEvaluateGrcDestinationPolicy: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -136,6 +153,14 @@ export function IntegrationReadinessPanel({
   anchorPolicySyncStatus,
   anchorPolicySyncError,
   anchorPolicySyncRecoveryAction,
+  grcDestinationPolicyDraft,
+  grcDestinationPolicyContext,
+  grcDestinationPolicyReport,
+  grcDestinationPolicySource,
+  grcDestinationPolicyApiBaseUrl,
+  grcDestinationPolicySyncStatus,
+  grcDestinationPolicySyncError,
+  grcDestinationPolicySyncRecoveryAction,
   onProviderPolicyApiBaseUrlChange,
   onRefreshProviderPolicy,
   onSecretPolicyDraftChange,
@@ -149,6 +174,9 @@ export function IntegrationReadinessPanel({
   onAnchorPolicyApiBaseUrlChange,
   onAnchorPolicyDraftChange,
   onEvaluateAnchorPolicy,
+  onGrcDestinationPolicyApiBaseUrlChange,
+  onGrcDestinationPolicyDraftChange,
+  onEvaluateGrcDestinationPolicy,
   onNavigate
 }: IntegrationReadinessPanelProps) {
   return (
@@ -210,6 +238,19 @@ export function IntegrationReadinessPanel({
         onApiBaseUrlChange={onAnchorPolicyApiBaseUrlChange}
         onDraftChange={onAnchorPolicyDraftChange}
         onEvaluate={onEvaluateAnchorPolicy}
+      />
+      <GrcDestinationPolicyPanel
+        draft={grcDestinationPolicyDraft}
+        context={grcDestinationPolicyContext}
+        report={grcDestinationPolicyReport}
+        source={grcDestinationPolicySource}
+        apiBaseUrl={grcDestinationPolicyApiBaseUrl}
+        syncStatus={grcDestinationPolicySyncStatus}
+        syncError={grcDestinationPolicySyncError}
+        syncRecoveryAction={grcDestinationPolicySyncRecoveryAction}
+        onApiBaseUrlChange={onGrcDestinationPolicyApiBaseUrlChange}
+        onDraftChange={onGrcDestinationPolicyDraftChange}
+        onEvaluate={onEvaluateGrcDestinationPolicy}
       />
       <ModelGatewayProviderPolicyPanel
         report={providerPolicyReport}
@@ -765,6 +806,180 @@ function ChainAnchorPolicyPanel({
   );
 }
 
+function GrcDestinationPolicyPanel({
+  draft,
+  context,
+  report,
+  source,
+  apiBaseUrl,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onApiBaseUrlChange,
+  onDraftChange,
+  onEvaluate
+}: {
+  draft: GrcDestinationPolicyDraft;
+  context: GrcDestinationPolicyContext;
+  report: GrcDestinationPolicyReport;
+  source: "local" | "server";
+  apiBaseUrl: string;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onDraftChange: (updates: Partial<GrcDestinationPolicyDraft>) => void;
+  onEvaluate: () => Promise<void> | void;
+}) {
+  return (
+    <section className={`secret-policy-panel grc-destination-policy-panel ${report.overallStatus}`} aria-label="GRC Destination Policy Evaluation">
+      <div className="split-title compact-title">
+        <div>
+          <ClipboardList size={17} aria-hidden="true" />
+          <h4>GRC Destination Policy Evaluation</h4>
+        </div>
+        <span className={`workflow-status ${report.overallStatus}`}>{policyStatusLabel(report.overallStatus)}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Approved controls" value={`${report.approvedControlCount}/${report.requiredControlCount}`} />
+        <ProviderPolicyFact label="Policy source" value={source === "server" ? "Server" : "Local"} />
+        <ProviderPolicyFact label="External tickets" value={report.externalGrcTicketCreationAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Remediation items" value={String(context.remediationItemCount)} />
+        <ProviderPolicyFact label="Export safety" value={context.exportSafetyStatus} />
+        <ProviderPolicyFact label="Adapter status" value={context.integrationAdapterStatus} />
+      </div>
+      <div className={`secret-policy-form ${syncStatus}`}>
+        <label className="editor-field">
+          <span>GRC Destination API base URL</span>
+          <input
+            type="url"
+            value={apiBaseUrl}
+            placeholder="http://127.0.0.1:8787"
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+          />
+        </label>
+        <label className="editor-field">
+          <span>GRC policy owner</span>
+          <input
+            type="text"
+            value={draft.policyOwner}
+            placeholder="GRC operations"
+            onChange={(event) => onDraftChange({ policyOwner: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Destination system</span>
+          <input
+            type="text"
+            value={draft.destinationSystem}
+            placeholder="jira"
+            onChange={(event) => onDraftChange({ destinationSystem: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Destination queue</span>
+          <input
+            type="text"
+            value={draft.destinationQueue}
+            placeholder="LEGAL-AUDIT"
+            onChange={(event) => onDraftChange({ destinationQueue: event.target.value })}
+          />
+        </label>
+        <div className="secret-policy-checklist" aria-label="GRC destination policy controls">
+          <SecretPolicyToggle
+            label="Field mapping"
+            checked={draft.fieldMappingApproved}
+            onChange={(checked) => onDraftChange({ fieldMappingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Authentication policy"
+            checked={draft.authenticationPolicyApproved}
+            onChange={(checked) => onDraftChange({ authenticationPolicyApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Export redaction"
+            checked={draft.redactionPolicyApproved}
+            onChange={(checked) => onDraftChange({ redactionPolicyApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Ticket ownership"
+            checked={draft.ticketOwnershipApproved}
+            onChange={(checked) => onDraftChange({ ticketOwnershipApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Retry and audit logging"
+            checked={draft.retryAndAuditLoggingApproved}
+            onChange={(checked) => onDraftChange({ retryAndAuditLoggingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="No sensitive material"
+            checked={draft.noSensitiveMaterialConfirmed}
+            onChange={(checked) => onDraftChange({ noSensitiveMaterialConfirmed: checked })}
+          />
+          <SecretPolicyToggle
+            label="Human review required"
+            checked={draft.humanReviewRequired}
+            onChange={(checked) => onDraftChange({ humanReviewRequired: checked })}
+          />
+        </div>
+        <label className="editor-field secret-policy-notes">
+          <span>GRC policy notes</span>
+          <textarea
+            value={draft.notes}
+            placeholder="Metadata only. Do not paste API keys, webhook secrets, raw ticket bodies, raw KYC, or personal data."
+            onChange={(event) => onDraftChange({ notes: event.target.value })}
+          />
+        </label>
+        <div className="inline-actions secret-policy-actions">
+          <span>
+            {report.externalGrcTicketCreationStatus === "policy-ready-not-enabled"
+              ? "External GRC ticket creation remains disabled until a separate destination adapter enablement review."
+              : report.nextActions[0]}
+          </span>
+          <button type="button" className="secondary" onClick={onEvaluate} disabled={syncStatus === "syncing"}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            {syncStatus === "syncing" ? "Evaluating Server GRC Policy" : "Evaluate Server GRC Policy"}
+          </button>
+        </div>
+        {syncStatus === "synced" ? <span className="save-state">GRC policy report synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. GRC destination policy evaluation is audit preparation metadata only.</small>
+          </div>
+        ) : null}
+      </div>
+      <div className="provider-control-list secret-policy-control-list">
+        {report.controls.map((control) => (
+          <article key={control.id} className={`provider-control ${control.status}`}>
+            <header>
+              <span>{policyStatusLabel(control.status)}</span>
+              <strong>{control.label}</strong>
+            </header>
+            <p>{control.evidence}</p>
+            <small>{control.recoveryAction}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>External GRC ticket creation remains disabled by default. No credentials, raw ticket bodies, or external tickets are created here.</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadGrcDestinationPolicyJson("grc-destination-policy.json", report)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download GRC Policy JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ModelGatewayProviderPolicyPanel({
   report,
   source,
@@ -1100,6 +1315,16 @@ function downloadDocumentParserPolicyJson(filename: string, report: DocumentPars
 
 function downloadChainAnchorPolicyJson(filename: string, report: ChainAnchorPolicyReport): void {
   const blob = new Blob([exportChainAnchorPolicyJson(report)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadGrcDestinationPolicyJson(filename: string, report: GrcDestinationPolicyReport): void {
+  const blob = new Blob([exportGrcDestinationPolicyJson(report)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

@@ -89,6 +89,16 @@ import { createDemoReadinessReport } from "./lib/demoReadiness";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
+import {
+  createGrcDestinationPolicyReport,
+  type GrcDestinationPolicyContext,
+  type GrcDestinationPolicyDraft,
+  type GrcDestinationPolicyReport
+} from "./lib/grcDestinationPolicy";
+import {
+  fetchGrcDestinationPolicyReport,
+  GrcDestinationPolicyClientError
+} from "./lib/grcDestinationPolicyClient";
 import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
@@ -240,6 +250,20 @@ const defaultChainAnchorPolicyDraft: ChainAnchorPolicyDraft = {
   notes: ""
 };
 
+const defaultGrcDestinationPolicyDraft: GrcDestinationPolicyDraft = {
+  policyOwner: "",
+  destinationSystem: "",
+  destinationQueue: "",
+  fieldMappingApproved: false,
+  authenticationPolicyApproved: false,
+  redactionPolicyApproved: false,
+  ticketOwnershipApproved: false,
+  retryAndAuditLoggingApproved: false,
+  noSensitiveMaterialConfirmed: true,
+  humanReviewRequired: true,
+  notes: ""
+};
+
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
@@ -308,6 +332,13 @@ export default function App() {
   const [anchorPolicySyncStatus, setAnchorPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [anchorPolicySyncError, setAnchorPolicySyncError] = useState("");
   const [anchorPolicySyncRecoveryAction, setAnchorPolicySyncRecoveryAction] = useState("");
+  const [grcDestinationPolicyApiBaseUrl, setGrcDestinationPolicyApiBaseUrl] = useState("");
+  const [grcDestinationPolicyDraft, setGrcDestinationPolicyDraft] =
+    useState<GrcDestinationPolicyDraft>(defaultGrcDestinationPolicyDraft);
+  const [serverGrcDestinationPolicyReport, setServerGrcDestinationPolicyReport] = useState<GrcDestinationPolicyReport | null>(null);
+  const [grcDestinationPolicySyncStatus, setGrcDestinationPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [grcDestinationPolicySyncError, setGrcDestinationPolicySyncError] = useState("");
+  const [grcDestinationPolicySyncRecoveryAction, setGrcDestinationPolicySyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -532,6 +563,32 @@ export default function App() {
     [anchorPolicyDraft, chainAnchorPolicyContext]
   );
   const activeChainAnchorPolicyReport = serverAnchorPolicyReport ?? chainAnchorPolicyReport;
+  const grcTicketExportAdapterStatus =
+    integrationReadinessRegistry.adapters.find((adapter) => adapter.id === "grc-ticket-export")?.status ?? "blocked";
+  const grcDestinationPolicyContext = useMemo<GrcDestinationPolicyContext>(
+    () => ({
+      workspaceId: project.id,
+      remediationItemCount: audit.remediation.length,
+      exportSafetyStatus: dataBoundaryReport.status,
+      exportBlockerCount: dataBoundaryReport.blockerCount,
+      integrationAdapterStatus: grcTicketExportAdapterStatus,
+      localTicketExportAvailable:
+        grcTicketExportAdapterStatus === "ready" && audit.remediation.length > 0 && dataBoundaryReport.exportAllowed
+    }),
+    [
+      audit.remediation.length,
+      dataBoundaryReport.blockerCount,
+      dataBoundaryReport.exportAllowed,
+      dataBoundaryReport.status,
+      grcTicketExportAdapterStatus,
+      project.id
+    ]
+  );
+  const grcDestinationPolicyReport = useMemo(
+    () => createGrcDestinationPolicyReport({ context: grcDestinationPolicyContext, policy: grcDestinationPolicyDraft }),
+    [grcDestinationPolicyContext, grcDestinationPolicyDraft]
+  );
+  const activeGrcDestinationPolicyReport = serverGrcDestinationPolicyReport ?? grcDestinationPolicyReport;
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -1225,6 +1282,39 @@ export default function App() {
     }
   };
 
+  const updateGrcDestinationPolicyDraft = (updates: Partial<GrcDestinationPolicyDraft>) => {
+    setGrcDestinationPolicyDraft((current) => ({ ...current, ...updates }));
+    setServerGrcDestinationPolicyReport(null);
+    setGrcDestinationPolicySyncStatus("idle");
+    setGrcDestinationPolicySyncError("");
+    setGrcDestinationPolicySyncRecoveryAction("");
+  };
+
+  const evaluateGrcDestinationPolicyReport = async () => {
+    setGrcDestinationPolicySyncStatus("syncing");
+    setGrcDestinationPolicySyncError("");
+    setGrcDestinationPolicySyncRecoveryAction("");
+
+    try {
+      const report = await fetchGrcDestinationPolicyReport({
+        apiBaseUrl: grcDestinationPolicyApiBaseUrl,
+        context: grcDestinationPolicyContext,
+        policy: grcDestinationPolicyDraft
+      });
+      setServerGrcDestinationPolicyReport(report);
+      setGrcDestinationPolicySyncStatus("synced");
+    } catch (error) {
+      setGrcDestinationPolicySyncStatus("error");
+      if (error instanceof GrcDestinationPolicyClientError) {
+        setGrcDestinationPolicySyncError(error.message);
+        setGrcDestinationPolicySyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setGrcDestinationPolicySyncError(error instanceof Error ? error.message : "GRC destination policy evaluation failed.");
+      setGrcDestinationPolicySyncRecoveryAction("Start the Phase 2 API and retry GRC destination policy evaluation.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1372,6 +1462,14 @@ export default function App() {
             anchorPolicySyncStatus={anchorPolicySyncStatus}
             anchorPolicySyncError={anchorPolicySyncError}
             anchorPolicySyncRecoveryAction={anchorPolicySyncRecoveryAction}
+            grcDestinationPolicyDraft={grcDestinationPolicyDraft}
+            grcDestinationPolicyContext={grcDestinationPolicyContext}
+            grcDestinationPolicyReport={activeGrcDestinationPolicyReport}
+            grcDestinationPolicySource={serverGrcDestinationPolicyReport ? "server" : "local"}
+            grcDestinationPolicyApiBaseUrl={grcDestinationPolicyApiBaseUrl}
+            grcDestinationPolicySyncStatus={grcDestinationPolicySyncStatus}
+            grcDestinationPolicySyncError={grcDestinationPolicySyncError}
+            grcDestinationPolicySyncRecoveryAction={grcDestinationPolicySyncRecoveryAction}
             onProviderPolicyApiBaseUrlChange={setProviderPolicyApiBaseUrl}
             onRefreshProviderPolicy={refreshProviderPolicyReport}
             onSecretPolicyDraftChange={updateSecretPolicyDraft}
@@ -1385,6 +1483,9 @@ export default function App() {
             onAnchorPolicyApiBaseUrlChange={setAnchorPolicyApiBaseUrl}
             onAnchorPolicyDraftChange={updateAnchorPolicyDraft}
             onEvaluateAnchorPolicy={evaluateAnchorPolicyReport}
+            onGrcDestinationPolicyApiBaseUrlChange={setGrcDestinationPolicyApiBaseUrl}
+            onGrcDestinationPolicyDraftChange={updateGrcDestinationPolicyDraft}
+            onEvaluateGrcDestinationPolicy={evaluateGrcDestinationPolicyReport}
             onNavigate={setActiveTab}
           />
 

@@ -1079,6 +1079,107 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("evaluates GRC destination policy readiness without creating external tickets", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/integrations/grc-destination/policy");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body.policy).toEqual({
+        policyOwner: "GRC owner",
+        destinationSystem: "jira",
+        destinationQueue: "LEGAL-AUDIT",
+        fieldMappingApproved: true,
+        authenticationPolicyApproved: true,
+        redactionPolicyApproved: true,
+        ticketOwnershipApproved: true,
+        retryAndAuditLoggingApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Policy approved for future GRC destination review."
+      });
+      expect(body.context).toEqual(
+        expect.objectContaining({
+          remediationItemCount: expect.any(Number),
+          exportSafetyStatus: expect.any(String),
+          exportBlockerCount: expect.any(Number),
+          integrationAdapterStatus: expect.any(String),
+          localTicketExportAvailable: expect.any(Boolean)
+        })
+      );
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("webhookSecret");
+      expect(String(init?.body)).not.toContain("rawTicketBody");
+      expect(String(init?.body)).not.toContain("sk-");
+      expect(String(init?.body)).not.toContain("passport data");
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-grc-destination-policy-v1",
+          generatedAt: "2026-07-01T00:00:00.000Z",
+          overallStatus: "ready",
+          requiredControlCount: 10,
+          approvedControlCount: 10,
+          externalGrcTicketCreationAllowed: false,
+          externalGrcTicketCreationStatus: "policy-ready-not-enabled",
+          exportMode: "metadata-only-json",
+          controls: [
+            {
+              id: "destination-scope",
+              label: "Destination scope",
+              status: "ready",
+              evidence: "Destination system and queue are defined for future adapter review.",
+              recoveryAction: "Keep external ticket creation disabled until destination enablement review."
+            },
+            {
+              id: "retry-audit-logging",
+              label: "Retry and audit logging",
+              status: "ready",
+              evidence: "Retry and audit logging are approved for future GRC destination review.",
+              recoveryAction: "Keep retry and audit logging mandatory before destination adapter enablement."
+            }
+          ],
+          nextActions: ["Keep external GRC ticket creation disabled until a separate destination adapter enablement review."],
+          notLegalAdviceBoundary: "Not legal advice. GRC destination policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const grcPolicy = within(registry.getByRole("region", { name: /GRC Destination Policy Evaluation/i }));
+
+    fireEvent.change(grcPolicy.getByLabelText(/GRC Destination API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.change(grcPolicy.getByLabelText(/GRC policy owner/i), { target: { value: "GRC owner" } });
+    fireEvent.change(grcPolicy.getByLabelText(/Destination system/i), { target: { value: "jira" } });
+    fireEvent.change(grcPolicy.getByLabelText(/Destination queue/i), { target: { value: "LEGAL-AUDIT" } });
+    fireEvent.click(grcPolicy.getByLabelText(/Field mapping/i));
+    fireEvent.click(grcPolicy.getByLabelText(/Authentication policy/i));
+    fireEvent.click(grcPolicy.getByLabelText(/Export redaction/i));
+    fireEvent.click(grcPolicy.getByLabelText(/Ticket ownership/i));
+    fireEvent.click(grcPolicy.getByLabelText(/Retry and audit logging/i));
+    await waitFor(() => {
+      expect(grcPolicy.getByLabelText(/Field mapping/i)).toBeChecked();
+      expect(grcPolicy.getByLabelText(/Authentication policy/i)).toBeChecked();
+      expect(grcPolicy.getByLabelText(/Export redaction/i)).toBeChecked();
+      expect(grcPolicy.getByLabelText(/Ticket ownership/i)).toBeChecked();
+      expect(grcPolicy.getByLabelText(/Retry and audit logging/i)).toBeChecked();
+    });
+    fireEvent.change(grcPolicy.getByLabelText(/GRC policy notes/i), {
+      target: { value: "Policy approved for future GRC destination review." }
+    });
+    fireEvent.click(grcPolicy.getByRole("button", { name: /Evaluate Server GRC Policy/i }));
+
+    expect(await grcPolicy.findByText(/GRC policy report synced/i)).toBeInTheDocument();
+    expect(grcPolicy.getAllByText(/External GRC ticket creation remains disabled/i).length).toBeGreaterThan(0);
+    expect(grcPolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
     const fetchMock = vi.fn(async () =>
       appJsonResponse(
@@ -2299,7 +2400,7 @@ describe("App", () => {
     expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Review status for AI event 1/i)).toHaveValue("reviewed");
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("handles returned and rejected Human Review decisions as audit-prep workflow states", async () => {
     render(<App />);

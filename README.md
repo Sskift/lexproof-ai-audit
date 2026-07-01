@@ -194,9 +194,11 @@ Evidence Vault sync carries linked regulatory control IDs from ledger source ref
 
 ![Evidence Vault manifest download](docs/assets/screenshots/evidence-vault-manifest-download.png)
 
-Evidence Ledger now exposes review-stage statuses directly, so users can move metadata-only records into `under-review` and preserve `rejected` records for replacement recovery before Evidence Vault sync. Not legal advice.
+Evidence Ledger now exposes review-stage statuses directly, so users can move metadata-only records into `under-review`, preserve `rejected` records, and create a metadata-only replacement request without copying stale rejected content before Evidence Vault sync. Not legal advice.
 
 ![Evidence Ledger review-stage statuses](docs/assets/screenshots/evidence-ledger-review-stage-statuses.png)
+
+![Evidence Ledger rejected replacement request](docs/assets/screenshots/evidence-ledger-rejected-replacement.png)
 
 ![Evidence Vault control coverage](docs/assets/screenshots/evidence-vault-control-coverage-ai.png)
 

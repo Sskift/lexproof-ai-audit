@@ -7,6 +7,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/regulatory-control-matrix.png",
   "docs/assets/screenshots/evidence-retention-remediation-queue.png",
   "docs/assets/screenshots/evidence-ledger-review-stage-statuses.png",
+  "docs/assets/screenshots/evidence-ledger-rejected-replacement.png",
   "docs/assets/screenshots/evidence-vault-manifest-download.png",
   "docs/assets/screenshots/demo-01-model-connect.png",
   "docs/assets/screenshots/demo-02-evidence-ledger.png",

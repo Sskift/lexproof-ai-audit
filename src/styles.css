@@ -4495,6 +4495,32 @@ textarea {
   align-items: end;
 }
 
+.evidence-replacement-recovery {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #f0d2cb;
+  border-radius: 8px;
+  background: #fffdfb;
+}
+
+.evidence-replacement-recovery strong {
+  color: #5f2b24;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.evidence-replacement-recovery p {
+  margin: 0;
+  color: #714438;
+  line-height: 1.45;
+}
+
+.evidence-replacement-recovery button {
+  justify-self: start;
+}
+
 .hash-block {
   min-width: 0;
   padding: 10px;

@@ -17,6 +17,7 @@ import {
 } from "../lib/evidenceVaultClient";
 import { createEvidenceVaultControlCoverage, type EvidenceVaultControlCoverage } from "../lib/evidenceVaultControlCoverage";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
+import { createRejectedEvidenceReplacementDraft } from "../lib/evidenceReplacement";
 import { evidenceStatuses, type EvidenceItem, type EvidenceOwner, type EvidenceStatus } from "../lib/projectModel";
 import {
   createEvidenceRetentionRemediationQueue,
@@ -127,6 +128,13 @@ export function EvidenceLedger({
     }
     onAddEvidence(draft);
     setDraft(blankEvidence);
+  };
+
+  const createRejectedReplacement = (item: EvidenceItem) => {
+    const replacement = createRejectedEvidenceReplacementDraft(item);
+    if (replacement) {
+      onAddEvidence(replacement);
+    }
   };
 
   const importLocalFile = async (file: File | undefined) => {
@@ -665,6 +673,18 @@ export function EvidenceLedger({
                 <Trash2 size={16} aria-hidden="true" />
               </button>
             </div>
+            {item.status === "rejected" ? (
+              <div className="evidence-replacement-recovery">
+                <strong>Rejected evidence recovery</strong>
+                <p>
+                  Preserve this rejected item and open a metadata-only replacement request. Not legal advice.
+                </p>
+                <button type="button" className="secondary" onClick={() => createRejectedReplacement(item)}>
+                  <RefreshCcw size={16} aria-hidden="true" />
+                  Create replacement for {item.label || "Untitled evidence"}
+                </button>
+              </div>
+            ) : null}
           </article>
         ))}
       </div>

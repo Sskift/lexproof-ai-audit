@@ -1469,6 +1469,37 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
   });
 
+  it("opens a metadata-only replacement request from rejected local evidence", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Rejected local evidence" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "rejected" } });
+    fireEvent.change(screen.getByLabelText(/Source reference/i), {
+      target: { value: "regulatory control: control-eu-mica-title-ii-white-paper" }
+    });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: "Rejected packet with stale facts that should not be copied." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await screen.findByText("Rejected local evidence")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
+
+    fireEvent.click(screen.getByRole("button", { name: /Create replacement for Rejected local evidence/i }));
+
+    expect(await screen.findByText("Replacement for Rejected local evidence")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Status for evidence 2/i)).toHaveValue("requested");
+    expect((screen.getByLabelText(/Source for evidence 2/i) as HTMLInputElement).value).toContain(
+      "replacement for evidence:"
+    );
+    const replacementContent = (screen.getByLabelText(/Content for evidence 2/i) as HTMLTextAreaElement).value;
+    expect(replacementContent).toContain("Not legal advice");
+    expect(replacementContent).not.toContain("stale facts");
+  });
+
   it("adds a local file as hashed evidence metadata without showing raw file content", async () => {
     render(<App />);
 

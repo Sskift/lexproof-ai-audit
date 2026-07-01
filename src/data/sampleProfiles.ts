@@ -86,6 +86,35 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "HarborKey DPT Custody Review",
+    entityType: "Digital payment token service provider",
+    jurisdictions: ["Singapore"],
+    assetModel: "Digital payment token custody and transfer service with customer asset safeguarding",
+    userType: "Retail users, accredited investors, and Singapore payment services reviewers",
+    custodyModel: "Platform controls omnibus wallets and safeguards customer DPT assets through segregated custody operations",
+    dataSensitivity: "KYC metadata, sanctions-screening status summaries, and wallet transaction history excluded from demo evidence",
+    aiUsage: "AI drafts custody evidence summaries for human review and Singapore counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only custody handoff",
+    operatingStage: "Planned DPT custody launch before Singapore counsel review",
+    evidenceItems: [
+      {
+        label: "MAS source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "DPT operations scope note",
+        kind: "Markdown",
+        content: "Synthetic service scope, review owner, and counsel handoff timing; control evidence still requested."
+      },
+      {
+        label: "Counsel question backlog",
+        kind: "Checklist",
+        content: "Synthetic questions for Singapore local counsel routing and pending evidence owners."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United Kingdom", "United Arab Emirates"],

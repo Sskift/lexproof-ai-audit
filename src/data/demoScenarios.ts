@@ -92,6 +92,23 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "singapore-dpt-custody-source-path",
+    projectName: "HarborKey DPT Custody Review",
+    title: "Singapore DPT custody review",
+    summary: "Singapore DPT customer-asset safeguards, custody disclosure, reconciliation, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect MAS customer asset safeguards",
+      "Review custody segregation evidence gaps",
+      "Check custody disclosure and reconciliation evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Singapore", "DPT custody", "Customer assets"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

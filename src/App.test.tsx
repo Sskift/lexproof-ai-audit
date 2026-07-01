@@ -398,6 +398,21 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Singapore DPT custody scenario with MAS customer-asset safeguard gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Singapore DPT custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("HarborKey DPT Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/MAS Guidelines PS-G03 on consumer protection safeguards by DPT service providers/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Singapore DPT customer asset segregation and safeguarding evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Singapore DPT custody disclosure and reconciliation evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

@@ -62,6 +62,7 @@ describe("evidence templates", () => {
     );
     expect(items.every((item) => item.status === "requested")).toBe(true);
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
+    expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
   });

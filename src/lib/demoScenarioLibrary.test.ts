@@ -99,6 +99,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(brazilScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Singapore DPT custody path for customer-asset safeguard demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const singaporeScenario = findDemoScenarioById(demoScenarios, "singapore-dpt-custody-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(singaporeScenario).toEqual(
+      expect.objectContaining({
+        title: "Singapore DPT custody review",
+        projectName: "HarborKey DPT Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Singapore", "DPT custody", "Customer assets"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(singaporeScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect MAS customer asset safeguards",
+        "Review custody segregation evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(singaporeScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

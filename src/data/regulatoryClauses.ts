@@ -349,6 +349,77 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "sg-mas-dpt-customer-asset-safeguards",
+    jurisdiction: "Singapore",
+    regulator: "Monetary Authority of Singapore",
+    sourceName: "Guidelines on Consumer Protection Safeguards by Digital Payment Token Service Providers",
+    sourceUrl:
+      "https://www.mas.gov.sg/-/media/mas-media-library/regulation/guidelines/pso/ps-g03-guidelines-on-consumer-protection-measures-by-digital-payment-token-service-providers/ps-g03_guidelines-on-consumer-protection-safeguards-by-dpt-service-providers_vf.pdf",
+    citation: "MAS Guidelines PS-G03 on consumer protection safeguards by DPT service providers",
+    topic: "custody",
+    summary:
+      "Prepare Singapore DPT customer-asset safeguarding, segregation, custody disclosure, reconciliation, and transfer-control evidence for local counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch"],
+    triggerKeywords: [
+      "digital payment token",
+      "dpt",
+      "customer asset",
+      "customer assets",
+      "customer dpt",
+      "customer dpt assets",
+      "asset safeguarding",
+      "safeguards customer",
+      "segregation",
+      "custody disclosure",
+      "omnibus wallets"
+    ],
+    evidenceRequests: [
+      {
+        id: "sg-dpt-customer-asset-segregation-safeguarding",
+        title: "Singapore DPT customer asset segregation and safeguarding evidence",
+        reason:
+          "Singapore DPT custody review needs customer asset segregation, safeguarding, wallet authority, signer quorum, and transfer-control evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "customer asset",
+          "customer assets",
+          "segregation",
+          "safeguarding",
+          "wallet authority",
+          "signer quorum",
+          "transfer control",
+          "custody and signer control"
+        ]
+      },
+      {
+        id: "sg-dpt-custody-disclosure-reconciliation",
+        title: "Singapore DPT custody disclosure and reconciliation evidence",
+        reason:
+          "Counsel needs custody arrangement disclosure, reconciliation, withdrawal approval, emergency pause, incident response, and customer asset return evidence for Singapore review.",
+        priority: "P1",
+        keywords: [
+          "custody disclosure",
+          "reconciliation",
+          "withdrawal approval",
+          "emergency pause",
+          "incident response",
+          "return",
+          "custody and signer control"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which MAS DPT customer-asset safeguarding and segregation controls should Singapore counsel review for this custody model?",
+      "What evidence shows custody disclosure, reconciliation, wallet authority, transfer approvals, and customer asset return paths are ready for review?"
+    ],
+    localCounselRole: "Singapore DPT custody / payment services counsel",
+    effectiveAsOf: "2024-10-04",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed from MAS PS-G03 consumer protection safeguards and MAS DPT regulatory measures; route applicability and implementation timing to Singapore local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

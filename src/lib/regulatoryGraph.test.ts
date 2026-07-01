@@ -326,4 +326,77 @@ describe("createRegulatoryGraph", () => {
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
+
+  it("matches Singapore DPT customer asset safeguarding controls without legal conclusions", () => {
+    const singaporeProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-singapore-dpt-custody",
+      projectName: "HarborKey DPT Custody Review",
+      jurisdictions: ["Singapore"],
+      assetModel: "Digital payment token service with customer asset custody and transfer approvals",
+      userType: "Retail users and accredited investors in Singapore",
+      custodyModel: "Platform controls omnibus wallets and safeguards customer DPT assets",
+      dataSensitivity: "KYC metadata, sanctions screening status, and wallet transaction history excluded from model payloads",
+      aiUsage: "AI drafts custody evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned DPT custody launch before Singapore counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(singaporeProject);
+    const graph = createRegulatoryGraph(singaporeProject, audit, singaporeProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["sg-mas-dpt-customer-asset-safeguards"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "sg-mas-dpt-customer-asset-safeguards")).toMatchObject({
+      jurisdiction: "Singapore",
+      regulator: "Monetary Authority of Singapore",
+      citation: "MAS Guidelines PS-G03 on consumer protection safeguards by DPT service providers",
+      sourceUrl:
+        "https://www.mas.gov.sg/-/media/mas-media-library/regulation/guidelines/pso/ps-g03-guidelines-on-consumer-protection-measures-by-digital-payment-token-service-providers/ps-g03_guidelines-on-consumer-protection-safeguards-by-dpt-service-providers_vf.pdf",
+      coverageStatus: "missing",
+      localCounselRole: "Singapore DPT custody / payment services counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Singapore DPT customer asset segregation and safeguarding evidence",
+        "Singapore DPT custody disclosure and reconciliation evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Singapore DPT safeguarding controls covered when RWA custody template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `sg-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const singaporeProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-singapore-dpt-custody-covered",
+      projectName: "HarborKey DPT Custody Review",
+      jurisdictions: ["Singapore"],
+      assetModel: "Digital payment token service with customer asset custody and transfer approvals",
+      userType: "Retail users and accredited investors in Singapore",
+      custodyModel: "Platform controls omnibus wallets and safeguards customer DPT assets",
+      dataSensitivity: "KYC metadata, sanctions screening status, and wallet transaction history excluded from model payloads",
+      aiUsage: "AI drafts custody evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned DPT custody launch before Singapore counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(singaporeProject);
+    const graph = createRegulatoryGraph(singaporeProject, audit, singaporeProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "sg-mas-dpt-customer-asset-safeguards")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Custody and signer control runbook"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "sg-mas-dpt-customer-asset-safeguards" })])
+    );
+  });
 });

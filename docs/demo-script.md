@@ -35,7 +35,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
    - Optional Singapore source path: click **Start Singapore DPT custody review** to load `HarborKey DPT Custody Review` and start in Jurisdiction Checklist for MAS PS-G03 customer-asset safeguard controls, custody evidence gaps, and counsel export.
    - Optional Hong Kong source path: click **Start Hong Kong VATP custody review** to load `HarborBridge VATP Custody Review` and start in Jurisdiction Checklist for SFC VATP client-asset custody controls, wallet governance evidence gaps, and counsel export.
-   - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / UK FCA / UAE VARA promotion source gaps.
+   - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / UK FCA / UAE VARA 2024 promotion, risk-warning, KOL/incentive, and recordkeeping source gaps.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
@@ -43,6 +43,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
    - Singapore path screenshot: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Marketing path screenshot: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
+   - UAE VARA 2024 marketing source screenshot: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - Marketing template screenshot: `docs/assets/screenshots/counsel-pack-marketing-claims-template.png`.
 
 1. **Review command center**
@@ -67,6 +68,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Singapore path screenshot after **Start Singapore DPT custody review**: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Optional Hong Kong path screenshot after **Start Hong Kong VATP custody review**: `docs/assets/screenshots/hong-kong-vatp-source-graph.png`.
    - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
+   - Optional VARA 2024 marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - Optional marketing template screenshot after **Start Marketing claims review**: `docs/assets/screenshots/counsel-pack-marketing-claims-template.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 

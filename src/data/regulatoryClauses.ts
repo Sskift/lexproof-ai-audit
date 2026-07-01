@@ -859,6 +859,84 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "uae-vara-marketing-regulations-2024",
+    jurisdiction: "United Arab Emirates",
+    regulator: "Dubai Virtual Assets Regulatory Authority",
+    sourceName: "Regulations on the Marketing of Virtual Assets and Related Activities 2024",
+    sourceUrl: "https://rulebooks.vara.ae/rulebook/marketing-regulations-0",
+    citation: "VARA Regulations on the Marketing of Virtual Assets and Related Activities 2024",
+    topic: "marketing",
+    summary:
+      "Prepare UAE virtual-asset marketing approval, risk-warning, audience targeting, KOL remuneration, incentives, and marketing recordkeeping evidence for Dubai VARA counsel review.",
+    triggerFlagIds: ["retail", "public-launch"],
+    triggerKeywords: [
+      "united arab emirates",
+      "uae",
+      "dubai",
+      "vara",
+      "marketing",
+      "promotion",
+      "promotional",
+      "advertising",
+      "kol",
+      "key opinion leader",
+      "influencer",
+      "endorsement",
+      "incentive",
+      "risk warning"
+    ],
+    evidenceRequests: [
+      {
+        id: "uae-vara-marketing-approval-risk-warning",
+        title: "UAE VARA marketing approval and risk-warning evidence",
+        reason:
+          "UAE virtual-asset marketing review needs VASP approval route, audience targeting, promotional label, risk-warning, and misleading-claims control evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "vara approval",
+          "vasp approval",
+          "marketing approval",
+          "approval route",
+          "audience restrictions",
+          "risk warning",
+          "promotional label",
+          "guaranteed return",
+          "misleading"
+        ]
+      },
+      {
+        id: "uae-vara-kol-incentive-recordkeeping",
+        title: "UAE VARA KOL, incentive, and marketing recordkeeping evidence",
+        reason:
+          "KOL, influencer, paid-post, incentive, and campaign-distribution workflows should retain remuneration disclosures, incentive confirmation, distribution details, and recordkeeping owner evidence for counsel review.",
+        priority: "P1",
+        keywords: [
+          "kol",
+          "key opinion leader",
+          "influencer",
+          "remuneration",
+          "paid post",
+          "incentive",
+          "compliance confirmation",
+          "recordkeeping",
+          "marketing record",
+          "distribution details",
+          "eight year"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which VARA marketing approval, VASP approval, risk-warning, and audience-targeting assumptions should UAE counsel review?",
+      "What KOL, incentive, remuneration-disclosure, distribution, and recordkeeping evidence should be retained without storing raw customer data or credentials?"
+    ],
+    localCounselRole: "UAE virtual-asset marketing counsel",
+    effectiveAsOf: "2024-10-01",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against VARA Marketing Regulations 2024 for virtual-asset marketing scope, approval routing, risk-warning, KOL remuneration, incentive, and recordkeeping evidence routing; route interpretation to UAE local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uae-vara-compliance-risk-management",
     jurisdiction: "United Arab Emirates",
     regulator: "Dubai Virtual Assets Regulatory Authority",

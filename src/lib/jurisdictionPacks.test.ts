@@ -121,7 +121,12 @@ describe("createJurisdictionPacks", () => {
       }
     });
     expect(uaePack?.controls.map((control) => control.title)).toEqual(
-      expect.arrayContaining(["Virtual asset activity scope control", "Marketing, custody, and cross-border access control"])
+      expect.arrayContaining([
+        "Virtual asset activity scope control",
+        "Marketing approval and audience-control control",
+        "KOL, incentive, and marketing recordkeeping control",
+        "Marketing, custody, and cross-border access control"
+      ])
     );
 
     const brazilPack = packs.find((pack) => pack.jurisdiction === "Brazil");

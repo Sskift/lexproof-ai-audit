@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { createEvidenceItemsFromTemplate } from "./evidenceTemplates";
 import { createRegulatoryGraph } from "./regulatoryGraph";
-import type { ProjectProfile } from "./projectModel";
+import type { EvidenceItem, ProjectProfile } from "./projectModel";
 
 const baseProject: ProjectProfile = {
   id: "project-regulatory-graph",
@@ -626,7 +626,8 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "us-ftc-endorsement-advertising-guides",
         "uk-fca-crypto-financial-promotions",
-        "uae-vara-va-regulations-activity-scope"
+        "uae-vara-va-regulations-activity-scope",
+        "uae-vara-marketing-regulations-2024"
       ])
     );
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
@@ -643,11 +644,76 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "US advertising / consumer protection counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-marketing-regulations-2024")).toMatchObject({
+      jurisdiction: "United Arab Emirates",
+      regulator: "Dubai Virtual Assets Regulatory Authority",
+      citation: "VARA Regulations on the Marketing of Virtual Assets and Related Activities 2024",
+      sourceUrl: "https://rulebooks.vara.ae/rulebook/marketing-regulations-0",
+      coverageStatus: "missing",
+      localCounselRole: "UAE virtual-asset marketing counsel"
+    });
     expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
       expect.arrayContaining([
         "US advertising claims substantiation and disclosure evidence",
-        "US endorsement and material-connection disclosure evidence"
+        "US endorsement and material-connection disclosure evidence",
+        "UAE VARA marketing approval and risk-warning evidence",
+        "UAE VARA KOL, incentive, and marketing recordkeeping evidence"
       ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks UAE VARA marketing controls covered when approval and recordkeeping evidence is verified", () => {
+    const evidenceItems: EvidenceItem[] = [
+      {
+        id: "uae-marketing-approval-record",
+        label: "UAE VARA marketing approval and risk-warning archive",
+        kind: "Archive",
+        content:
+          "Verified: VARA approval route, VASP approval, clear marketing label, risk warning, no guaranteed return claim, and UAE audience restrictions.",
+        source: "regulatory control: control-uae-vara-marketing-regulations-2024",
+        status: "verified" as const,
+        owner: "Counsel"
+      },
+      {
+        id: "uae-kol-incentive-recordkeeping",
+        label: "UAE KOL incentive disclosure and 8-year recordkeeping log",
+        kind: "Log",
+        content:
+          "Verified: KOL remuneration disclosure, incentive compliance confirmation, campaign distribution details, and eight year marketing recordkeeping owner.",
+        source: "regulatory control: control-uae-vara-marketing-regulations-2024",
+        status: "verified" as const,
+        owner: "Compliance"
+      }
+    ];
+    const marketingProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-cross-border-marketing-uae-covered",
+      projectName: "SignalBridge Marketing Review",
+      jurisdictions: ["United Arab Emirates"],
+      assetModel: "Virtual asset public education and product-positioning campaign with paid KOL endorsements and no token sale",
+      userType: "UAE retail audience segments, community followers, and exchange listing reviewers",
+      custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
+      dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
+      aiUsage: "AI drafts promotion-risk summaries for human review and UAE counsel routing",
+      blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
+      operatingStage: "Planned public marketing campaign with influencer incentives before UAE counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const graph = createRegulatoryGraph(marketingProject, audit, marketingProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-marketing-regulations-2024")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: [
+        "UAE VARA marketing approval and risk-warning archive",
+        "UAE KOL incentive disclosure and 8-year recordkeeping log"
+      ]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "uae-vara-marketing-regulations-2024" })])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });

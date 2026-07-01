@@ -74,7 +74,7 @@ export function RegulatoryCommandCenter({
   onNavigate
 }: RegulatoryCommandCenterProps) {
   const topClauses = graph.matchedClauses.slice(0, 4);
-  const topGaps = graph.evidenceGaps.slice(0, 5);
+  const topGaps = graph.evidenceGaps.slice(0, 8);
   const topSourceReviewItems = sourceReview.items.slice(0, 4);
   const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
 

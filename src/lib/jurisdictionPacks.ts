@@ -240,6 +240,41 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["virtual asset", "activity scope", "offering memo", "eligibility", "launch approval", "token terms"]
       },
       {
+        id: "uae-marketing-approval-audience-control",
+        title: "Marketing approval and audience-control control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "vara approval",
+          "vasp approval",
+          "marketing approval",
+          "approval route",
+          "risk warning",
+          "audience restrictions",
+          "promotional label"
+        ]
+      },
+      {
+        id: "uae-kol-incentive-recordkeeping-control",
+        title: "KOL, incentive, and marketing recordkeeping control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "kol",
+          "key opinion leader",
+          "influencer",
+          "remuneration",
+          "incentive",
+          "compliance confirmation",
+          "recordkeeping",
+          "marketing record",
+          "distribution details",
+          "eight year"
+        ]
+      },
+      {
         id: "uae-marketing-custody-access-control",
         title: "Marketing, custody, and cross-border access control",
         owner: "Compliance",

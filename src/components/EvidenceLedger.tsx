@@ -17,7 +17,7 @@ import {
 } from "../lib/evidenceVaultClient";
 import { createEvidenceVaultControlCoverage, type EvidenceVaultControlCoverage } from "../lib/evidenceVaultControlCoverage";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
-import type { EvidenceItem, EvidenceOwner, EvidenceStatus } from "../lib/projectModel";
+import { evidenceStatuses, type EvidenceItem, type EvidenceOwner, type EvidenceStatus } from "../lib/projectModel";
 import {
   createEvidenceRetentionRemediationQueue,
   downloadEvidenceRetentionRemediationJson,
@@ -43,7 +43,7 @@ type EvidenceLedgerProps = {
   onRemoveEvidence: (index: number) => void;
 };
 
-const statuses: EvidenceStatus[] = ["draft", "requested", "received", "verified"];
+const statuses = evidenceStatuses;
 const owners: EvidenceOwner[] = ["Founder", "Counsel", "Compliance", "Engineering", "Product"];
 
 const blankEvidence: EvidenceItem = {

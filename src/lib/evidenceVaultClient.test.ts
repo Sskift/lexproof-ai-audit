@@ -118,6 +118,82 @@ describe("evidence vault client", () => {
     expect(uploadedForms[0].get("containsRawKycOrPersonalData")).toBe("false");
   });
 
+  it("syncs local review-stage evidence statuses to backend vault status updates", async () => {
+    const patchStatuses: string[] = [];
+    const manifest: EvidenceVaultManifestResponse = {
+      manifestVersion: "lexproof-evidence-vault-manifest-v1",
+      workspaceId: "workspace-vault",
+      generatedAt: "2026-06-30T00:00:00.000Z",
+      itemCount: 2,
+      items: [],
+      bundleHash: "e".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+    };
+    const baseRecord: EvidenceVaultRecordResponse = {
+      recordVersion: "lexproof-evidence-vault-record-v1",
+      id: "evidence-vault-review-1",
+      workspaceId: "workspace-vault",
+      filename: "review-stage.metadata.json",
+      mimeType: "application/json",
+      byteSize: 512,
+      fileHash: "f".repeat(64),
+      storageMode: "server-vault",
+      status: "received",
+      owner: "Compliance",
+      sourceNote: "Metadata-only sync",
+      version: 1,
+      linkedRiskFlagIds: [],
+      linkedControlIds: [],
+      containsRawKycOrPersonalData: false,
+      createdAt: "2026-06-30T00:00:00.000Z",
+      updatedAt: "2026-06-30T00:00:00.000Z"
+    };
+    let uploadCount = 0;
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        uploadCount += 1;
+        return jsonResponse({ ...baseRecord, id: `evidence-vault-review-${uploadCount}` }, 201);
+      }
+
+      if (path.includes("/evidence/evidence-vault-review-") && init?.method === "PATCH") {
+        const body = JSON.parse(String(init.body)) as { status: string };
+        patchStatuses.push(body.status);
+        return jsonResponse({ ...baseRecord, id: path.split("/").pop() ?? baseRecord.id, status: body.status, version: 2 }, 200);
+      }
+
+      if (path.endsWith("/evidence-manifest")) {
+        return jsonResponse(manifest, 200);
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+
+    const result = await syncEvidenceLedgerToVault({
+      workspaceId: "workspace-vault",
+      evidenceItems: [
+        {
+          ...evidenceItem,
+          id: "review-stage-under-review",
+          label: "Evidence under reviewer review",
+          status: "under-review"
+        },
+        {
+          ...evidenceItem,
+          id: "review-stage-rejected",
+          label: "Evidence rejected for replacement",
+          status: "rejected"
+        }
+      ],
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher
+    });
+
+    expect(patchStatuses).toEqual(["under-review", "rejected"]);
+    expect(result.records.map((record) => record.status)).toEqual(["under-review", "rejected"]);
+    expect(result.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("preserves structured duplicate-hash recovery metadata from Evidence Vault errors", async () => {
     const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);

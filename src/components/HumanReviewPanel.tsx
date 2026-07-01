@@ -264,7 +264,7 @@ function reviewDecisionGuidance(item: HumanReviewQueueItem, status: HumanReviewS
   }
 
   if (status === "rejected") {
-    return "Rejected from review. Linked evidence is moved to draft for rework. Not legal advice.";
+    return "Rejected from review. Linked evidence is marked rejected for replacement recovery. Not legal advice.";
   }
 
   if (status === "reviewed") {

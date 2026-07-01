@@ -202,7 +202,10 @@ export function humanReviewStatusToEvidenceStatus(status: HumanReviewStatus): Ev
     return "requested";
   }
   if (status === "rejected") {
-    return "draft";
+    return "rejected";
+  }
+  if (status === "in-review") {
+    return "under-review";
   }
   return "received";
 }
@@ -392,6 +395,12 @@ function statusFromAIEvent(status: AIEventReviewStatus): HumanReviewStatus {
 function statusFromEvidence(status: EvidenceStatus): HumanReviewStatus {
   if (status === "verified") {
     return "reviewed";
+  }
+  if (status === "under-review") {
+    return "in-review";
+  }
+  if (status === "rejected") {
+    return "rejected";
   }
   if (status === "requested" || status === "draft") {
     return "needs-more-evidence";

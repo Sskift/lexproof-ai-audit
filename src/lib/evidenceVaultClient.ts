@@ -290,6 +290,14 @@ function mapLedgerStatusToVaultStatus(status: EvidenceItem["status"]): EvidenceV
     return "verified";
   }
 
+  if (status === "under-review") {
+    return "under-review";
+  }
+
+  if (status === "rejected") {
+    return "rejected";
+  }
+
   if (status === "received") {
     return "received";
   }

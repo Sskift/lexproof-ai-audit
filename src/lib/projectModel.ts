@@ -1,4 +1,6 @@
-export type EvidenceStatus = "draft" | "requested" | "received" | "verified";
+export const evidenceStatuses = ["draft", "requested", "received", "under-review", "verified", "rejected"] as const;
+
+export type EvidenceStatus = (typeof evidenceStatuses)[number];
 
 export type EvidenceOwner = "Counsel" | "Compliance" | "Engineering" | "Product" | "Founder";
 
@@ -86,6 +88,10 @@ export function validateProjectProfile(profile: Partial<AuditInputProfile>): Pro
     valid: errors.length === 0,
     errors
   };
+}
+
+export function isEvidenceStatus(value: unknown): value is EvidenceStatus {
+  return typeof value === "string" && evidenceStatuses.includes(value as EvidenceStatus);
 }
 
 function hasText(value: unknown): value is string {

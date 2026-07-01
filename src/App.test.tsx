@@ -1441,6 +1441,34 @@ describe("App", () => {
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("verified");
   });
 
+  it("lets Evidence Ledger move local evidence through review-stage statuses", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+
+    const draftStatus = screen.getByLabelText(/Evidence status/i) as HTMLSelectElement;
+    expect(Array.from(draftStatus.options).map((option) => option.value)).toEqual(
+      expect.arrayContaining(["draft", "requested", "received", "under-review", "verified", "rejected"])
+    );
+
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Review stage evidence" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "under-review" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: "Metadata-only reviewer packet without raw private data." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    expect(await screen.findByText("Review stage evidence")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("under-review");
+
+    fireEvent.change(screen.getByLabelText(/Status for evidence 1/i), { target: { value: "rejected" } });
+
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
+    expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
+  });
+
   it("adds a local file as hashed evidence metadata without showing raw file content", async () => {
     render(<App />);
 
@@ -2606,10 +2634,10 @@ describe("App", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Save decision for Returned review memo/i }));
 
-    expect(await screen.findByText(/Rejected from review. Linked evidence is moved to draft for rework/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Rejected from review. Linked evidence is marked rejected for replacement recovery/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
-    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("draft");
+    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
   });
 
   it("shows and downloads a Human Review timeline with saved status history", async () => {

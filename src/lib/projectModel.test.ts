@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateProjectProfile, type ProjectProfile } from "./projectModel";
+import { evidenceStatuses, isEvidenceStatus, validateProjectProfile, type ProjectProfile } from "./projectModel";
 
 const validProject: ProjectProfile = {
   id: "project-test",
@@ -48,5 +48,13 @@ describe("validateProjectProfile", () => {
       "At least one jurisdiction is required.",
       "Asset model is required."
     ]);
+  });
+
+  it("recognizes review-stage evidence statuses used by the ledger and vault workflow", () => {
+    expect(evidenceStatuses).toEqual(["draft", "requested", "received", "under-review", "verified", "rejected"]);
+    expect(isEvidenceStatus("under-review")).toBe(true);
+    expect(isEvidenceStatus("rejected")).toBe(true);
+    expect(isEvidenceStatus("approved")).toBe(false);
+    expect(isEvidenceStatus("superseded")).toBe(false);
   });
 });

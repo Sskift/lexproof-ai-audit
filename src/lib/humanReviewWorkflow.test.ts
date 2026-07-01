@@ -4,7 +4,8 @@ import {
   createHumanReviewDecision,
   createHumanReviewQueue,
   createHumanReviewTimeline,
-  exportHumanReviewTimelineJson
+  exportHumanReviewTimelineJson,
+  humanReviewStatusToEvidenceStatus
 } from "./humanReviewWorkflow";
 import type { AIEventRecord } from "./modelIntake";
 import type { EvidenceItem } from "./projectModel";
@@ -282,5 +283,13 @@ describe("human review workflow", () => {
     expect(exported.timelineVersion).toBe("lexproof-human-review-timeline-v1");
     expect(exported.entries).toHaveLength(4);
     expect(JSON.stringify(exported)).toContain("Not legal advice");
+  });
+
+  it("maps human review decisions back to local evidence workflow statuses", () => {
+    expect(humanReviewStatusToEvidenceStatus("in-review")).toBe("under-review");
+    expect(humanReviewStatusToEvidenceStatus("reviewed")).toBe("verified");
+    expect(humanReviewStatusToEvidenceStatus("needs-more-evidence")).toBe("requested");
+    expect(humanReviewStatusToEvidenceStatus("rejected")).toBe("rejected");
+    expect(humanReviewStatusToEvidenceStatus("needs-review")).toBe("received");
   });
 });

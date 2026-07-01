@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ClipboardCheck, Download, History, ShieldAlert, UserCheck } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
@@ -11,6 +11,7 @@ import {
   type HumanReviewStatus,
   type HumanReviewTimelineEntry
 } from "../lib/humanReviewWorkflow";
+import { createHumanReviewQueueFilterOptions, filterHumanReviewQueueItems } from "../lib/humanReviewQueueFilters";
 
 type HumanReviewPanelProps = {
   queue: HumanReviewQueue;
@@ -23,17 +24,41 @@ const statuses: HumanReviewStatus[] = ["needs-review", "in-review", "needs-more-
 export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanReviewPanelProps) {
   const [savedTitle, setSavedTitle] = useState("");
   const [saveGuidance, setSaveGuidance] = useState("");
+  const [targetTypeFilter, setTargetTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [reviewerFilter, setReviewerFilter] = useState("all");
+  const [reviewQuery, setReviewQuery] = useState("");
   const timeline = createHumanReviewTimeline({
     projectId: queue.items[0]?.projectId ?? "",
     queue,
     decisions
   });
   const savedDecisionCount = decisions.length;
+  const filterOptions = useMemo(() => createHumanReviewQueueFilterOptions(queue.items), [queue.items]);
+  const filteredItems = useMemo(
+    () =>
+      filterHumanReviewQueueItems(queue.items, {
+        targetType: targetTypeFilter,
+        status: statusFilter,
+        reviewer: reviewerFilter,
+        query: reviewQuery
+      }),
+    [queue.items, reviewQuery, reviewerFilter, statusFilter, targetTypeFilter]
+  );
+  const hasActiveFilters =
+    targetTypeFilter !== "all" || statusFilter !== "all" || reviewerFilter !== "all" || reviewQuery.trim().length > 0;
 
   const saveDecision = (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => {
     onSaveDecision(item, update);
     setSavedTitle(item.title);
     setSaveGuidance(reviewDecisionGuidance(item, update.status));
+  };
+
+  const resetFilters = () => {
+    setTargetTypeFilter("all");
+    setStatusFilter("all");
+    setReviewerFilter("all");
+    setReviewQuery("");
   };
 
   return (
@@ -64,9 +89,80 @@ export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanRevi
         </p>
       ) : null}
 
-      <div className="human-review-queue">
+      <div className="human-review-filters" aria-label="Human review queue filters">
+        <label className="editor-field" htmlFor="human-review-target-type-filter">
+          <span className="field-label">Target type</span>
+          <select
+            id="human-review-target-type-filter"
+            aria-label="Human review target type"
+            value={targetTypeFilter}
+            onChange={(event) => setTargetTypeFilter(event.target.value)}
+          >
+            <option value="all">All target types</option>
+            {filterOptions.targetTypes.map((targetType) => (
+              <option key={targetType} value={targetType}>
+                {labelForTarget(targetType)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="editor-field" htmlFor="human-review-status-filter">
+          <span className="field-label">Status</span>
+          <select
+            id="human-review-status-filter"
+            aria-label="Human review status"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">All statuses</option>
+            {filterOptions.statuses.map((nextStatus) => (
+              <option key={nextStatus} value={nextStatus}>
+                {nextStatus}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="editor-field" htmlFor="human-review-reviewer-filter">
+          <span className="field-label">Reviewer</span>
+          <select
+            id="human-review-reviewer-filter"
+            aria-label="Human review reviewer"
+            value={reviewerFilter}
+            onChange={(event) => setReviewerFilter(event.target.value)}
+          >
+            <option value="all">All reviewers</option>
+            {filterOptions.reviewers.map((reviewer) => (
+              <option key={reviewer} value={reviewer}>
+                {reviewer}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="editor-field" htmlFor="human-review-search-filter">
+          <span className="field-label">Search</span>
+          <input
+            id="human-review-search-filter"
+            aria-label="Search human review queue"
+            value={reviewQuery}
+            onChange={(event) => setReviewQuery(event.target.value)}
+            placeholder="Search target, note, reviewer, or summary"
+          />
+        </label>
+        <button type="button" className="secondary" onClick={resetFilters} disabled={!hasActiveFilters}>
+          Reset filters
+        </button>
+        <p>
+          Showing {filteredItems.length} of {queue.items.length} review items. Filters change the on-screen queue only;
+          timeline export remains the full metadata-only review timeline. Not legal advice.
+        </p>
+      </div>
+
+      <div className="human-review-queue" role="list" aria-label="Filtered human review queue">
         {queue.items.length === 0 ? <p className="empty-state">No human review targets are currently queued.</p> : null}
-        {queue.items.map((item, index) => (
+        {queue.items.length > 0 && filteredItems.length === 0 ? (
+          <p className="empty-state">No human review items match the current filters. Reset filters or search another target, reviewer, or decision note.</p>
+        ) : null}
+        {filteredItems.map((item, index) => (
           <HumanReviewCard key={item.id} item={item} sequence={index + 1} onSave={saveDecision} />
         ))}
       </div>
@@ -99,7 +195,7 @@ function HumanReviewCard({
   const fieldLabel = item.title || `review item ${sequence}`;
 
   return (
-    <article className={`human-review-card ${status}`}>
+    <article className={`human-review-card ${status}`} role="listitem">
       <header>
         <span className={`priority ${item.priority}`}>{item.priority}</span>
         <div>

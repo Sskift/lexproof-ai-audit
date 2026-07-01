@@ -2713,6 +2713,37 @@ describe("App", () => {
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
   });
 
+  it("filters the Human Review queue by target type, status, reviewer, and search text", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Custody support memo" } });
+    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+    fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "requested" } });
+    fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: "Custody support is missing and should be returned for evidence review." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+
+    expect(await screen.findByText("Custody support memo")).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Human review decisions track audit preparation workflow status only./i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Human review target type/i), { target: { value: "evidence" } });
+    fireEvent.change(screen.getByLabelText(/Human review status/i), { target: { value: "needs-more-evidence" } });
+    fireEvent.change(screen.getByLabelText(/Human review reviewer/i), { target: { value: "Compliance" } });
+    fireEvent.change(screen.getByLabelText(/Search human review queue/i), { target: { value: "custody support" } });
+
+    const filteredQueue = screen.getByRole("list", { name: /Filtered human review queue/i });
+    expect(screen.getByText(/Showing 1 of/i)).toBeInTheDocument();
+    expect(within(filteredQueue).getByText("Custody support memo")).toBeInTheDocument();
+    expect(within(filteredQueue).queryByText(/AI Review run/i)).not.toBeInTheDocument();
+    expect(within(filteredQueue).queryByText(/Regulation \(EU\) 2023\/1114/i)).not.toBeInTheDocument();
+  });
+
   it("shows and downloads a Human Review timeline with saved status history", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

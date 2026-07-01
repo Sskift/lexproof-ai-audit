@@ -2575,6 +2575,26 @@ textarea {
   gap: 12px;
 }
 
+.human-review-filters {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.8fr) minmax(150px, 0.8fr) minmax(150px, 0.9fr) minmax(220px, 1.4fr) auto;
+  gap: 10px;
+  align-items: end;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.human-review-filters p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #53616f;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .human-review-card {
   border: 1px solid #d9e2e8;
   border-radius: 8px;
@@ -5776,6 +5796,7 @@ textarea {
   .workspace-action-list,
   .model-connect-receipt > div:first-child,
   .human-review-summary,
+  .human-review-filters,
   .human-review-card header,
   .human-review-grid,
   .template-grid,

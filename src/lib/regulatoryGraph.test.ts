@@ -156,9 +156,60 @@ describe("createRegulatoryGraph", () => {
     });
     expect(graph.topActions.map((action) => action.action)).toEqual(
       expect.arrayContaining([
+        "Prepare US accredited-investor verification and solicitation-controls evidence for counsel review.",
         "Prepare US crypto asset classification and offering analysis for counsel review.",
-        "Prepare EU CASP custody and administration policy evidence for counsel review."
+        "Prepare US Regulation D offering exemption and investor eligibility evidence for counsel review."
       ])
+    );
+  });
+
+  it("matches US Regulation D accredited-investor source controls for tokenized private-credit RWA facts", () => {
+    const audit = analyzeAuditProfile(baseProject);
+    const graph = createRegulatoryGraph(baseProject, audit, baseProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["us-sec-reg-d-accredited-investor-verification"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-reg-d-accredited-investor-verification")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "U.S. Securities and Exchange Commission",
+      citation: "17 C.F.R. 230.501(a), 230.506(c)",
+      sourceUrl: "https://www.ecfr.gov/current/title-17/chapter-II/part-230/subject-group-ECFR6e651a4c86c0174/section-230.506",
+      topic: "asset-classification",
+      coverageStatus: "missing",
+      localCounselRole: "US private offering / securities counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US Regulation D offering exemption and investor eligibility evidence",
+        "US accredited-investor verification and solicitation-controls evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks US Regulation D source controls covered when RWA investor eligibility template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...baseProject,
+      jurisdictions: ["United States"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-reg-d-accredited-investor-verification")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Investor eligibility review"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "us-sec-reg-d-accredited-investor-verification" })])
     );
   });
 
@@ -448,6 +499,9 @@ describe("createRegulatoryGraph", () => {
         "uk-fca-crypto-financial-promotions",
         "uae-vara-va-regulations-activity-scope"
       ])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["us-sec-reg-d-accredited-investor-verification"])
     );
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ftc-endorsement-advertising-guides")).toMatchObject({
       jurisdiction: "United States",

@@ -128,6 +128,73 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-sec-reg-d-accredited-investor-verification",
+    jurisdiction: "United States",
+    regulator: "U.S. Securities and Exchange Commission",
+    sourceName: "Regulation D Rule 506(c) and accredited investor definitions",
+    sourceUrl:
+      "https://www.ecfr.gov/current/title-17/chapter-II/part-230/subject-group-ECFR6e651a4c86c0174/section-230.506",
+    citation: "17 C.F.R. 230.501(a), 230.506(c)",
+    topic: "asset-classification",
+    summary:
+      "Prepare private offering, accredited-investor, solicitation, eligibility, subscription, and verification evidence for US securities counsel review of tokenized private-credit or RWA launch facts.",
+    triggerFlagIds: ["asset-yield"],
+    triggerKeywords: [
+      "accredited investor",
+      "accredited investors",
+      "private credit",
+      "private offering",
+      "regulation d",
+      "rule 506",
+      "subscription",
+      "investor eligibility"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-reg-d-offering-exemption-investor-eligibility",
+        title: "US Regulation D offering exemption and investor eligibility evidence",
+        reason:
+          "US RWA or tokenized private-credit review needs offering route, exemption assumptions, purchaser eligibility, restriction, and subscription-flow evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "regulation d",
+          "rule 506",
+          "offering exemption",
+          "private placement",
+          "investor eligibility",
+          "eligibility",
+          "subscription"
+        ]
+      },
+      {
+        id: "us-accredited-investor-verification-solicitation-controls",
+        title: "US accredited-investor verification and solicitation-controls evidence",
+        reason:
+          "If public communications or broader solicitation are in scope, counsel needs accredited-investor verification, solicitation-control, purchaser-status, and approval-route evidence.",
+        priority: "P0",
+        keywords: [
+          "accredited investor",
+          "verification",
+          "general solicitation",
+          "solicitation",
+          "purchaser status",
+          "approval route",
+          "investor eligibility review"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which private-offering, purchaser-eligibility, solicitation, or investor-verification assumptions should US securities counsel review?",
+      "What evidence shows the offering route, subscription flow, purchaser status, restrictions, and communication approvals without treating the project as legally approved?"
+    ],
+    localCounselRole: "US private offering / securities counsel",
+    effectiveAsOf: "2026-07-01",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against current eCFR Rule 506(c) and Rule 501(a) references for accredited-investor and offering-evidence routing; route interpretation to US securities counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-title-ii-white-paper",
     jurisdiction: "European Union",
     regulator: "European Union",

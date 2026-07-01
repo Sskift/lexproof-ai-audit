@@ -40,7 +40,8 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Investor eligibility review",
         kind: "Checklist",
         content: "Requested: summarize eligibility assumptions, user restrictions, screening boundary, and marketing approval status.",
-        source: "LexProof template: Tokenized Yield / RWA Issuance",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-reg-d-accredited-investor-verification",
         status: "requested",
         owner: "Compliance"
       },

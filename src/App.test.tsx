@@ -2722,6 +2722,80 @@ describe("App", () => {
     }
   });
 
+  it("downloads an Export Safety Inventory that blocks unsafe handoff without leaking secrets", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn(() => "blob:export-safety-inventory");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe export bundle" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: {
+          value:
+            "Contains sk-live-abcdef1234567890abcdef1234567890, private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, and raw KYC packet."
+        }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+      await waitFor(() => {
+        const inventory = within(screen.getByRole("region", { name: /Export Safety Inventory/i }));
+        expect(inventory.getByText(/Not legal advice. Export Safety Inventory is audit preparation handoff metadata only./i)).toBeInTheDocument();
+        expect(inventory.getByText(/Export handoff blocked/i)).toBeInTheDocument();
+        expect(inventory.getAllByText(/Unsafe export bundle/i).length).toBeGreaterThan(0);
+        expect(inventory.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+      });
+
+      const inventory = within(screen.getByRole("region", { name: /Export Safety Inventory/i }));
+
+      fireEvent.click(inventory.getByRole("button", { name: /Download Export Inventory JSON/i }));
+
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Export Safety Inventory did not create a blob.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          inventoryVersion: "lexproof-export-safety-inventory-v1",
+          overallStatus: "blocked",
+          exportHandoffAllowed: false,
+          notLegalAdviceBoundary: "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only."
+        })
+      );
+      expect(parsed.inventoryHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(payload).toContain("[redacted-api-key]");
+      expect(payload).toContain("[redacted-private-key]");
+      expect(payload).not.toContain("sk-live-abcdef1234567890");
+      expect(payload).not.toContain("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+      expect(payload).not.toContain("raw KYC packet");
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:export-safety-inventory");
+      expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("requests missing risk evidence into the Evidence Ledger as an in-progress item", async () => {
     render(<App />);
 

@@ -28,6 +28,16 @@ describe("classifyDataBoundaryText", () => {
     expect(JSON.stringify(findings)).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   });
 
+  it("redacts full text before snippet truncation so nearby raw KYC text is not partially leaked", () => {
+    const findings = classifyDataBoundaryText(
+      `Unsafe export bundle Text draft Founder Contains ${apiKey}, private key ${privateKey}, and raw KYC packet.`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-api-key]");
+    expect(credentialFinding?.redactedSnippet).not.toMatch(/\braw\s+K/i);
+  });
+
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
     expect(classifyDataBoundaryText("Metadata-only board approval memo; no raw KYC files included.")).toEqual([]);
   });

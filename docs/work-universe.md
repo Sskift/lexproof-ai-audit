@@ -362,6 +362,7 @@ Build:
 - Download receipts for manifest JSON, model-run receipts, evidence audit trail, and simulated/real anchor receipts.
 - Export diff view between pack versions.
 - Source Review Ledger export in Markdown so reviewed source counts, next review dates, reviewer notes, refresh actions, and open Source Update Approval Queue gates survive the counsel handoff without becoming legal conclusions. The first source approval gate handoff is implemented in `src/lib/counselPack.ts` and the Counsel Pack preview: open source approval queues appear in Markdown only as audit-prep workflow metadata.
+- Sources-level Export Safety Inventory in `src/lib/exportSafetyInventory.ts` and `ExportSafetyInventoryPanel` consolidates Evidence Manifest, source pack, Counsel Pack, source-review, local-counsel, GRC, integration dossier, and Submission Pack artifact readiness into one redacted hashed JSON handoff with Not legal advice wording.
 
 Acceptance:
 

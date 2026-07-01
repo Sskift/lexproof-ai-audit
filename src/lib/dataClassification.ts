@@ -149,11 +149,12 @@ function isNegatedKycReference(text: string, matchIndex: number): boolean {
 }
 
 function createRedactedSnippet(text: string, matchIndex: number): string {
-  const start = Math.max(0, Math.min(matchIndex, text.length) - 52);
-  const end = Math.min(text.length, start + 180);
+  const redactedText = redactClassifiedText(text);
+  const start = Math.max(0, Math.min(matchIndex, redactedText.length) - 52);
+  const end = Math.min(redactedText.length, start + 180);
   const prefix = start > 0 ? "..." : "";
-  const suffix = end < text.length ? "..." : "";
-  return `${prefix}${redactClassifiedText(text.slice(start, end))}${suffix}`;
+  const suffix = end < redactedText.length ? "..." : "";
+  return `${prefix}${redactedText.slice(start, end)}${suffix}`;
 }
 
 function normalizeWhitespace(value: string): string {

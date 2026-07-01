@@ -5816,6 +5816,149 @@ textarea {
   margin-bottom: 0;
 }
 
+.export-safety-inventory {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #c8d8e6;
+  border-radius: 8px;
+  background: #f8fbfd;
+}
+
+.export-safety-inventory.ready {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.export-safety-inventory.needs-review,
+.export-safety-inventory.needs-action {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.export-safety-inventory.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.export-inventory-summary,
+.export-inventory-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.export-inventory-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.export-inventory-fact,
+.export-inventory-actions,
+.export-inventory-card,
+.export-inventory-blockers {
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.export-inventory-fact {
+  padding: 12px;
+}
+
+.export-inventory-fact span,
+.export-inventory-fact code {
+  display: block;
+}
+
+.export-inventory-fact span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.export-inventory-fact code {
+  overflow-wrap: anywhere;
+  color: #102a43;
+  font-size: 0.78rem;
+}
+
+.export-inventory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.export-inventory-actions strong,
+.export-inventory-actions span {
+  color: #31424f;
+}
+
+.export-inventory-blockers {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-color: #e2a7a1;
+  color: #7a2f2a;
+}
+
+.export-inventory-blockers ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.export-inventory-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.export-inventory-card {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+}
+
+.export-inventory-card.ready {
+  border-color: #b8d8c8;
+}
+
+.export-inventory-card.needs-review,
+.export-inventory-card.needs-action {
+  border-color: #e9bd87;
+}
+
+.export-inventory-card.blocked {
+  border-color: #e2a7a1;
+}
+
+.export-inventory-card header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.export-inventory-card header span {
+  color: #53616f;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.export-inventory-card p,
+.export-inventory-card small {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
 .submission-pack-panel {
   display: grid;
   gap: 14px;
@@ -6018,6 +6161,8 @@ textarea {
   .evaluation-facts,
   .integration-adapter-grid,
   .integration-dossier-policy-list,
+  .export-inventory-summary,
+  .export-inventory-grid,
   .provider-policy-summary,
   .provider-policy-sync,
   .provider-policy-grid,

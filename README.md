@@ -82,6 +82,7 @@ Key evidence:
 - Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, Regulatory Source Pack hash, source review status, and audit-log entries without raw Markdown, KYC, personal data, or credentials. Blocked data-boundary findings disable Markdown/PDF, manifest JSON, simulated anchor, version save, and server export actions until remediated.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
+- Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ## Product Screenshots
@@ -322,6 +323,10 @@ Sources now includes a generated Submission Pack JSON artifact for judges. It su
 
 ![Submission Pack artifact](docs/assets/screenshots/submission-pack.png)
 
+Sources also includes an Export Safety Inventory that consolidates the handoff state for manifest, source pack, Counsel Pack version, source review, local counsel routing, GRC ticket export, integration dossier, and submission pack artifacts. It blocks external handoff when the data boundary detects private keys, credential-like tokens, or raw KYC references, and downloads only redacted metadata. Not legal advice.
+
+![Export Safety Inventory](docs/assets/screenshots/export-safety-inventory.png)
+
 ## Hackathon Demo Runbook
 
 The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
@@ -334,7 +339,7 @@ The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.
 6. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
 7. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
 8. Counsel Pack template selection, Source Review Ledger API sync, Source Update Approval Queue preview, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
-9. Sources tab Submission Pack JSON export with pack hash, known limitations, demo readiness, and hackathon mapping.
+9. Sources tab Export Safety Inventory and Submission Pack JSON exports with inventory/pack hashes, known limitations, demo readiness, and hackathon mapping.
 
 Screenshots for the exact demo path:
 
@@ -350,7 +355,9 @@ Screenshots for the exact demo path:
 
 ![Demo step 6: Counsel Pack Export](docs/assets/screenshots/demo-06-counsel-pack-export.png)
 
-![Demo step 7: Submission Pack](docs/assets/screenshots/submission-pack.png)
+![Demo step 7: Export Safety Inventory](docs/assets/screenshots/export-safety-inventory.png)
+
+![Demo step 8: Submission Pack](docs/assets/screenshots/submission-pack.png)
 
 Every step is audit preparation only. Not legal advice.
 
@@ -387,7 +394,7 @@ Model output is draft audit preparation only. It does not change deterministic r
 12. Run **Secure Review Journey** to sync metadata-only evidence to the Phase 2 API, create a server Model Gateway receipt, open Human Review, and record audit-log events. Gateway policy failures are shown as recoverable failure receipts with run IDs and remediation steps.
 13. Open **Counsel Pack** to choose an export template, inspect the Export Safety Gate, edit the counsel question queue, update review status for each risk flag, confirm the Source Review Ledger, Local Counsel Routing Plan, and any open Source Update Approval Queue gates appear in the Markdown preview, save a Pack Version to capture manifest/Markdown hashes, Regulatory Source Pack hash, source review status, and review-status diff, create a server export record from that latest version when the Phase 2 API is running, then download the Markdown audit-prep packet with Regulatory Source Graph, Source Review Ledger, local counsel routes, source update approval gates, Model Intake summary and AI event hashes, use browser Print / Save PDF, download version JSON, download manifest JSON, or create a simulated anchor receipt JSON for counsel/compliance review. If the gate detects private keys, API keys, or raw KYC materials, these export actions are disabled until the evidence is replaced with metadata-only summaries.
 
-Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, audit-log, and Counsel Pack export metadata records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, raw Markdown, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Evidence Retention Policy JSON, Evidence Retention Remediation Queue JSON, Evidence Vault Manifest JSON, Integration Readiness Registry output, Integration Enablement Dossier JSON, GRC Destination Policy JSON, GRC Ticket Export JSON, Model Gateway Evaluation JSON, Audit Log Export JSON, Counsel Pack version JSON, Model Gateway receipts, server export records, and model-run ledger exports store hashes and metadata, not credentials or raw Markdown content. Evidence Retention Readiness redacts detected secrets in snippets and blocks Evidence Vault sync for private-key-like material, credential-like tokens, and raw KYC references; wallet-address identifiers and personal-data references remain warning-level review signals for counsel handoff. The remediation queue carries only redacted snippets, priority, next action, and queue SHA-256. Integration Readiness Registry and Integration Enablement Dossier expose disabled, needs-policy, ready, and blocked adapter states only; they do not call external providers, upload objects, run OCR, create GRC tickets, or write to a chain. GRC Destination Policy and GRC Ticket Export create local/server metadata-only JSON artifacts only; they do not create external Jira, Linear, ServiceNow, or GRC system records. The Evidence Vault API blocks invalid status transitions such as directly reactivating rejected or superseded records; users must use replacement recovery so lineage remains visible. The Export Safety Gate redacts detected secrets in the preview and blocks export handoff for the same blocked data classes. The anchor receipt is a local simulation for manifest handoff only.
+Workspace data is stored locally in browser `localStorage`. Local file evidence is hashed in the browser and stored as file metadata plus SHA-256, not raw file bytes. The Phase 2 API stores workspace, evidence metadata, model-run receipt, human-review, audit-log, and Counsel Pack export metadata records in SQLite when enabled. It does not store model credentials, raw KYC, personal data, raw evidence bytes, raw Markdown, or real chain transactions. API keys for live browser model calls are held in browser state and are not persisted. Model Intake JSON, Evidence Audit Trail JSON, Evidence Retention Policy JSON, Evidence Retention Remediation Queue JSON, Evidence Vault Manifest JSON, Integration Readiness Registry output, Integration Enablement Dossier JSON, GRC Destination Policy JSON, GRC Ticket Export JSON, Model Gateway Evaluation JSON, Audit Log Export JSON, Counsel Pack version JSON, Export Safety Inventory JSON, Model Gateway receipts, server export records, and model-run ledger exports store hashes and metadata, not credentials or raw Markdown content. Evidence Retention Readiness redacts detected secrets in snippets and blocks Evidence Vault sync for private-key-like material, credential-like tokens, and raw KYC references; wallet-address identifiers and personal-data references remain warning-level review signals for counsel handoff. The remediation queue carries only redacted snippets, priority, next action, and queue SHA-256. Integration Readiness Registry and Integration Enablement Dossier expose disabled, needs-policy, ready, and blocked adapter states only; they do not call external providers, upload objects, run OCR, create GRC tickets, or write to a chain. GRC Destination Policy and GRC Ticket Export create local/server metadata-only JSON artifacts only; they do not create external Jira, Linear, ServiceNow, or GRC system records. The Evidence Vault API blocks invalid status transitions such as directly reactivating rejected or superseded records; users must use replacement recovery so lineage remains visible. The Export Safety Gate and Export Safety Inventory redact detected secrets in previews/downloads and block export handoff for the same blocked data classes. The anchor receipt is a local simulation for manifest handoff only.
 
 ## Tech Stack
 

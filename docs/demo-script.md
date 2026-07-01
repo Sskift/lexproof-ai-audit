@@ -145,9 +145,12 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 
 8. **Download submission pack**
    - Open **Sources**.
+   - Show **Export Safety Inventory** with inventory hash, boundary status, export handoff allowed/blocked state, artifact statuses, and the Not legal advice boundary.
+   - Click **Download Export Inventory JSON** to show the metadata-only redacted handoff inventory.
    - Show the generated **Submission Pack** with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, hackathon mapping, and known limitations.
    - Click **Download Submission Pack JSON** for the judge-facing metadata artifact.
    - Confirm the boundary: Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only.
+   - Screenshot: `docs/assets/screenshots/export-safety-inventory.png`.
    - Screenshot: `docs/assets/screenshots/submission-pack.png`.
 
 ## Error-State Checks
@@ -162,6 +165,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 - **Retention blocked:** add a disposable evidence item that mentions a private-key-like value, API-key-like token, or raw KYC packet, then stay in **Evidence Ledger**. **Evidence Retention Readiness** should show **Blocked retention**, redact detected material in snippets, disable **Sync Evidence Vault**, show **Evidence Retention Remediation Queue**, keep **Download Retention Policy JSON** and **Download Remediation Queue JSON** available, and show a Not legal advice boundary. Delete or replace that evidence item before continuing the normal demo path.
 - **Recertification due:** load `SignalBridge Marketing Review`, open **Evidence Ledger**, and confirm **Evidence Recertification Queue** shows a P0 source-linked item for `Claims inventory`; click **Mark Claims inventory recertified** and confirm the queue moves to ready without changing raw evidence content. Not legal advice.
 - **Export Safety Gate blocked:** add a disposable evidence item that mentions a private-key-like value, API-key-like token, or raw KYC packet, then open **Counsel Pack**. The gate should show **Blocked for export**, redact the detected material in snippets, and disable Markdown/PDF, manifest JSON, simulated anchor, Pack Version save, and server export actions. Delete or replace that evidence item before continuing the normal demo path. Not legal advice.
+- **Export Safety Inventory blocked:** add a disposable evidence item that mentions a private-key-like value, API-key-like token, or raw KYC packet, then open **Sources**. The inventory should show **Export handoff blocked**, list redacted blockers, keep **Download Export Inventory JSON** available for remediation review, and avoid echoing secrets or raw KYC text. Delete or replace that evidence item before continuing. Not legal advice.
 - **GRC destination policy blocked:** paste a disposable API-key-like token or external ticket-write instruction into **GRC Destination Policy Evaluation** notes, then click **Evaluate Server GRC Policy**. The report should block the metadata boundary, keep external ticket creation disabled, avoid echoing the unsafe text, and show the Not legal advice boundary. Remove the unsafe note before continuing.
 - **Integration enablement blocked:** add unsafe disposable evidence or unsafe policy metadata, then return to **Integration Readiness Registry**. **Integration Enablement Dossier** should move to blocked, redact unsafe text in blockers, keep `externalEnablementAllowed: false`, and still allow the metadata-only JSON download for remediation review. Not legal advice.
 

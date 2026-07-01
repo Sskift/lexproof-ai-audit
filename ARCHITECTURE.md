@@ -54,6 +54,7 @@ lexproof-ai-audit/
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
       CounselPackPanel.tsx   # Markdown, manifest, source pack, and simulated receipt export
+      ExportSafetyInventoryPanel.tsx # Sources-level handoff readiness inventory and JSON download
       SubmissionPackPanel.tsx # Judge-facing submission metadata artifact and JSON download
     data/
       sampleProfiles.ts      # Seed legal/compliance audit scenarios
@@ -116,6 +117,7 @@ lexproof-ai-audit/
       regulatorySourceApprovalClient.ts # Browser client for Source Approval API sync
       regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
       submissionPack.ts      # Metadata-only hackathon submission pack artifact and stable hash
+      exportSafetyInventory.ts # Sources-level export artifact inventory, blockers, and stable hash
       workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
       counselPack.ts         # Markdown pack and browser download helper
       dataClassification.ts  # Shared security data-classification and redaction rules
@@ -191,6 +193,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
   -> createSubmissionPack(project, audit, manifest, source pack, demo readiness) for judge-facing metadata artifact
+  -> createExportSafetyInventory(project, data boundary report, handoff artifacts) for Sources-level export readiness
   -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
 
@@ -611,6 +614,16 @@ Owns export data-boundary behavior:
 - `redactDataBoundaryText(value)` redacts private keys, API keys, raw KYC phrases, and direct personal-data identifiers before preview/export strings are rendered.
 
 Blocked findings disable Counsel Pack Markdown download, browser Print / Save PDF, manifest JSON, simulated anchor receipt, Pack Version save, and server export-record creation in `CounselPackPanel`. Warnings keep export available but visible for human confirmation. The module is audit preparation data classification only; it does not perform legal review or KYC.
+
+### `src/lib/exportSafetyInventory.ts`
+
+Owns Sources-level export handoff readiness:
+
+- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, and Submission Pack.
+- The inventory returns a stable SHA-256 inventory hash, artifact statuses, blocker counts, recovery actions, and `exportHandoffAllowed`.
+- `exportExportSafetyInventoryJson(inventory)` and `downloadExportSafetyInventoryJson(filename, inventory)` export redacted metadata only.
+
+The inventory is a safety checklist for audit-prep handoff. It does not make legal conclusions, upload raw evidence, store secrets, perform KYC, or enable external adapters.
 
 ### `src/lib/securityReviewChecklist.ts`
 

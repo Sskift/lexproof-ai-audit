@@ -17,6 +17,7 @@ import { AIReviewPanel } from "./components/AIReviewPanel";
 import { AuditWizard, SectionHeader, riskCopy } from "./components/AuditWizard";
 import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
+import { ExportSafetyInventoryPanel } from "./components/ExportSafetyInventoryPanel";
 import { GrcTicketExportPanel } from "./components/GrcTicketExportPanel";
 import { HumanReviewPanel } from "./components/HumanReviewPanel";
 import { IntegrationReadinessPanel } from "./components/IntegrationReadinessPanel";
@@ -92,6 +93,11 @@ import {
   createEvidenceRecertificationQueue,
   type EvidenceRecertificationQueue
 } from "./lib/evidenceRecertification";
+import {
+  createExportSafetyInventory,
+  type ExportSafetyArtifactInput,
+  type ExportSafetyInventory
+} from "./lib/exportSafetyInventory";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import {
   createGrcDestinationPolicyReport,
@@ -310,6 +316,7 @@ export default function App() {
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
+  const [exportSafetyInventory, setExportSafetyInventory] = useState<ExportSafetyInventory | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
@@ -914,6 +921,163 @@ export default function App() {
     regulatorySourcePack,
     submissionModelConnectStatus
   ]);
+
+  const exportSafetyArtifacts = useMemo<ExportSafetyArtifactInput[]>(() => {
+    const latestCounselPackVersion = currentCounselPackVersions[0];
+
+    return [
+      {
+        id: "evidence-manifest",
+        label: "Evidence Manifest JSON",
+        category: "evidence",
+        exportMode: "metadata-only-json",
+        required: true,
+        available: Boolean(manifest?.bundleHash),
+        artifactHash: manifest?.bundleHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Add metadata-only evidence and wait for the Evidence Manifest bundle hash.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence manifests are audit preparation hash metadata only."
+      },
+      {
+        id: "regulatory-source-pack",
+        label: "Regulatory Source Pack JSON",
+        category: "source-lineage",
+        exportMode: "metadata-only-json",
+        required: true,
+        available: Boolean(regulatorySourcePack?.packHash),
+        artifactHash: regulatorySourcePack?.packHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Open Counsel Pack or Sources after the source graph and source pack finish calculating.",
+        notLegalAdviceBoundary: "Not legal advice. Regulatory source packs are audit preparation source-lineage metadata only."
+      },
+      {
+        id: "counsel-pack-markdown",
+        label: "Counsel Pack Markdown/PDF",
+        category: "counsel-export",
+        exportMode: "audit-prep-markdown",
+        required: true,
+        available: Boolean(manifest?.bundleHash),
+        artifactHash: latestCounselPackVersion?.markdownHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        warnings: latestCounselPackVersion ? [] : ["Save a Counsel Pack version to lock the Markdown hash before external handoff."],
+        recoveryAction: "Clear Export Safety Gate blockers, open Counsel Pack, and save a Pack Version before external handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack Markdown is audit preparation material only."
+      },
+      {
+        id: "counsel-pack-version",
+        label: "Counsel Pack Version JSON",
+        category: "counsel-export",
+        exportMode: "metadata-only-json",
+        required: true,
+        available: Boolean(latestCounselPackVersion),
+        artifactHash: latestCounselPackVersion?.markdownHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Save a Counsel Pack version to capture manifest, Markdown, source-pack, and review-status hashes.",
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
+      },
+      {
+        id: "source-review-packet",
+        label: "Source Review Packet JSON",
+        category: "source-lineage",
+        exportMode: "metadata-only-json",
+        required: false,
+        available: Boolean(regulatorySourceReviewPacket?.packetHash),
+        artifactHash: regulatorySourceReviewPacket?.packetHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Use the command center Source Review Packet export when source refresh actions need handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Source review packets are audit preparation source-lineage metadata only."
+      },
+      {
+        id: "local-counsel-routing",
+        label: "Local Counsel Routing JSON",
+        category: "review-workflow",
+        exportMode: "metadata-only-json",
+        required: false,
+        available: Boolean(localCounselRoutingPlan?.planHash),
+        artifactHash: localCounselRoutingPlan?.planHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Use the command center Local Counsel Routing export for jurisdiction and counsel-role handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Local counsel routing plans are audit preparation workflow metadata only."
+      },
+      {
+        id: "grc-ticket-export",
+        label: "GRC Ticket Export JSON",
+        category: "review-workflow",
+        exportMode: "metadata-only-json",
+        required: false,
+        available: grcTicketExport.exportAllowed,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        blockers: grcTicketExport.exportAllowed ? [] : grcTicketExport.blockers,
+        recoveryAction: "Resolve GRC adapter readiness and Export Safety Gate blockers before ticket export.",
+        notLegalAdviceBoundary: grcTicketExport.notLegalAdviceBoundary
+      },
+      {
+        id: "integration-enablement-dossier",
+        label: "Integration Enablement Dossier JSON",
+        category: "integration-readiness",
+        exportMode: "metadata-only-json",
+        required: false,
+        available: Boolean(integrationEnablementDossier?.dossierHash),
+        artifactHash: integrationEnablementDossier?.dossierHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Open Integration Readiness and wait for the enablement dossier hash.",
+        notLegalAdviceBoundary:
+          integrationEnablementDossier?.notLegalAdviceBoundary ??
+          "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
+      },
+      {
+        id: "submission-pack",
+        label: "Submission Pack JSON",
+        category: "submission",
+        exportMode: "metadata-only-json",
+        required: true,
+        available: Boolean(submissionPack?.packHash),
+        artifactHash: submissionPack?.packHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Open Sources after manifest and Regulatory Source Pack calculation completes.",
+        notLegalAdviceBoundary:
+          submissionPack?.notLegalAdviceBoundary ??
+          "Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only."
+      }
+    ];
+  }, [
+    currentCounselPackVersions,
+    grcTicketExport,
+    integrationEnablementDossier,
+    localCounselRoutingPlan,
+    manifest?.bundleHash,
+    regulatorySourcePack,
+    regulatorySourceReviewPacket,
+    submissionPack
+  ]);
+
+  useEffect(() => {
+    let live = true;
+
+    createExportSafetyInventory({
+      workspaceId: project.id,
+      projectName: project.projectName,
+      dataBoundaryReport,
+      artifacts: exportSafetyArtifacts
+    }).then((nextInventory) => {
+      if (live) {
+        setExportSafetyInventory(nextInventory);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [dataBoundaryReport, exportSafetyArtifacts, project.id, project.projectName]);
 
   useEffect(() => {
     let live = true;
@@ -1785,7 +1949,9 @@ export default function App() {
               onCreateServerExport={createServerExportRecord}
             />
           ) : null}
-          {activeTab === "sources" ? <SourcesPanel audit={audit} submissionPack={submissionPack} /> : null}
+          {activeTab === "sources" ? (
+            <SourcesPanel audit={audit} exportSafetyInventory={exportSafetyInventory} submissionPack={submissionPack} />
+          ) : null}
         </section>
       </main>
     </div>
@@ -1852,9 +2018,11 @@ function RiskAuditPanel({
 
 function SourcesPanel({
   audit,
+  exportSafetyInventory,
   submissionPack
 }: {
   audit: ReturnType<typeof analyzeAuditProfile>;
+  exportSafetyInventory: ExportSafetyInventory | null;
   submissionPack: SubmissionPack | null;
 }) {
   return (
@@ -1873,6 +2041,7 @@ function SourcesPanel({
         <Github size={20} aria-hidden="true" />
         <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
       </div>
+      <ExportSafetyInventoryPanel inventory={exportSafetyInventory} />
       <SubmissionPackPanel pack={submissionPack} />
     </section>
   );

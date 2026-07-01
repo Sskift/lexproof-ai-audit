@@ -454,6 +454,21 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Hong Kong VATP custody scenario with SFC custody evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Hong Kong VATP custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("HarborBridge VATP Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/SFC Guidelines for Virtual Asset Trading Platform Operators, Part X/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong VATP client asset custody and associated-entity evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong VATP wallet control, reconciliation, and compensation evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

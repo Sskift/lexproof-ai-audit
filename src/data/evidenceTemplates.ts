@@ -32,7 +32,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         kind: "Runbook",
         content: "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, and incident response.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody",
         status: "requested",
         owner: "Compliance"
       },

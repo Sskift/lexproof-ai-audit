@@ -147,6 +147,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(singaporeScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Hong Kong VATP custody path for SFC custody source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const hongKongScenario = findDemoScenarioById(demoScenarios, "hong-kong-vatp-custody-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(hongKongScenario).toEqual(
+      expect.objectContaining({
+        title: "Hong Kong VATP custody review",
+        projectName: "HarborBridge VATP Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Hong Kong", "VATP custody", "SFC"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(hongKongScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect SFC VATP custody controls",
+        "Review associated-entity and client-asset evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(hongKongScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

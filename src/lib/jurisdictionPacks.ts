@@ -39,6 +39,7 @@ type PackTemplate = {
     | "European Union"
     | "United Kingdom"
     | "Singapore"
+    | "Hong Kong"
     | "Switzerland"
     | "United Arab Emirates"
     | "Brazil";
@@ -153,6 +154,48 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
         evidenceKeywords: ["custody", "wallet control", "aml", "kyc", "redaction", "model payload", "human review"]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Hong Kong",
+    aliases: ["hong kong", "hk", "hong kong sar"],
+    summary:
+      "Prepare VATP client-asset custody, wallet governance, reconciliation, compensation, AML/data, and public access controls for Hong Kong local counsel.",
+    recommendedRole: "Hong Kong virtual asset trading platform counsel",
+    controls: [
+      {
+        id: "hk-vatp-client-asset-custody-control",
+        title: "VATP client asset custody control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "client asset",
+          "client virtual asset",
+          "associated entity",
+          "segregation",
+          "safeguarding",
+          "wallet authority",
+          "custody and signer control"
+        ]
+      },
+      {
+        id: "hk-vatp-wallet-compensation-control",
+        title: "Wallet governance and compensation arrangement control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "public-launch"],
+        evidenceKeywords: [
+          "cold storage",
+          "key management",
+          "reconciliation",
+          "internal audit",
+          "monitoring",
+          "incident response",
+          "compensation arrangement",
+          "custody and signer control"
+        ]
       }
     ]
   },

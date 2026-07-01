@@ -115,6 +115,35 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "HarborBridge VATP Custody Review",
+    entityType: "Virtual asset trading platform operator",
+    jurisdictions: ["Hong Kong"],
+    assetModel: "Virtual asset trading platform with token listing and retail virtual asset access",
+    userType: "Hong Kong retail and professional investor client accounts",
+    custodyModel: "Platform controls client virtual assets through an associated entity, omnibus wallets, cold storage, and withdrawal approvals",
+    dataSensitivity: "KYC metadata, wallet transaction history, client asset reconciliation summaries, and sanctions-screening status excluded from demo evidence",
+    aiUsage: "AI drafts custody evidence summaries for human review and Hong Kong counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only custody handoff",
+    operatingStage: "Planned public launch before Hong Kong counsel review",
+    evidenceItems: [
+      {
+        label: "SFC source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "VATP operations scope note",
+        kind: "Markdown",
+        content: "Synthetic service scope, review owner, and counsel handoff timing; custody control evidence still requested."
+      },
+      {
+        label: "Counsel question backlog",
+        kind: "Checklist",
+        content: "Synthetic questions for Hong Kong local counsel routing and pending evidence owners."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],

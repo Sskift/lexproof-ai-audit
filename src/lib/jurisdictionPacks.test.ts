@@ -7,7 +7,16 @@ const project: ProjectProfile = {
   id: "jurisdiction-pack-project",
   projectName: "Global Launch Desk",
   entityType: "Startup issuer",
-  jurisdictions: ["United States", "European Union", "United Kingdom", "Singapore", "Switzerland", "United Arab Emirates", "Brazil"],
+  jurisdictions: [
+    "United States",
+    "European Union",
+    "United Kingdom",
+    "Singapore",
+    "Hong Kong",
+    "Switzerland",
+    "United Arab Emirates",
+    "Brazil"
+  ],
   assetModel: "Tokenized private credit note with yield",
   userType: "Retail and accredited investors",
   custodyModel: "Platform controls omnibus wallet",
@@ -33,7 +42,16 @@ describe("createJurisdictionPacks", () => {
     const packs = createJurisdictionPacks(project, audit);
 
     expect(packs.map((pack) => pack.jurisdiction)).toEqual(
-      expect.arrayContaining(["United States", "European Union", "United Kingdom", "Singapore", "Switzerland", "United Arab Emirates", "Brazil"])
+      expect.arrayContaining([
+        "United States",
+        "European Union",
+        "United Kingdom",
+        "Singapore",
+        "Hong Kong",
+        "Switzerland",
+        "United Arab Emirates",
+        "Brazil"
+      ])
     );
 
     const usPack = packs.find((pack) => pack.jurisdiction === "United States");
@@ -74,6 +92,16 @@ describe("createJurisdictionPacks", () => {
     });
     expect(singaporePack?.controls.map((control) => control.title)).toEqual(
       expect.arrayContaining(["Product scope and launch-intake control", "Custody, AML, and data handoff control"])
+    );
+
+    const hongKongPack = packs.find((pack) => pack.jurisdiction === "Hong Kong");
+    expect(hongKongPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Hong Kong virtual asset trading platform counsel"
+      }
+    });
+    expect(hongKongPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining(["VATP client asset custody control", "Wallet governance and compensation arrangement control"])
     );
 
     const switzerlandPack = packs.find((pack) => pack.jurisdiction === "Switzerland");

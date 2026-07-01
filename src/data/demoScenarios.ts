@@ -110,6 +110,23 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "hong-kong-vatp-custody-source-path",
+    projectName: "HarborBridge VATP Custody Review",
+    title: "Hong Kong VATP custody review",
+    summary: "Hong Kong SFC VATP client-asset custody, associated-entity, wallet governance, reconciliation, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect SFC VATP custody controls",
+      "Review associated-entity and client-asset evidence gaps",
+      "Check wallet governance and compensation evidence gaps",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Hong Kong", "VATP custody", "SFC"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

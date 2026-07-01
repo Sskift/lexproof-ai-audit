@@ -705,6 +705,78 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "hk-sfc-vatp-client-asset-custody",
+    jurisdiction: "Hong Kong",
+    regulator: "Securities and Futures Commission of Hong Kong",
+    sourceName: "Guidelines for Virtual Asset Trading Platform Operators",
+    sourceUrl:
+      "https://www.sfc.hk/-/media/EN/assets/components/codes/files-current/web/guidelines/Guidelines-for-Virtual-Asset-Trading-Platform-Operators/Guidelines-for-Virtual-Asset-Trading-Platform-Operators.pdf",
+    citation: "SFC Guidelines for Virtual Asset Trading Platform Operators, Part X",
+    topic: "custody",
+    summary:
+      "Prepare Hong Kong VATP client-asset custody, associated-entity trust holding, wallet segregation, reconciliation, cold-storage, key-control, monitoring, and compensation evidence for local counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "hong kong",
+      "hk",
+      "vatp",
+      "virtual asset trading platform",
+      "client virtual assets",
+      "client asset",
+      "client assets",
+      "associated entity",
+      "cold storage",
+      "compensation arrangement"
+    ],
+    evidenceRequests: [
+      {
+        id: "hk-vatp-client-asset-associated-entity-custody",
+        title: "Hong Kong VATP client asset custody and associated-entity evidence",
+        reason:
+          "Hong Kong VATP custody review needs associated-entity trust holding, client asset segregation, safeguarding, wallet authority, and withdrawal-control evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "associated entity",
+          "client asset",
+          "client assets",
+          "client virtual assets",
+          "segregation",
+          "safeguarding",
+          "wallet authority",
+          "withdrawal approval",
+          "custody and signer control"
+        ]
+      },
+      {
+        id: "hk-vatp-wallet-reconciliation-compensation",
+        title: "Hong Kong VATP wallet control, reconciliation, and compensation evidence",
+        reason:
+          "Counsel needs wallet segregation, cold-storage, key-management, reconciliation, internal audit, monitoring, incident response, and compensation-arrangement evidence for Hong Kong VATP review.",
+        priority: "P1",
+        keywords: [
+          "cold storage",
+          "key management",
+          "reconciliation",
+          "internal audit",
+          "monitoring",
+          "incident response",
+          "compensation arrangement",
+          "custody and signer control"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which SFC VATP client-asset custody, associated-entity, segregation, and wallet-control requirements should Hong Kong counsel review?",
+      "What reconciliation, cold-storage, key-management, internal-audit, and compensation-arrangement evidence should be included without storing raw wallet secrets or KYC?"
+    ],
+    localCounselRole: "Hong Kong virtual asset trading platform counsel",
+    effectiveAsOf: "2023-06-01",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against SFC VATP Guidelines Part X for client asset custody, associated-entity trust holding, segregation, cold-storage, reconciliation, monitoring, and compensation evidence routing; route interpretation to Hong Kong local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

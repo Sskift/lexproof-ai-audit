@@ -491,6 +491,85 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches Hong Kong SFC VATP client asset custody controls without legal conclusions", () => {
+    const hongKongProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-hk-vatp-custody",
+      projectName: "HarborBridge VATP Custody Review",
+      jurisdictions: ["Hong Kong"],
+      assetModel: "Virtual asset trading platform with token listing and retail virtual asset access",
+      userType: "Hong Kong retail and professional investor client accounts",
+      custodyModel: "Platform controls client virtual assets through an associated entity, omnibus wallets, cold storage, and withdrawal approvals",
+      dataSensitivity: "KYC metadata, wallet transaction history, client asset reconciliation summaries, and sanctions-screening status",
+      aiUsage: "AI drafts custody evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned public launch before Hong Kong counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(hongKongProject);
+    const graph = createRegulatoryGraph(hongKongProject, audit, hongKongProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["hk-sfc-vatp-client-asset-custody"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "hk-sfc-vatp-client-asset-custody")).toMatchObject({
+      jurisdiction: "Hong Kong",
+      regulator: "Securities and Futures Commission of Hong Kong",
+      citation: "SFC Guidelines for Virtual Asset Trading Platform Operators, Part X",
+      sourceUrl:
+        "https://www.sfc.hk/-/media/EN/assets/components/codes/files-current/web/guidelines/Guidelines-for-Virtual-Asset-Trading-Platform-Operators/Guidelines-for-Virtual-Asset-Trading-Platform-Operators.pdf",
+      coverageStatus: "missing",
+      localCounselRole: "Hong Kong virtual asset trading platform counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Hong Kong VATP client asset custody and associated-entity evidence",
+        "Hong Kong VATP wallet control, reconciliation, and compensation evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Hong Kong")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Hong Kong virtual asset trading platform counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Hong Kong SFC VATP custody controls covered when RWA custody template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `hk-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const hongKongProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-hk-vatp-custody-covered",
+      projectName: "HarborBridge VATP Custody Review",
+      jurisdictions: ["Hong Kong"],
+      assetModel: "Virtual asset trading platform with token listing and retail virtual asset access",
+      userType: "Hong Kong retail and professional investor client accounts",
+      custodyModel: "Platform controls client virtual assets through an associated entity, omnibus wallets, cold storage, and withdrawal approvals",
+      dataSensitivity: "KYC metadata, wallet transaction history, client asset reconciliation summaries, and sanctions-screening status",
+      aiUsage: "AI drafts custody evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned public launch before Hong Kong counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(hongKongProject);
+    const graph = createRegulatoryGraph(hongKongProject, audit, hongKongProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "hk-sfc-vatp-client-asset-custody")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Custody and signer control runbook"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "hk-sfc-vatp-client-asset-custody" })])
+    );
+  });
+
   it("marks Singapore DPT safeguarding controls covered when RWA custody template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,

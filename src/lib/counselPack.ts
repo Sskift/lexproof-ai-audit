@@ -12,6 +12,7 @@ import type { ProjectProfile } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
 import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
+import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type CounselPackModelIntake = {
   profile: ModelConnectionProfile;
@@ -33,7 +34,8 @@ export function buildMarkdownCounselPack(
   regulatorySourceApprovalQueue?: RegulatorySourceApprovalQueue,
   humanReviewTimeline: HumanReviewTimelineEntry[] = [],
   evidenceRecertificationQueue?: EvidenceRecertificationQueue,
-  localCounselRoutingPlan?: LocalCounselRoutingPlan
+  localCounselRoutingPlan?: LocalCounselRoutingPlan,
+  sourceFreshnessBoard?: SourceFreshnessBoard
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -47,6 +49,7 @@ export function buildMarkdownCounselPack(
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
   const sourceReviewSection = regulatorySourceReview ? formatRegulatorySourceReviewSection(regulatorySourceReview) : "";
+  const sourceFreshnessBoardSection = sourceFreshnessBoard ? formatSourceFreshnessBoardSection(sourceFreshnessBoard) : "";
   const localCounselRoutingSection =
     localCounselRoutingPlan && localCounselRoutingPlan.routeCount > 0
       ? formatLocalCounselRoutingPlanSection(localCounselRoutingPlan)
@@ -98,6 +101,7 @@ export function buildMarkdownCounselPack(
     "",
     ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
+    ...(sourceFreshnessBoardSection ? ["## Source Freshness Board", sourceFreshnessBoardSection, ""] : []),
     ...(localCounselRoutingSection ? ["## Local Counsel Routing Plan", localCounselRoutingSection, ""] : []),
     ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
     ...(humanReviewSection ? ["## Human Review Timeline", humanReviewSection, ""] : []),
@@ -114,6 +118,41 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatSourceFreshnessBoardSection(board: SourceFreshnessBoard): string {
+  const laneLines = board.lanes
+    .map((lane) => {
+      const items = lane.items
+        .slice(0, 4)
+        .map(
+          (item) =>
+            `  - ${item.priority} ${safe(item.jurisdiction)} [${safe(item.citation)}] ${safe(
+              item.nextAction
+            )} Last reviewed ${safe(item.lastReviewedAt || "metadata missing")}; next review ${safe(
+              item.nextReviewDueAt || "metadata missing"
+            )}.`
+        )
+        .join("\n");
+      return [`- ${safe(lane.label)}: ${lane.itemCount}`, items || "  - No source records in this lane."].join("\n");
+    })
+    .join("\n");
+
+  return [
+    board.notLegalAdviceBoundary,
+    `- Board status: ${board.status}`,
+    `- Board hash: ${board.boardHash}`,
+    `- As of: ${safe(board.asOf)}`,
+    `- Due soon window: ${board.dueSoonDays} days`,
+    `- Total sources: ${board.totalSourceCount}`,
+    `- Metadata missing sources: ${board.metadataMissingCount}`,
+    `- Overdue sources: ${board.overdueCount}`,
+    `- Due soon sources: ${board.dueSoonCount}`,
+    `- Scheduled sources: ${board.scheduledCount}`,
+    "",
+    "### Source Freshness Lanes",
+    laneLines || "- No source review records matched current facts."
   ].join("\n");
 }
 

@@ -546,6 +546,29 @@ describe("App", () => {
     }
   });
 
+  it("includes Source Freshness Board scheduling metadata in the Counsel Pack preview", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+      const memo = await screen.findByText(/## Source Freshness Board/i);
+
+      expect(memo).toHaveClass("memo");
+      expect(memo).toHaveTextContent(/Not legal advice. Source freshness boards are audit preparation scheduling metadata only./i);
+      expect(memo).toHaveTextContent(/- Board status: attention-needed/i);
+      expect(memo).toHaveTextContent(/- Board hash: [a-f0-9]{64}/i);
+      expect(memo).toHaveTextContent(/- Overdue sources: [1-9]/i);
+      expect(memo.textContent ?? "").not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("loads a judge-ready demo scenario from the seeded scenario library", async () => {
     render(<App />);
 

@@ -808,7 +808,8 @@ export default function App() {
         regulatorySourceApprovalQueue,
         humanReviewTimeline,
         evidenceRecertificationQueue ?? undefined,
-        localCounselRoutingPlan ?? undefined
+        localCounselRoutingPlan ?? undefined,
+        sourceFreshnessBoard ?? undefined
       );
     },
     [
@@ -827,7 +828,8 @@ export default function App() {
       regulatoryGraph,
       regulatorySourceApprovalQueue,
       regulatorySourceReview,
-      selectedCounselPackTemplate
+      selectedCounselPackTemplate,
+      sourceFreshnessBoard
     ]
   );
 

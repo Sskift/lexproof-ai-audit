@@ -15,6 +15,7 @@ import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfil
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
+import { createSourceFreshnessBoard } from "./sourceFreshnessBoard";
 import { createDataBoundaryReport } from "./dataBoundary";
 import { createEvidenceRecertificationQueue } from "./evidenceRecertification";
 import { createLocalCounselRoutingPlan } from "./localCounselRouting";
@@ -237,6 +238,55 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("- Approval required:");
     expect(markdown).toContain("approval-required");
     expect(markdown).toContain("Refresh and approve");
+    expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("includes source freshness board scheduling metadata in Markdown handoff", async () => {
+    const graphProject: ProjectProfile = {
+      ...project,
+      jurisdictions: ["European Union", "United Kingdom"],
+      assetModel: "Tokenized private credit note with yield",
+      userType: "Retail users",
+      operatingStage: "Planned public launch",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(graphProject);
+    const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
+    const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, {
+      asOf: "2026-10-01T00:00:00.000Z"
+    });
+    const sourceFreshnessBoard = await createSourceFreshnessBoard({
+      sourceReview,
+      asOf: "2026-10-01T00:00:00.000Z",
+      generatedAt: "2026-10-01T00:00:00.000Z"
+    });
+
+    const markdown = buildMarkdownCounselPack(
+      graphProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      graph,
+      undefined,
+      undefined,
+      sourceReview,
+      undefined,
+      [],
+      undefined,
+      undefined,
+      sourceFreshnessBoard
+    );
+
+    expect(markdown).toContain("## Source Freshness Board");
+    expect(markdown).toContain("Not legal advice. Source freshness boards are audit preparation scheduling metadata only.");
+    expect(markdown).toContain(`- Board hash: ${sourceFreshnessBoard.boardHash}`);
+    expect(markdown).toContain("- Board status: attention-needed");
+    expect(markdown).toContain("- Overdue sources:");
+    expect(markdown).toContain("- Due soon sources:");
+    expect(markdown).toContain("Refresh");
     expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
 

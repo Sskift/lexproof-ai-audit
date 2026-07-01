@@ -88,6 +88,10 @@ import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoSce
 import { createDemoReadinessReport } from "./lib/demoReadiness";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
+import {
+  createEvidenceRecertificationQueue,
+  type EvidenceRecertificationQueue
+} from "./lib/evidenceRecertification";
 import { createEvidenceItemsFromTemplate, listEvidenceTemplates, recommendEvidenceTemplates } from "./lib/evidenceTemplates";
 import {
   createGrcDestinationPolicyReport,
@@ -295,6 +299,7 @@ export default function App() {
   const [showValidation, setShowValidation] = useState(false);
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
+  const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
@@ -641,11 +646,13 @@ export default function App() {
         dataBoundaryReport,
         evidenceCount: project.evidenceItems.length,
         manifestHash: manifest?.bundleHash,
-        counselPackVersionCount: currentCounselPackVersions.length
+        counselPackVersionCount: currentCounselPackVersions.length,
+        evidenceRecertificationQueue: evidenceRecertificationQueue ?? undefined
       }),
     [
       currentCounselPackVersions.length,
       dataBoundaryReport,
+      evidenceRecertificationQueue,
       humanReviewQueue,
       manifest?.bundleHash,
       project.evidenceItems.length,
@@ -717,7 +724,8 @@ export default function App() {
         dataBoundaryReport,
         regulatorySourceReview,
         regulatorySourceApprovalQueue,
-        humanReviewTimeline
+        humanReviewTimeline,
+        evidenceRecertificationQueue ?? undefined
       );
     },
     [
@@ -726,6 +734,7 @@ export default function App() {
       currentCounselQuestions,
       currentCounselReviews,
       dataBoundaryReport,
+      evidenceRecertificationQueue,
       humanReviewTimeline,
       manifest,
       modelIntakeProfile,
@@ -761,6 +770,22 @@ export default function App() {
       live = false;
     };
   }, [audit, project]);
+
+  useEffect(() => {
+    let live = true;
+    setEvidenceRecertificationQueue(null);
+    createEvidenceRecertificationQueue({
+      workspaceId: project.id,
+      evidenceItems: project.evidenceItems
+    }).then((nextQueue) => {
+      if (live) {
+        setEvidenceRecertificationQueue(nextQueue);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [project.evidenceItems, project.id]);
 
   useEffect(() => {
     let live = true;

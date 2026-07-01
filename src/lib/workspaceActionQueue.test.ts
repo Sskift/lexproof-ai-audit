@@ -5,6 +5,7 @@ import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
 import type { SecurityReviewChecklistReport } from "./securityReviewChecklist";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import { createWorkspaceActionQueue } from "./workspaceActionQueue";
 
 describe("createWorkspaceActionQueue", () => {
@@ -85,6 +86,34 @@ describe("createWorkspaceActionQueue", () => {
         cta: "Open export queue"
       })
     ]);
+  });
+
+  it("routes stale evidence recertification to the Evidence Ledger before export work", () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({ evidenceGaps: [] }),
+      sourceReview: sourceReview({ actionCount: 0 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 0, blockedCount: 0 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "ready", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 1,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 1,
+      evidenceRecertificationQueue: recertificationQueue()
+    } as Parameters<typeof createWorkspaceActionQueue>[0] & { evidenceRecertificationQueue: EvidenceRecertificationQueue });
+
+    expect(queue.items[0]).toEqual(
+      expect.objectContaining({
+        id: "recertify-stale-evidence",
+        priority: "P0",
+        target: "evidence",
+        title: "Recertify stale evidence",
+        cta: "Open recertification queue"
+      })
+    );
+    expect(queue.items[0].summary).toContain("Claims inventory");
+    expect(queue.items[0].summary).toContain("2026-04-01");
+    expect(queue.items[0].notLegalAdviceBoundary).toContain("Not legal advice");
   });
 });
 
@@ -180,5 +209,52 @@ function dataBoundary({
     findings: [],
     remediation: [],
     notLegalAdviceBoundary: "Not legal advice. Data boundary output is audit preparation material only."
+  };
+}
+
+function recertificationQueue(): EvidenceRecertificationQueue {
+  return {
+    queueVersion: "lexproof-evidence-recertification-queue-v1",
+    workspaceId: "workspace-action-queue",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    status: "needs-recertification",
+    queueHash: "f".repeat(64),
+    policy: {
+      recertificationIntervalDays: 90,
+      warningWindowDays: 14
+    },
+    summary: {
+      totalActionCount: 1,
+      overdueCount: 1,
+      expiringCount: 0,
+      sourceLinkedCount: 1,
+      missingTimestampCount: 0
+    },
+    items: [
+      {
+        itemVersion: "lexproof-evidence-recertification-item-v1",
+        id: "p0-claims-inventory",
+        priority: "P0",
+        evidenceIndex: 0,
+        evidenceId: "claims-inventory",
+        evidenceLabel: "Claims inventory",
+        evidenceKind: "CSV",
+        owner: "Compliance",
+        evidenceStatus: "verified",
+        lastReviewedAt: "2026-01-01T00:00:00.000Z",
+        dueAt: "2026-04-01T00:00:00.000Z",
+        ageDays: 181,
+        daysUntilDue: -91,
+        linkedControlIds: ["control-uae-vara-marketing-approval"],
+        linkedRiskIds: ["risk-marketing-claims"],
+        reason: "Evidence exceeded the recertification window for audit-prep reliance.",
+        nextAction: "Recertify source-linked evidence before counsel/export reliance.",
+        notLegalAdviceBoundary:
+          "Not legal advice. Evidence recertification items are audit preparation workflow metadata only."
+      }
+    ],
+    nextSteps: ["Refresh P0/P1 evidence metadata before counsel/export reliance."],
+    notLegalAdviceBoundary:
+      "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
   };
 }

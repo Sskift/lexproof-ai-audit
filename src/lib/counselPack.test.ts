@@ -16,6 +16,7 @@ import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import { createDataBoundaryReport } from "./dataBoundary";
+import { createEvidenceRecertificationQueue } from "./evidenceRecertification";
 
 const project: ProjectProfile = {
   id: "project-counsel",
@@ -236,6 +237,56 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("approval-required");
     expect(markdown).toContain("Refresh and approve");
     expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("includes evidence recertification queue metadata without raw evidence content", async () => {
+    const staleProject: ProjectProfile = {
+      ...project,
+      evidenceItems: [
+        {
+          id: "claims-inventory",
+          label: "Claims inventory",
+          kind: "CSV",
+          content: "Synthetic claim rows plus raw working notes that must not enter the Counsel Pack recertification section.",
+          source: "regulatory control: control-uae-vara-marketing-approval; risk evidence requirement: marketing-claims",
+          status: "verified",
+          owner: "Compliance",
+          updatedAt: "2026-01-01T00:00:00.000Z"
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(staleProject);
+    const manifest = await createEvidenceManifest(staleProject, audit, staleProject.evidenceItems);
+    const recertificationQueue = await createEvidenceRecertificationQueue({
+      workspaceId: staleProject.id,
+      evidenceItems: staleProject.evidenceItems,
+      generatedAt: "2026-07-01T00:00:00.000Z"
+    });
+
+    const markdown = buildMarkdownCounselPack(
+      staleProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      recertificationQueue
+    );
+
+    expect(markdown).toContain("## Evidence Recertification Queue");
+    expect(markdown).toContain("Not legal advice. Evidence recertification queues are audit preparation workflow metadata only.");
+    expect(markdown).toContain(`- Queue hash: ${recertificationQueue.queueHash}`);
+    expect(markdown).toContain("- Status: needs-recertification");
+    expect(markdown).toContain("- P0 Claims inventory");
+    expect(markdown).toContain("control-uae-vara-marketing-approval");
+    expect(markdown).toContain("Recertify source-linked evidence before counsel/export reliance.");
+    expect(markdown).not.toContain("raw working notes");
   });
 
   it("includes a data boundary report and does not leak blocked export materials", async () => {

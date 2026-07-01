@@ -176,7 +176,9 @@ Evidence Retention Readiness blocks Evidence Vault sync when evidence contains p
 
 ![Evidence Retention Remediation Queue](docs/assets/screenshots/evidence-retention-remediation-queue.png)
 
-Evidence Recertification Queue flags stale source-linked metadata before counsel/export reliance. Load `SignalBridge Marketing Review`, open **Evidence Ledger**, and refresh the stale `Claims inventory` evidence to clear the queue. Not legal advice.
+Evidence Recertification Queue flags stale source-linked metadata before counsel/export reliance. Load `SignalBridge Marketing Review`, confirm the first-screen **Workspace Action Queue** routes stale `Claims inventory` to Evidence Ledger, and refresh the evidence to clear the queue. Not legal advice.
+
+![Workspace Action Queue recertification route](docs/assets/screenshots/workspace-action-recertification.png)
 
 ![Evidence Recertification Queue](docs/assets/screenshots/evidence-recertification-queue.png)
 
@@ -286,7 +288,7 @@ The Counsel Pack Markdown preview now carries the Source Review Ledger from the 
 
 ![Counsel Pack Source Update Approval Queue](docs/assets/screenshots/counsel-pack-source-approval-queue.png)
 
-The Counsel Pack Markdown preview also carries Human Review Timeline metadata, including saved decisions, reviewer names, decision notes, and audit log IDs. Review status remains audit preparation workflow metadata only, not legal approval.
+The Counsel Pack Markdown preview also carries Human Review Timeline metadata and Evidence Recertification Queue metadata, including stale evidence status, queue hash, source-linked controls, reviewer actions, saved decisions, reviewer names, decision notes, and audit log IDs. Review and recertification status remain audit preparation workflow metadata only, not legal approval.
 
 ![Counsel Pack Human Review Timeline](docs/assets/screenshots/counsel-pack-human-review-timeline-focus.png)
 

@@ -36,6 +36,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Singapore source path: click **Start Singapore DPT custody review** to load `HarborKey DPT Custody Review` and start in Jurisdiction Checklist for MAS PS-G03 customer-asset safeguard controls, custody evidence gaps, and counsel export.
    - Optional Hong Kong source path: click **Start Hong Kong VATP custody review** to load `HarborBridge VATP Custody Review` and start in Jurisdiction Checklist for SFC VATP client-asset custody controls, wallet governance evidence gaps, and counsel export.
    - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / UK FCA / UAE VARA 2024 promotion, risk-warning, KOL/incentive, and recordkeeping source gaps.
+   - On the marketing path, show the first-screen **Workspace Action Queue** item **Recertify stale evidence** for the stale source-linked `Claims inventory` record, then click it to route into Evidence Ledger. Not legal advice.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
@@ -130,7 +131,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **Counsel Pack**.
    - Show the recommended **Export template**, then switch to **AI Governance Review** or another template to show the Markdown agenda and evidence focus update without changing deterministic risk scoring.
    - Show **Export Safety Gate**. In the normal path, warnings are visible for human confirmation and blocked counts must be zero before handoff.
-   - Show Regulatory Source Graph, Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, source pack hash, source review status, and any Source Update Approval Queue gates in the Markdown preview.
+   - Show Regulatory Source Graph, Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, evidence recertification queue hash when stale evidence is open, source pack hash, source review status, and any Source Update Approval Queue gates in the Markdown preview.
    - Click **Save Pack Version**, update one counsel review status, then click **Save Pack Version** again to show the export diff and version JSON action.
    - Open **Human Review**, filter **Target type** to **Counsel Pack**, and show the saved Pack Version queued for reviewer decision before external handoff. This review status is audit-prep workflow metadata only, not legal approval.
    - Enter `http://127.0.0.1:8787` in **Server export API base URL**, then click **Create Server Export Record** to persist a metadata-only server record for the latest Pack Version.

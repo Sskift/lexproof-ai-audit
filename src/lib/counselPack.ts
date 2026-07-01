@@ -3,6 +3,7 @@ import type { CounselReviewItem } from "./counselReview";
 import type { CounselQuestion } from "./counselQuestions";
 import type { CounselPackTemplate } from "./counselPackTemplates";
 import { redactDataBoundaryText, summarizeDataBoundaryForExport, type DataBoundaryReport } from "./dataBoundary";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { HumanReviewTimelineEntry } from "./humanReviewWorkflow";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
@@ -29,7 +30,8 @@ export function buildMarkdownCounselPack(
   dataBoundaryReport?: DataBoundaryReport,
   regulatorySourceReview?: RegulatorySourceReview,
   regulatorySourceApprovalQueue?: RegulatorySourceApprovalQueue,
-  humanReviewTimeline: HumanReviewTimelineEntry[] = []
+  humanReviewTimeline: HumanReviewTimelineEntry[] = [],
+  evidenceRecertificationQueue?: EvidenceRecertificationQueue
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -48,6 +50,10 @@ export function buildMarkdownCounselPack(
       ? formatRegulatorySourceApprovalQueueSection(regulatorySourceApprovalQueue)
       : "";
   const humanReviewSection = humanReviewTimeline.length > 0 ? formatHumanReviewTimelineSection(humanReviewTimeline) : "";
+  const recertificationSection =
+    evidenceRecertificationQueue && evidenceRecertificationQueue.summary.totalActionCount > 0
+      ? formatEvidenceRecertificationQueueSection(evidenceRecertificationQueue)
+      : "";
   const exportTemplateSection = exportTemplate ? formatExportTemplateSection(exportTemplate) : "";
   const dataBoundarySection = dataBoundaryReport ? summarizeDataBoundaryForExport(dataBoundaryReport) : "";
   const sources = audit.sourcePack.map((source) => `- ${safe(source.title)}: ${source.url}`).join("\n");
@@ -88,6 +94,7 @@ export function buildMarkdownCounselPack(
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
     ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
     ...(humanReviewSection ? ["## Human Review Timeline", humanReviewSection, ""] : []),
+    ...(recertificationSection ? ["## Evidence Recertification Queue", recertificationSection, ""] : []),
     ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
     remediation,
@@ -273,6 +280,30 @@ function formatModelIntakeSection({ profile, events, summary }: CounselPackModel
     eventLines || "- No AI event records have been added yet.",
     "",
     summary.notLegalAdviceBoundary
+  ].join("\n");
+}
+
+function formatEvidenceRecertificationQueueSection(queue: EvidenceRecertificationQueue): string {
+  const items = queue.items
+    .map(
+      (item) =>
+        `- ${item.priority} ${safe(item.evidenceLabel)} (${safe(item.evidenceStatus)}, ${safe(item.owner)}) due ${safe(
+          formatDate(item.dueAt)
+        )}; age ${item.ageDays} days; controls: ${safe(item.linkedControlIds.join(", ") || "none")}; ${safe(item.nextAction)}`
+    )
+    .join("\n");
+
+  return [
+    queue.notLegalAdviceBoundary,
+    `- Status: ${queue.status}`,
+    `- Queue hash: ${queue.queueHash}`,
+    `- Actions: ${queue.summary.totalActionCount}`,
+    `- Overdue: ${queue.summary.overdueCount}`,
+    `- Expiring: ${queue.summary.expiringCount}`,
+    `- Source-linked: ${queue.summary.sourceLinkedCount}`,
+    "",
+    "### Recertification Actions",
+    items || "- No evidence recertification actions are open."
   ].join("\n");
 }
 

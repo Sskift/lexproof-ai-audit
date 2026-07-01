@@ -493,6 +493,31 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("routes stale marketing evidence recertification from the workspace action queue to the ledger", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-01T00:00:00.000Z"));
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Start Marketing claims review/i }));
+      vi.useRealTimers();
+
+      const actionQueue = screen.getByRole("region", { name: /Workspace Action Queue/i });
+
+      expect(await within(actionQueue).findByText(/Recertify stale evidence/i)).toBeInTheDocument();
+      expect(within(actionQueue).getByText(/Claims inventory/i)).toBeInTheDocument();
+      expect(within(actionQueue).getByText(/Not legal advice/i)).toBeInTheDocument();
+
+      fireEvent.click(within(actionQueue).getByRole("button", { name: /Open recertification queue/i }));
+
+      expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
+      expect(await screen.findByRole("region", { name: /Evidence Recertification Queue/i })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("shows judge demo readiness and checks the Phase 2 API without private credentials", async () => {
     const fetchMock = vi.fn(async () =>
       new Response(

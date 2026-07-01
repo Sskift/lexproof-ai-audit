@@ -1,4 +1,5 @@
 import type { DataBoundaryReport } from "./dataBoundary";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
@@ -51,6 +52,7 @@ export type CreateWorkspaceActionQueueInput = {
   evidenceCount: number;
   manifestHash?: string;
   counselPackVersionCount: number;
+  evidenceRecertificationQueue?: EvidenceRecertificationQueue;
 };
 
 const NOT_LEGAL_ADVICE = "Not legal advice. Workspace actions are audit preparation workflow prompts only.";
@@ -61,6 +63,7 @@ export function createWorkspaceActionQueue(input: CreateWorkspaceActionQueueInpu
     createHumanReviewRecoveryAction(input.humanReviewQueue),
     createRegulatoryEvidenceAction(input.regulatoryGraph),
     createExportSafetyAction(input.dataBoundaryReport),
+    createEvidenceRecertificationAction(input.evidenceRecertificationQueue),
     createSourceRefreshAction(input.sourceReview),
     createHumanReviewOpenAction(input.humanReviewQueue),
     createSecurityReadinessAction(input.securityReviewChecklist),
@@ -141,6 +144,26 @@ function createExportSafetyAction(report: DataBoundaryReport): WorkspaceActionIt
     title: "Clear Export Safety Gate",
     summary: `${report.blockerCount} blocked data-boundary finding${report.blockerCount === 1 ? "" : "s"} must be remediated before pack export.`,
     cta: "Open export queue"
+  });
+}
+
+function createEvidenceRecertificationAction(queue: EvidenceRecertificationQueue | undefined): WorkspaceActionItem | null {
+  if (!queue || queue.summary.totalActionCount === 0 || queue.status === "ready") {
+    return null;
+  }
+
+  const firstItem = queue.items[0];
+  const priority = queue.summary.overdueCount > 0 || firstItem?.priority === "P0" ? "P0" : "P1";
+  const dueLabel = firstItem?.dueAt && firstItem.dueAt !== "missing" ? ` due ${firstItem.dueAt.slice(0, 10)}` : "";
+  const firstLabel = firstItem ? ` First: ${firstItem.evidenceLabel}${dueLabel}.` : "";
+
+  return createAction({
+    id: "recertify-stale-evidence",
+    priority,
+    target: "evidence",
+    title: "Recertify stale evidence",
+    summary: `${queue.summary.totalActionCount} evidence recertification action${queue.summary.totalActionCount === 1 ? "" : "s"} open; ${queue.summary.sourceLinkedCount} source-linked.${firstLabel}`,
+    cta: "Open recertification queue"
   });
 }
 
@@ -243,6 +266,7 @@ function actionOrder(id: string): number {
     "recover-human-review",
     "resolve-regulatory-evidence-gaps",
     "clear-export-safety-gate",
+    "recertify-stale-evidence",
     "refresh-source-review",
     "complete-human-review",
     "validate-security-readiness",

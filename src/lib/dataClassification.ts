@@ -24,6 +24,15 @@ type ClassificationRule = {
   allowNegatedRawKyc?: boolean;
 };
 
+const emailPattern = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/;
+const phonePattern = /\+\d[\d\s().-]{7,}\d|\b(?:phone|tel|mobile)\s*[:#-]?\s*\d[\d\s().-]{7,}\d\b/;
+const ssnPattern = /\b(?:ssn|social security number)?\s*[:#-]?\s*\d{3}-\d{2}-\d{4}\b/;
+const passportIdPattern = /\bpassport(?:\s+(?:number|no\.?|id))?\s+(?:[A-Z]{1,3}\d{5,9}|\d{6,12})\b/;
+const directPersonalIdentifierPattern = new RegExp(
+  `${emailPattern.source}|${phonePattern.source}|${ssnPattern.source}|${passportIdPattern.source}`,
+  "gi"
+);
+
 const classificationRules: ClassificationRule[] = [
   {
     dataClass: "private-key-material",
@@ -54,6 +63,12 @@ const classificationRules: ClassificationRule[] = [
     severity: "block",
     pattern: /\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi,
     message: "Raw KYC material must stay outside Counsel Pack exports."
+  },
+  {
+    dataClass: "personal-data",
+    severity: "warn",
+    pattern: directPersonalIdentifierPattern,
+    message: "Direct personal identifiers must be redacted or summarized before external handoff."
   },
   {
     dataClass: "personal-data",
@@ -110,7 +125,11 @@ export function redactClassifiedText(value: string): string {
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")
     .replace(/\b[a-fA-F0-9]{24,}\b/g, "[redacted-hex-material]")
     .replace(/\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi, "[redacted-raw-kyc]")
-    .replace(/\b(passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]");
+    .replace(new RegExp(emailPattern.source, "gi"), "[redacted-email]")
+    .replace(new RegExp(ssnPattern.source, "gi"), "[redacted-ssn]")
+    .replace(new RegExp(passportIdPattern.source, "gi"), "[redacted-passport-id]")
+    .replace(new RegExp(phonePattern.source, "gi"), "[redacted-phone]")
+    .replace(/(?<!-)\b(passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]");
 }
 
 function isNegatedKycReference(text: string, matchIndex: number): boolean {

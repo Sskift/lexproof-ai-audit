@@ -30,6 +30,24 @@ describe("classifyDataBoundaryText", () => {
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
     expect(classifyDataBoundaryText("Metadata-only board approval memo; no raw KYC files included.")).toEqual([]);
   });
+
+  it("flags direct personal identifiers without exposing the raw identifier values", () => {
+    const findings = classifyDataBoundaryText(
+      "Reviewer note lists founder jane.founder@example.com, phone +1 415 555 0199, SSN 123-45-6789, and passport AB1234567 for removal."
+    );
+
+    const personalDataFinding = findings.find((finding) => finding.dataClass === "personal-data");
+
+    expect(personalDataFinding).toMatchObject({
+      dataClass: "personal-data",
+      severity: "warn",
+      matchCount: 4
+    });
+    expect(JSON.stringify(findings)).not.toContain("jane.founder@example.com");
+    expect(JSON.stringify(findings)).not.toContain("+1 415 555 0199");
+    expect(JSON.stringify(findings)).not.toContain("123-45-6789");
+    expect(JSON.stringify(findings)).not.toContain("AB1234567");
+  });
 });
 
 describe("redactClassifiedText", () => {
@@ -40,5 +58,20 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-private-key]");
     expect(redacted).not.toContain(apiKey);
     expect(redacted).not.toContain(privateKey);
+  });
+
+  it("redacts direct personal identifiers from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(
+      "Contact jane.founder@example.com, +1 415 555 0199, SSN 123-45-6789, passport AB1234567."
+    );
+
+    expect(redacted).toContain("[redacted-email]");
+    expect(redacted).toContain("[redacted-phone]");
+    expect(redacted).toContain("[redacted-ssn]");
+    expect(redacted).toContain("[redacted-passport-id]");
+    expect(redacted).not.toContain("jane.founder@example.com");
+    expect(redacted).not.toContain("+1 415 555 0199");
+    expect(redacted).not.toContain("123-45-6789");
+    expect(redacted).not.toContain("AB1234567");
   });
 });

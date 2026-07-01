@@ -106,6 +106,16 @@ describe("Phase 2 backend API contracts", () => {
     expect(routes).toContainEqual(
       expect.objectContaining({
         method: "POST",
+        path: "/api/integrations/chain-anchor/policy",
+        domain: "integrations",
+        requestContract: "ChainAnchorPolicyRequest",
+        responseContract: "ChainAnchorPolicyReport",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "POST",
         path: "/api/workspaces/:workspaceId/model-runs",
         domain: "model-gateway",
         implemented: true

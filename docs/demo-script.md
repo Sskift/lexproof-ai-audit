@@ -95,12 +95,14 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Enter `http://127.0.0.1:8787` in **Provider Policy API base URL**, click **Refresh Server Provider Policy**, and show **Server provider policy synced**. If the API is down, show the recovery action instead of collecting credentials.
    - In **Object Storage Policy Evaluation**, enter `http://127.0.0.1:8787`, fill synthetic owner/retention/deletion metadata, approve encryption, bucket allowlist, access logging, lifecycle policy, no-sensitive-material, and human-review controls, then click **Evaluate Server Storage Policy**. Show **Storage policy report synced**, `10/10`, and **External storage: Disabled**. Download Storage Policy JSON if time allows. Not legal advice.
    - In **Document Parser Policy Evaluation**, enter `http://127.0.0.1:8787`, fill synthetic owner, document-size, raw-retention, deletion-SLA, and parser-purpose metadata, approve redaction before parsing, no model training use, parser access logging, no-sensitive-material, and human-review controls, then click **Evaluate Server Parser Policy**. Show **Parser policy report synced** and **External parsing: Disabled**. Download Parser Policy JSON if time allows. Not legal advice.
+   - In **Chain Anchor Policy Evaluation**, enter `http://127.0.0.1:8787`, fill synthetic owner, `ethereum-sepolia`, wallet custody model, signer role, approve transaction logging, privacy review, public payload limits, user consent, no-raw-evidence-on-chain, and human-review controls, then click **Evaluate Server Anchor Policy**. Show **Anchor policy report synced**, `anchorMode: simulated-only`, and **External anchoring: Disabled**. Download Anchor Policy JSON if time allows. Not legal advice.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.
    - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, the automatically queued Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
    - Storage policy screenshot: `docs/assets/screenshots/object-storage-policy-evaluation.png`.
    - Parser policy screenshot: `docs/assets/screenshots/document-parser-policy-evaluation.png`.
+   - Chain anchor policy screenshot: `docs/assets/screenshots/chain-anchor-policy-evaluation.png`.
 
 7. **Export counsel pack**
    - Open **Counsel Pack**.

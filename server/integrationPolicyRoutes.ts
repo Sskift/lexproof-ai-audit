@@ -1,5 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import {
+  createChainAnchorPolicyReport,
+  type ChainAnchorPolicyContext,
+  type ChainAnchorPolicyDraft
+} from "../src/lib/chainAnchorPolicy.js";
+import {
   createDocumentParserPolicyReport,
   type DocumentParserPolicyContext,
   type DocumentParserPolicyDraft
@@ -20,6 +25,11 @@ type DocumentParserPolicyRequestBody = {
   policy?: unknown;
 };
 
+type ChainAnchorPolicyRequestBody = {
+  context?: unknown;
+  policy?: unknown;
+};
+
 export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
   server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request) =>
     createObjectStoragePolicyReport({
@@ -32,6 +42,13 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
     createDocumentParserPolicyReport({
       context: toDocumentParserPolicyContext(request.body?.context),
       policy: toDocumentParserPolicyDraft(request.body?.policy)
+    })
+  );
+
+  server.post<{ Body: ChainAnchorPolicyRequestBody }>("/api/integrations/chain-anchor/policy", async (request) =>
+    createChainAnchorPolicyReport({
+      context: toChainAnchorPolicyContext(request.body?.context),
+      policy: toChainAnchorPolicyDraft(request.body?.policy)
     })
   );
 }
@@ -93,6 +110,40 @@ function toDocumentParserPolicyDraft(value: unknown): DocumentParserPolicyDraft 
     noTrainingUseConfirmed: policy.noTrainingUseConfirmed === true,
     accessLoggingApproved: policy.accessLoggingApproved === true,
     noSensitiveMaterialConfirmed: policy.noSensitiveMaterialConfirmed === true,
+    humanReviewRequired: policy.humanReviewRequired === true,
+    notes: stringField(policy.notes)
+  };
+}
+
+function toChainAnchorPolicyContext(value: unknown): ChainAnchorPolicyContext {
+  const context = isRecord(value) ? value : {};
+
+  return {
+    workspaceId: stringField(context.workspaceId),
+    evidenceCount: numberField(context.evidenceCount),
+    retentionStatus: isRetentionPolicyStatus(context.retentionStatus) ? context.retentionStatus : "needs-review",
+    vaultSyncAllowed: context.vaultSyncAllowed === true,
+    blockerCount: numberField(context.blockerCount),
+    exportBlockerCount: numberField(context.exportBlockerCount),
+    manifestHash: stringField(context.manifestHash) || undefined,
+    counselPackVersionCount: numberField(context.counselPackVersionCount),
+    simulatedAnchorAvailable: context.simulatedAnchorAvailable === true
+  };
+}
+
+function toChainAnchorPolicyDraft(value: unknown): ChainAnchorPolicyDraft {
+  const policy = isRecord(value) ? value : {};
+
+  return {
+    policyOwner: stringField(policy.policyOwner),
+    targetNetwork: stringField(policy.targetNetwork),
+    walletCustodyModel: stringField(policy.walletCustodyModel),
+    signerRole: stringField(policy.signerRole),
+    transactionLoggingApproved: policy.transactionLoggingApproved === true,
+    privacyReviewApproved: policy.privacyReviewApproved === true,
+    publicPayloadLimitedApproved: policy.publicPayloadLimitedApproved === true,
+    userConsentApproved: policy.userConsentApproved === true,
+    noRawEvidenceOnChainConfirmed: policy.noRawEvidenceOnChainConfirmed === true,
     humanReviewRequired: policy.humanReviewRequired === true,
     notes: stringField(policy.notes)
   };

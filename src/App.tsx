@@ -71,6 +71,16 @@ import {
   type DocumentParserPolicyReport
 } from "./lib/documentParserPolicy";
 import {
+  createChainAnchorPolicyReport,
+  type ChainAnchorPolicyContext,
+  type ChainAnchorPolicyDraft,
+  type ChainAnchorPolicyReport
+} from "./lib/chainAnchorPolicy";
+import {
+  ChainAnchorPolicyClientError,
+  fetchChainAnchorPolicyReport
+} from "./lib/chainAnchorPolicyClient";
+import {
   DocumentParserPolicyClientError,
   fetchDocumentParserPolicyReport
 } from "./lib/documentParserPolicyClient";
@@ -216,6 +226,20 @@ const defaultDocumentParserPolicyDraft: DocumentParserPolicyDraft = {
   notes: ""
 };
 
+const defaultChainAnchorPolicyDraft: ChainAnchorPolicyDraft = {
+  policyOwner: "",
+  targetNetwork: "",
+  walletCustodyModel: "",
+  signerRole: "",
+  transactionLoggingApproved: false,
+  privacyReviewApproved: false,
+  publicPayloadLimitedApproved: false,
+  userConsentApproved: false,
+  noRawEvidenceOnChainConfirmed: false,
+  humanReviewRequired: true,
+  notes: ""
+};
+
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
@@ -278,6 +302,12 @@ export default function App() {
   const [parserPolicySyncStatus, setParserPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [parserPolicySyncError, setParserPolicySyncError] = useState("");
   const [parserPolicySyncRecoveryAction, setParserPolicySyncRecoveryAction] = useState("");
+  const [anchorPolicyApiBaseUrl, setAnchorPolicyApiBaseUrl] = useState("");
+  const [anchorPolicyDraft, setAnchorPolicyDraft] = useState<ChainAnchorPolicyDraft>(defaultChainAnchorPolicyDraft);
+  const [serverAnchorPolicyReport, setServerAnchorPolicyReport] = useState<ChainAnchorPolicyReport | null>(null);
+  const [anchorPolicySyncStatus, setAnchorPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [anchorPolicySyncError, setAnchorPolicySyncError] = useState("");
+  const [anchorPolicySyncRecoveryAction, setAnchorPolicySyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -474,6 +504,34 @@ export default function App() {
     [documentParserPolicyContext, parserPolicyDraft]
   );
   const activeDocumentParserPolicyReport = serverParserPolicyReport ?? documentParserPolicyReport;
+  const chainAnchorPolicyContext = useMemo<ChainAnchorPolicyContext>(
+    () => ({
+      workspaceId: project.id,
+      evidenceCount: project.evidenceItems.length,
+      retentionStatus: retentionPolicyReport.status,
+      vaultSyncAllowed: retentionPolicyReport.vaultSyncAllowed,
+      blockerCount: retentionPolicyReport.blockerCount,
+      exportBlockerCount: dataBoundaryReport.blockerCount,
+      manifestHash: manifest?.bundleHash,
+      counselPackVersionCount: currentCounselPackVersions.length,
+      simulatedAnchorAvailable: Boolean(manifest?.bundleHash)
+    }),
+    [
+      currentCounselPackVersions.length,
+      dataBoundaryReport.blockerCount,
+      manifest?.bundleHash,
+      project.evidenceItems.length,
+      project.id,
+      retentionPolicyReport.blockerCount,
+      retentionPolicyReport.status,
+      retentionPolicyReport.vaultSyncAllowed
+    ]
+  );
+  const chainAnchorPolicyReport = useMemo(
+    () => createChainAnchorPolicyReport({ context: chainAnchorPolicyContext, policy: anchorPolicyDraft }),
+    [anchorPolicyDraft, chainAnchorPolicyContext]
+  );
+  const activeChainAnchorPolicyReport = serverAnchorPolicyReport ?? chainAnchorPolicyReport;
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -1134,6 +1192,39 @@ export default function App() {
     }
   };
 
+  const updateAnchorPolicyDraft = (updates: Partial<ChainAnchorPolicyDraft>) => {
+    setAnchorPolicyDraft((current) => ({ ...current, ...updates }));
+    setServerAnchorPolicyReport(null);
+    setAnchorPolicySyncStatus("idle");
+    setAnchorPolicySyncError("");
+    setAnchorPolicySyncRecoveryAction("");
+  };
+
+  const evaluateAnchorPolicyReport = async () => {
+    setAnchorPolicySyncStatus("syncing");
+    setAnchorPolicySyncError("");
+    setAnchorPolicySyncRecoveryAction("");
+
+    try {
+      const report = await fetchChainAnchorPolicyReport({
+        apiBaseUrl: anchorPolicyApiBaseUrl,
+        context: chainAnchorPolicyContext,
+        policy: anchorPolicyDraft
+      });
+      setServerAnchorPolicyReport(report);
+      setAnchorPolicySyncStatus("synced");
+    } catch (error) {
+      setAnchorPolicySyncStatus("error");
+      if (error instanceof ChainAnchorPolicyClientError) {
+        setAnchorPolicySyncError(error.message);
+        setAnchorPolicySyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setAnchorPolicySyncError(error instanceof Error ? error.message : "Chain anchor policy evaluation failed.");
+      setAnchorPolicySyncRecoveryAction("Start the Phase 2 API and retry chain anchor policy evaluation.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1273,6 +1364,14 @@ export default function App() {
             parserPolicySyncStatus={parserPolicySyncStatus}
             parserPolicySyncError={parserPolicySyncError}
             parserPolicySyncRecoveryAction={parserPolicySyncRecoveryAction}
+            anchorPolicyDraft={anchorPolicyDraft}
+            anchorPolicyContext={chainAnchorPolicyContext}
+            anchorPolicyReport={activeChainAnchorPolicyReport}
+            anchorPolicySource={serverAnchorPolicyReport ? "server" : "local"}
+            anchorPolicyApiBaseUrl={anchorPolicyApiBaseUrl}
+            anchorPolicySyncStatus={anchorPolicySyncStatus}
+            anchorPolicySyncError={anchorPolicySyncError}
+            anchorPolicySyncRecoveryAction={anchorPolicySyncRecoveryAction}
             onProviderPolicyApiBaseUrlChange={setProviderPolicyApiBaseUrl}
             onRefreshProviderPolicy={refreshProviderPolicyReport}
             onSecretPolicyDraftChange={updateSecretPolicyDraft}
@@ -1283,6 +1382,9 @@ export default function App() {
             onParserPolicyApiBaseUrlChange={setParserPolicyApiBaseUrl}
             onParserPolicyDraftChange={updateParserPolicyDraft}
             onEvaluateParserPolicy={evaluateParserPolicyReport}
+            onAnchorPolicyApiBaseUrlChange={setAnchorPolicyApiBaseUrl}
+            onAnchorPolicyDraftChange={updateAnchorPolicyDraft}
+            onEvaluateAnchorPolicy={evaluateAnchorPolicyReport}
             onNavigate={setActiveTab}
           />
 

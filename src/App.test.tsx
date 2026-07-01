@@ -973,6 +973,112 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("evaluates chain anchor policy readiness without enabling external chain writes", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/integrations/chain-anchor/policy");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body.policy).toEqual({
+        policyOwner: "Web3 owner",
+        targetNetwork: "ethereum-sepolia",
+        walletCustodyModel: "Multisig policy wallet",
+        signerRole: "Compliance reviewer",
+        transactionLoggingApproved: true,
+        privacyReviewApproved: true,
+        publicPayloadLimitedApproved: true,
+        userConsentApproved: true,
+        noRawEvidenceOnChainConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Policy approved for future chain anchor review."
+      });
+      expect(body.context).toEqual(
+        expect.objectContaining({
+          evidenceCount: expect.any(Number),
+          retentionStatus: expect.any(String),
+          vaultSyncAllowed: expect.any(Boolean),
+          blockerCount: expect.any(Number),
+          exportBlockerCount: expect.any(Number),
+          manifestHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          counselPackVersionCount: expect.any(Number),
+          simulatedAnchorAvailable: true
+        })
+      );
+      expect(String(init?.body)).not.toContain("privateKey");
+      expect(String(init?.body)).not.toContain("signedTransaction");
+      expect(String(init?.body)).not.toContain("rawEvidenceBody");
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("sk-");
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-chain-anchor-policy-v1",
+          generatedAt: "2026-07-01T00:00:00.000Z",
+          overallStatus: "ready",
+          requiredControlCount: 10,
+          approvedControlCount: 10,
+          externalChainAnchoringAllowed: false,
+          externalChainAnchoringStatus: "policy-ready-not-enabled",
+          anchorMode: "simulated-only",
+          controls: [
+            {
+              id: "manifest-linkage",
+              label: "Manifest linkage",
+              status: "ready",
+              evidence: "Manifest hash is available for simulated anchor review.",
+              recoveryAction: "Keep chain writes disabled until wallet signing review."
+            },
+            {
+              id: "privacy-review",
+              label: "Privacy review",
+              status: "ready",
+              evidence: "Privacy review is approved for future chain anchor review.",
+              recoveryAction: "Keep privacy review mandatory before transaction enablement."
+            }
+          ],
+          nextActions: ["Keep chain anchoring simulated until a separate wallet signing and transaction enablement review."],
+          notLegalAdviceBoundary: "Not legal advice. Chain anchor policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const anchorPolicy = within(registry.getByRole("region", { name: /Chain Anchor Policy Evaluation/i }));
+
+    fireEvent.change(anchorPolicy.getByLabelText(/Chain Anchor API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.change(anchorPolicy.getByLabelText(/Anchor policy owner/i), { target: { value: "Web3 owner" } });
+    fireEvent.change(anchorPolicy.getByLabelText(/Anchor network/i), { target: { value: "ethereum-sepolia" } });
+    fireEvent.change(anchorPolicy.getByLabelText(/Wallet custody policy/i), { target: { value: "Multisig policy wallet" } });
+    fireEvent.change(anchorPolicy.getByLabelText(/Signer role/i), { target: { value: "Compliance reviewer" } });
+    fireEvent.click(anchorPolicy.getByLabelText(/Transaction logging/i));
+    fireEvent.click(anchorPolicy.getByLabelText(/Privacy review/i));
+    fireEvent.click(anchorPolicy.getByLabelText(/Public payload limited/i));
+    fireEvent.click(anchorPolicy.getByLabelText(/User consent recorded/i));
+    fireEvent.click(anchorPolicy.getByLabelText(/No raw evidence on-chain/i));
+    await waitFor(() => {
+      expect(anchorPolicy.getByLabelText(/Transaction logging/i)).toBeChecked();
+      expect(anchorPolicy.getByLabelText(/Privacy review/i)).toBeChecked();
+      expect(anchorPolicy.getByLabelText(/Public payload limited/i)).toBeChecked();
+      expect(anchorPolicy.getByLabelText(/User consent recorded/i)).toBeChecked();
+      expect(anchorPolicy.getByLabelText(/No raw evidence on-chain/i)).toBeChecked();
+      expect(anchorPolicy.getByText("9/10")).toBeInTheDocument();
+    });
+    fireEvent.change(anchorPolicy.getByLabelText(/Anchor policy notes/i), {
+      target: { value: "Policy approved for future chain anchor review." }
+    });
+    fireEvent.click(anchorPolicy.getByRole("button", { name: /Evaluate Server Anchor Policy/i }));
+
+    expect(await anchorPolicy.findByText(/Anchor policy report synced/i)).toBeInTheDocument();
+    expect(anchorPolicy.getAllByText(/External chain anchoring remains disabled/i).length).toBeGreaterThan(0);
+    expect(anchorPolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
     const fetchMock = vi.fn(async () =>
       appJsonResponse(
@@ -2756,7 +2862,10 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
-    fireEvent.click(await screen.findByRole("button", { name: /Create Simulated Anchor Receipt/i }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Create Simulated Anchor Receipt/i })).toBeEnabled(), {
+      timeout: 5000
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Create Simulated Anchor Receipt/i }));
 
     expect(await screen.findByText(/Simulated Anchor Receipt/i)).toBeInTheDocument();
     expect(screen.getByText(/not a real on-chain write/i)).toBeInTheDocument();

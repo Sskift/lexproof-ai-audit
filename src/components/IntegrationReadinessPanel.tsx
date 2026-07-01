@@ -22,6 +22,12 @@ import {
   type DocumentParserPolicyReport
 } from "../lib/documentParserPolicy";
 import {
+  exportChainAnchorPolicyJson,
+  type ChainAnchorPolicyContext,
+  type ChainAnchorPolicyDraft,
+  type ChainAnchorPolicyReport
+} from "../lib/chainAnchorPolicy";
+import {
   exportObjectStoragePolicyJson,
   type ObjectStoragePolicyContext,
   type ObjectStoragePolicyDraft,
@@ -58,6 +64,14 @@ type IntegrationReadinessPanelProps = {
   parserPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
   parserPolicySyncError: string;
   parserPolicySyncRecoveryAction: string;
+  anchorPolicyDraft: ChainAnchorPolicyDraft;
+  anchorPolicyContext: ChainAnchorPolicyContext;
+  anchorPolicyReport: ChainAnchorPolicyReport;
+  anchorPolicySource: "local" | "server";
+  anchorPolicyApiBaseUrl: string;
+  anchorPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  anchorPolicySyncError: string;
+  anchorPolicySyncRecoveryAction: string;
   onProviderPolicyApiBaseUrlChange: (value: string) => void;
   onRefreshProviderPolicy: () => Promise<void> | void;
   onSecretPolicyDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
@@ -68,6 +82,9 @@ type IntegrationReadinessPanelProps = {
   onParserPolicyApiBaseUrlChange: (value: string) => void;
   onParserPolicyDraftChange: (updates: Partial<DocumentParserPolicyDraft>) => void;
   onEvaluateParserPolicy: () => Promise<void> | void;
+  onAnchorPolicyApiBaseUrlChange: (value: string) => void;
+  onAnchorPolicyDraftChange: (updates: Partial<ChainAnchorPolicyDraft>) => void;
+  onEvaluateAnchorPolicy: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -111,6 +128,14 @@ export function IntegrationReadinessPanel({
   parserPolicySyncStatus,
   parserPolicySyncError,
   parserPolicySyncRecoveryAction,
+  anchorPolicyDraft,
+  anchorPolicyContext,
+  anchorPolicyReport,
+  anchorPolicySource,
+  anchorPolicyApiBaseUrl,
+  anchorPolicySyncStatus,
+  anchorPolicySyncError,
+  anchorPolicySyncRecoveryAction,
   onProviderPolicyApiBaseUrlChange,
   onRefreshProviderPolicy,
   onSecretPolicyDraftChange,
@@ -121,6 +146,9 @@ export function IntegrationReadinessPanel({
   onParserPolicyApiBaseUrlChange,
   onParserPolicyDraftChange,
   onEvaluateParserPolicy,
+  onAnchorPolicyApiBaseUrlChange,
+  onAnchorPolicyDraftChange,
+  onEvaluateAnchorPolicy,
   onNavigate
 }: IntegrationReadinessPanelProps) {
   return (
@@ -169,6 +197,19 @@ export function IntegrationReadinessPanel({
         onApiBaseUrlChange={onParserPolicyApiBaseUrlChange}
         onDraftChange={onParserPolicyDraftChange}
         onEvaluate={onEvaluateParserPolicy}
+      />
+      <ChainAnchorPolicyPanel
+        draft={anchorPolicyDraft}
+        context={anchorPolicyContext}
+        report={anchorPolicyReport}
+        source={anchorPolicySource}
+        apiBaseUrl={anchorPolicyApiBaseUrl}
+        syncStatus={anchorPolicySyncStatus}
+        syncError={anchorPolicySyncError}
+        syncRecoveryAction={anchorPolicySyncRecoveryAction}
+        onApiBaseUrlChange={onAnchorPolicyApiBaseUrlChange}
+        onDraftChange={onAnchorPolicyDraftChange}
+        onEvaluate={onEvaluateAnchorPolicy}
       />
       <ModelGatewayProviderPolicyPanel
         report={providerPolicyReport}
@@ -550,6 +591,180 @@ function DocumentParserPolicyPanel({
   );
 }
 
+function ChainAnchorPolicyPanel({
+  draft,
+  context,
+  report,
+  source,
+  apiBaseUrl,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onApiBaseUrlChange,
+  onDraftChange,
+  onEvaluate
+}: {
+  draft: ChainAnchorPolicyDraft;
+  context: ChainAnchorPolicyContext;
+  report: ChainAnchorPolicyReport;
+  source: "local" | "server";
+  apiBaseUrl: string;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onDraftChange: (updates: Partial<ChainAnchorPolicyDraft>) => void;
+  onEvaluate: () => Promise<void> | void;
+}) {
+  return (
+    <section className={`secret-policy-panel chain-anchor-policy-panel ${report.overallStatus}`} aria-label="Chain Anchor Policy Evaluation">
+      <div className="split-title compact-title">
+        <div>
+          <Link2 size={17} aria-hidden="true" />
+          <h4>Chain Anchor Policy Evaluation</h4>
+        </div>
+        <span className={`workflow-status ${report.overallStatus}`}>{policyStatusLabel(report.overallStatus)}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Approved controls" value={`${report.approvedControlCount}/${report.requiredControlCount}`} />
+        <ProviderPolicyFact label="Policy source" value={source === "server" ? "Server" : "Local"} />
+        <ProviderPolicyFact label="External anchoring" value={report.externalChainAnchoringAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Evidence records" value={String(context.evidenceCount)} />
+        <ProviderPolicyFact label="Manifest" value={context.manifestHash ? `${context.manifestHash.slice(0, 12)}...` : "Missing"} />
+        <ProviderPolicyFact label="Counsel versions" value={String(context.counselPackVersionCount)} />
+      </div>
+      <div className={`secret-policy-form ${syncStatus}`}>
+        <label className="editor-field">
+          <span>Chain Anchor API base URL</span>
+          <input
+            type="url"
+            value={apiBaseUrl}
+            placeholder="http://127.0.0.1:8787"
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Anchor policy owner</span>
+          <input
+            type="text"
+            value={draft.policyOwner}
+            placeholder="Web3 operations"
+            onChange={(event) => onDraftChange({ policyOwner: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Anchor network</span>
+          <input
+            type="text"
+            value={draft.targetNetwork}
+            placeholder="ethereum-sepolia"
+            onChange={(event) => onDraftChange({ targetNetwork: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Wallet custody policy</span>
+          <input
+            type="text"
+            value={draft.walletCustodyModel}
+            placeholder="Multisig policy wallet"
+            onChange={(event) => onDraftChange({ walletCustodyModel: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Signer role</span>
+          <input
+            type="text"
+            value={draft.signerRole}
+            placeholder="Compliance reviewer"
+            onChange={(event) => onDraftChange({ signerRole: event.target.value })}
+          />
+        </label>
+        <div className="secret-policy-checklist" aria-label="Chain anchor policy controls">
+          <SecretPolicyToggle
+            label="Transaction logging"
+            checked={draft.transactionLoggingApproved}
+            onChange={(checked) => onDraftChange({ transactionLoggingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Privacy review"
+            checked={draft.privacyReviewApproved}
+            onChange={(checked) => onDraftChange({ privacyReviewApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Public payload limited"
+            checked={draft.publicPayloadLimitedApproved}
+            onChange={(checked) => onDraftChange({ publicPayloadLimitedApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="User consent recorded"
+            checked={draft.userConsentApproved}
+            onChange={(checked) => onDraftChange({ userConsentApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="No raw evidence on-chain"
+            checked={draft.noRawEvidenceOnChainConfirmed}
+            onChange={(checked) => onDraftChange({ noRawEvidenceOnChainConfirmed: checked })}
+          />
+          <SecretPolicyToggle
+            label="Human review required"
+            checked={draft.humanReviewRequired}
+            onChange={(checked) => onDraftChange({ humanReviewRequired: checked })}
+          />
+        </div>
+        <label className="editor-field secret-policy-notes">
+          <span>Anchor policy notes</span>
+          <textarea
+            value={draft.notes}
+            placeholder="Metadata only. Do not paste wallet keys, signed transactions, raw KYC, raw evidence, or personal data."
+            onChange={(event) => onDraftChange({ notes: event.target.value })}
+          />
+        </label>
+        <div className="inline-actions secret-policy-actions">
+          <span>
+            {report.externalChainAnchoringStatus === "policy-ready-not-enabled"
+              ? "External chain anchoring remains disabled until a separate wallet signing and transaction enablement review."
+              : report.nextActions[0]}
+          </span>
+          <button type="button" className="secondary" onClick={onEvaluate} disabled={syncStatus === "syncing"}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            {syncStatus === "syncing" ? "Evaluating Server Anchor Policy" : "Evaluate Server Anchor Policy"}
+          </button>
+        </div>
+        {syncStatus === "synced" ? <span className="save-state">Anchor policy report synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. Chain anchor policy evaluation is audit preparation metadata only.</small>
+          </div>
+        ) : null}
+      </div>
+      <div className="provider-control-list secret-policy-control-list">
+        {report.controls.map((control) => (
+          <article key={control.id} className={`provider-control ${control.status}`}>
+            <header>
+              <span>{policyStatusLabel(control.status)}</span>
+              <strong>{control.label}</strong>
+            </header>
+            <p>{control.evidence}</p>
+            <small>{control.recoveryAction}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>External chain anchoring remains disabled by default. No wallet keys, signed transactions, or raw evidence are collected here.</span>
+        <button type="button" className="secondary" onClick={() => downloadChainAnchorPolicyJson("chain-anchor-policy.json", report)}>
+          <Download size={16} aria-hidden="true" />
+          Download Anchor Policy JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ModelGatewayProviderPolicyPanel({
   report,
   source,
@@ -875,6 +1090,16 @@ function downloadObjectStoragePolicyJson(filename: string, report: ObjectStorage
 
 function downloadDocumentParserPolicyJson(filename: string, report: DocumentParserPolicyReport): void {
   const blob = new Blob([exportDocumentParserPolicyJson(report)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadChainAnchorPolicyJson(filename: string, report: ChainAnchorPolicyReport): void {
+  const blob = new Blob([exportChainAnchorPolicyJson(report)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

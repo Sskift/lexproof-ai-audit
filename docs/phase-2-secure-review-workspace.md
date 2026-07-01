@@ -97,6 +97,7 @@ Week 2 design-spike artifacts:
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
 - `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock success/failure receipts behind redaction, allowed-data-class, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
 - `server/integrationPolicyRoutes.ts` adds Object Storage Policy Evaluation for metadata-only retention, manifest, storage-control, and human-review readiness without enabling external object storage.
+- `server/integrationPolicyRoutes.ts` adds Chain Anchor Policy Evaluation for metadata-only manifest, Counsel Pack version, wallet custody, signer-role, transaction logging, privacy, public-payload, consent, and human-review readiness without collecting wallet keys, signed transactions, raw evidence, or enabling real chain writes.
 - `server/integrationPolicyRoutes.ts` adds Document Parser Policy Evaluation for metadata-only parser purpose, retention, manifest, Export Safety, redaction, no-training-use, access logging, and human-review readiness without accepting raw document bytes, running OCR, or enabling external parsing.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
 - `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.

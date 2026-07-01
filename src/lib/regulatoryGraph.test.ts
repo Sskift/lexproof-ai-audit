@@ -34,6 +34,21 @@ const aiLegalWorkflowProject: ProjectProfile = {
   evidenceItems: []
 };
 
+const daoGovernanceProject: ProjectProfile = {
+  id: "project-dao-governance",
+  projectName: "ClauseGuard DAO",
+  entityType: "DAO tooling company",
+  jurisdictions: ["United States", "United Kingdom"],
+  assetModel: "Governance workflow with optional token-gated access",
+  userType: "Protocol contributors and foundation counsel",
+  custodyModel: "Non-custodial multisig review workflow",
+  dataSensitivity: "Private contributor agreements and governance votes",
+  aiUsage: "AI summarizes proposals, creates issue lineage, and drafts review comments",
+  blockchainUse: "Hash of approved proposal versions and execution receipts",
+  operatingStage: "Private beta with foundation partners",
+  evidenceItems: []
+};
+
 describe("createRegulatoryGraph", () => {
   it("matches source-backed jurisdiction clauses without making legal conclusions", () => {
     const audit = analyzeAuditProfile(baseProject);
@@ -449,5 +464,75 @@ describe("createRegulatoryGraph", () => {
       ])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("matches US and UK DAO governance source controls without legal conclusions", () => {
+    const audit = analyzeAuditProfile(daoGovernanceProject);
+    const graph = createRegulatoryGraph(daoGovernanceProject, audit, daoGovernanceProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining([
+        "us-sec-dao-report-governance-token-review",
+        "uk-law-commission-dao-scoping-paper"
+      ])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-dao-report-governance-token-review")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "U.S. Securities and Exchange Commission",
+      citation: "SEC Release No. 81207, The DAO Report, July 25, 2017",
+      sourceUrl: "https://www.sec.gov/files/litigation/investreport/34-81207.pdf",
+      topic: "governance",
+      coverageStatus: "missing",
+      localCounselRole: "US DAO / digital asset securities counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-law-commission-dao-scoping-paper")).toMatchObject({
+      jurisdiction: "United Kingdom",
+      regulator: "Law Commission of England and Wales",
+      citation: "Law Commission DAO scoping paper, 11 July 2024",
+      sourceUrl: "https://lawcom.gov.uk/project/decentralised-autonomous-organisations-daos/",
+      topic: "governance",
+      coverageStatus: "missing",
+      localCounselRole: "UK DAO / commercial law counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US DAO token rights and participant-role evidence",
+        "US DAO voting and execution-control evidence",
+        "UK DAO structure and participant-liability evidence",
+        "UK DAO governance rules and asset-control evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks DAO governance source controls covered when DAO template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("dao-governance-multisig").map((item, index) => ({
+      ...item,
+      id: `dao-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...daoGovernanceProject,
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-dao-report-governance-token-review")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-law-commission-dao-scoping-paper")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "us-sec-dao-report-governance-token-review" }),
+        expect.objectContaining({ clauseId: "uk-law-commission-dao-scoping-paper" })
+      ])
+    );
   });
 });

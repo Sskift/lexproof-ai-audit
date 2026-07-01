@@ -5,6 +5,7 @@ export type RegulatoryClauseTopic =
   | "data"
   | "aml-cft"
   | "ai-governance"
+  | "governance"
   | "evidence";
 
 export type RegulatoryEvidenceRequest = {
@@ -75,6 +76,55 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-06-30",
     reviewerNotes:
       "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "us-sec-dao-report-governance-token-review",
+    jurisdiction: "United States",
+    regulator: "U.S. Securities and Exchange Commission",
+    sourceName: "Report of Investigation Pursuant to Section 21(a): The DAO",
+    sourceUrl: "https://www.sec.gov/files/litigation/investreport/34-81207.pdf",
+    citation: "SEC Release No. 81207, The DAO Report, July 25, 2017",
+    topic: "governance",
+    summary:
+      "Prepare DAO token, governance-rights, voting, project-funding, participant-role, and execution-control evidence for US digital asset securities counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "dao",
+      "decentralized autonomous",
+      "decentralised autonomous",
+      "token-gated",
+      "governance token",
+      "governance workflow",
+      "voting window"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-dao-token-rights-participant-roles",
+        title: "US DAO token rights and participant-role evidence",
+        reason:
+          "DAO review needs governance-token rights, participant roles, project-funding assumptions, contributor authority, and secondary-transfer facts before counsel reliance.",
+        priority: "P0",
+        keywords: ["governance proposal", "proposal scope", "token-gated", "governance token", "participant", "contributor", "project funding"]
+      },
+      {
+        id: "us-dao-voting-execution-controls",
+        title: "US DAO voting and execution-control evidence",
+        reason:
+          "Counsel needs voting, quorum, signer, multisig, execution, proposal-hash, and emergency authority evidence for DAO governance review.",
+        priority: "P1",
+        keywords: ["quorum", "voting window", "vote", "execution", "signer", "multisig", "proposal hash", "emergency authority"]
+      }
+    ],
+    counselQuestions: [
+      "Which DAO token, participant-role, voting, funding, or transfer facts should US digital asset securities counsel review?",
+      "What evidence connects proposal approval, signer authority, execution receipts, and participant communications without treating the workflow as legally approved?"
+    ],
+    localCounselRole: "US DAO / digital asset securities counsel",
+    effectiveAsOf: "2017-07-25",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against SEC Release No. 81207 for DAO token, voting, capital-raising, participant-role, and execution-control evidence routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -316,6 +366,55 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-06-30",
     reviewerNotes:
       "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "uk-law-commission-dao-scoping-paper",
+    jurisdiction: "United Kingdom",
+    regulator: "Law Commission of England and Wales",
+    sourceName: "Decentralised autonomous organisations (DAOs): scoping paper",
+    sourceUrl: "https://lawcom.gov.uk/project/decentralised-autonomous-organisations-daos/",
+    citation: "Law Commission DAO scoping paper, 11 July 2024",
+    topic: "governance",
+    summary:
+      "Prepare DAO structure, participant-liability, governance-rule, asset-control, and legal-characterisation evidence for UK commercial and crypto counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "dao",
+      "decentralized autonomous",
+      "decentralised autonomous",
+      "governance workflow",
+      "token-gated",
+      "multisig",
+      "protocol contributors"
+    ],
+    evidenceRequests: [
+      {
+        id: "uk-dao-structure-participant-liability",
+        title: "UK DAO structure and participant-liability evidence",
+        reason:
+          "DAO scoping review needs structure, participant role, contributor, foundation, liability, and legal-characterisation evidence before counsel handoff.",
+        priority: "P1",
+        keywords: ["dao", "participant", "contributor", "foundation", "liability", "legal status", "entity structure", "agreement"]
+      },
+      {
+        id: "uk-dao-governance-asset-control",
+        title: "UK DAO governance rules and asset-control evidence",
+        reason:
+          "Counsel needs governance rules, voting, quorum, multisig signer, asset-control, execution, and emergency-authority evidence for DAO review.",
+        priority: "P1",
+        keywords: ["governance proposal", "quorum", "vote", "voting window", "multisig", "signer", "asset control", "execution", "emergency authority"]
+      }
+    ],
+    counselQuestions: [
+      "Which DAO structure, participant-role, liability, governance-rule, and asset-control facts should UK counsel review?",
+      "What evidence shows how proposals, votes, signers, contributors, and execution receipts are governed without implying legal approval?"
+    ],
+    localCounselRole: "UK DAO / commercial law counsel",
+    effectiveAsOf: "2024-07-11",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against the Law Commission DAO scoping project page for DAO characterisation, participant-exposure, governance, and asset-control evidence routing; route interpretation to local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

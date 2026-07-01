@@ -380,6 +380,20 @@ describe("App", () => {
     expect(screen.getByText(/AI events are audit-prep records for human review. Not legal advice/i)).toBeInTheDocument();
   });
 
+  it("starts the DAO proposal scenario with source-backed governance controls", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start DAO proposal review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("ClauseGuard DAO");
+    expect(await screen.findByRole("heading", { name: "Human Review", level: 2 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/SEC Release No\. 81207, The DAO Report, July 25, 2017/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Law Commission DAO scoping paper, 11 July 2024/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the Brazil VASP scenario in the source graph with official-source gaps", async () => {
     render(<App />);
 

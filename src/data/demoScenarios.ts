@@ -25,18 +25,19 @@ export const demoScenarios: DemoScenario[] = [
     id: "clauseguard-review-path",
     projectName: "ClauseGuard DAO",
     title: "DAO proposal review",
-    summary: "Governance proposal review with multisig evidence, AI event intake, and returned-review recovery.",
+    summary: "DAO governance proposal, US SEC DAO Report source control, UK DAO scoping source control, multisig evidence, AI event intake, and returned-review recovery.",
     estimatedMinutes: 7,
     recommendedStartTab: "review",
     judgePath: [
       "Open human review",
+      "Inspect DAO governance source controls",
       "Return evidence for support",
       "Inspect evidence status",
       "Run secure review journey",
       "Download review timeline"
     ],
-    expectedArtifacts: ["Human Review Timeline", "Evidence Manifest", "Counsel Pack Version"],
-    focusTags: ["DAO governance", "Multisig", "Human review"],
+    expectedArtifacts: ["Regulatory Source Graph", "Human Review Timeline", "Counsel Pack Version"],
+    focusTags: ["DAO governance", "US SEC DAO Report", "UK Law Commission", "Human review"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {

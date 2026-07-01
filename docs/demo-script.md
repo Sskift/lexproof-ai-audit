@@ -30,6 +30,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 0. **Start from a seeded scenario**
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
+   - Optional DAO source path: click **Start DAO proposal review** to load `ClauseGuard DAO`, open Human Review, then inspect US SEC DAO Report / UK Law Commission DAO source controls in Risk Audit.
    - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, EU AI Act / UK ICO AI data protection source controls, and counsel export.
    - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
    - Optional Singapore source path: click **Start Singapore DPT custody review** to load `HarborKey DPT Custody Review` and start in Jurisdiction Checklist for MAS PS-G03 customer-asset safeguard controls, custody evidence gaps, and counsel export.
@@ -37,6 +38,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
+   - DAO source screenshot: `docs/assets/screenshots/dao-governance-source-graph.png`.
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
    - Singapore path screenshot: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Marketing path screenshot: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
@@ -55,6 +57,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Screenshot: `docs/assets/screenshots/source-review-packet.png`.
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
    - Screenshot: `docs/assets/screenshots/source-approval-api-sync.png`.
+   - Optional DAO path screenshot after **Start DAO proposal review**: `docs/assets/screenshots/dao-governance-source-graph.png`.
    - Optional RWA custody screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/eu-mica-casp-custody-source-graph.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
    - Optional Brazil path screenshot after **Start Brazil VASP source review**: `docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png`.

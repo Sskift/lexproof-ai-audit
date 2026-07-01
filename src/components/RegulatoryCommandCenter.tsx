@@ -1,6 +1,7 @@
 import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck, UserCheck } from "lucide-react";
 import { JurisdictionEvidenceMapPanel } from "./JurisdictionEvidenceMapPanel";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
+import { SourceFreshnessBoardPanel } from "./SourceFreshnessBoardPanel";
 import type { AuditResult } from "../lib/auditEngine";
 import type { JurisdictionEvidenceMap } from "../lib/jurisdictionEvidenceMap";
 import {
@@ -19,6 +20,7 @@ import {
   type RegulatorySourceApprovalStatus
 } from "../lib/regulatorySourceApproval";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
+import type { SourceFreshnessBoard } from "../lib/sourceFreshnessBoard";
 import type { ProjectProfile } from "../lib/projectModel";
 import type { RegulatorySourceApprovalSyncResult, RegulatorySourceReviewSyncResult } from "../lib/phase2Types";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
@@ -42,6 +44,7 @@ type RegulatoryCommandCenterProps = {
   sourceApprovalSyncRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
   jurisdictionEvidenceMap: JurisdictionEvidenceMap | null;
+  sourceFreshnessBoard: SourceFreshnessBoard | null;
   localCounselRoutingPlan: LocalCounselRoutingPlan | null;
   actionQueue: WorkspaceActionQueue;
   journey: WorkspaceJourney;
@@ -72,6 +75,7 @@ export function RegulatoryCommandCenter({
   sourceApprovalSyncRecoveryAction,
   controlMatrix,
   jurisdictionEvidenceMap,
+  sourceFreshnessBoard,
   localCounselRoutingPlan,
   actionQueue,
   journey,
@@ -220,6 +224,10 @@ export function RegulatoryCommandCenter({
             ))}
           </div>
         </section>
+      ) : null}
+
+      {sourceFreshnessBoard ? (
+        <SourceFreshnessBoardPanel board={sourceFreshnessBoard} projectId={project.id} />
       ) : null}
 
       <section className={`reg-source-review ${sourceReview.status}`} aria-label="Source Review Ledger">

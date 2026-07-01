@@ -172,6 +172,64 @@ describe("App", () => {
     }
   });
 
+  it("shows and downloads a source freshness board without legal conclusions", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:source-freshness-board");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      const board = await screen.findByRole("region", { name: /Source Freshness Board/i });
+      expect(
+        within(board).getByText(/Not legal advice. Source freshness boards are audit preparation scheduling metadata only./i)
+      ).toBeInTheDocument();
+      expect(within(board).getAllByText(/Overdue/i).length).toBeGreaterThan(0);
+      expect(within(board).getByRole("button", { name: /Download Source Freshness Board JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(board).getByRole("button", { name: /Download Source Freshness Board JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:source-freshness-board");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Source Freshness Board JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          boardVersion: "lexproof-source-freshness-board-v1",
+          status: "attention-needed",
+          notLegalAdviceBoundary: "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+        })
+      );
+      expect(parsed.boardHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.overdueCount).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it("filters the Regulatory Control Matrix to a specific jurisdiction and source control", async () => {
     render(<App />);
 
@@ -1664,7 +1722,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Evidence Audit Trail/i })).toBeInTheDocument();
     expect(screen.getByText(/created Launch memo/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download Evidence Trail JSON/i })).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("keeps long evidence records editable with visible mobile-friendly field labels", async () => {
     render(<App />);

@@ -48,6 +48,7 @@ lexproof-ai-audit/
       RegulatoryCommandCenter.tsx # Source-backed jurisdiction graph and evidence gap cockpit
       RegulatoryControlMatrixPanel.tsx # Downloadable source/evidence/source-review control matrix
       JurisdictionEvidenceMapPanel.tsx # Per-jurisdiction evidence request map and JSON handoff
+      SourceFreshnessBoardPanel.tsx # Source review freshness scheduling lanes and JSON handoff
       SecurityReviewChecklistPanel.tsx # Security readiness gates for integrations
       IntegrationReadinessPanel.tsx # Adapter-level readiness registry for external integration gates
       GrcTicketExportPanel.tsx # Metadata-only remediation ticket export from Risk Audit
@@ -112,6 +113,7 @@ lexproof-ai-audit/
       regulatoryControlMatrix.ts # Metadata-only source/evidence/source-review control matrix
       jurisdictionEvidenceMap.ts # Metadata-only per-jurisdiction evidence map and hash
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
+      sourceFreshnessBoard.ts # Metadata-only source review scheduling board and hash
       regulatorySourceReviewSync.ts # Metadata-only Source Review Ledger sync records and ledger hash
       regulatorySourceReviewClient.ts # Browser client for Source Review Ledger API sync
       regulatorySourceApproval.ts # Source update approval queue and metadata-only JSON export
@@ -162,6 +164,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createRegulatorySourceApprovalQueue(regulatorySourceReview)
   -> createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview })
   -> createJurisdictionEvidenceMap({ matrix: regulatoryControlMatrix })
+  -> createSourceFreshnessBoard({ sourceReview: regulatorySourceReview })
   -> recommendEvidenceTemplates(project)
   -> validateModelConnectionProfile(modelIntakeProfile)
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
@@ -382,6 +385,16 @@ Owns source review metadata for the Regulatory Command Center:
 - The output repeats the Not legal advice boundary and creates review actions for source metadata refresh only.
 
 This module tracks source lineage and review freshness. It does not decide whether a law applies, whether a source is legally current, or whether a project is compliant.
+
+### `src/lib/sourceFreshnessBoard.ts`
+
+Owns source review scheduling metadata for the Regulatory Command Center:
+
+- `createSourceFreshnessBoard({ sourceReview })` turns Source Review Ledger records into `metadata-missing`, `overdue`, `due-soon`, and `scheduled` lanes with priority, days-until-due, next actions, and a stable SHA-256 board hash.
+- `exportSourceFreshnessBoardJson(board)` and `downloadSourceFreshnessBoardJson(filename, board)` produce redacted metadata-only JSON for counsel/compliance scheduling review.
+- Board status is operational only: `attention-needed`, `due-soon`, `current`, or `empty`.
+
+Source freshness boards are audit preparation scheduling metadata only. They do not refresh sources, decide source currency, alter source matching, scrape laws, or create legal conclusions.
 
 ### `src/lib/regulatorySourceReviewSync.ts` and `src/lib/regulatorySourceReviewClient.ts`
 
@@ -765,7 +778,7 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
-- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source update approval gates, control matrices, jurisdiction evidence maps, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `regulatorySourceApproval.ts`, `regulatoryControlMatrix.ts`, and `jurisdictionEvidenceMap.ts`.
+- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source freshness lanes, source update approval gates, control matrices, jurisdiction evidence maps, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `sourceFreshnessBoard.ts`, `regulatorySourceApproval.ts`, `regulatoryControlMatrix.ts`, and `jurisdictionEvidenceMap.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
 - `IntegrationReadinessPanel` renders adapter readiness, Integration Enablement Dossier, Model Gateway provider/secret policy controls, Object Storage Policy Evaluation, Document Parser Policy Evaluation, Chain Anchor Policy Evaluation, GRC Destination Policy Evaluation, server sync states, recovery states, and metadata-only JSON downloads while keeping external providers, object storage, raw-document parsing, chain anchoring, and external ticket creation disabled by default.

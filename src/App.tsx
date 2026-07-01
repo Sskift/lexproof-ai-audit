@@ -206,6 +206,10 @@ import {
   type RegulatorySourceReviewPacket
 } from "./lib/regulatorySourceReviewPacket";
 import { createRegulatorySourceReview } from "./lib/regulatorySourceReview";
+import {
+  createSourceFreshnessBoard,
+  type SourceFreshnessBoard
+} from "./lib/sourceFreshnessBoard";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
   createRiskEvidenceCoverage,
@@ -389,6 +393,7 @@ export default function App() {
   const [sourceReviewSyncError, setSourceReviewSyncError] = useState("");
   const [sourceReviewSyncRecoveryAction, setSourceReviewSyncRecoveryAction] = useState("");
   const [jurisdictionEvidenceMap, setJurisdictionEvidenceMap] = useState<JurisdictionEvidenceMap | null>(null);
+  const [sourceFreshnessBoard, setSourceFreshnessBoard] = useState<SourceFreshnessBoard | null>(null);
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -422,6 +427,19 @@ export default function App() {
       active = false;
     };
   }, [regulatoryControlMatrix]);
+  useEffect(() => {
+    let active = true;
+
+    createSourceFreshnessBoard({ sourceReview: regulatorySourceReview }).then((nextBoard) => {
+      if (active) {
+        setSourceFreshnessBoard(nextBoard);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [regulatorySourceReview]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
   const demoReadinessReport = useMemo(
@@ -1779,6 +1797,7 @@ export default function App() {
             sourceApprovalSyncRecoveryAction={sourceApprovalSyncRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
             jurisdictionEvidenceMap={jurisdictionEvidenceMap}
+            sourceFreshnessBoard={sourceFreshnessBoard}
             localCounselRoutingPlan={localCounselRoutingPlan}
             actionQueue={workspaceActionQueue}
             journey={workspaceJourney}

@@ -28,7 +28,7 @@ describe("audit log filters", () => {
 
     expect(normalizeAuditLogFilters({ targetType: "legal-opinion" })).toEqual({
       valid: false,
-      errors: ["Audit log target type must be workspace, evidence, model-run, human-review, or export."]
+      errors: ["Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, or export."]
     });
   });
 });

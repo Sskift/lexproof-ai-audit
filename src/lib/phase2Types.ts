@@ -188,13 +188,48 @@ export type RegulatorySourceApprovalSyncResult = {
   notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only.";
 };
 
+export type RegulatorySourceReviewRecord = {
+  recordVersion: "lexproof-source-review-record-v1";
+  id: string;
+  workspaceId: string;
+  ledgerHash: string;
+  sourceReviewItemId: string;
+  clauseId: string;
+  jurisdiction: string;
+  regulator: string;
+  citation: string;
+  sourceName: string;
+  sourceUrl: string;
+  reviewStatus: "current" | "review-due" | "metadata-missing";
+  priority: "P0" | "P1" | "P2";
+  effectiveAsOf: string;
+  lastReviewedAt: string;
+  nextReviewDueAt: string;
+  reviewerNotes: string;
+  nextAction: string;
+  status: "current" | "pending-review" | "metadata-needed";
+  matchingBehaviorChanged: false;
+  createdBy: string;
+  createdAt: string;
+  notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only.";
+};
+
+export type RegulatorySourceReviewSyncResult = {
+  syncVersion: "lexproof-source-review-sync-v1";
+  workspaceId: string;
+  ledgerHash: string;
+  syncedCount: number;
+  records: RegulatorySourceReviewRecord[];
+  notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only.";
+};
+
 export type AuditLogRecord = {
   recordVersion: "lexproof-audit-log-record-v1";
   id: string;
   workspaceId: string;
   actorId: string;
   action: string;
-  targetType: "workspace" | "evidence" | "model-run" | "human-review" | "export" | "source-approval";
+  targetType: "workspace" | "evidence" | "model-run" | "human-review" | "export" | "source-approval" | "source-review";
   targetId: string;
   beforeHash: string;
   afterHash: string;

@@ -139,6 +139,33 @@ model RegulatorySourceApprovalRecord {
   @@index([workspaceId])
 }
 
+model RegulatorySourceReviewRecord {
+  id                      String   @id
+  workspaceId             String
+  ledgerHash              String
+  sourceReviewItemId      String
+  clauseId                String
+  jurisdiction            String
+  regulator               String
+  citation                String
+  sourceName              String
+  sourceUrl               String
+  reviewStatus            String
+  priority                String
+  effectiveAsOf           String
+  lastReviewedAt          String
+  nextReviewDueAt         String
+  reviewerNotes           String
+  nextAction              String
+  status                  String
+  matchingBehaviorChanged Boolean
+  createdBy               String
+  createdAt               DateTime
+  notLegalAdviceBoundary  String
+
+  @@index([workspaceId])
+}
+
 model AuditLogRecord {
   id                     String   @id
   workspaceId            String

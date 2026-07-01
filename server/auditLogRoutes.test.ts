@@ -97,7 +97,7 @@ describe("Audit Log route module", () => {
     });
     expect(invalidFilterResponse.statusCode).toBe(400);
     expect(invalidFilterResponse.json()).toEqual({
-      error: "Audit log target type must be workspace, evidence, model-run, human-review, or export.",
+      error: "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, or export.",
       code: "AUDIT_LOG_FILTER_FAILED",
       recoveryAction: "Use supported audit log filters for actorId, action, targetType, or targetId.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."

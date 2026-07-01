@@ -4,6 +4,7 @@ export type Phase2ApiDomain =
   | "model-gateway"
   | "human-review"
   | "source-approvals"
+  | "source-reviews"
   | "exports"
   | "audit-log"
   | "integrations";
@@ -150,6 +151,22 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "source-approvals",
       "SourceApprovalListRequest",
       "RegulatorySourceApprovalRecord[]",
+      true
+    ),
+    createRoute(
+      "POST",
+      "/api/workspaces/:workspaceId/source-reviews",
+      "source-reviews",
+      "SourceReviewSyncRequest",
+      "RegulatorySourceReviewSyncResult",
+      true
+    ),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/source-reviews",
+      "source-reviews",
+      "SourceReviewListRequest",
+      "RegulatorySourceReviewRecord[]",
       true
     ),
     createRoute(
@@ -377,6 +394,33 @@ model RegulatorySourceApprovalRecord {
   createdBy              String
   createdAt              DateTime
   notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}
+
+model RegulatorySourceReviewRecord {
+  id                      String   @id
+  workspaceId             String
+  ledgerHash              String
+  sourceReviewItemId      String
+  clauseId                String
+  jurisdiction            String
+  regulator               String
+  citation                String
+  sourceName              String
+  sourceUrl               String
+  reviewStatus            String
+  priority                String
+  effectiveAsOf           String
+  lastReviewedAt          String
+  nextReviewDueAt         String
+  reviewerNotes           String
+  nextAction              String
+  status                  String
+  matchingBehaviorChanged Boolean
+  createdBy               String
+  createdAt               DateTime
+  notLegalAdviceBoundary  String
 
   @@index([workspaceId])
 }

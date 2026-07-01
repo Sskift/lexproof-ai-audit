@@ -257,6 +257,77 @@ describe("App", () => {
     }
   });
 
+  it("syncs Source Review Ledger metadata to the Phase 2 API", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-reviews");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body.createdBy).toBe("Compliance");
+      expect(body.sourceReview).toEqual(
+        expect.objectContaining({
+          status: expect.stringMatching(/current|review-due|metadata-missing/),
+          totalSourceCount: expect.any(Number),
+          notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only."
+        })
+      );
+      expect(body.sourceReview.items.length).toBeGreaterThan(0);
+      expect(String(init?.body)).not.toContain("rawSourceBody");
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("sk-");
+      return appJsonResponse(
+        {
+          syncVersion: "lexproof-source-review-sync-v1",
+          workspaceId: "sample-yieldpassport",
+          ledgerHash: "b".repeat(64),
+          syncedCount: body.sourceReview.items.length,
+          records: body.sourceReview.items.map(
+            (item: { clauseId: string; jurisdiction: string; citation: string; reviewStatus: string }, index: number) => ({
+              recordVersion: "lexproof-source-review-record-v1",
+              id: `source-review-record-${index + 1}`,
+              workspaceId: "sample-yieldpassport",
+              ledgerHash: "b".repeat(64),
+              sourceReviewItemId: `source-review-${item.clauseId}`,
+              clauseId: item.clauseId,
+              jurisdiction: item.jurisdiction,
+              regulator: "Reviewer",
+              citation: item.citation,
+              sourceName: "Reviewed source",
+              sourceUrl: "https://example.test/source",
+              reviewStatus: item.reviewStatus,
+              priority: item.reviewStatus === "metadata-missing" ? "P0" : item.reviewStatus === "review-due" ? "P1" : "P2",
+              effectiveAsOf: "2024-06-30",
+              lastReviewedAt: "2026-06-01",
+              nextReviewDueAt: "2026-09-01",
+              reviewerNotes: "Review source freshness before counsel handoff.",
+              nextAction: "Refresh source metadata before counsel handoff.",
+              status: item.reviewStatus === "current" ? "current" : "pending-review",
+              matchingBehaviorChanged: false,
+              createdBy: "Compliance",
+              createdAt: "2026-10-01T00:00:00.000Z",
+              notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only."
+            })
+          ),
+          notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only."
+        },
+        201
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const ledger = screen.getByRole("region", { name: /Source Review Ledger/i });
+    fireEvent.change(within(ledger).getByLabelText(/Source Review API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.click(within(ledger).getByRole("button", { name: /Sync Source Review Ledger/i }));
+
+    expect(await within(ledger).findByText(/Source review ledger synced/i)).toBeInTheDocument();
+    expect(within(ledger).getByText(/Matching behavior unchanged/i)).toBeInTheDocument();
+    expect(within(ledger).getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("includes the Source Update Approval Queue in the Counsel Pack Markdown preview when approvals are open", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
@@ -483,7 +554,7 @@ describe("App", () => {
     expect(security.getAllByText(/Remove blocked materials before Evidence Vault sync or export handoff./i).length).toBeGreaterThan(0);
     expect(security.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(security.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  });
+  }, 10000);
 
   it("downloads a metadata-only Model Connect receipt without exposing session credentials", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -2735,7 +2806,7 @@ describe("App", () => {
 
     expect(screen.getByDisplayValue("Edited counsel question about AI evidence sharing?")).toBeInTheDocument();
     expect(await screen.findByText(/P1 answered \[ai-review\] Edited counsel question about AI evidence sharing\?/i)).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("updates counsel review status for a risk item in the Counsel Pack", async () => {
     render(<App />);

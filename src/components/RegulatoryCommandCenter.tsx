@@ -14,7 +14,7 @@ import {
 } from "../lib/regulatorySourceApproval";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
-import type { RegulatorySourceApprovalSyncResult } from "../lib/phase2Types";
+import type { RegulatorySourceApprovalSyncResult, RegulatorySourceReviewSyncResult } from "../lib/phase2Types";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
 
@@ -23,6 +23,11 @@ type RegulatoryCommandCenterProps = {
   audit: AuditResult;
   graph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
+  sourceReviewApiBaseUrl: string;
+  sourceReviewSyncResult: RegulatorySourceReviewSyncResult | null;
+  sourceReviewSyncStatus: "idle" | "syncing" | "synced" | "error";
+  sourceReviewSyncError: string;
+  sourceReviewSyncRecoveryAction: string;
   sourceApprovalQueue: RegulatorySourceApprovalQueue;
   sourceApprovalApiBaseUrl: string;
   sourceApprovalSyncResult: RegulatorySourceApprovalSyncResult | null;
@@ -34,6 +39,8 @@ type RegulatoryCommandCenterProps = {
   journey: WorkspaceJourney;
   sourceReviewPacket: RegulatorySourceReviewPacket | null;
   manifestHash?: string;
+  onSourceReviewApiBaseUrlChange: (value: string) => void;
+  onSyncSourceReviewLedger: () => Promise<void> | void;
   onSourceApprovalApiBaseUrlChange: (value: string) => void;
   onSyncSourceApprovalQueue: () => Promise<void> | void;
   onNavigate: (tab: WorkspaceActionTarget) => void;
@@ -44,6 +51,11 @@ export function RegulatoryCommandCenter({
   audit,
   graph,
   sourceReview,
+  sourceReviewApiBaseUrl,
+  sourceReviewSyncResult,
+  sourceReviewSyncStatus,
+  sourceReviewSyncError,
+  sourceReviewSyncRecoveryAction,
   sourceApprovalQueue,
   sourceApprovalApiBaseUrl,
   sourceApprovalSyncResult,
@@ -55,6 +67,8 @@ export function RegulatoryCommandCenter({
   journey,
   sourceReviewPacket,
   manifestHash,
+  onSourceReviewApiBaseUrlChange,
+  onSyncSourceReviewLedger,
   onSourceApprovalApiBaseUrlChange,
   onSyncSourceApprovalQueue,
   onNavigate
@@ -174,6 +188,44 @@ export function RegulatoryCommandCenter({
           <Metric label="Metadata gaps" value={sourceReview.metadataMissingCount} helper="citation, URL, notes" />
         </div>
         <p>{sourceReview.notLegalAdviceBoundary}</p>
+        <div className={`provider-policy-sync ${sourceReviewSyncStatus}`}>
+          <label className="editor-field">
+            <span>Source Review API base URL</span>
+            <input
+              type="url"
+              value={sourceReviewApiBaseUrl}
+              placeholder="http://127.0.0.1:8787"
+              onChange={(event) => onSourceReviewApiBaseUrlChange(event.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="secondary"
+            onClick={onSyncSourceReviewLedger}
+            disabled={sourceReviewSyncStatus === "syncing"}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {sourceReviewSyncStatus === "syncing" ? "Syncing Source Review Ledger" : "Sync Source Review Ledger"}
+          </button>
+          <small>
+            Syncs reviewed source lineage metadata only. Matching behavior remains unchanged until a separate source approval gate
+            records refreshed metadata.
+          </small>
+          {sourceReviewSyncStatus === "synced" && sourceReviewSyncResult ? (
+            <span className="save-state">
+              Source review ledger synced: {sourceReviewSyncResult.syncedCount} record
+              {sourceReviewSyncResult.syncedCount === 1 ? "" : "s"}. Matching behavior unchanged. Ledger hash{" "}
+              {sourceReviewSyncResult.ledgerHash.slice(0, 12)}...
+            </span>
+          ) : null}
+          {sourceReviewSyncError ? (
+            <div className="provider-policy-error" role="alert">
+              <strong>{sourceReviewSyncError}</strong>
+              {sourceReviewSyncRecoveryAction ? <span>{sourceReviewSyncRecoveryAction}</span> : null}
+              <small>Not legal advice. Source review sync is audit preparation lineage metadata only.</small>
+            </div>
+          ) : null}
+        </div>
         <div className="reg-source-review-list">
           {topSourceReviewItems.length === 0 ? (
             <p className="empty-state">No source review records matched current facts.</p>

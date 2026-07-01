@@ -19,6 +19,8 @@ lexproof-ai-audit/
     counselPackExportRoutes.ts # Counsel Pack export-record create/list/lookup routes
     humanReviewRoutes.ts     # Human Review create/list/queue/update and linked target sync routes
     evidenceVaultRoutes.ts   # Evidence Vault upload/list/update/replacement/manifest routes
+    sourceReviewRoutes.ts    # Source Review Ledger metadata sync/list routes
+    sourceApprovalRoutes.ts  # Source Update Approval Queue metadata sync/list routes
     workspaceRoutes.ts       # Workspace create/read/update routes
     auditLogRoutes.ts        # Audit Log listing routes
     apiError.ts              # Typed API error responses with the audit-prep boundary
@@ -104,7 +106,11 @@ lexproof-ai-audit/
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       regulatoryControlMatrix.ts # Metadata-only source/evidence/source-review control matrix
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
+      regulatorySourceReviewSync.ts # Metadata-only Source Review Ledger sync records and ledger hash
+      regulatorySourceReviewClient.ts # Browser client for Source Review Ledger API sync
       regulatorySourceApproval.ts # Source update approval queue and metadata-only JSON export
+      regulatorySourceApprovalSync.ts # Metadata-only Source Approval sync records and queue hash
+      regulatorySourceApprovalClient.ts # Browser client for Source Approval API sync
       regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
       submissionPack.ts      # Metadata-only hackathon submission pack artifact and stable hash
       workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
@@ -367,6 +373,16 @@ Owns source review metadata for the Regulatory Command Center:
 - The output repeats the Not legal advice boundary and creates review actions for source metadata refresh only.
 
 This module tracks source lineage and review freshness. It does not decide whether a law applies, whether a source is legally current, or whether a project is compliant.
+
+### `src/lib/regulatorySourceReviewSync.ts` and `src/lib/regulatorySourceReviewClient.ts`
+
+Own server-syncable Source Review Ledger metadata:
+
+- `createRegulatorySourceReviewSyncResult({ workspaceId, sourceReview, createdBy })` converts a Source Review Ledger into metadata-only persisted records with a stable ledger hash.
+- `hashRegulatorySourceReviewLedger(sourceReview)` hashes normalized source review records and refresh actions so source metadata changes are detectable.
+- `syncRegulatorySourceReviewLedger(...)` posts only whitelisted ledger fields to `POST /api/workspaces/:workspaceId/source-reviews` and validates the response before the UI trusts it.
+
+Source review sync records keep `matchingBehaviorChanged: false`. They do not ingest raw source bodies, store credentials, process KYC or personal data, refresh source matching behavior, or create legal conclusions.
 
 ### `src/lib/regulatorySourceApproval.ts`
 
@@ -723,6 +739,8 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
 The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, Integration object-storage policy evaluation, Integration document-parser policy evaluation, Integration chain-anchor policy evaluation, Integration GRC destination policy evaluation, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing/filtering. `server/app.ts` composes shared hooks and route modules; `server/systemRoutes.ts`, `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/integrationPolicyRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, `server/evidenceVaultRoutes.ts`, and `server/auditLogRoutes.ts` are route modules split out of the monolithic app while preserving route contracts and repository-backed audit logging. `server/apiError.ts` provides the shared typed error response shape; Workspace, Evidence Vault, Model Gateway, Integration policy, Human Review, Counsel Pack export, and Audit Log filter failures now include stable codes, the audit-prep boundary, and recovery guidance where useful. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, real object storage, real chain anchoring, real GRC ticket creation, and real provider proxying are still deferred.
+
+Source Review Ledger persistence is implemented in `server/sourceReviewRoutes.ts`, backed by memory and Prisma repository methods in `server/reviewWorkspaceRepository.ts`. `POST /api/workspaces/:workspaceId/source-reviews` stores metadata-only source review records plus an audit-log entry; `GET /api/workspaces/:workspaceId/source-reviews` lists those records. The route rejects credentials, private-key-like values, raw KYC, personal data, raw source bodies, and legal conclusions, and it never changes regulatory matching behavior.
 
 ### Model Gateway Responsibilities
 

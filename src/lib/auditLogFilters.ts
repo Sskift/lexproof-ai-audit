@@ -24,7 +24,15 @@ export type AuditLogFilterValidation =
       errors: string[];
     };
 
-const auditLogTargetTypes: AuditLogRecord["targetType"][] = ["workspace", "evidence", "model-run", "human-review", "export"];
+const auditLogTargetTypes: AuditLogRecord["targetType"][] = [
+  "workspace",
+  "evidence",
+  "model-run",
+  "human-review",
+  "source-approval",
+  "source-review",
+  "export"
+];
 
 export function normalizeAuditLogFilters(input: AuditLogFilterInput): AuditLogFilterValidation {
   const filters: AuditLogFilters = {};
@@ -49,7 +57,9 @@ export function normalizeAuditLogFilters(input: AuditLogFilterInput): AuditLogFi
     if (!isAuditLogTargetType(targetType)) {
       return {
         valid: false,
-        errors: ["Audit log target type must be workspace, evidence, model-run, human-review, or export."]
+        errors: [
+          "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, or export."
+        ]
       };
     }
     filters.targetType = targetType;

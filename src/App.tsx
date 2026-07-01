@@ -158,7 +158,11 @@ import {
 } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
-import type { CounselPackExportRecord, RegulatorySourceApprovalSyncResult } from "./lib/phase2Types";
+import type {
+  CounselPackExportRecord,
+  RegulatorySourceApprovalSyncResult,
+  RegulatorySourceReviewSyncResult
+} from "./lib/phase2Types";
 import { createRegulatoryControlMatrix } from "./lib/regulatoryControlMatrix";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import {
@@ -170,6 +174,10 @@ import {
   RegulatorySourceApprovalClientError,
   syncRegulatorySourceApprovalQueue
 } from "./lib/regulatorySourceApprovalClient";
+import {
+  RegulatorySourceReviewClientError,
+  syncRegulatorySourceReviewLedger
+} from "./lib/regulatorySourceReviewClient";
 import {
   createRegulatorySourceReviewPacket,
   type RegulatorySourceReviewPacket
@@ -348,6 +356,11 @@ export default function App() {
   const [sourceApprovalSyncStatus, setSourceApprovalSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [sourceApprovalSyncError, setSourceApprovalSyncError] = useState("");
   const [sourceApprovalSyncRecoveryAction, setSourceApprovalSyncRecoveryAction] = useState("");
+  const [sourceReviewApiBaseUrl, setSourceReviewApiBaseUrl] = useState("");
+  const [sourceReviewSyncResult, setSourceReviewSyncResult] = useState<RegulatorySourceReviewSyncResult | null>(null);
+  const [sourceReviewSyncStatus, setSourceReviewSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [sourceReviewSyncError, setSourceReviewSyncError] = useState("");
+  const [sourceReviewSyncRecoveryAction, setSourceReviewSyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -1357,6 +1370,32 @@ export default function App() {
     }
   };
 
+  const syncSourceReviewLedger = async () => {
+    setSourceReviewSyncStatus("syncing");
+    setSourceReviewSyncError("");
+    setSourceReviewSyncRecoveryAction("");
+
+    try {
+      const result = await syncRegulatorySourceReviewLedger({
+        apiBaseUrl: sourceReviewApiBaseUrl,
+        workspaceId: project.id,
+        sourceReview: regulatorySourceReview,
+        createdBy: modelIntakeProfile.humanReviewOwner || "Compliance"
+      });
+      setSourceReviewSyncResult(result);
+      setSourceReviewSyncStatus("synced");
+    } catch (error) {
+      setSourceReviewSyncStatus("error");
+      if (error instanceof RegulatorySourceReviewClientError) {
+        setSourceReviewSyncError(error.message);
+        setSourceReviewSyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setSourceReviewSyncError(error instanceof Error ? error.message : "Source review sync failed.");
+      setSourceReviewSyncRecoveryAction("Start the Phase 2 API and retry source review sync.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1442,6 +1481,11 @@ export default function App() {
             audit={audit}
             graph={regulatoryGraph}
             sourceReview={regulatorySourceReview}
+            sourceReviewApiBaseUrl={sourceReviewApiBaseUrl}
+            sourceReviewSyncResult={sourceReviewSyncResult}
+            sourceReviewSyncStatus={sourceReviewSyncStatus}
+            sourceReviewSyncError={sourceReviewSyncError}
+            sourceReviewSyncRecoveryAction={sourceReviewSyncRecoveryAction}
             sourceApprovalQueue={regulatorySourceApprovalQueue}
             sourceApprovalApiBaseUrl={sourceApprovalApiBaseUrl}
             sourceApprovalSyncResult={sourceApprovalSyncResult}
@@ -1453,6 +1497,8 @@ export default function App() {
             journey={workspaceJourney}
             sourceReviewPacket={regulatorySourceReviewPacket}
             manifestHash={manifest?.bundleHash}
+            onSourceReviewApiBaseUrlChange={setSourceReviewApiBaseUrl}
+            onSyncSourceReviewLedger={syncSourceReviewLedger}
             onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}
             onSyncSourceApprovalQueue={syncSourceApprovalQueue}
             onNavigate={setActiveTab}

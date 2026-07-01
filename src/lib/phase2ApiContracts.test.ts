@@ -20,6 +20,7 @@ describe("Phase 2 backend API contracts", () => {
         "model-gateway",
         "human-review",
         "source-approvals",
+        "source-reviews",
         "exports",
         "audit-log",
         "integrations"
@@ -172,6 +173,26 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "POST",
+        path: "/api/workspaces/:workspaceId/source-reviews",
+        domain: "source-reviews",
+        requestContract: "SourceReviewSyncRequest",
+        responseContract: "RegulatorySourceReviewSyncResult",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/source-reviews",
+        domain: "source-reviews",
+        requestContract: "SourceReviewListRequest",
+        responseContract: "RegulatorySourceReviewRecord[]",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "GET",
         path: "/api/workspaces/:workspaceId/reviews/queue",
         domain: "human-review",
@@ -272,6 +293,8 @@ describe("Phase 2 backend API contracts", () => {
     expect(schema).toContain("reviewSummaryJson");
     expect(schema).toContain("manifestHash");
     expect(schema).toContain("artifactHash");
+    expect(schema).toContain("model RegulatorySourceReviewRecord");
+    expect(schema).toContain("ledgerHash");
     expect(schema).toContain("model AuditLogRecord");
     expect(schema).toContain('provider = "sqlite"');
     expect(schema).toContain('provider = "prisma-client-js"');

@@ -120,6 +120,33 @@ describe("App", () => {
     }
   });
 
+  it("filters the Regulatory Control Matrix to a specific jurisdiction and source control", async () => {
+    render(<App />);
+
+    const matrix = await screen.findByRole("region", { name: /Regulatory Control Matrix/i });
+
+    fireEvent.change(within(matrix).getByLabelText(/Control matrix jurisdiction/i), {
+      target: { value: "United States" }
+    });
+    fireEvent.change(within(matrix).getByLabelText(/Control matrix topic/i), {
+      target: { value: "aml-cft" }
+    });
+    fireEvent.change(within(matrix).getByLabelText(/Search controls/i), {
+      target: { value: "OFAC blocked property" }
+    });
+
+    expect(within(matrix).getByText(/Showing 1 of/i)).toBeInTheDocument();
+    const filteredControls = within(matrix).getByRole("list", { name: /Filtered regulatory controls/i });
+    expect(within(filteredControls).getAllByText(/US sanctions \/ virtual-currency compliance counsel/i).length).toBeGreaterThan(0);
+    expect(
+      within(filteredControls).getByText(/OFAC Sanctions Compliance Guidance for the Virtual Currency Industry, October 2021/i)
+    ).toBeInTheDocument();
+    expect(within(filteredControls).queryByText(/EU crypto-asset custody \/ CASP counsel/i)).not.toBeInTheDocument();
+    expect(
+      within(matrix).getByText(/Not legal advice. Regulatory control matrices are audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
+  });
+
   it("shows and downloads the Source Update Approval Queue when source review is due", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));

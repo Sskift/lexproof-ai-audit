@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { createRegulatoryControlMatrix, exportRegulatoryControlMatrixJson } from "./regulatoryControlMatrix";
+import { createRegulatoryControlMatrixFilterOptions, filterRegulatoryControlMatrixControls } from "./regulatoryControlMatrixFilters";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import type { ProjectProfile } from "./projectModel";
@@ -136,5 +137,35 @@ describe("createRegulatoryControlMatrix", () => {
       })
     );
     expect(exported).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("filters controls by jurisdiction, topic, status, and search query without legal conclusions", () => {
+    const audit = analyzeAuditProfile(globalLaunchProject);
+    const graph = createRegulatoryGraph(globalLaunchProject, audit, globalLaunchProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, { asOf: "2026-07-15T00:00:00.000Z" });
+    const matrix = createRegulatoryControlMatrix({ graph, sourceReview });
+
+    const filtered = filterRegulatoryControlMatrixControls(matrix.controls, {
+      jurisdiction: "United States",
+      topic: "aml-cft",
+      status: "needs-evidence",
+      query: "OFAC blocked property"
+    });
+
+    expect(filtered.map((control) => control.clauseId)).toEqual(["us-ofac-virtual-currency-sanctions-compliance"]);
+    expect(JSON.stringify(filtered)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("builds stable filter options from the current control set", () => {
+    const audit = analyzeAuditProfile(globalLaunchProject);
+    const graph = createRegulatoryGraph(globalLaunchProject, audit, globalLaunchProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, { asOf: "2026-07-15T00:00:00.000Z" });
+    const matrix = createRegulatoryControlMatrix({ graph, sourceReview });
+
+    const options = createRegulatoryControlMatrixFilterOptions(matrix.controls);
+
+    expect(options.jurisdictions).toEqual(expect.arrayContaining(["European Union", "Singapore", "United Kingdom", "United States"]));
+    expect(options.topics).toEqual(expect.arrayContaining(["aml-cft", "asset-classification", "custody", "marketing"]));
+    expect(options.statuses).toEqual(["needs-evidence"]);
   });
 });

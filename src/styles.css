@@ -878,6 +878,62 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.reg-control-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(130px, 0.8fr)) minmax(220px, 1.4fr) auto;
+  gap: 8px;
+  align-items: end;
+  min-width: 0;
+}
+
+.reg-control-filters label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.reg-control-filters label span {
+  color: #53616f;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.reg-control-filters select,
+.reg-control-filters input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #cfdce5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172431;
+  font-size: 0.8rem;
+  font-weight: 750;
+  padding: 9px 10px;
+}
+
+.reg-control-filters input::placeholder {
+  color: #7a8794;
+  font-weight: 650;
+}
+
+.reg-control-filters button {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.reg-control-filter-state {
+  border: 1px dashed #cfdce5;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #53616f;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 8px 10px;
+}
+
 .reg-control-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -5714,6 +5770,7 @@ textarea {
   .secure-flow-grid,
   .reg-command-layout,
   .reg-command-metrics,
+  .reg-control-filters,
   .reg-control-summary,
   .workspace-journey-list,
   .workspace-action-list,

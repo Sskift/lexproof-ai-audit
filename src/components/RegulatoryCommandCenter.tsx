@@ -1,6 +1,10 @@
-import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck, UserCheck } from "lucide-react";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
 import type { AuditResult } from "../lib/auditEngine";
+import {
+  downloadLocalCounselRoutingPlanJson,
+  type LocalCounselRoutingPlan
+} from "../lib/localCounselRouting";
 import type { RegulatoryControlMatrix } from "../lib/regulatoryControlMatrix";
 import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGraph";
 import {
@@ -35,6 +39,7 @@ type RegulatoryCommandCenterProps = {
   sourceApprovalSyncError: string;
   sourceApprovalSyncRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
+  localCounselRoutingPlan: LocalCounselRoutingPlan | null;
   actionQueue: WorkspaceActionQueue;
   journey: WorkspaceJourney;
   sourceReviewPacket: RegulatorySourceReviewPacket | null;
@@ -63,6 +68,7 @@ export function RegulatoryCommandCenter({
   sourceApprovalSyncError,
   sourceApprovalSyncRecoveryAction,
   controlMatrix,
+  localCounselRoutingPlan,
   actionQueue,
   journey,
   sourceReviewPacket,
@@ -76,6 +82,7 @@ export function RegulatoryCommandCenter({
   const topClauses = graph.matchedClauses.slice(0, 4);
   const topGaps = graph.evidenceGaps.slice(0, 8);
   const topSourceReviewItems = sourceReview.items.slice(0, 4);
+  const topCounselRoutes = localCounselRoutingPlan?.routes.slice(0, 4) ?? [];
   const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
 
   return (
@@ -162,6 +169,50 @@ export function RegulatoryCommandCenter({
       </div>
 
       <RegulatoryControlMatrixPanel matrix={controlMatrix} />
+
+      {localCounselRoutingPlan ? (
+        <section className="local-counsel-routing" aria-label="Local Counsel Routing Plan">
+          <div className="reg-source-review-header">
+            <div className="reg-section-title">
+              <UserCheck size={17} aria-hidden="true" />
+              <h3>Local Counsel Routing Plan</h3>
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                downloadLocalCounselRoutingPlanJson(`lexproof-${project.id}-local-counsel-routing.json`, localCounselRoutingPlan)
+              }
+            >
+              <Download size={15} aria-hidden="true" />
+              Download Local Counsel Routing JSON
+            </button>
+          </div>
+          <div className="reg-source-review-summary">
+            <Metric label="Routes" value={localCounselRoutingPlan.routeCount} helper="jurisdiction + counsel role" />
+            <Metric label="P0" value={localCounselRoutingPlan.prioritySummary.P0} helper="evidence blockers" />
+            <Metric label="P1" value={localCounselRoutingPlan.prioritySummary.P1} helper="review or gap work" />
+            <Metric label="Plan hash" value={localCounselRoutingPlan.planHash.slice(0, 12)} helper="metadata-only" />
+          </div>
+          <p>{localCounselRoutingPlan.notLegalAdviceBoundary}</p>
+          <div className="source-approval-list">
+            {topCounselRoutes.map((route) => (
+              <article key={route.id} className={`source-approval-item ${route.status}`}>
+                <header>
+                  <span>{route.priority}</span>
+                  <strong>{route.jurisdiction}</strong>
+                </header>
+                <p>{route.localCounselRole}</p>
+                <small>
+                  {formatLocalCounselStatus(route.status)} · source review {formatLocalCounselSourceStatus(route.sourceReviewStatus)} ·{" "}
+                  {route.evidenceGapCount} evidence gap{route.evidenceGapCount === 1 ? "" : "s"}
+                </small>
+                <small>{route.nextAction}</small>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className={`reg-source-review ${sourceReview.status}`} aria-label="Source Review Ledger">
         <div className="reg-source-review-header">
@@ -447,6 +498,29 @@ function formatApprovalStatus(status: RegulatorySourceApprovalStatus): string {
     return "metadata required";
   }
   return "approval required";
+}
+
+function formatLocalCounselStatus(status: LocalCounselRoutingPlan["routes"][number]["status"]): string {
+  if (status === "needs-source-review") {
+    return "needs source review";
+  }
+  if (status === "ready-for-counsel") {
+    return "ready for counsel";
+  }
+  return "needs evidence";
+}
+
+function formatLocalCounselSourceStatus(status: LocalCounselRoutingPlan["routes"][number]["sourceReviewStatus"]): string {
+  if (status === "metadata-missing") {
+    return "metadata missing";
+  }
+  if (status === "review-due") {
+    return "review due";
+  }
+  if (status === "not-tracked") {
+    return "not tracked";
+  }
+  return "current";
 }
 
 function formatJourneyStatus(status: WorkspaceJourneyStatus): string {

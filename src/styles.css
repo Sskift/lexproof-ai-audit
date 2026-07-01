@@ -1200,6 +1200,27 @@ textarea {
   padding: 12px;
 }
 
+.local-counsel-routing {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.local-counsel-routing > p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.local-counsel-routing .reg-source-review-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .source-approval-queue.needs-approval {
   border-color: #e9bd87;
   background: #fffaf2;
@@ -1243,6 +1264,16 @@ textarea {
   background: #fff7f6;
 }
 
+.source-approval-item.needs-evidence {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.source-approval-item.needs-source-review {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
 .source-approval-item header {
   display: flex;
   justify-content: space-between;
@@ -1264,6 +1295,16 @@ textarea {
 .source-approval-item.metadata-required header span {
   background: #f7dfd8;
   color: #9f241a;
+}
+
+.source-approval-item.needs-evidence header span {
+  background: #9f241a;
+  color: #ffffff;
+}
+
+.source-approval-item.needs-source-review header span {
+  background: #a6531c;
+  color: #ffffff;
 }
 
 .source-approval-item strong,

@@ -6,6 +6,7 @@ import { redactDataBoundaryText, summarizeDataBoundaryForExport, type DataBounda
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { HumanReviewTimelineEntry } from "./humanReviewWorkflow";
+import type { LocalCounselRoutingPlan } from "./localCounselRouting";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
@@ -31,7 +32,8 @@ export function buildMarkdownCounselPack(
   regulatorySourceReview?: RegulatorySourceReview,
   regulatorySourceApprovalQueue?: RegulatorySourceApprovalQueue,
   humanReviewTimeline: HumanReviewTimelineEntry[] = [],
-  evidenceRecertificationQueue?: EvidenceRecertificationQueue
+  evidenceRecertificationQueue?: EvidenceRecertificationQueue,
+  localCounselRoutingPlan?: LocalCounselRoutingPlan
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -45,6 +47,10 @@ export function buildMarkdownCounselPack(
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
   const sourceReviewSection = regulatorySourceReview ? formatRegulatorySourceReviewSection(regulatorySourceReview) : "";
+  const localCounselRoutingSection =
+    localCounselRoutingPlan && localCounselRoutingPlan.routeCount > 0
+      ? formatLocalCounselRoutingPlanSection(localCounselRoutingPlan)
+      : "";
   const sourceApprovalSection =
     regulatorySourceApprovalQueue && regulatorySourceApprovalQueue.totalItemCount > 0
       ? formatRegulatorySourceApprovalQueueSection(regulatorySourceApprovalQueue)
@@ -92,6 +98,7 @@ export function buildMarkdownCounselPack(
     "",
     ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
+    ...(localCounselRoutingSection ? ["## Local Counsel Routing Plan", localCounselRoutingSection, ""] : []),
     ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
     ...(humanReviewSection ? ["## Human Review Timeline", humanReviewSection, ""] : []),
     ...(recertificationSection ? ["## Evidence Recertification Queue", recertificationSection, ""] : []),
@@ -107,6 +114,30 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatLocalCounselRoutingPlanSection(plan: LocalCounselRoutingPlan): string {
+  const routes = plan.routes
+    .map((route) => {
+      const gaps = route.evidenceGapTitles.slice(0, 3).join("; ") || "none";
+      const questions = route.counselQuestions.slice(0, 2).join(" / ") || "none";
+      return `- ${route.priority} ${route.status} ${safe(route.jurisdiction)}: ${safe(
+        route.localCounselRole
+      )}; source review: ${route.sourceReviewStatus}; clauses: ${safe(route.matchedClauseIds.join(", "))}; evidence gaps: ${
+        route.evidenceGapCount
+      } (${safe(gaps)}); questions: ${safe(questions)}; ${safe(route.nextAction)}`;
+    })
+    .join("\n");
+
+  return [
+    plan.notLegalAdviceBoundary,
+    `- Plan hash: ${plan.planHash}`,
+    `- Route count: ${plan.routeCount}`,
+    `- Priority summary: P0 ${plan.prioritySummary.P0}; P1 ${plan.prioritySummary.P1}; P2 ${plan.prioritySummary.P2}`,
+    "",
+    "### Local Counsel Routes",
+    routes || "- No local counsel routing actions are open."
   ].join("\n");
 }
 

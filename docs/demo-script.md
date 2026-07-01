@@ -52,11 +52,13 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show the **Workspace Journey** from project facts -> model/evidence intake -> risk/source graph -> human review -> vault/manifest -> counsel export, including the current next action and the Not legal advice boundary.
    - Show jurisdiction readiness, official-source clause triggers, the Regulatory Control Matrix, evidence gap queue, manifest status, and the Not legal advice boundary.
    - Click **Download Control Matrix JSON** to show the metadata-only handoff with evidence coverage, source review status, local counsel route, next action, and no compliance conclusion.
+   - Show the **Local Counsel Routing Plan**, then click **Download Local Counsel Routing JSON** to show jurisdiction + counsel-role routes, route priority, evidence gaps, source-review state, plan hash, and the Not legal advice boundary.
    - Click **Download Source Review Packet JSON** to show the metadata-only source refresh action queue, clause-match targets, packet hash, and Not legal advice boundary.
    - If source review is due, show the **Source Update Approval Queue** and click **Download Source Approval Queue JSON** to show that source updates cannot affect matching behavior until counsel or compliance review records refreshed source metadata.
    - When the Phase 2 API is running, enter `http://127.0.0.1:8787` in **Source Approval API base URL** and click **Sync Source Approval Queue** to persist metadata-only source approval records while confirming matching behavior is unchanged.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
    - Screenshot: `docs/assets/screenshots/workspace-journey.png`.
+   - Screenshot: `docs/assets/screenshots/local-counsel-routing-plan.png`.
    - Screenshot: `docs/assets/screenshots/source-review-packet.png`.
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
    - Screenshot: `docs/assets/screenshots/source-approval-api-sync.png`.

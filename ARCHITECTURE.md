@@ -406,6 +406,16 @@ Owns control-matrix workflow metadata for the Regulatory Command Center:
 
 Control matrices are audit preparation workflow metadata only. They do not classify a project as legally compliant or non-compliant, and they do not replace source review or local counsel review.
 
+### `src/lib/localCounselRouting.ts`
+
+Owns local-counsel routing workflow metadata for the Regulatory Command Center and Counsel Pack:
+
+- `createLocalCounselRoutingPlan({ graph, sourceReview })` groups matched clauses by jurisdiction and local counsel role, then ranks each route by open evidence gaps and source-review status.
+- Routes carry priority, source-review state, matched clause IDs, citations, evidence gap titles, counsel questions, matched evidence labels, next action, and a stable SHA-256 plan hash.
+- `exportLocalCounselRoutingPlanJson(plan)` and `downloadLocalCounselRoutingPlanJson(filename, plan)` produce metadata-only handoff artifacts for counsel/compliance review.
+
+Local counsel routing plans are audit preparation workflow metadata only. They do not decide law applicability, approve launch readiness, process sensitive data, or replace local counsel review.
+
 ### `src/lib/regulatorySourcePack.ts`
 
 Owns standalone source-pack handoff artifacts:

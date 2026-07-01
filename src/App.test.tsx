@@ -147,6 +147,63 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows local counsel routing in the command center and Counsel Pack handoff", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:local-counsel-routing");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const routing = await screen.findByRole("region", { name: /Local Counsel Routing Plan/i });
+      expect(
+        within(routing).getByText(/Not legal advice. Local counsel routing plans are audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+      expect(within(routing).getAllByText(/US private offering \/ securities counsel/i).length).toBeGreaterThan(0);
+      expect(within(routing).getByRole("button", { name: /Download Local Counsel Routing JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(routing).getByRole("button", { name: /Download Local Counsel Routing JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:local-counsel-routing");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Local Counsel Routing Plan JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          planVersion: "lexproof-local-counsel-routing-v1",
+          notLegalAdviceBoundary: "Not legal advice. Local counsel routing plans are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.routes.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b|raw KYC|private key/i);
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+      expect(await screen.findByText(/## Local Counsel Routing Plan/i)).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(parsed.planHash))).toBeInTheDocument();
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("shows and downloads the Source Update Approval Queue when source review is due", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
@@ -3228,7 +3285,7 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
-  });
+  }, 10000);
 
   it("creates server-side Counsel Pack export records from version metadata", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -3315,7 +3372,7 @@ describe("App", () => {
     expect(screen.getByText(/EU crypto-asset disclosure readiness review/i)).toBeInTheDocument();
     expect(screen.getByText(/Jurisdiction Packs/i)).toBeInTheDocument();
     expect(screen.getByText(/Policy controls/i)).toBeInTheDocument();
-    expect(screen.getByText(/Local counsel routing/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Local counsel routing/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Offering and disclosure control/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   });

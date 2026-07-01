@@ -124,6 +124,10 @@ import {
   ModelGatewaySecretPolicyClientError
 } from "./lib/modelGatewaySecretPolicyClient";
 import {
+  createLocalCounselRoutingPlan,
+  type LocalCounselRoutingPlan
+} from "./lib/localCounselRouting";
+import {
   createObjectStoragePolicyReport,
   type ObjectStoragePolicyContext,
   type ObjectStoragePolicyDraft,
@@ -300,6 +304,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
+  const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
@@ -725,7 +730,8 @@ export default function App() {
         regulatorySourceReview,
         regulatorySourceApprovalQueue,
         humanReviewTimeline,
-        evidenceRecertificationQueue ?? undefined
+        evidenceRecertificationQueue ?? undefined,
+        localCounselRoutingPlan ?? undefined
       );
     },
     [
@@ -736,6 +742,7 @@ export default function App() {
       dataBoundaryReport,
       evidenceRecertificationQueue,
       humanReviewTimeline,
+      localCounselRoutingPlan,
       manifest,
       modelIntakeProfile,
       modelIntakeSummary,
@@ -786,6 +793,22 @@ export default function App() {
       live = false;
     };
   }, [project.evidenceItems, project.id]);
+
+  useEffect(() => {
+    let live = true;
+    setLocalCounselRoutingPlan(null);
+    createLocalCounselRoutingPlan({
+      graph: regulatoryGraph,
+      sourceReview: regulatorySourceReview
+    }).then((nextPlan) => {
+      if (live) {
+        setLocalCounselRoutingPlan(nextPlan);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [regulatoryGraph, regulatorySourceReview]);
 
   useEffect(() => {
     let live = true;
@@ -1539,6 +1562,7 @@ export default function App() {
             sourceApprovalSyncError={sourceApprovalSyncError}
             sourceApprovalSyncRecoveryAction={sourceApprovalSyncRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
+            localCounselRoutingPlan={localCounselRoutingPlan}
             actionQueue={workspaceActionQueue}
             journey={workspaceJourney}
             sourceReviewPacket={regulatorySourceReviewPacket}

@@ -17,6 +17,7 @@ import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import { createDataBoundaryReport } from "./dataBoundary";
 import { createEvidenceRecertificationQueue } from "./evidenceRecertification";
+import { createLocalCounselRoutingPlan } from "./localCounselRouting";
 
 const project: ProjectProfile = {
   id: "project-counsel",
@@ -237,6 +238,54 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("approval-required");
     expect(markdown).toContain("Refresh and approve");
     expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("includes local counsel routing plan metadata in Markdown handoff without legal conclusions", async () => {
+    const graphProject: ProjectProfile = {
+      ...project,
+      jurisdictions: ["European Union", "United Kingdom", "United States"],
+      assetModel: "Tokenized private credit note with yield and public communications",
+      userType: "Retail users and accredited investors",
+      custodyModel: "Platform controls omnibus wallet",
+      operatingStage: "Planned public launch before local counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(graphProject);
+    const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
+    const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, {
+      asOf: "2026-10-15T00:00:00.000Z"
+    });
+    const localCounselRoutingPlan = await createLocalCounselRoutingPlan({
+      graph,
+      sourceReview,
+      generatedAt: "2026-10-15T00:00:00.000Z"
+    });
+
+    const markdown = buildMarkdownCounselPack(
+      graphProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      graph,
+      undefined,
+      undefined,
+      sourceReview,
+      undefined,
+      [],
+      undefined,
+      localCounselRoutingPlan
+    );
+
+    expect(markdown).toContain("## Local Counsel Routing Plan");
+    expect(markdown).toContain("Not legal advice. Local counsel routing plans are audit preparation workflow metadata only.");
+    expect(markdown).toContain(localCounselRoutingPlan.planHash);
+    expect(markdown).toContain("US private offering / securities counsel");
+    expect(markdown).toContain("UK financial promotion / crypto counsel");
+    expect(markdown).toContain("Prepare missing evidence for local counsel review.");
+    expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b|raw KYC|private key/i);
   });
 
   it("includes evidence recertification queue metadata without raw evidence content", async () => {

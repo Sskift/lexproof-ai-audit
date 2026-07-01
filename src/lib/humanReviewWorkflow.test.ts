@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { CounselPackVersionRecord } from "./counselPackVersions";
 import type { CounselReviewItem } from "./counselReview";
 import {
   createHumanReviewDecision,
@@ -84,6 +85,51 @@ const sourceReview: RegulatorySourceReview = {
   notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only."
 };
 
+const counselPackVersion: CounselPackVersionRecord = {
+  recordVersion: "lexproof-counsel-pack-version-v1",
+  id: "counsel-pack-version-1",
+  projectId: "project-1",
+  projectName: "YieldPassport",
+  version: 1,
+  title: "YieldPassport Counsel Pack v1",
+  manifestHash: "a".repeat(64),
+  markdownHash: "b".repeat(64),
+  markdownSize: 42_000,
+  riskLevel: "critical",
+  reviewSummary: {
+    total: 3,
+    reviewed: 1,
+    readyForCounsel: 1,
+    needsEvidence: 1,
+    blocked: 0,
+    open: 2
+  },
+  reviewStatuses: [
+    {
+      flagId: "asset-yield",
+      title: "Yield-bearing or investment-like asset",
+      status: "needs-evidence",
+      reviewer: "Counsel",
+      evidenceSummary: "1/3 evidence requirements covered"
+    }
+  ],
+  sourcePack: [{ title: "SEC Rule 506(c)", url: "https://www.ecfr.gov/current/title-17/section-230.506" }],
+  regulatorySourcePack: {
+    packVersion: "lexproof-regulatory-source-pack-v1",
+    packHash: "c".repeat(64),
+    sourceCount: 4,
+    evidenceGapCount: 2,
+    sourceReviewStatus: "review-due",
+    currentSourceCount: 2,
+    reviewDueCount: 2,
+    metadataMissingCount: 0,
+    reviewWindowDays: 90,
+    notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only."
+  },
+  exportedAt: "2026-06-30T00:00:00.000Z",
+  notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
+};
+
 describe("human review workflow", () => {
   it("builds a single review queue across risk flags, evidence, and AI events", () => {
     const queue = createHumanReviewQueue({
@@ -149,6 +195,38 @@ describe("human review workflow", () => {
         updatedAt: "2026-06-30T00:00:00.000Z"
       })
     );
+  });
+
+  it("queues saved Counsel Pack versions for export handoff review without legal approval wording", () => {
+    const input = {
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [],
+      aiEvents: [],
+      counselPackVersions: [counselPackVersion]
+    };
+
+    const queue = createHumanReviewQueue(input);
+
+    expect(queue.items).toEqual([
+      expect.objectContaining({
+        id: "human-review-queue-counsel-pack-counsel-pack-version-1",
+        targetType: "counsel-pack",
+        targetId: "counsel-pack-version-1",
+        title: "YieldPassport Counsel Pack v1",
+        priority: "P0",
+        status: "needs-review",
+        reviewer: "Counsel",
+        decisionNote: "Review Counsel Pack export metadata before external handoff. Not legal advice.",
+        dueAt: "2026-07-02T00:00:00.000Z",
+        updatedAt: "2026-06-30T00:00:00.000Z",
+        notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
+      })
+    ]);
+    expect(queue.items[0]?.summary).toContain("2 open review items");
+    expect(queue.items[0]?.summary).toContain("manifest aaaaaaaa");
+    expect(JSON.stringify(queue)).not.toMatch(/\blegal approval\b/i);
+    expect(JSON.stringify(queue)).toContain("Not legal advice");
   });
 
   it("creates a review decision without turning workflow status into legal advice", () => {

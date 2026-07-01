@@ -1,9 +1,10 @@
+import type { CounselPackVersionRecord } from "./counselPackVersions";
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import type { AIEventRecord, AIEventReviewStatus } from "./modelIntake";
 import type { EvidenceItem, EvidenceStatus } from "./projectModel";
 import type { RegulatorySourceReview, RegulatorySourceReviewAction } from "./regulatorySourceReview";
 
-export type HumanReviewTargetType = "risk-flag" | "ai-event" | "evidence" | "clause-match";
+export type HumanReviewTargetType = "risk-flag" | "ai-event" | "evidence" | "clause-match" | "counsel-pack";
 
 export type HumanReviewStatus = "needs-review" | "in-review" | "needs-more-evidence" | "reviewed" | "rejected";
 
@@ -80,6 +81,7 @@ export type CreateHumanReviewQueueInput = {
   aiEvents: AIEventRecord[];
   sourceReview?: RegulatorySourceReview;
   sourceReviewUpdatedAt?: string;
+  counselPackVersions?: CounselPackVersionRecord[];
   decisions?: HumanReviewDecision[];
 };
 
@@ -99,7 +101,8 @@ export function createHumanReviewQueue(input: CreateHumanReviewQueueInput): Huma
     ...input.counselReviews.map((review) => applyDecision(createRiskReviewQueueItem(review), decisionsById)),
     ...createSourceReviewQueueItems(input.projectId, input.sourceReview, input.sourceReviewUpdatedAt).map((item) => applyDecision(item, decisionsById)),
     ...input.aiEvents.map((event) => applyDecision(createAIEventQueueItem(event), decisionsById)),
-    ...input.evidenceItems.map((item, index) => applyDecision(createEvidenceQueueItem(input.projectId, item, index), decisionsById))
+    ...input.evidenceItems.map((item, index) => applyDecision(createEvidenceQueueItem(input.projectId, item, index), decisionsById)),
+    ...(input.counselPackVersions ?? []).map((record) => applyDecision(createCounselPackQueueItem(input.projectId, record), decisionsById))
   ];
 
   return {
@@ -331,6 +334,33 @@ function createEvidenceQueueItem(projectId: string, item: EvidenceItem, index: n
   };
 }
 
+function createCounselPackQueueItem(projectId: string, record: CounselPackVersionRecord): HumanReviewQueueItem {
+  const openReviewItems = formatCount(record.reviewSummary.open, "open review item");
+  const reviewedItems = `${record.reviewSummary.reviewed}/${record.reviewSummary.total} counsel review items reviewed`;
+  const sourceReviewStatus = record.regulatorySourcePack?.sourceReviewStatus ?? "metadata-missing";
+  const priority = counselPackPriority(record);
+
+  return {
+    queueVersion: "lexproof-human-review-queue-item-v1",
+    id: queueItemId("counsel-pack", record.id),
+    projectId,
+    targetType: "counsel-pack",
+    targetId: record.id,
+    sourceId: record.manifestHash,
+    title: record.title,
+    summary: `${record.riskLevel} risk export; ${openReviewItems}; ${reviewedItems}; manifest ${shortHash(
+      record.manifestHash
+    )}; markdown ${shortHash(record.markdownHash)}; source review ${sourceReviewStatus}. Not legal advice.`,
+    priority,
+    status: "needs-review",
+    reviewer: "Counsel",
+    decisionNote: "Review Counsel Pack export metadata before external handoff. Not legal advice.",
+    dueAt: createDueAt(record.exportedAt, priority),
+    updatedAt: record.exportedAt,
+    notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only."
+  };
+}
+
 function applyDecision(item: HumanReviewQueueItem, decisionsById: Map<string, HumanReviewDecision>): HumanReviewQueueItem {
   const decision = decisionsById.get(decisionId(item.targetType, item.targetId));
   if (!decision) {
@@ -455,4 +485,24 @@ function hashId(parts: string[]): string {
   }
 
   return hash.toString(16).padStart(16, "0").slice(0, 12);
+}
+
+function counselPackPriority(record: CounselPackVersionRecord): HumanReviewQueueItem["priority"] {
+  if (record.riskLevel === "critical" || record.reviewSummary.blocked > 0) {
+    return "P0";
+  }
+
+  if (record.riskLevel === "high" || record.reviewSummary.open > 0 || record.regulatorySourcePack?.sourceReviewStatus !== "current") {
+    return "P1";
+  }
+
+  return "P2";
+}
+
+function shortHash(value: string): string {
+  return value.slice(0, 8);
+}
+
+function formatCount(count: number, singular: string): string {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
 }

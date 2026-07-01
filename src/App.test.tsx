@@ -2744,6 +2744,35 @@ describe("App", () => {
     expect(within(filteredQueue).queryByText(/Regulation \(EU\) 2023\/1114/i)).not.toBeInTheDocument();
   });
 
+  it("queues saved Counsel Pack versions for Human Review before export handoff", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+    const saveButton = await screen.findByRole("button", { name: /Save Pack Version/i });
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
+    fireEvent.click(saveButton);
+
+    expect(await screen.findByText(/Version 1/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+    fireEvent.change(screen.getByLabelText(/Human review target type/i), { target: { value: "counsel-pack" } });
+
+    const filteredQueue = screen.getByRole("list", { name: /Filtered human review queue/i });
+    expect(screen.getByText(/Not legal advice. Human review decisions track audit preparation workflow status only./i)).toBeInTheDocument();
+    expect(screen.getByText(/Showing 1 of/i)).toBeInTheDocument();
+    expect(within(filteredQueue).getByText(/Counsel Pack v1/i)).toBeInTheDocument();
+    expect(within(filteredQueue).getByText(/open review items/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status for .*Counsel Pack v1/i), { target: { value: "reviewed" } });
+    fireEvent.change(screen.getByLabelText(/Decision note for .*Counsel Pack v1/i), {
+      target: { value: "Reviewed export metadata for audit-prep handoff." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save decision for .*Counsel Pack v1/i }));
+
+    expect(await screen.findByText(/Human review decision saved for .*Counsel Pack v1/i)).toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice; this is an audit preparation workflow status/i)).toBeInTheDocument();
+  });
+
   it("shows and downloads a Human Review timeline with saved status history", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

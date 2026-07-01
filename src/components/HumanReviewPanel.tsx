@@ -331,6 +331,9 @@ function labelForTarget(targetType: HumanReviewQueueItem["targetType"]): string 
   if (targetType === "clause-match") {
     return "Clause match";
   }
+  if (targetType === "counsel-pack") {
+    return "Counsel Pack";
+  }
   return "Evidence";
 }
 

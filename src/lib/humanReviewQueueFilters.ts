@@ -15,7 +15,7 @@ export type HumanReviewQueueFilterOptions = {
   reviewers: string[];
 };
 
-const TARGET_TYPE_ORDER: HumanReviewTargetType[] = ["risk-flag", "ai-event", "evidence", "clause-match"];
+const TARGET_TYPE_ORDER: HumanReviewTargetType[] = ["risk-flag", "ai-event", "evidence", "clause-match", "counsel-pack"];
 const STATUS_ORDER: HumanReviewStatus[] = ["needs-review", "in-review", "needs-more-evidence", "reviewed", "rejected"];
 
 export function filterHumanReviewQueueItems(

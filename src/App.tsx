@@ -449,9 +449,18 @@ export default function App() {
         evidenceItems: project.evidenceItems,
         aiEvents: currentAIEvents,
         sourceReview: regulatorySourceReview,
+        counselPackVersions: currentCounselPackVersions,
         decisions: currentHumanReviewDecisions
       }),
-    [currentAIEvents, currentCounselReviews, currentHumanReviewDecisions, project.evidenceItems, project.id, regulatorySourceReview]
+    [
+      currentAIEvents,
+      currentCounselPackVersions,
+      currentCounselReviews,
+      currentHumanReviewDecisions,
+      project.evidenceItems,
+      project.id,
+      regulatorySourceReview
+    ]
   );
   const dataBoundaryReport = useMemo(
     () =>

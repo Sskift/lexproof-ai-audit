@@ -45,7 +45,7 @@ Key evidence:
 - Chain Anchor Policy Evaluation inside Integration Readiness, with server sync through `POST /api/integrations/chain-anchor/policy`, metadata-only manifest/counsel-version/signing-policy controls, JSON export, and `externalChainAnchoringAllowed: false` plus `anchorMode: simulated-only` even when the policy evaluates ready.
 - GRC Destination Policy Evaluation inside Integration Readiness, with server sync through `POST /api/integrations/grc-destination/policy`, metadata-only destination mapping, authentication, export redaction, ticket ownership, retry/audit logging, and human-review controls, JSON export, and `externalGrcTicketCreationAllowed: false` even when the policy evaluates ready.
 - GRC Ticket Export from Risk Audit for metadata-only remediation tickets, gated by Integration Readiness and downloadable as JSON without creating real external tickets.
-- Human Review queue with reviewer assignment, due dates, saved status history, source clause-match refresh actions, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
+- Human Review queue with reviewer assignment, due dates, saved status history, source clause-match refresh actions, saved Counsel Pack version handoff review, linked evidence and model-run status updates, server-side queue views by target/status/reviewer, and downloadable review timeline JSON with audit log IDs.
 - Editable Counsel Questions queue that combines deterministic risk prompts, AI draft questions, user edits, status, and priority.
 - Editable Counsel Review Status queue for each deterministic risk flag, with reviewer, status, evidence summary, and notes.
 - Regulatory Command Center first screen with a Workspace Journey rail, Workspace Action Queue, Regulatory Control Matrix, jurisdiction readiness, source-backed clause triggers, Source Review Ledger metadata, Source Update Approval Queue, evidence gaps, manifest readiness, and counsel handoff status.
@@ -225,6 +225,10 @@ Human Review records reviewer due dates, saved status history, audit log IDs, so
 Source review refresh actions route into Human Review as clause-match items for local counsel or compliance review. They remain audit-prep workflow metadata, not legal conclusions.
 
 ![Human Review clause-match source refresh](docs/assets/screenshots/human-review-clause-match-source-refresh.png)
+
+Saved Counsel Pack versions route into Human Review as `counsel-pack` items before external handoff. Review status is audit-preparation workflow metadata only, not legal approval.
+
+![Human Review Counsel Pack queue](docs/assets/screenshots/human-review-counsel-pack-queue.png)
 
 The Source Review Ledger can also export a metadata-only Source Review Packet JSON with a packet hash, source records, and clause-match refresh actions for counsel/compliance review. Not legal advice.
 

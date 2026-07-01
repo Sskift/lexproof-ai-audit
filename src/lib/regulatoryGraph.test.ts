@@ -213,6 +213,56 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
+  it("matches US OFAC virtual-currency sanctions controls for wallet-risk RWA facts", () => {
+    const audit = analyzeAuditProfile(baseProject);
+    const graph = createRegulatoryGraph(baseProject, audit, baseProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["us-ofac-virtual-currency-sanctions-compliance"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ofac-virtual-currency-sanctions-compliance")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "U.S. Department of the Treasury / OFAC",
+      citation: "OFAC Sanctions Compliance Guidance for the Virtual Currency Industry, October 2021",
+      sourceUrl: "https://ofac.treasury.gov/media/913571/download?inline=",
+      topic: "aml-cft",
+      coverageStatus: "missing",
+      localCounselRole: "US sanctions / virtual-currency compliance counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US OFAC wallet sanctions screening and risk assessment evidence",
+        "US OFAC blocked-property escalation and reporting evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks US OFAC sanctions controls covered when RWA wallet screening template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-ofac-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...baseProject,
+      jurisdictions: ["United States"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ofac-virtual-currency-sanctions-compliance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Wallet sanctions screening and escalation controls"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "us-ofac-virtual-currency-sanctions-compliance" })])
+    );
+  });
+
   it("matches EU and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
@@ -502,6 +552,9 @@ describe("createRegulatoryGraph", () => {
     );
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
       expect.arrayContaining(["us-sec-reg-d-accredited-investor-verification"])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["us-ofac-virtual-currency-sanctions-compliance"])
     );
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ftc-endorsement-advertising-guides")).toMatchObject({
       jurisdiction: "United States",

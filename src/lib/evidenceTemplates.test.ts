@@ -58,12 +58,18 @@ describe("evidence templates", () => {
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
 
     expect(items.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["RWA disclosure assumptions memo", "Custody and signer control runbook", "Investor eligibility review"])
+      expect.arrayContaining([
+        "RWA disclosure assumptions memo",
+        "Custody and signer control runbook",
+        "Investor eligibility review",
+        "Wallet sanctions screening and escalation controls"
+      ])
     );
     expect(items.every((item) => item.status === "requested")).toBe(true);
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
+    expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
   });

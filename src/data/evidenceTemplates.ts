@@ -46,6 +46,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "Wallet sanctions screening and escalation controls",
+        kind: "Policy",
+        content:
+          "Requested: summarize OFAC sanctions screening, wallet screening, geolocation controls, blocked property escalation, reporting, recordkeeping, and reviewer owner without raw KYC or wallet secrets.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-ofac-virtual-currency-sanctions-compliance",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Evidence anchor procedure",
         kind: "Procedure",
         content: "Requested: define what is hashed, what is public, what remains private, and who approves any anchor receipt.",

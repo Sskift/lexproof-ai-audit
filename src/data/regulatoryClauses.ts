@@ -195,6 +195,72 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-ofac-virtual-currency-sanctions-compliance",
+    jurisdiction: "United States",
+    regulator: "U.S. Department of the Treasury / OFAC",
+    sourceName: "Sanctions Compliance Guidance for the Virtual Currency Industry",
+    sourceUrl: "https://ofac.treasury.gov/media/913571/download?inline=",
+    citation: "OFAC Sanctions Compliance Guidance for the Virtual Currency Industry, October 2021",
+    topic: "aml-cft",
+    summary:
+      "Prepare virtual-currency sanctions risk assessment, wallet screening, geolocation, blocked-property escalation, reporting, and recordkeeping evidence for US sanctions counsel review.",
+    triggerFlagIds: ["custody", "sensitive-data"],
+    triggerKeywords: [
+      "ofac",
+      "sanctions",
+      "sanctions screening",
+      "wallet risk",
+      "wallet transaction history",
+      "blocked property",
+      "virtual currency sanctions"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-ofac-wallet-sanctions-screening-risk-assessment",
+        title: "US OFAC wallet sanctions screening and risk assessment evidence",
+        reason:
+          "US virtual-currency sanctions review needs wallet-screening scope, onboarding and transaction screening, geolocation, risk assessment, and internal-control evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "ofac",
+          "sanctions screening",
+          "wallet screening",
+          "wallet risk",
+          "risk assessment",
+          "geolocation",
+          "internal controls"
+        ]
+      },
+      {
+        id: "us-ofac-blocked-property-escalation-reporting",
+        title: "US OFAC blocked-property escalation and reporting evidence",
+        reason:
+          "Counsel and compliance review need blocked-property escalation, denial of access, reporting, licensing, recordkeeping, audit, and reviewer-owner evidence for virtual-currency workflows.",
+        priority: "P0",
+        keywords: [
+          "blocked property",
+          "blocking",
+          "deny access",
+          "reporting",
+          "recordkeeping",
+          "licensing",
+          "escalation",
+          "reviewer owner"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which wallet-screening, geolocation, sanctions-list, and transaction-monitoring controls should US sanctions counsel review?",
+      "What blocked-property, reporting, recordkeeping, escalation, and reviewer-owner evidence should be retained without storing raw KYC or wallet secrets?"
+    ],
+    localCounselRole: "US sanctions / virtual-currency compliance counsel",
+    effectiveAsOf: "2021-10-15",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against OFAC virtual-currency sanctions compliance guidance for wallet screening, sanctions-risk assessment, blocked-property handling, reporting, and recordkeeping evidence routing; route interpretation to US sanctions counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-title-ii-white-paper",
     jurisdiction: "European Union",
     regulator: "European Union",

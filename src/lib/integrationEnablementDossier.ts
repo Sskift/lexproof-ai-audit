@@ -1,0 +1,358 @@
+import type { ChainAnchorPolicyReport } from "./chainAnchorPolicy";
+import { redactDataBoundaryText } from "./dataBoundary";
+import type { DocumentParserPolicyReport } from "./documentParserPolicy";
+import type { GrcDestinationPolicyReport } from "./grcDestinationPolicy";
+import type { IntegrationAdapterId, IntegrationAdapterStatus, IntegrationReadinessRegistry } from "./integrationReadiness";
+import type { ModelGatewayProviderPolicyReport } from "./modelGatewayProviderPolicy";
+import type { ModelGatewaySecretPolicyReport } from "./modelGatewaySecretPolicy";
+import type { ObjectStoragePolicyReport } from "./objectStoragePolicy";
+
+export type IntegrationEnablementPolicyReportId =
+  | "provider-policy"
+  | "secret-policy"
+  | "object-storage-policy"
+  | "document-parser-policy"
+  | "chain-anchor-policy"
+  | "grc-destination-policy";
+
+export type IntegrationEnablementPolicyReportSummary = {
+  id: IntegrationEnablementPolicyReportId;
+  label: string;
+  reportVersion: string;
+  status: IntegrationAdapterStatus;
+  requiredControlCount: number;
+  approvedControlCount: number;
+  blockedControlCount: number;
+  externalCapability: string;
+  externalCapabilityAllowed: false;
+  externalCapabilityStatus: string;
+  nextActions: string[];
+  notLegalAdviceBoundary: string;
+};
+
+export type IntegrationEnablementAdapterSummary = {
+  id: IntegrationAdapterId;
+  label: string;
+  status: IntegrationAdapterStatus;
+  readinessEvidence: string;
+  requiredPolicy: string;
+  blockerCount: number;
+  blockers: string[];
+  recoveryAction: string;
+  disabledReason?: string;
+  notLegalAdviceBoundary: string;
+};
+
+export type IntegrationEnablementDossier = {
+  dossierVersion: "lexproof-integration-enablement-dossier-v1";
+  generatedAt: string;
+  dossierHash: string;
+  overallStatus: IntegrationAdapterStatus;
+  registryStatus: IntegrationAdapterStatus;
+  adapterCount: number;
+  readyCount: number;
+  needsPolicyCount: number;
+  blockedCount: number;
+  disabledCount: number;
+  policyReportCount: number;
+  externalEnablementAllowed: false;
+  externalEnablementStatus: "disabled-by-default" | "blocked-by-policy" | "needs-policy-review";
+  adapters: IntegrationEnablementAdapterSummary[];
+  policyReports: IntegrationEnablementPolicyReportSummary[];
+  blockerCount: number;
+  blockers: string[];
+  nextActions: string[];
+  notLegalAdviceBoundary: "Not legal advice. Integration enablement dossiers are audit preparation metadata only.";
+};
+
+export type CreateIntegrationEnablementDossierInput = {
+  registry: IntegrationReadinessRegistry;
+  providerPolicyReport: ModelGatewayProviderPolicyReport;
+  secretPolicyReport: ModelGatewaySecretPolicyReport;
+  objectStoragePolicyReport: ObjectStoragePolicyReport;
+  documentParserPolicyReport: DocumentParserPolicyReport;
+  chainAnchorPolicyReport: ChainAnchorPolicyReport;
+  grcDestinationPolicyReport: GrcDestinationPolicyReport;
+  generatedAt?: string;
+};
+
+const NOT_LEGAL_ADVICE =
+  "Not legal advice. Integration enablement dossiers are audit preparation metadata only." as const;
+const DEFAULT_NEXT_ACTION =
+  "Keep all external adapters disabled until adapter enablement review, secret handling, retention, audit logging, and human review controls are approved.";
+
+export async function createIntegrationEnablementDossier({
+  registry,
+  providerPolicyReport,
+  secretPolicyReport,
+  objectStoragePolicyReport,
+  documentParserPolicyReport,
+  chainAnchorPolicyReport,
+  grcDestinationPolicyReport,
+  generatedAt = new Date().toISOString()
+}: CreateIntegrationEnablementDossierInput): Promise<IntegrationEnablementDossier> {
+  const adapters = registry.adapters.map((adapter) => ({
+    id: adapter.id,
+    label: sanitize(adapter.label),
+    status: normalizeStatus(adapter.status),
+    readinessEvidence: sanitize(adapter.readinessEvidence),
+    requiredPolicy: sanitize(adapter.requiredPolicy),
+    blockerCount: adapter.status === "blocked" ? Math.max(1, adapter.validationErrors.length) : adapter.validationErrors.length,
+    blockers: adapter.validationErrors.map(sanitize).filter(Boolean),
+    recoveryAction: sanitize(adapter.recoveryAction),
+    disabledReason: adapter.disabledReason ? sanitize(adapter.disabledReason) : undefined,
+    notLegalAdviceBoundary: sanitize(adapter.notLegalAdviceBoundary)
+  }));
+  const policyReports = [
+    summarizeProviderPolicy(providerPolicyReport),
+    summarizePolicyReport({
+      id: "secret-policy",
+      label: "Model Gateway Secret Policy",
+      report: secretPolicyReport,
+      externalCapability: "Server model provider proxying",
+      externalCapabilityStatus: secretPolicyReport.externalProviderProxyingStatus
+    }),
+    summarizePolicyReport({
+      id: "object-storage-policy",
+      label: "Object Storage Policy",
+      report: objectStoragePolicyReport,
+      externalCapability: "External object storage writes",
+      externalCapabilityStatus: objectStoragePolicyReport.externalObjectStorageStatus
+    }),
+    summarizePolicyReport({
+      id: "document-parser-policy",
+      label: "Document Parser Policy",
+      report: documentParserPolicyReport,
+      externalCapability: "External document parsing",
+      externalCapabilityStatus: documentParserPolicyReport.externalDocumentParsingStatus
+    }),
+    summarizePolicyReport({
+      id: "chain-anchor-policy",
+      label: "Chain Anchor Policy",
+      report: chainAnchorPolicyReport,
+      externalCapability: "External chain anchoring",
+      externalCapabilityStatus: chainAnchorPolicyReport.externalChainAnchoringStatus
+    }),
+    summarizePolicyReport({
+      id: "grc-destination-policy",
+      label: "GRC Destination Policy",
+      report: grcDestinationPolicyReport,
+      externalCapability: "External GRC ticket creation",
+      externalCapabilityStatus: grcDestinationPolicyReport.externalGrcTicketCreationStatus
+    })
+  ];
+  const blockedCount = adapters.filter((adapter) => adapter.status === "blocked").length;
+  const needsPolicyCount = adapters.filter((adapter) => adapter.status === "needs-policy").length;
+  const readyCount = adapters.filter((adapter) => adapter.status === "ready").length;
+  const disabledCount = adapters.filter((adapter) => adapter.status === "disabled").length;
+  const policyBlockedCount = policyReports.filter((report) => report.status === "blocked").length;
+  const policyNeedsReviewCount = policyReports.filter((report) => report.status === "needs-policy").length;
+  const blockers = collectBlockers(adapters, policyReports);
+  const nextActions = createNextActions(registry.nextActions, policyReports);
+  const overallStatus = createOverallStatus(blockedCount + policyBlockedCount, needsPolicyCount + policyNeedsReviewCount, readyCount);
+  const hashPayload = {
+    dossierVersion: "lexproof-integration-enablement-dossier-v1",
+    overallStatus,
+    registryStatus: normalizeStatus(registry.overallStatus),
+    adapters,
+    policyReports,
+    blockers,
+    nextActions,
+    externalEnablementAllowed: false
+  };
+
+  return {
+    dossierVersion: "lexproof-integration-enablement-dossier-v1",
+    generatedAt,
+    dossierHash: await sha256Hex(stableStringify(hashPayload)),
+    overallStatus,
+    registryStatus: normalizeStatus(registry.overallStatus),
+    adapterCount: adapters.length,
+    readyCount,
+    needsPolicyCount,
+    blockedCount,
+    disabledCount,
+    policyReportCount: policyReports.length,
+    externalEnablementAllowed: false,
+    externalEnablementStatus: createExternalEnablementStatus(blockedCount + policyBlockedCount, needsPolicyCount + policyNeedsReviewCount),
+    adapters,
+    policyReports,
+    blockerCount: blockers.length,
+    blockers,
+    nextActions,
+    notLegalAdviceBoundary: NOT_LEGAL_ADVICE
+  };
+}
+
+export function exportIntegrationEnablementDossierJson(dossier: IntegrationEnablementDossier): string {
+  return `${JSON.stringify(dossier, null, 2)}\n`;
+}
+
+export function downloadIntegrationEnablementDossierJson(filename: string, dossier: IntegrationEnablementDossier): void {
+  const blob = new Blob([exportIntegrationEnablementDossierJson(dossier)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function summarizeProviderPolicy(report: ModelGatewayProviderPolicyReport): IntegrationEnablementPolicyReportSummary {
+  const blockedControlCount = report.controls.filter((control) => control.status === "blocked").length;
+  const blockedAdapterCount = report.adapters.filter((adapter) => adapter.status === "blocked").length;
+
+  return {
+    id: "provider-policy",
+    label: "Model Gateway Provider Policy",
+    reportVersion: report.reportVersion,
+    status: normalizeStatus(report.overallStatus),
+    requiredControlCount: report.controls.length,
+    approvedControlCount: report.controls.filter((control) => control.status === "ready").length,
+    blockedControlCount: blockedControlCount + blockedAdapterCount,
+    externalCapability: "External model provider proxying",
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: "disabled-by-default",
+    nextActions: report.nextActions.map(sanitize).filter(Boolean),
+    notLegalAdviceBoundary: sanitize(report.notLegalAdviceBoundary)
+  };
+}
+
+function summarizePolicyReport({
+  id,
+  label,
+  report,
+  externalCapability,
+  externalCapabilityStatus
+}: {
+  id: Exclude<IntegrationEnablementPolicyReportId, "provider-policy">;
+  label: string;
+  report:
+    | ModelGatewaySecretPolicyReport
+    | ObjectStoragePolicyReport
+    | DocumentParserPolicyReport
+    | ChainAnchorPolicyReport
+    | GrcDestinationPolicyReport;
+  externalCapability: string;
+  externalCapabilityStatus: string;
+}): IntegrationEnablementPolicyReportSummary {
+  return {
+    id,
+    label,
+    reportVersion: report.reportVersion,
+    status: normalizeStatus(report.overallStatus),
+    requiredControlCount: report.requiredControlCount,
+    approvedControlCount: report.approvedControlCount,
+    blockedControlCount: report.controls.filter((control) => control.status === "blocked").length,
+    externalCapability,
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: sanitize(externalCapabilityStatus),
+    nextActions: report.nextActions.map(sanitize).filter(Boolean),
+    notLegalAdviceBoundary: sanitize(report.notLegalAdviceBoundary)
+  };
+}
+
+function collectBlockers(
+  adapters: IntegrationEnablementAdapterSummary[],
+  reports: IntegrationEnablementPolicyReportSummary[]
+): string[] {
+  return unique([
+    ...adapters.flatMap((adapter) =>
+      adapter.status === "blocked"
+        ? adapter.blockers.length > 0
+          ? adapter.blockers
+          : [`${adapter.label}: ${adapter.recoveryAction}`]
+        : []
+    ),
+    ...reports.flatMap((report) =>
+      report.status === "blocked"
+        ? report.nextActions.length > 0
+          ? report.nextActions.map((action) => `${report.label}: ${action}`)
+          : [`${report.label}: blocked policy report requires review.`]
+        : []
+    )
+  ]);
+}
+
+function createNextActions(registryActions: string[], policyReports: IntegrationEnablementPolicyReportSummary[]): string[] {
+  const policyActions = policyReports.flatMap((report) =>
+    report.status === "ready" ? [] : report.nextActions.slice(0, 2).map((action) => `${report.label}: ${action}`)
+  );
+
+  return unique([
+    DEFAULT_NEXT_ACTION,
+    ...registryActions.map(sanitize).filter(Boolean),
+    ...policyActions.map(sanitize).filter(Boolean)
+  ]);
+}
+
+function createOverallStatus(blockedCount: number, needsPolicyCount: number, readyCount: number): IntegrationAdapterStatus {
+  if (blockedCount > 0) {
+    return "blocked";
+  }
+
+  if (needsPolicyCount > 0) {
+    return "needs-policy";
+  }
+
+  if (readyCount > 0) {
+    return "ready";
+  }
+
+  return "disabled";
+}
+
+function createExternalEnablementStatus(
+  blockedCount: number,
+  needsPolicyCount: number
+): IntegrationEnablementDossier["externalEnablementStatus"] {
+  if (blockedCount > 0) {
+    return "blocked-by-policy";
+  }
+
+  if (needsPolicyCount > 0) {
+    return "needs-policy-review";
+  }
+
+  return "disabled-by-default";
+}
+
+function normalizeStatus(value: string): IntegrationAdapterStatus {
+  if (value === "ready" || value === "needs-policy" || value === "blocked" || value === "disabled") {
+    return value;
+  }
+
+  return "blocked";
+}
+
+function sanitize(value: string): string {
+  return redactDataBoundaryText(value.replace(/\s+/g, " ").trim());
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))];
+}
+
+async function sha256Hex(payload: string): Promise<string> {
+  const bytes = new TextEncoder().encode(payload);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  return `{${Object.entries(value)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+    .join(",")}}`;
+}

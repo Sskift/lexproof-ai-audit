@@ -802,6 +802,65 @@ describe("App", () => {
     expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   });
 
+  it("downloads an Integration Enablement Dossier without enabling external adapters", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn(() => "blob:integration-enablement-dossier");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+      const registryPanel = registryHeading.closest("section");
+      expect(registryPanel).not.toBeNull();
+      const registry = within(registryPanel as HTMLElement);
+
+      expect(await registry.findByRole("heading", { name: /Integration Enablement Dossier/i })).toBeInTheDocument();
+      expect(await registry.findByText(/External enablement remains disabled/i)).toBeInTheDocument();
+      expect(registry.getByText(/Dossier hash/i)).toBeInTheDocument();
+
+      fireEvent.click(registry.getByRole("button", { name: /Download Enablement Dossier JSON/i }));
+
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Integration Enablement Dossier did not create a blob.");
+      }
+      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          dossierVersion: "lexproof-integration-enablement-dossier-v1",
+          externalEnablementAllowed: false,
+          policyReportCount: 6,
+          notLegalAdviceBoundary: "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
+        })
+      );
+      expect(parsed.dossierHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.policyReports.length).toBe(6);
+      expect(payload).toContain("Not legal advice");
+      expect(payload).not.toContain("sk-live-");
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:integration-enablement-dossier");
+      expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("shows Model Gateway provider policy readiness before external server providers can be enabled", async () => {
     render(<App />);
 

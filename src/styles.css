@@ -2079,6 +2079,36 @@ textarea {
   justify-self: start;
 }
 
+.integration-enablement-dossier {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.integration-enablement-dossier.ready {
+  border-color: #b8d8c8;
+  background: #f8fffb;
+}
+
+.integration-enablement-dossier.needs-policy {
+  border-color: #e9bd87;
+  background: #fffdf8;
+}
+
+.integration-enablement-dossier.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.integration-dossier-policy-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .model-gateway-provider-policy {
   display: grid;
   gap: 10px;
@@ -5987,6 +6017,7 @@ textarea {
   .audit-log-facts,
   .evaluation-facts,
   .integration-adapter-grid,
+  .integration-dossier-policy-list,
   .provider-policy-summary,
   .provider-policy-sync,
   .provider-policy-grid,

@@ -6,6 +6,10 @@ import type {
   IntegrationReadinessRegistry
 } from "../lib/integrationReadiness";
 import {
+  downloadIntegrationEnablementDossierJson,
+  type IntegrationEnablementDossier
+} from "../lib/integrationEnablementDossier";
+import {
   exportModelGatewayProviderPolicyJson,
   type ModelGatewayProviderPolicyReport,
   type ModelGatewayProviderPolicyStatus
@@ -42,6 +46,7 @@ import {
 
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
+  enablementDossier: IntegrationEnablementDossier | null;
   providerPolicyReport: ModelGatewayProviderPolicyReport;
   providerPolicySource: "local" | "server";
   providerPolicyApiBaseUrl: string;
@@ -117,6 +122,7 @@ const categoryIcons: Record<IntegrationAdapterCategory, typeof PlugZap> = {
 
 export function IntegrationReadinessPanel({
   registry,
+  enablementDossier,
   providerPolicyReport,
   providerPolicySource,
   providerPolicyApiBaseUrl,
@@ -200,6 +206,7 @@ export function IntegrationReadinessPanel({
           <IntegrationAdapterCard key={adapter.id} adapter={adapter} onNavigate={onNavigate} />
         ))}
       </div>
+      <IntegrationEnablementDossierPanel dossier={enablementDossier} />
       <ObjectStoragePolicyPanel
         draft={storagePolicyDraft}
         context={storagePolicyContext}
@@ -277,6 +284,65 @@ export function IntegrationReadinessPanel({
             <li key={action}>{action}</li>
           ))}
         </ul>
+      </div>
+    </section>
+  );
+}
+
+function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEnablementDossier | null }) {
+  return (
+    <section className={`integration-enablement-dossier ${dossier?.overallStatus ?? "disabled"}`} aria-label="Integration Enablement Dossier">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldCheck size={17} aria-hidden="true" />
+          <h4>Integration Enablement Dossier</h4>
+        </div>
+        <span className={`workflow-status ${dossier?.overallStatus ?? "disabled"}`}>
+          {dossier ? statusLabel(dossier.overallStatus) : "calculating"}
+        </span>
+      </div>
+      <p className="section-note">
+        {dossier?.notLegalAdviceBoundary ?? "Not legal advice. Integration enablement dossiers are audit preparation metadata only."}
+      </p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Dossier hash" value={dossier ? `${dossier.dossierHash.slice(0, 12)}...` : "Calculating"} />
+        <ProviderPolicyFact label="Policy reports" value={dossier ? String(dossier.policyReportCount) : "0"} />
+        <ProviderPolicyFact label="External enablement" value={dossier?.externalEnablementAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Ready adapters" value={dossier ? String(dossier.readyCount) : "0"} />
+        <ProviderPolicyFact label="Needs policy" value={dossier ? String(dossier.needsPolicyCount) : "0"} />
+        <ProviderPolicyFact label="Blocked" value={dossier ? String(dossier.blockedCount + dossier.blockerCount) : "0"} />
+      </div>
+      <div className="integration-dossier-policy-list">
+        {(dossier?.policyReports ?? []).map((report) => (
+          <article key={report.id} className={`provider-control ${report.status}`}>
+            <header>
+              <span>{statusLabel(report.status)}</span>
+              <strong>{report.label}</strong>
+            </header>
+            <p>
+              {report.approvedControlCount}/{report.requiredControlCount} controls ready; {report.externalCapability} is{" "}
+              {report.externalCapabilityAllowed ? "enabled" : "disabled"}.
+            </p>
+            <small>{report.externalCapabilityStatus}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>
+          External enablement remains disabled. The dossier is metadata-only and does not call providers, storage, OCR,
+          ticket systems, or chains.
+        </span>
+        <button
+          type="button"
+          className="secondary"
+          disabled={!dossier}
+          onClick={() => dossier && downloadIntegrationEnablementDossierJson("integration-enablement-dossier.json", dossier)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Enablement Dossier JSON
+        </button>
       </div>
     </section>
   );

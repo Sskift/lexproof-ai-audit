@@ -83,6 +83,7 @@ lexproof-ai-audit/
       grcDestinationPolicyClient.ts # Browser client for GRC destination policy evaluation
       modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
       auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts
+      integrationEnablementDossier.ts # Hashed metadata-only adapter/policy enablement dossier
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
       counselReview.ts       # Counsel/compliance review status queue helpers
@@ -631,6 +632,16 @@ Owns W9 adapter readiness behavior:
 
 The registry is audit preparation metadata only. It does not call external providers, persist secrets, upload raw files, run OCR, create GRC tickets, write chain transactions, or change deterministic audit scoring.
 
+### `src/lib/integrationEnablementDossier.ts`
+
+Owns the W9 adapter enablement handoff artifact:
+
+- `createIntegrationEnablementDossier(input)` consolidates the Integration Readiness Registry, Model Gateway provider policy, secret policy, object storage policy, document parser policy, chain anchor policy, and GRC destination policy reports into one metadata-only dossier.
+- The dossier includes adapter summaries, policy report summaries, sanitized blockers, next actions, `externalEnablementAllowed: false`, and a stable SHA-256 dossier hash that ignores `generatedAt`.
+- `exportIntegrationEnablementDossierJson()` and `downloadIntegrationEnablementDossierJson()` serialize and download the local JSON bundle for security/counsel review.
+
+The dossier is audit preparation metadata only. It does not enable providers, persist secrets, upload objects, parse raw documents, create tickets, write chain transactions, or change deterministic audit scoring.
+
 ### `src/lib/grcTicketExport.ts`
 
 Owns the first W9 GRC export artifact:
@@ -731,7 +742,7 @@ Components are intentionally presentational and interaction-focused:
 - `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source update approval gates, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, and `regulatorySourceApproval.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
-- `IntegrationReadinessPanel` renders adapter readiness, Model Gateway provider/secret policy controls, Object Storage Policy Evaluation, Document Parser Policy Evaluation, Chain Anchor Policy Evaluation, GRC Destination Policy Evaluation, server sync states, recovery states, and metadata-only JSON downloads while keeping external providers, object storage, raw-document parsing, chain anchoring, and external ticket creation disabled by default.
+- `IntegrationReadinessPanel` renders adapter readiness, Integration Enablement Dossier, Model Gateway provider/secret policy controls, Object Storage Policy Evaluation, Document Parser Policy Evaluation, Chain Anchor Policy Evaluation, GRC Destination Policy Evaluation, server sync states, recovery states, and metadata-only JSON downloads while keeping external providers, object storage, raw-document parsing, chain anchoring, and external ticket creation disabled by default.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -887,6 +898,7 @@ Domain tests live next to the audit engine and cover:
 - data boundary report classification, blocker handling, redacted snippets, and export Markdown summary
 - security review checklist status, sanitized blockers, session-model review state, and simulated-anchor requirements
 - integration readiness registry status, disabled adapters, policy blockers, safe GRC readiness, and sanitized unsafe evidence blockers
+- integration enablement dossier hashing, disabled-by-default external enablement, policy report consolidation, and sanitized blockers
 - GRC ticket export bundle gating, metadata-only remediation records, JSON serialization, and browser download
 - counsel pack model intake export
 - model review run payload and response hashing

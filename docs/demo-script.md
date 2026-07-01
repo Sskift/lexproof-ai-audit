@@ -115,6 +115,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 6. **Sync vault and gateway journey**
    - Open the **Secure Review Workspace** panel at the top of the app.
    - In **Integration Readiness Registry**, show **Model Gateway Provider Policy** with mock-only enabled status, disabled external model adapters, required provider controls, **Secret Policy Evaluation**, **Download Provider Policy JSON**, and **Download Secret Policy JSON**. Not legal advice.
+   - In **Integration Enablement Dossier**, show the dossier hash, six consolidated policy reports, disabled external enablement state, and click **Download Enablement Dossier JSON** to show a metadata-only handoff with `externalEnablementAllowed: false`. Not legal advice.
    - Enter `http://127.0.0.1:8787` in **Provider Policy API base URL**, click **Refresh Server Provider Policy**, and show **Server provider policy synced**. If the API is down, show the recovery action instead of collecting credentials.
    - In **Object Storage Policy Evaluation**, enter `http://127.0.0.1:8787`, fill synthetic owner/retention/deletion metadata, approve encryption, bucket allowlist, access logging, lifecycle policy, no-sensitive-material, and human-review controls, then click **Evaluate Server Storage Policy**. Show **Storage policy report synced**, `10/10`, and **External storage: Disabled**. Download Storage Policy JSON if time allows. Not legal advice.
    - In **Document Parser Policy Evaluation**, enter `http://127.0.0.1:8787`, fill synthetic owner, document-size, raw-retention, deletion-SLA, and parser-purpose metadata, approve redaction before parsing, no model training use, parser access logging, no-sensitive-material, and human-review controls, then click **Evaluate Server Parser Policy**. Show **Parser policy report synced** and **External parsing: Disabled**. Download Parser Policy JSON if time allows. Not legal advice.
@@ -124,6 +125,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Run Secure Review Journey**.
    - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, the automatically queued Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
+   - Integration dossier screenshot: `docs/assets/screenshots/integration-enablement-dossier.png`.
    - Storage policy screenshot: `docs/assets/screenshots/object-storage-policy-evaluation.png`.
    - Parser policy screenshot: `docs/assets/screenshots/document-parser-policy-evaluation.png`.
    - Chain anchor policy screenshot: `docs/assets/screenshots/chain-anchor-policy-evaluation.png`.
@@ -161,6 +163,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 - **Recertification due:** load `SignalBridge Marketing Review`, open **Evidence Ledger**, and confirm **Evidence Recertification Queue** shows a P0 source-linked item for `Claims inventory`; click **Mark Claims inventory recertified** and confirm the queue moves to ready without changing raw evidence content. Not legal advice.
 - **Export Safety Gate blocked:** add a disposable evidence item that mentions a private-key-like value, API-key-like token, or raw KYC packet, then open **Counsel Pack**. The gate should show **Blocked for export**, redact the detected material in snippets, and disable Markdown/PDF, manifest JSON, simulated anchor, Pack Version save, and server export actions. Delete or replace that evidence item before continuing the normal demo path. Not legal advice.
 - **GRC destination policy blocked:** paste a disposable API-key-like token or external ticket-write instruction into **GRC Destination Policy Evaluation** notes, then click **Evaluate Server GRC Policy**. The report should block the metadata boundary, keep external ticket creation disabled, avoid echoing the unsafe text, and show the Not legal advice boundary. Remove the unsafe note before continuing.
+- **Integration enablement blocked:** add unsafe disposable evidence or unsafe policy metadata, then return to **Integration Readiness Registry**. **Integration Enablement Dossier** should move to blocked, redact unsafe text in blockers, keep `externalEnablementAllowed: false`, and still allow the metadata-only JSON download for remediation review. Not legal advice.
 
 ## Closing Line
 

@@ -104,6 +104,10 @@ import {
   GrcDestinationPolicyClientError
 } from "./lib/grcDestinationPolicyClient";
 import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
+import {
+  createIntegrationEnablementDossier,
+  type IntegrationEnablementDossier
+} from "./lib/integrationEnablementDossier";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
   createModelGatewayProviderPolicyReport,
@@ -305,6 +309,7 @@ export default function App() {
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
+  const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
@@ -640,6 +645,35 @@ export default function App() {
     [grcDestinationPolicyContext, grcDestinationPolicyDraft]
   );
   const activeGrcDestinationPolicyReport = serverGrcDestinationPolicyReport ?? grcDestinationPolicyReport;
+  useEffect(() => {
+    let cancelled = false;
+
+    createIntegrationEnablementDossier({
+      registry: integrationReadinessRegistry,
+      providerPolicyReport: activeModelGatewayProviderPolicyReport,
+      secretPolicyReport: activeModelGatewaySecretPolicyReport,
+      objectStoragePolicyReport: activeObjectStoragePolicyReport,
+      documentParserPolicyReport: activeDocumentParserPolicyReport,
+      chainAnchorPolicyReport: activeChainAnchorPolicyReport,
+      grcDestinationPolicyReport: activeGrcDestinationPolicyReport
+    }).then((dossier) => {
+      if (!cancelled) {
+        setIntegrationEnablementDossier(dossier);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeChainAnchorPolicyReport,
+    activeDocumentParserPolicyReport,
+    activeGrcDestinationPolicyReport,
+    activeModelGatewayProviderPolicyReport,
+    activeModelGatewaySecretPolicyReport,
+    activeObjectStoragePolicyReport,
+    integrationReadinessRegistry
+  ]);
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -1591,6 +1625,7 @@ export default function App() {
 
           <IntegrationReadinessPanel
             registry={integrationReadinessRegistry}
+            enablementDossier={integrationEnablementDossier}
             providerPolicyReport={activeModelGatewayProviderPolicyReport}
             providerPolicySource={serverProviderPolicyReport ? "server" : "local"}
             providerPolicyApiBaseUrl={providerPolicyApiBaseUrl}

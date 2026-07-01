@@ -69,6 +69,7 @@ Key evidence:
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
 - Editable Evidence Ledger with empty-state Evidence Intake Guidance, `draft/requested/received/under-review/verified/rejected` evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, and local evidence change trail.
 - Evidence Retention Readiness panel that classifies metadata-only evidence, personal-data review needs, and vault-sync blockers for private-key-like material, API keys, and raw KYC references with metadata-only retention policy JSON plus a hashed remediation queue JSON export.
+- Evidence Recertification Queue that flags stale or expiring reliance-ready evidence from metadata timestamps, prioritizes source-linked controls, lets a reviewer mark evidence recertified, and downloads a metadata-only hashed queue. Not legal advice.
 - Evidence Vault versioning with duplicate-hash detection, rejected-record replacement, parent/superseded lineage, replacement reasons, linked regulatory control IDs, server-side persisted metadata manifests, server-enforced status transitions, local `under-review/rejected` ledger sync, and metadata-only recovery actions.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
 - Evidence Manifest generator with deterministic SHA-256 item hashes, bundle hash, and JSON download.
@@ -174,6 +175,10 @@ Evidence Retention Readiness blocks Evidence Vault sync when evidence contains p
 ![Evidence Retention Readiness](docs/assets/screenshots/evidence-retention-readiness.png)
 
 ![Evidence Retention Remediation Queue](docs/assets/screenshots/evidence-retention-remediation-queue.png)
+
+Evidence Recertification Queue flags stale source-linked metadata before counsel/export reliance. Load `SignalBridge Marketing Review`, open **Evidence Ledger**, and refresh the stale `Claims inventory` evidence to clear the queue. Not legal advice.
+
+![Evidence Recertification Queue](docs/assets/screenshots/evidence-recertification-queue.png)
 
 Security Review Checklist turns Model Connect, retention, Export Safety Gate, manifest, and anchor state into real integration gates for model providers, evidence storage, and anchoring. Not legal advice.
 

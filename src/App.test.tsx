@@ -1529,6 +1529,28 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
   });
 
+  it("surfaces stale source-linked evidence in the recertification queue and lets the user refresh it", async () => {
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText(/Load sample scenario/i), { target: { value: "SignalBridge Marketing Review" } });
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+
+    const queue = await screen.findByRole("region", { name: /Evidence Recertification Queue/i });
+
+    expect(await within(queue).findByText(/needs-recertification/i)).toBeInTheDocument();
+    expect(within(queue).getByText("Claims inventory")).toBeInTheDocument();
+    expect(within(queue).getByText(/Recertify source-linked evidence before counsel\/export reliance/i)).toBeInTheDocument();
+    expect(within(queue).getByText(/Not legal advice/i)).toBeInTheDocument();
+    expect(within(queue).getByRole("button", { name: /Download Recertification Queue JSON/i })).toBeEnabled();
+
+    fireEvent.click(within(queue).getByRole("button", { name: /Mark Claims inventory recertified/i }));
+
+    await waitFor(() =>
+      expect(within(queue).getAllByText(/No recertification action is due for reliance-ready evidence/i).length).toBeGreaterThan(0)
+    );
+    expect(within(queue).getByRole("button", { name: /Download Recertification Queue JSON/i })).toBeDisabled();
+  });
+
   it("opens a metadata-only replacement request from rejected local evidence", async () => {
     render(<App />);
 

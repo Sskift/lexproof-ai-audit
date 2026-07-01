@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { BadgeCheck, CloudUpload, DatabaseZap, Download, FileUp, History, LockKeyhole, RefreshCcw, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarClock,
+  CloudUpload,
+  DatabaseZap,
+  Download,
+  FileUp,
+  History,
+  LockKeyhole,
+  RefreshCcw,
+  ShieldAlert,
+  Trash2
+} from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
 import type { EvidenceIntakeGuidance, EvidenceIntakeGuidanceAction } from "../lib/evidenceIntakeGuidance";
@@ -24,6 +36,11 @@ import {
   downloadEvidenceRetentionRemediationJson,
   type EvidenceRetentionRemediationQueue
 } from "../lib/evidenceRetentionRemediation";
+import {
+  createEvidenceRecertificationQueue,
+  downloadEvidenceRecertificationJson,
+  type EvidenceRecertificationQueue
+} from "../lib/evidenceRecertification";
 import {
   createRetentionPolicyReport,
   downloadRetentionPolicyJson,
@@ -89,6 +106,7 @@ export function EvidenceLedger({
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
   const [retentionRemediationQueue, setRetentionRemediationQueue] = useState<EvidenceRetentionRemediationQueue | null>(null);
+  const [recertificationQueue, setRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const vaultControlCoverage = useMemo(
     () =>
       createEvidenceVaultControlCoverage({
@@ -117,6 +135,21 @@ export function EvidenceLedger({
       isActive = false;
     };
   }, [retentionReport]);
+  useEffect(() => {
+    let isActive = true;
+    setRecertificationQueue(null);
+    void createEvidenceRecertificationQueue({
+      workspaceId: projectId,
+      evidenceItems
+    }).then((queue) => {
+      if (isActive) {
+        setRecertificationQueue(queue);
+      }
+    });
+    return () => {
+      isActive = false;
+    };
+  }, [evidenceItems, projectId]);
 
   const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
   const canSyncVault =
@@ -382,6 +415,10 @@ export function EvidenceLedger({
       </section>
 
       <RetentionPolicyPanel report={retentionReport} remediationQueue={retentionRemediationQueue} />
+      <EvidenceRecertificationPanel
+        queue={recertificationQueue}
+        onMarkRecertified={(index) => onUpdateEvidence(index, { status: "verified" })}
+      />
 
       <section className={`evidence-vault-sync ${vaultStatus}`}>
         <div className="split-title compact-title">
@@ -724,6 +761,84 @@ function EvidenceIntakeGuidancePanel({
             </button>
           </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function EvidenceRecertificationPanel({
+  queue,
+  onMarkRecertified
+}: {
+  queue: EvidenceRecertificationQueue | null;
+  onMarkRecertified: (index: number) => void;
+}) {
+  const status = queue?.status ?? "generating";
+  const visibleItems = queue?.items.slice(0, 5) ?? [];
+
+  return (
+    <section className={`evidence-recertification-panel ${queue?.status ?? "monitoring"}`} aria-label="Evidence Recertification Queue">
+      <div className="split-title compact-title">
+        <div>
+          <CalendarClock size={17} aria-hidden="true" />
+          <h3>Evidence Recertification Queue</h3>
+        </div>
+        <span className={`recertification-status ${queue?.status ?? "monitoring"}`}>{status}</span>
+      </div>
+      <p className="section-note">
+        {queue?.notLegalAdviceBoundary ??
+          "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."}
+      </p>
+      <div className="recertification-grid">
+        <RetentionFact label="Actions" value={String(queue?.summary.totalActionCount ?? 0)} />
+        <RetentionFact label="Overdue" value={String(queue?.summary.overdueCount ?? 0)} />
+        <RetentionFact label="Expiring" value={String(queue?.summary.expiringCount ?? 0)} />
+        <RetentionFact label="Queue SHA-256" value={queue?.queueHash ?? "calculating"} />
+      </div>
+      {visibleItems.length === 0 ? (
+        <p className="empty-state">
+          {queue?.nextSteps[0] ?? "Checking reliance-ready evidence recertification metadata."}
+        </p>
+      ) : (
+        <div className="recertification-list">
+          {visibleItems.map((item) => (
+            <article key={item.id} className={`recertification-item ${item.priority.toLowerCase()}`}>
+              <header>
+                <span className={`recertification-priority ${item.priority.toLowerCase()}`}>{item.priority}</span>
+                <strong>{item.evidenceLabel}</strong>
+                <small>
+                  {item.evidenceStatus} · {item.owner} · due {item.dueAt === "missing" ? "missing" : item.dueAt.slice(0, 10)}
+                </small>
+              </header>
+              <p>{item.reason}</p>
+              <small>
+                {item.nextAction} Age: {item.ageDays} days. Controls: {item.linkedControlIds.join(", ") || "none"}.
+              </small>
+              <div className="recertification-actions">
+                <button type="button" className="secondary" onClick={() => onMarkRecertified(item.evidenceIndex)}>
+                  <RefreshCcw size={16} aria-hidden="true" />
+                  Mark {item.evidenceLabel} recertified
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      <div className="retention-footer">
+        <ul>
+          {(queue?.nextSteps ?? ["Generate recertification queue from metadata-only evidence."]).map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          className="secondary"
+          disabled={!queue || queue.summary.totalActionCount === 0}
+          onClick={() => (queue ? downloadEvidenceRecertificationJson("evidence-recertification-queue.json", queue) : undefined)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Recertification Queue JSON
+        </button>
       </div>
     </section>
   );

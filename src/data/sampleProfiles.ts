@@ -156,7 +156,16 @@ export const sampleProfiles: AuditProfile[] = [
     blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
     operatingStage: "Planned public marketing campaign before US, UK, and UAE VARA 2024 marketing counsel review",
     evidenceItems: [
-      { label: "Claims inventory", kind: "CSV", content: "Synthetic claim IDs, channels, launch date, reviewer placeholder, and source owner." },
+      {
+        label: "Claims inventory",
+        kind: "CSV",
+        content: "Synthetic claim IDs, channels, launch date, reviewer placeholder, and source owner.",
+        source: "regulatory control: control-uae-vara-marketing-approval; risk evidence requirement: marketing-claims",
+        status: "verified",
+        owner: "Compliance",
+        addedAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z"
+      },
       {
         label: "Audience routing note",
         kind: "Markdown",

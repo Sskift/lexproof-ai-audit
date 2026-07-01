@@ -4155,6 +4155,149 @@ textarea {
   line-height: 1.45;
 }
 
+.evidence-recertification-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.evidence-recertification-panel.needs-recertification {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.evidence-recertification-panel.monitoring {
+  border-color: #e7c673;
+  background: #fffbeb;
+}
+
+.evidence-recertification-panel.ready {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.recertification-status,
+.recertification-priority {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recertification-status.needs-recertification,
+.recertification-priority.p0 {
+  background: #fee4df;
+  color: #9f241a;
+}
+
+.recertification-status.monitoring,
+.recertification-priority.p1,
+.recertification-priority.p2 {
+  background: #fff0bd;
+  color: #7a4e00;
+}
+
+.recertification-status.ready {
+  background: #dff4eb;
+  color: #0c5f55;
+}
+
+.recertification-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.recertification-grid > div,
+.recertification-item {
+  min-width: 0;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.recertification-grid > div {
+  padding: 10px;
+}
+
+.recertification-grid span,
+.recertification-grid strong {
+  display: block;
+}
+
+.recertification-grid span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recertification-grid strong {
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.88rem;
+}
+
+.recertification-list {
+  display: grid;
+  gap: 10px;
+}
+
+.recertification-item {
+  display: grid;
+  gap: 8px;
+  border-left: 4px solid #78909c;
+  padding: 12px;
+}
+
+.recertification-item.p0 {
+  border-left-color: #b85c54;
+}
+
+.recertification-item.p1,
+.recertification-item.p2 {
+  border-left-color: #b57a3a;
+}
+
+.recertification-item header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.recertification-item strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #172431;
+}
+
+.recertification-item p {
+  margin-bottom: 0;
+  color: #445361;
+  line-height: 1.4;
+}
+
+.recertification-item small {
+  color: #657382;
+  line-height: 1.35;
+}
+
+.recertification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .evidence-vault-sync {
   display: grid;
   gap: 12px;
@@ -5812,6 +5955,8 @@ textarea {
   .secret-policy-control-list,
   .grc-ticket-list,
   .retention-grid,
+  .retention-remediation-grid,
+  .recertification-grid,
   .vault-sync-grid,
   .vault-error-facts,
   .submission-pack-summary,

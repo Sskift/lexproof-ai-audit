@@ -55,11 +55,13 @@ describe("evidence templates", () => {
 
   it("instantiates requested evidence items without raw KYC or private data", () => {
     const items = createEvidenceItemsFromTemplate("tokenized-yield-rwa");
+    const serializedSources = items.map((item) => item.source ?? "").join("\n");
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining(["RWA disclosure assumptions memo", "Custody and signer control runbook", "Investor eligibility review"])
     );
     expect(items.every((item) => item.status === "requested")).toBe(true);
+    expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
   });

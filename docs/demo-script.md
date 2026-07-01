@@ -53,6 +53,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Screenshot: `docs/assets/screenshots/source-review-packet.png`.
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
    - Screenshot: `docs/assets/screenshots/source-approval-api-sync.png`.
+   - Optional RWA custody screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/eu-mica-casp-custody-source-graph.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
    - Optional Brazil path screenshot after **Start Brazil VASP source review**: `docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png`.
    - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.

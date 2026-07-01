@@ -63,8 +63,8 @@ describe("createRegulatoryGraph", () => {
     });
 
     expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "European Union")).toMatchObject({
-      matchedClauseCount: 2,
-      missingEvidenceCount: 4,
+      matchedClauseCount: 3,
+      missingEvidenceCount: 6,
       readiness: "evidence-gaps",
       localCounselRole: "EU crypto-asset / data protection counsel"
     });
@@ -133,7 +133,7 @@ describe("createRegulatoryGraph", () => {
     expect(graph.topActions.map((action) => action.action)).toEqual(
       expect.arrayContaining([
         "Prepare US crypto asset classification and offering analysis for counsel review.",
-        "Prepare EU crypto-asset white paper and public communication evidence for counsel review."
+        "Prepare EU CASP custody and administration policy evidence for counsel review."
       ])
     );
   });
@@ -199,6 +199,68 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
       ])
+    );
+  });
+
+  it("matches EU MiCA custody and administration controls for platform wallet custody facts", () => {
+    const custodyProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-casp-custody",
+      jurisdictions: ["European Union"],
+      assetModel: "EU tokenized private credit product with crypto-asset service provider custody",
+      custodyModel: "Platform controls omnibus wallet and client crypto-asset custody administration",
+      aiUsage: "Manual evidence summary only",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(custodyProject);
+    const graph = createRegulatoryGraph(custodyProject, audit, custodyProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["eu-mica-casp-custody-administration"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-casp-custody-administration")).toMatchObject({
+      jurisdiction: "European Union",
+      topic: "custody",
+      citation: "Regulation (EU) 2023/1114, Article 75",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+      coverageStatus: "missing",
+      localCounselRole: "EU crypto-asset custody / CASP counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "EU CASP custody and administration policy evidence",
+        "EU client crypto-asset safeguarding and access-control evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks EU MiCA custody controls covered when RWA custody template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const custodyProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-casp-custody-covered",
+      jurisdictions: ["European Union"],
+      assetModel: "EU tokenized private credit product with crypto-asset service provider custody",
+      custodyModel: "Platform controls omnibus wallet and client crypto-asset custody administration",
+      aiUsage: "Manual evidence summary only",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(custodyProject);
+    const graph = createRegulatoryGraph(custodyProject, audit, custodyProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-casp-custody-administration")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Custody and signer control runbook"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "eu-mica-casp-custody-administration" })])
     );
   });
 

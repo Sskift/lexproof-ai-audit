@@ -119,6 +119,71 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-mica-casp-custody-administration",
+    jurisdiction: "European Union",
+    regulator: "European Union / ESMA",
+    sourceName: "Regulation (EU) 2023/1114 on markets in crypto-assets",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+    citation: "Regulation (EU) 2023/1114, Article 75",
+    topic: "custody",
+    summary:
+      "Prepare crypto-asset service provider custody and administration evidence for EU local counsel review, including custody policy, client-asset access controls, return procedures, and delegation assumptions.",
+    triggerFlagIds: ["custody"],
+    triggerKeywords: [
+      "casp",
+      "crypto-asset service provider",
+      "client crypto-asset",
+      "custody administration",
+      "omnibus wallet",
+      "wallet custody"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-mica-casp-custody-policy",
+        title: "EU CASP custody and administration policy evidence",
+        reason:
+          "EU custody review needs custody agreement, policy summary, wallet authority, signer quorum, means-of-access, and return procedure evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "custody agreement",
+          "custody policy",
+          "wallet authority",
+          "signer quorum",
+          "means of access",
+          "return procedure",
+          "custody and signer control"
+        ]
+      },
+      {
+        id: "eu-mica-client-asset-safeguarding",
+        title: "EU client crypto-asset safeguarding and access-control evidence",
+        reason:
+          "Counsel needs client crypto-asset safeguarding, withdrawal approval, emergency pause, incident response, reconciliation, and delegation evidence for custody review.",
+        priority: "P1",
+        keywords: [
+          "client crypto-asset",
+          "safeguarding",
+          "withdrawal approval",
+          "emergency pause",
+          "incident response",
+          "reconciliation",
+          "delegation",
+          "custody and signer control"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which MiCA custody and administration obligations should EU local counsel map to this wallet or CASP operating model?",
+      "What evidence shows client crypto-assets, wallet authority, access controls, return procedures, and delegation assumptions are ready for review?"
+    ],
+    localCounselRole: "EU crypto-asset custody / CASP counsel",
+    effectiveAsOf: "2024-12-30",
+    lastReviewedAt: "2026-07-01",
+    reviewerNotes:
+      "Source metadata reviewed against MiCA Article 75 custody and administration routing plus ESMA MiCA materials; route interpretation and applicability to EU local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-ai-act-ai-literacy-governance",
     jurisdiction: "European Union",
     regulator: "European Union",

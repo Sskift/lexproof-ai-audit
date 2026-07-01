@@ -52,6 +52,7 @@ describe("createRegulatoryControlMatrix", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
+      custodyModel: "No custody; issuer only prepares metadata summaries for counsel review",
       aiUsage: "Manual evidence summary only",
       evidenceItems: [
         {
@@ -87,6 +88,7 @@ describe("createRegulatoryControlMatrix", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
+      custodyModel: "No custody; issuer only prepares metadata summaries for counsel review",
       aiUsage: "Manual evidence summary only",
       evidenceItems: [
         {

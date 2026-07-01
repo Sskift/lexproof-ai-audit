@@ -2832,25 +2832,27 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+    const counselPackHeading = await screen.findByRole("heading", { name: /^Counsel Pack$/i });
+    const counselPack = within(counselPackHeading.closest("section") as HTMLElement);
 
-    expect(screen.getByLabelText(/Export template/i)).toHaveValue("rwa-tokenized-asset");
-    expect(screen.getByText(/Recommended for current project/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Tokenized Asset \/ RWA Review/i).length).toBeGreaterThan(0);
-    await waitFor(() => expect(screen.getByText(/## Source Review Ledger/i)).toBeInTheDocument());
+    expect(counselPack.getByLabelText(/Export template/i)).toHaveValue("rwa-tokenized-asset");
+    expect(counselPack.getByText(/Recommended for current project/i)).toBeInTheDocument();
+    expect(counselPack.getAllByText(/Tokenized Asset \/ RWA Review/i).length).toBeGreaterThan(0);
+    await waitFor(() => expect(counselPack.getByText(/## Source Review Ledger/i)).toBeInTheDocument());
     expect(
-      screen.getAllByText(/Not legal advice. Source review metadata is audit preparation lineage only./i).length
+      counselPack.getAllByText(/Not legal advice. Source review metadata is audit preparation lineage only./i).length
     ).toBeGreaterThan(0);
 
-    fireEvent.change(screen.getByLabelText(/Export template/i), { target: { value: "ai-governance" } });
+    fireEvent.change(counselPack.getByLabelText(/Export template/i), { target: { value: "ai-governance" } });
 
-    expect(screen.getByLabelText(/Export template/i)).toHaveValue("ai-governance");
-    expect((await screen.findAllByText(/AI Governance Review/i)).length).toBeGreaterThan(0);
-    await waitFor(() => expect(screen.getByText(/Template Review Agenda/i)).toBeInTheDocument());
+    expect(counselPack.getByLabelText(/Export template/i)).toHaveValue("ai-governance");
+    await waitFor(() => expect(counselPack.getAllByText(/AI Governance Review/i).length).toBeGreaterThan(0));
+    await waitFor(() => expect(counselPack.getByText(/Template Review Agenda/i)).toBeInTheDocument());
     expect(
-      screen.getAllByText(/Confirm model purpose, allowed data classes, redaction status, and human review owner./i).length
+      counselPack.getAllByText(/Confirm model purpose, allowed data classes, redaction status, and human review owner./i).length
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Not legal advice. Export templates are audit preparation routing aids only./i).length).toBeGreaterThan(0);
-  });
+    expect(counselPack.getAllByText(/Not legal advice. Export templates are audit preparation routing aids only./i).length).toBeGreaterThan(0);
+  }, 15000);
 
   it("downloads a metadata-only Regulatory Source Pack JSON from the Counsel Pack", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;

@@ -32,9 +32,10 @@ describe("createRegulatorySourceReview", () => {
     expect(review.notLegalAdviceBoundary).toBe("Not legal advice. Source review metadata is audit preparation lineage only.");
     expect(review.totalSourceCount).toBe(graph.matchedClauses.length);
     expect(review.reviewDueCount).toBe(0);
-    expect(review.items[0]).toEqual(
+    const usCryptoSource = review.items.find((item) => item.clauseId === "us-sec-cftc-crypto-asset-interpretation");
+    expect(usCryptoSource).toEqual(
       expect.objectContaining({
-        clauseId: expect.any(String),
+        clauseId: "us-sec-cftc-crypto-asset-interpretation",
         sourceUrl: expect.stringMatching(/^https:\/\//),
         effectiveAsOf: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         lastReviewedAt: "2026-06-30",

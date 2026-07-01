@@ -2,6 +2,7 @@ export type ClassifiedDataClass =
   | "public"
   | "confidential"
   | "personal-data"
+  | "wallet-address"
   | "raw-kyc"
   | "credential-material"
   | "private-key-material";
@@ -28,6 +29,7 @@ const emailPattern = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/;
 const phonePattern = /\+\d[\d\s().-]{7,}\d|\b(?:phone|tel|mobile)\s*[:#-]?\s*\d[\d\s().-]{7,}\d\b/;
 const ssnPattern = /\b(?:ssn|social security number)?\s*[:#-]?\s*\d{3}-\d{2}-\d{4}\b/;
 const passportIdPattern = /\bpassport(?:\s+(?:number|no\.?|id))?\s+(?:[A-Z]{1,3}\d{5,9}|\d{6,12})\b/;
+const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
 const directPersonalIdentifierPattern = new RegExp(
   `${emailPattern.source}|${phonePattern.source}|${ssnPattern.source}|${passportIdPattern.source}`,
   "gi"
@@ -63,6 +65,12 @@ const classificationRules: ClassificationRule[] = [
     severity: "block",
     pattern: /\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi,
     message: "Raw KYC material must stay outside Counsel Pack exports."
+  },
+  {
+    dataClass: "wallet-address",
+    severity: "warn",
+    pattern: new RegExp(evmWalletAddressPattern.source, "gi"),
+    message: "Wallet addresses can be linkable Web3 identifiers and need human confirmation before external handoff."
   },
   {
     dataClass: "personal-data",
@@ -123,6 +131,7 @@ export function redactClassifiedText(value: string): string {
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
     .replace(/\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)(\s*[:=]\s*)[\w.\-]{8,}/gi, "$1$2[redacted-secret]")
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")
+    .replace(new RegExp(evmWalletAddressPattern.source, "gi"), "[redacted-wallet-address]")
     .replace(/\b[a-fA-F0-9]{24,}\b/g, "[redacted-hex-material]")
     .replace(/\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi, "[redacted-raw-kyc]")
     .replace(new RegExp(emailPattern.source, "gi"), "[redacted-email]")

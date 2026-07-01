@@ -3,6 +3,7 @@ import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassifica
 
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const walletAddress = "0x1111111111111111111111111111111111111111";
 
 describe("classifyDataBoundaryText", () => {
   it("classifies secrets, raw KYC, personal data, and confidential labels without leaking raw values", () => {
@@ -48,6 +49,23 @@ describe("classifyDataBoundaryText", () => {
     expect(JSON.stringify(findings)).not.toContain("123-45-6789");
     expect(JSON.stringify(findings)).not.toContain("AB1234567");
   });
+
+  it("flags wallet addresses as reviewable Web3 identifiers without treating them as private keys", () => {
+    const findings = classifyDataBoundaryText(
+      `Evidence note references treasury wallet ${walletAddress} and signer wallet 0x2222222222222222222222222222222222222222 for review.`
+    );
+
+    const walletFinding = findings.find((finding) => finding.dataClass === "wallet-address");
+
+    expect(walletFinding).toMatchObject({
+      dataClass: "wallet-address",
+      severity: "warn",
+      matchCount: 2
+    });
+    expect(findings.map((finding) => finding.dataClass)).not.toContain("private-key-material");
+    expect(JSON.stringify(findings)).not.toContain(walletAddress);
+    expect(JSON.stringify(findings)).not.toContain("0x2222222222222222222222222222222222222222");
+  });
 });
 
 describe("redactClassifiedText", () => {
@@ -73,5 +91,14 @@ describe("redactClassifiedText", () => {
     expect(redacted).not.toContain("+1 415 555 0199");
     expect(redacted).not.toContain("123-45-6789");
     expect(redacted).not.toContain("AB1234567");
+  });
+
+  it("redacts wallet addresses without changing private-key redaction", () => {
+    const redacted = redactClassifiedText(`wallet ${walletAddress} private key ${privateKey}`);
+
+    expect(redacted).toContain("[redacted-wallet-address]");
+    expect(redacted).toContain("[redacted-private-key]");
+    expect(redacted).not.toContain(walletAddress);
+    expect(redacted).not.toContain(privateKey);
   });
 });

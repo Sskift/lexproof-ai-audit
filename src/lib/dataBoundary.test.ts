@@ -8,6 +8,7 @@ import type { ProjectProfile } from "./projectModel";
 
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const walletAddress = "0x1111111111111111111111111111111111111111";
 
 const baseProject: ProjectProfile = {
   id: "project-boundary",
@@ -99,6 +100,44 @@ describe("createDataBoundaryReport", () => {
     expect(report.detectedClasses).toContain("personal-data");
     expect(report.notLegalAdviceBoundary).toContain("Not legal advice");
   });
+
+  it("marks wallet addresses for review while keeping metadata-only export available", () => {
+    const report = createDataBoundaryReport(
+      withInput({
+        project: {
+          ...baseProject,
+          evidenceItems: [
+            {
+              id: "wallet-reference",
+              label: "Wallet control memo",
+              kind: "Markdown",
+              content: `Treasury signer address ${walletAddress} appears in the wallet-control summary.`,
+              status: "received",
+              owner: "Compliance"
+            }
+          ]
+        }
+      })
+    );
+
+    expect(report.status).toBe("needs-review");
+    expect(report.exportAllowed).toBe(true);
+    expect(report.detectedClasses).toContain("wallet-address");
+    expect(report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceLabel: "Wallet control memo",
+          dataClass: "wallet-address",
+          severity: "warn",
+          redactedSnippet: expect.stringContaining("[redacted-wallet-address]")
+        })
+      ])
+    );
+    expect(report.remediation).toContain(
+      "Confirm wallet addresses are public, redacted, or approved for counsel handoff before external sharing."
+    );
+    expect(JSON.stringify(report)).not.toContain(walletAddress);
+  });
 });
 
 describe("summarizeDataBoundaryForExport", () => {
@@ -130,6 +169,32 @@ describe("summarizeDataBoundaryForExport", () => {
     expect(summary).not.toContain(privateKey);
     expect(summary).not.toContain(apiKey);
     expect(summary).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  });
+
+  it("summarizes wallet-address review findings without raw wallet values", () => {
+    const report = createDataBoundaryReport(
+      withInput({
+        project: {
+          ...baseProject,
+          evidenceItems: [
+            {
+              label: "Wallet control memo",
+              kind: "Markdown",
+              content: `Treasury signer address ${walletAddress} appears in the wallet-control summary.`,
+              status: "received",
+              owner: "Compliance"
+            }
+          ]
+        }
+      })
+    );
+
+    const summary = summarizeDataBoundaryForExport(report);
+
+    expect(summary).toContain("wallet-address");
+    expect(summary).toContain("[redacted-wallet-address]");
+    expect(summary).toContain("Not legal advice");
+    expect(summary).not.toContain(walletAddress);
   });
 });
 

@@ -199,6 +199,10 @@ function buildRemediation(findings: DataBoundaryFinding[]): string[] {
     remediation.push("Confirm personal-data and KYC references are redacted, summarized, or counsel-approved before sharing.");
   }
 
+  if (findings.some((finding) => finding.dataClass === "wallet-address")) {
+    remediation.push("Confirm wallet addresses are public, redacted, or approved for counsel handoff before external sharing.");
+  }
+
   if (findings.some((finding) => finding.severity === "info")) {
     remediation.push("Confirm confidentiality labels and recipient scope before external distribution.");
   }

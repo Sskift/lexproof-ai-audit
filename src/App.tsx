@@ -132,6 +132,7 @@ import {
 import {
   createHumanReviewDecision,
   createHumanReviewQueue,
+  createHumanReviewTimeline,
   humanReviewStatusToAIEventStatus,
   humanReviewStatusToCounselReviewStatus,
   humanReviewStatusToEvidenceStatus,
@@ -462,6 +463,15 @@ export default function App() {
       regulatorySourceReview
     ]
   );
+  const humanReviewTimeline = useMemo(
+    () =>
+      createHumanReviewTimeline({
+        projectId: project.id,
+        queue: humanReviewQueue,
+        decisions: currentHumanReviewDecisions
+      }),
+    [currentHumanReviewDecisions, humanReviewQueue, project.id]
+  );
   const dataBoundaryReport = useMemo(
     () =>
       createDataBoundaryReport({
@@ -706,7 +716,8 @@ export default function App() {
         selectedCounselPackTemplate,
         dataBoundaryReport,
         regulatorySourceReview,
-        regulatorySourceApprovalQueue
+        regulatorySourceApprovalQueue,
+        humanReviewTimeline
       );
     },
     [
@@ -715,6 +726,7 @@ export default function App() {
       currentCounselQuestions,
       currentCounselReviews,
       dataBoundaryReport,
+      humanReviewTimeline,
       manifest,
       modelIntakeProfile,
       modelIntakeSummary,

@@ -4,6 +4,7 @@ import type { CounselQuestion } from "./counselQuestions";
 import type { CounselPackTemplate } from "./counselPackTemplates";
 import { redactDataBoundaryText, summarizeDataBoundaryForExport, type DataBoundaryReport } from "./dataBoundary";
 import type { EvidenceManifest } from "./evidenceManifest";
+import type { HumanReviewTimelineEntry } from "./humanReviewWorkflow";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
@@ -27,7 +28,8 @@ export function buildMarkdownCounselPack(
   exportTemplate?: CounselPackTemplate,
   dataBoundaryReport?: DataBoundaryReport,
   regulatorySourceReview?: RegulatorySourceReview,
-  regulatorySourceApprovalQueue?: RegulatorySourceApprovalQueue
+  regulatorySourceApprovalQueue?: RegulatorySourceApprovalQueue,
+  humanReviewTimeline: HumanReviewTimelineEntry[] = []
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -45,6 +47,7 @@ export function buildMarkdownCounselPack(
     regulatorySourceApprovalQueue && regulatorySourceApprovalQueue.totalItemCount > 0
       ? formatRegulatorySourceApprovalQueueSection(regulatorySourceApprovalQueue)
       : "";
+  const humanReviewSection = humanReviewTimeline.length > 0 ? formatHumanReviewTimelineSection(humanReviewTimeline) : "";
   const exportTemplateSection = exportTemplate ? formatExportTemplateSection(exportTemplate) : "";
   const dataBoundarySection = dataBoundaryReport ? summarizeDataBoundaryForExport(dataBoundaryReport) : "";
   const sources = audit.sourcePack.map((source) => `- ${safe(source.title)}: ${source.url}`).join("\n");
@@ -84,6 +87,7 @@ export function buildMarkdownCounselPack(
     ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
     ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
+    ...(humanReviewSection ? ["## Human Review Timeline", humanReviewSection, ""] : []),
     ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
     remediation,
@@ -96,6 +100,31 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatHumanReviewTimelineSection(entries: HumanReviewTimelineEntry[]): string {
+  const orderedEntries = [...entries].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, 12);
+  const decisionCount = entries.filter((entry) => entry.action === "review.decision.saved").length;
+  const openCount = entries.filter((entry) => entry.status !== "reviewed" && entry.status !== "rejected").length;
+  const lines = orderedEntries
+    .map((entry) => {
+      const reviewer = safe(entry.reviewer.trim() || "unassigned");
+      const note = entry.decisionNote.trim() ? `; note: ${safe(entry.decisionNote.trim())}` : "";
+      return `- ${entry.status} ${entry.targetType} [${entry.action}] ${safe(entry.title)}; reviewer: ${reviewer}; due ${safe(
+        formatDate(entry.dueAt)
+      )}; audit log: ${safe(entry.auditLogId)}${note}`;
+    })
+    .join("\n");
+
+  return [
+    "Not legal advice. Human review timeline entries are audit preparation metadata only.",
+    `- Timeline entries: ${entries.length}`,
+    `- Saved decisions: ${decisionCount}`,
+    `- Open workflow items: ${openCount}`,
+    "",
+    "### Human Review Entries",
+    lines || "- No human review timeline entries have been created yet."
   ].join("\n");
 }
 
@@ -255,6 +284,10 @@ function formatReviewItem(item: CounselReviewItem): string {
 
 function safe(value: string): string {
   return redactDataBoundaryText(value);
+}
+
+function formatDate(value: string): string {
+  return value.slice(0, 10);
 }
 
 export function downloadMarkdownFile(filename: string, content: string): void {

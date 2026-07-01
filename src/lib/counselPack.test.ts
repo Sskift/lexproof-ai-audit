@@ -10,6 +10,7 @@ import type { CounselReviewItem } from "./counselReview";
 import { createEvidenceManifest } from "./evidenceManifest";
 import type { CounselQuestion } from "./counselQuestions";
 import type { ProjectProfile } from "./projectModel";
+import type { HumanReviewTimelineEntry } from "./humanReviewWorkflow";
 import { buildModelIntakeSummary, type AIEventRecord, type ModelConnectionProfile } from "./modelIntake";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
@@ -130,6 +131,39 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain(summary.eventHashes[0].hash);
     expect(markdown).toContain("- needs-review Evidence review: Drafted missing evidence question for wallet authority");
     expect(markdown).toContain("Not legal advice");
+  });
+
+  it("includes Human Review timeline metadata without representing it as legal approval", async () => {
+    const audit = analyzeAuditProfile(project);
+    const manifest = await createEvidenceManifest(project, audit, project.evidenceItems);
+    const timeline: HumanReviewTimelineEntry[] = [
+      {
+        timelineEntryVersion: "lexproof-human-review-timeline-entry-v1",
+        id: "human-review-timeline-counsel-pack",
+        projectId: project.id,
+        targetType: "counsel-pack",
+        targetId: "counsel-pack-version-1",
+        title: "Counsel Yield Review Counsel Pack v1",
+        action: "review.decision.saved",
+        status: "reviewed",
+        reviewer: "Outside counsel",
+        decisionNote: "Reviewed export metadata for audit-prep handoff.",
+        dueAt: "2026-07-02T00:00:00.000Z",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+        auditLogId: "human-review-audit-abc123def456",
+        notLegalAdviceBoundary: "Not legal advice. Human review timeline entries are audit preparation metadata only."
+      }
+    ];
+    const markdown = buildMarkdownCounselPack(project, audit, manifest, [], [], undefined, undefined, undefined, undefined, undefined, undefined, timeline);
+
+    expect(markdown).toContain("## Human Review Timeline");
+    expect(markdown).toContain("Not legal advice. Human review timeline entries are audit preparation metadata only.");
+    expect(markdown).toContain("counsel-pack");
+    expect(markdown).toContain("review.decision.saved");
+    expect(markdown).toContain("reviewer: Outside counsel");
+    expect(markdown).toContain("Reviewed export metadata for audit-prep handoff.");
+    expect(markdown).toContain("human-review-audit-abc123def456");
+    expect(markdown).not.toMatch(/\blegal approval\b/i);
   });
 
   it("includes regulatory source graph clauses, source review ledger, evidence gaps, and non-advice boundary when provided", async () => {

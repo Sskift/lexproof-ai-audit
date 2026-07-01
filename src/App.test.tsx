@@ -2773,6 +2773,35 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice; this is an audit preparation workflow status/i)).toBeInTheDocument();
   });
 
+  it("includes saved Human Review timeline metadata in the Counsel Pack preview", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+    expect(await screen.findByRole("heading", { name: /^Human Review$/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status for Yield-bearing or investment-like asset/i), { target: { value: "reviewed" } });
+    fireEvent.change(screen.getByLabelText(/Reviewer for Yield-bearing or investment-like asset/i), {
+      target: { value: "Outside counsel" }
+    });
+    fireEvent.change(screen.getByLabelText(/Decision note for Yield-bearing or investment-like asset/i), {
+      target: { value: "Reviewed risk flag for audit-prep export." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save decision for Yield-bearing or investment-like asset/i }));
+
+    expect(await screen.findByText(/Human review decision saved for Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    await screen.findByText(/## Human Review Timeline/i);
+    const memo = document.querySelector(".memo");
+    expect(memo).toHaveTextContent(/## Human Review Timeline/i);
+    expect(memo).toHaveTextContent(/Not legal advice. Human review timeline entries are audit preparation metadata only./i);
+    expect(memo).toHaveTextContent(/review.decision.saved/i);
+    expect(memo).toHaveTextContent(/reviewer: Outside counsel/i);
+    expect(memo).toHaveTextContent(/Reviewed risk flag for audit-prep export/i);
+    expect(memo).toHaveTextContent(/human-review-audit-/i);
+  }, 10000);
+
   it("shows and downloads a Human Review timeline with saved status history", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

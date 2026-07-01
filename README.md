@@ -275,6 +275,10 @@ The Counsel Pack Markdown preview now carries the Source Review Ledger from the 
 
 ![Counsel Pack Source Update Approval Queue](docs/assets/screenshots/counsel-pack-source-approval-queue.png)
 
+The Counsel Pack Markdown preview also carries Human Review Timeline metadata, including saved decisions, reviewer names, decision notes, and audit log IDs. Review status remains audit preparation workflow metadata only, not legal approval.
+
+![Counsel Pack Human Review Timeline](docs/assets/screenshots/counsel-pack-human-review-timeline-focus.png)
+
 The Counsel Pack export surface now includes a metadata-only Regulatory Source Pack JSON download with its own stable SHA-256 hash, source URLs, evidence gaps, and Not legal advice boundary.
 
 ![Counsel Pack Source Pack JSON download](docs/assets/screenshots/counsel-pack-source-pack-download.png)

@@ -33,6 +33,7 @@ model EvidenceVaultRecord {
   linkedRiskFlagIdsJson        String
   linkedControlIdsJson         String
   containsRawKycOrPersonalData Boolean
+  metadataBoundaryWarningsJson String   @default("[]")
   parentEvidenceId             String?
   supersededByEvidenceId       String?
   replacementReason            String?

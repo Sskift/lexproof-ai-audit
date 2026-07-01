@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { redactClassifiedText } from "../src/lib/dataClassification.js";
 import { validateEvidenceMetadataBoundary } from "../src/lib/evidenceUploadBoundary.js";
 import { validateEvidenceUploadBoundary } from "../src/lib/phase2ApiContracts.js";
 import type { EvidenceVaultRecord } from "../src/lib/phase2Types.js";
@@ -54,21 +55,22 @@ export function createEvidenceVaultRecordFromUpload(input: EvidenceVaultUploadIn
     recordVersion: "lexproof-evidence-vault-record-v1",
     id: `evidence-vault-${fileHash.slice(0, 16)}`,
     workspaceId: input.workspaceId,
-    filename: input.filename.trim(),
+    filename: sanitizeVaultMetadata(input.filename) || "redacted-evidence",
     mimeType: input.mimeType.trim() || "application/octet-stream",
     byteSize: input.bytes.byteLength,
     fileHash,
     storageMode: "server-vault",
     status: "received",
-    owner: input.owner.trim(),
-    sourceNote: input.sourceNote.trim(),
+    owner: sanitizeVaultMetadata(input.owner) || "Unassigned",
+    sourceNote: sanitizeVaultMetadata(input.sourceNote),
     version: input.baseVersion ? input.baseVersion + 1 : 1,
     linkedRiskFlagIds: [...input.linkedRiskFlagIds],
     linkedControlIds,
     containsRawKycOrPersonalData: false,
+    ...(metadataBoundary.warningFindings.length > 0 ? { metadataBoundaryWarnings: metadataBoundary.warningFindings } : {}),
     parentEvidenceId: normalizeOptional(input.parentEvidenceId),
     supersededByEvidenceId: undefined,
-    replacementReason: normalizeOptional(input.replacementReason),
+    replacementReason: normalizeOptional(input.replacementReason ? sanitizeVaultMetadata(input.replacementReason) : undefined),
     createdAt,
     updatedAt: createdAt
   };
@@ -101,6 +103,10 @@ export function findDuplicateEvidenceVaultRecord(
 function normalizeOptional(value: string | undefined): string | undefined {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function sanitizeVaultMetadata(value: string): string {
+  return redactClassifiedText(value.trim());
 }
 
 function normalizeControlIds(values: string[]): string[] {

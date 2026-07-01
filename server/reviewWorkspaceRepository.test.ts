@@ -9,6 +9,8 @@ import { createHumanReviewRecord } from "./humanReviewService";
 import { createModelGatewayRun } from "./modelGatewayService";
 import { createPrismaReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
+const walletAddress = "0x1111111111111111111111111111111111111111";
+
 describe("Prisma review workspace repository", () => {
   let tempDir: string;
   let databaseUrl: string;
@@ -95,7 +97,7 @@ describe("Prisma review workspace repository", () => {
       mimeType: "text/plain",
       bytes: new TextEncoder().encode("board approval memo"),
       owner: "Compliance",
-      sourceNote: "Board approval memo for counsel review.",
+      sourceNote: `Board approval memo for counsel review with treasury wallet ${walletAddress} and contact jane.founder@example.com.`,
       linkedRiskFlagIds: ["governance", "custody"],
       linkedControlIds: ["control-governance", "control-custody"],
       containsRawKycOrPersonalData: false,
@@ -119,6 +121,8 @@ describe("Prisma review workspace repository", () => {
     await expect(secondRepository.findWorkspaceRecord(workspace.id)).resolves.toEqual(workspace);
     await expect(secondRepository.listEvidenceVaultRecords(workspace.id)).resolves.toEqual([updatedEvidence]);
     await expect(secondRepository.findEvidenceVaultRecord(workspace.id, evidence.id)).resolves.toEqual(updatedEvidence);
+    expect(JSON.stringify(await secondRepository.listEvidenceVaultRecords(workspace.id))).not.toContain(walletAddress);
+    expect(JSON.stringify(await secondRepository.listEvidenceVaultRecords(workspace.id))).not.toContain("jane.founder@example.com");
 
     await secondRepository.close();
   });

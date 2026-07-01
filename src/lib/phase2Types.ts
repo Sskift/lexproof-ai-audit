@@ -1,3 +1,5 @@
+import type { ClassifiedDataClass, ClassifiedDataSeverity } from "./dataClassification.js";
+
 export type WorkspaceRecord = {
   recordVersion: "lexproof-workspace-record-v1";
   id: string;
@@ -36,11 +38,20 @@ export type EvidenceVaultRecord = {
   linkedRiskFlagIds: string[];
   linkedControlIds: string[];
   containsRawKycOrPersonalData: boolean;
+  metadataBoundaryWarnings?: EvidenceVaultMetadataBoundaryWarning[];
   parentEvidenceId?: string;
   supersededByEvidenceId?: string;
   replacementReason?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type EvidenceVaultMetadataBoundaryWarning = {
+  dataClass: Exclude<ClassifiedDataClass, "public" | "credential-material" | "private-key-material" | "raw-kyc">;
+  severity: Extract<ClassifiedDataSeverity, "warn">;
+  matchCount: number;
+  redactedSnippet: string;
+  message: string;
 };
 
 export type ModelGatewayRunStatus = "queued" | "blocked" | "completed" | "failed";

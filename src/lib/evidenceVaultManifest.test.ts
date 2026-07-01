@@ -86,6 +86,46 @@ describe("createEvidenceVaultManifest", () => {
     expect(relinked.bundleHash).not.toBe(original.bundleHash);
   });
 
+  it("includes redacted metadata boundary warnings in the manifest hash without raw identifiers", async () => {
+    const clean = await createEvidenceVaultManifest({
+      workspaceId: "workspace-vault-manifest",
+      records: [record({ id: "evidence-a" })]
+    });
+    const withWarnings = await createEvidenceVaultManifest({
+      workspaceId: "workspace-vault-manifest",
+      records: [
+        record({
+          id: "evidence-a",
+          metadataBoundaryWarnings: [
+            {
+              dataClass: "wallet-address",
+              severity: "warn",
+              matchCount: 1,
+              redactedSnippet: "wallet-address: [redacted-wallet-address]",
+              message: "Wallet address needs review."
+            }
+          ]
+        })
+      ]
+    });
+
+    expect(withWarnings.items[0]).toEqual(
+      expect.objectContaining({
+        metadataBoundaryWarnings: [
+          {
+            dataClass: "wallet-address",
+            severity: "warn",
+            matchCount: 1,
+            redactedSnippet: "wallet-address: [redacted-wallet-address]",
+            message: "Wallet address needs review."
+          }
+        ]
+      })
+    );
+    expect(withWarnings.bundleHash).not.toBe(clean.bundleHash);
+    expect(exportEvidenceVaultManifestJson(withWarnings)).toContain("[redacted-wallet-address]");
+  });
+
   it("uses a stable record order so repository ordering does not alter the bundle hash", async () => {
     const records = [
       record({ id: "evidence-b", filename: "b.txt", fileHash: "b".repeat(64), createdAt: "2026-06-30T02:00:00.000Z" }),

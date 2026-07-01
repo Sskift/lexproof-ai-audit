@@ -14,6 +14,7 @@ export type EvidenceVaultManifestItem = {
   linkedRiskFlagIds: string[];
   linkedControlIds: string[];
   containsRawKycOrPersonalData: boolean;
+  metadataBoundaryWarnings?: NonNullable<EvidenceVaultRecord["metadataBoundaryWarnings"]>;
   parentEvidenceId?: string;
   supersededByEvidenceId?: string;
   replacementReason?: string;
@@ -75,10 +76,24 @@ function createManifestItem(record: EvidenceVaultRecord, index: number): Evidenc
     linkedRiskFlagIds: [...record.linkedRiskFlagIds].sort((left, right) => left.localeCompare(right)),
     linkedControlIds: [...record.linkedControlIds].sort((left, right) => left.localeCompare(right)),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
+    ...(record.metadataBoundaryWarnings?.length
+      ? { metadataBoundaryWarnings: sortMetadataBoundaryWarnings(record.metadataBoundaryWarnings) }
+      : {}),
     ...(record.parentEvidenceId ? { parentEvidenceId: record.parentEvidenceId } : {}),
     ...(record.supersededByEvidenceId ? { supersededByEvidenceId: record.supersededByEvidenceId } : {}),
     ...(record.replacementReason ? { replacementReason: record.replacementReason } : {})
   };
+}
+
+function sortMetadataBoundaryWarnings(
+  warnings: NonNullable<EvidenceVaultRecord["metadataBoundaryWarnings"]>
+): NonNullable<EvidenceVaultRecord["metadataBoundaryWarnings"]> {
+  return [...warnings].sort(
+    (left, right) =>
+      left.dataClass.localeCompare(right.dataClass) ||
+      left.redactedSnippet.localeCompare(right.redactedSnippet) ||
+      left.message.localeCompare(right.message)
+  );
 }
 
 function sortEvidenceRecords(records: EvidenceVaultRecord[]): EvidenceVaultRecord[] {

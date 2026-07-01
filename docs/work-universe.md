@@ -229,7 +229,7 @@ Goal: make evidence handling durable, versioned, and reviewable while staying me
 Build:
 
 - Versioned Evidence Vault records with parent/child relationships, replacement reason, owner, source notes, and linked risk/control IDs. The first control-link path is implemented from Evidence Ledger source references through multipart upload, persisted vault records, manifest hashing, the vault record UI, and an aggregated Evidence Vault Control Coverage summary in `src/lib/evidenceVaultControlCoverage.ts`.
-- Server-side manifest generation from persisted evidence metadata. The first dedicated manifest builder is implemented in `src/lib/evidenceVaultManifest.ts`, the Evidence Vault manifest route, and the Evidence Ledger **Download Vault Manifest JSON** action: it uses stable ordering, status/version/lineage hashes, and excludes raw bytes plus source-note body content.
+- Server-side manifest generation from persisted evidence metadata. The first dedicated manifest builder is implemented in `src/lib/evidenceVaultManifest.ts`, the Evidence Vault manifest route, and the Evidence Ledger **Download Vault Manifest JSON** action: it uses stable ordering, status/version/lineage hashes, redacted metadata-boundary warning hashes, and excludes raw bytes plus source-note body content.
 - Evidence state machine: `draft`, `requested`, `received`, `under-review`, `verified`, `rejected`, `superseded`. The first server-enforced transition guard is implemented in `src/lib/evidenceVaultWorkflow.ts` and the Evidence Vault PATCH route; rejected or superseded records cannot be directly reactivated outside replacement recovery. The local Evidence Ledger now exposes `under-review` and `rejected`, Human Review maps rejected evidence to a rejected local state, and Evidence Vault client sync preserves those review-stage statuses as metadata-only workflow records.
 - Evidence empty states, invalid upload errors, duplicate hash detection, and rejected-evidence recovery flows. The first empty-ledger guidance is implemented in `src/lib/evidenceIntakeGuidance.ts` and `EvidenceLedger`: it recommends the safest template action and missing risk evidence requests without raw KYC, private keys, credentials, personal data, or legal conclusions.
 - Optional object storage adapter only after retention, privacy, and access policy are documented.
@@ -393,7 +393,7 @@ Acceptance:
 - Blocked data classes produce explicit, recoverable UI messages.
 - Exports do not contain credentials, private keys, or raw KYC.
 - Evidence Vault sync cannot run while retention blockers are present.
-- Evidence Vault API uploads reject unsafe metadata without echoing secrets or raw KYC snippets.
+- Evidence Vault API uploads reject unsafe metadata without echoing secrets or raw KYC snippets, and preserve warning-level wallet-address, personal-data, and confidentiality metadata only as redacted review signals.
 - Secure Review audit logs can be exported without raw secrets, raw KYC, or legal conclusions.
 - Security Review Checklist surfaces model provider, evidence storage, and anchor integration blockers before W9 adapters are enabled.
 - Tests cover boundary validators and redaction blockers.

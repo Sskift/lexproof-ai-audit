@@ -374,6 +374,7 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
       "linkedRiskFlagIdsJson" TEXT NOT NULL,
       "linkedControlIdsJson" TEXT NOT NULL DEFAULT '[]',
       "containsRawKycOrPersonalData" BOOLEAN NOT NULL,
+      "metadataBoundaryWarningsJson" TEXT NOT NULL DEFAULT '[]',
       "parentEvidenceId" TEXT,
       "supersededByEvidenceId" TEXT,
       "replacementReason" TEXT,
@@ -385,6 +386,7 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
   await addColumnIfMissing(prisma, "EvidenceVaultRecord", "supersededByEvidenceId", "TEXT");
   await addColumnIfMissing(prisma, "EvidenceVaultRecord", "replacementReason", "TEXT");
   await addColumnIfMissing(prisma, "EvidenceVaultRecord", "linkedControlIdsJson", "TEXT NOT NULL DEFAULT '[]'");
+  await addColumnIfMissing(prisma, "EvidenceVaultRecord", "metadataBoundaryWarningsJson", "TEXT NOT NULL DEFAULT '[]'");
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "EvidenceVaultRecord_workspaceId_idx" ON "EvidenceVaultRecord"("workspaceId");`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "EvidenceVaultRecord_parentEvidenceId_idx" ON "EvidenceVaultRecord"("parentEvidenceId");`);
 
@@ -609,6 +611,7 @@ function serializeEvidenceVaultRecord(record: EvidenceVaultRecord) {
     linkedRiskFlagIdsJson: JSON.stringify(record.linkedRiskFlagIds),
     linkedControlIdsJson: JSON.stringify(record.linkedControlIds),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
+    metadataBoundaryWarningsJson: JSON.stringify(record.metadataBoundaryWarnings ?? []),
     parentEvidenceId: record.parentEvidenceId ?? null,
     supersededByEvidenceId: record.supersededByEvidenceId ?? null,
     replacementReason: record.replacementReason ?? null,
@@ -632,6 +635,7 @@ type PersistedEvidenceVaultRecord = {
   linkedRiskFlagIdsJson: string;
   linkedControlIdsJson?: string | null;
   containsRawKycOrPersonalData: boolean;
+  metadataBoundaryWarningsJson?: string | null;
   parentEvidenceId: string | null;
   supersededByEvidenceId: string | null;
   replacementReason: string | null;
@@ -656,6 +660,7 @@ function deserializeEvidenceVaultRecord(record: PersistedEvidenceVaultRecord): E
     linkedRiskFlagIds: parseStringArray(record.linkedRiskFlagIdsJson),
     linkedControlIds: parseStringArray(record.linkedControlIdsJson ?? "[]"),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
+    ...parseMetadataBoundaryWarnings(record.metadataBoundaryWarningsJson ?? "[]"),
     parentEvidenceId: record.parentEvidenceId ?? undefined,
     supersededByEvidenceId: record.supersededByEvidenceId ?? undefined,
     replacementReason: record.replacementReason ?? undefined,
@@ -679,6 +684,31 @@ function parseStringArray(payload: string): string[] {
   } catch {
     return [];
   }
+}
+
+function parseMetadataBoundaryWarnings(payload: string): Pick<EvidenceVaultRecord, "metadataBoundaryWarnings"> {
+  try {
+    const parsed = JSON.parse(payload);
+    const metadataBoundaryWarnings = Array.isArray(parsed) ? parsed.filter(isMetadataBoundaryWarning) : [];
+    return metadataBoundaryWarnings.length > 0 ? { metadataBoundaryWarnings } : {};
+  } catch {
+    return {};
+  }
+}
+
+function isMetadataBoundaryWarning(value: unknown): value is NonNullable<EvidenceVaultRecord["metadataBoundaryWarnings"]>[number] {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    (candidate.dataClass === "wallet-address" || candidate.dataClass === "personal-data" || candidate.dataClass === "confidential") &&
+    candidate.severity === "warn" &&
+    typeof candidate.matchCount === "number" &&
+    typeof candidate.redactedSnippet === "string" &&
+    typeof candidate.message === "string"
+  );
 }
 
 function serializeModelGatewayRun(run: ModelGatewayRun) {

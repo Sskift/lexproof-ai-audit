@@ -8,6 +8,7 @@ import {
 
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const walletAddress = "0x1111111111111111111111111111111111111111";
 
 describe("Phase 2 evidence vault service", () => {
   it("creates metadata-only evidence records with server-side SHA-256 hashes", () => {
@@ -102,6 +103,41 @@ describe("Phase 2 evidence vault service", () => {
       expect((error as Error).message).not.toContain(privateKey);
       expect((error as Error).message).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     }
+  });
+
+  it("preserves redacted metadata boundary warnings on allowed vault records", () => {
+    const record = createEvidenceVaultRecordFromUpload({
+      workspaceId: "workspace-1",
+      filename: "wallet-control-memo.txt",
+      mimeType: "text/plain",
+      bytes: new TextEncoder().encode("wallet control memo"),
+      owner: "Compliance",
+      sourceNote: `Treasury signer wallet ${walletAddress} and contact jane.founder@example.com require review.`,
+      linkedRiskFlagIds: ["custody"],
+      linkedControlIds: ["control-wallet"],
+      containsRawKycOrPersonalData: false,
+      createdAt: "2026-06-29T10:00:00.000Z"
+    });
+
+    expect(record.metadataBoundaryWarnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dataClass: "wallet-address",
+          severity: "warn",
+          redactedSnippet: expect.stringContaining("[redacted-wallet-address]")
+        }),
+        expect.objectContaining({
+          dataClass: "personal-data",
+          severity: "warn",
+          redactedSnippet: expect.stringContaining("[redacted-email]")
+        })
+      ])
+    );
+    expect(record.metadataBoundaryWarnings?.length).toBe(2);
+    expect(record.sourceNote).toContain("[redacted-wallet-address]");
+    expect(record.sourceNote).toContain("[redacted-email]");
+    expect(JSON.stringify(record)).not.toContain(walletAddress);
+    expect(JSON.stringify(record)).not.toContain("jane.founder@example.com");
   });
 
   it("links replacement records to a rejected parent without hiding the superseded record", () => {

@@ -15,6 +15,12 @@ import {
   type ModelGatewaySecretPolicyDraft,
   type ModelGatewaySecretPolicyReport
 } from "../lib/modelGatewaySecretPolicy";
+import {
+  exportObjectStoragePolicyJson,
+  type ObjectStoragePolicyContext,
+  type ObjectStoragePolicyDraft,
+  type ObjectStoragePolicyReport
+} from "../lib/objectStoragePolicy";
 
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
@@ -30,10 +36,21 @@ type IntegrationReadinessPanelProps = {
   secretPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
   secretPolicySyncError: string;
   secretPolicySyncRecoveryAction: string;
+  storagePolicyDraft: ObjectStoragePolicyDraft;
+  storagePolicyContext: ObjectStoragePolicyContext;
+  storagePolicyReport: ObjectStoragePolicyReport;
+  storagePolicySource: "local" | "server";
+  storagePolicyApiBaseUrl: string;
+  storagePolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  storagePolicySyncError: string;
+  storagePolicySyncRecoveryAction: string;
   onProviderPolicyApiBaseUrlChange: (value: string) => void;
   onRefreshProviderPolicy: () => Promise<void> | void;
   onSecretPolicyDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
   onEvaluateSecretPolicy: () => Promise<void> | void;
+  onStoragePolicyApiBaseUrlChange: (value: string) => void;
+  onStoragePolicyDraftChange: (updates: Partial<ObjectStoragePolicyDraft>) => void;
+  onEvaluateStoragePolicy: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -61,10 +78,21 @@ export function IntegrationReadinessPanel({
   secretPolicySyncStatus,
   secretPolicySyncError,
   secretPolicySyncRecoveryAction,
+  storagePolicyDraft,
+  storagePolicyContext,
+  storagePolicyReport,
+  storagePolicySource,
+  storagePolicyApiBaseUrl,
+  storagePolicySyncStatus,
+  storagePolicySyncError,
+  storagePolicySyncRecoveryAction,
   onProviderPolicyApiBaseUrlChange,
   onRefreshProviderPolicy,
   onSecretPolicyDraftChange,
   onEvaluateSecretPolicy,
+  onStoragePolicyApiBaseUrlChange,
+  onStoragePolicyDraftChange,
+  onEvaluateStoragePolicy,
   onNavigate
 }: IntegrationReadinessPanelProps) {
   return (
@@ -88,6 +116,19 @@ export function IntegrationReadinessPanel({
           <IntegrationAdapterCard key={adapter.id} adapter={adapter} onNavigate={onNavigate} />
         ))}
       </div>
+      <ObjectStoragePolicyPanel
+        draft={storagePolicyDraft}
+        context={storagePolicyContext}
+        report={storagePolicyReport}
+        source={storagePolicySource}
+        apiBaseUrl={storagePolicyApiBaseUrl}
+        syncStatus={storagePolicySyncStatus}
+        syncError={storagePolicySyncError}
+        syncRecoveryAction={storagePolicySyncRecoveryAction}
+        onApiBaseUrlChange={onStoragePolicyApiBaseUrlChange}
+        onDraftChange={onStoragePolicyDraftChange}
+        onEvaluate={onEvaluateStoragePolicy}
+      />
       <ModelGatewayProviderPolicyPanel
         report={providerPolicyReport}
         source={providerPolicySource}
@@ -113,6 +154,175 @@ export function IntegrationReadinessPanel({
             <li key={action}>{action}</li>
           ))}
         </ul>
+      </div>
+    </section>
+  );
+}
+
+function ObjectStoragePolicyPanel({
+  draft,
+  context,
+  report,
+  source,
+  apiBaseUrl,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onApiBaseUrlChange,
+  onDraftChange,
+  onEvaluate
+}: {
+  draft: ObjectStoragePolicyDraft;
+  context: ObjectStoragePolicyContext;
+  report: ObjectStoragePolicyReport;
+  source: "local" | "server";
+  apiBaseUrl: string;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onDraftChange: (updates: Partial<ObjectStoragePolicyDraft>) => void;
+  onEvaluate: () => Promise<void> | void;
+}) {
+  return (
+    <section className={`secret-policy-panel storage-policy-panel ${report.overallStatus}`} aria-label="Object Storage Policy Evaluation">
+      <div className="split-title compact-title">
+        <div>
+          <DatabaseZap size={17} aria-hidden="true" />
+          <h4>Object Storage Policy Evaluation</h4>
+        </div>
+        <span className={`workflow-status ${report.overallStatus}`}>{policyStatusLabel(report.overallStatus)}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Approved controls" value={`${report.approvedControlCount}/${report.requiredControlCount}`} />
+        <ProviderPolicyFact label="Policy source" value={source === "server" ? "Server" : "Local"} />
+        <ProviderPolicyFact label="External storage" value={report.externalObjectStorageAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Evidence records" value={String(context.evidenceCount)} />
+        <ProviderPolicyFact label="Retention" value={context.retentionStatus} />
+        <ProviderPolicyFact label="Manifest" value={context.manifestHash ? `${context.manifestHash.slice(0, 12)}...` : "Missing"} />
+      </div>
+      <div className={`secret-policy-form ${syncStatus}`}>
+        <label className="editor-field">
+          <span>Storage Policy API base URL</span>
+          <input
+            type="url"
+            value={apiBaseUrl}
+            placeholder="http://127.0.0.1:8787"
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Storage policy owner</span>
+          <input
+            type="text"
+            value={draft.policyOwner}
+            placeholder="Security operations"
+            onChange={(event) => onDraftChange({ policyOwner: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Retention days</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.retentionDays}
+            onChange={(event) => onDraftChange({ retentionDays: Number(event.target.value) })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Deletion SLA days</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.deletionSlaDays}
+            onChange={(event) => onDraftChange({ deletionSlaDays: Number(event.target.value) })}
+          />
+        </label>
+        <div className="secret-policy-checklist" aria-label="Object storage policy controls">
+          <SecretPolicyToggle
+            label="Encryption at rest"
+            checked={draft.encryptionAtRestApproved}
+            onChange={(checked) => onDraftChange({ encryptionAtRestApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Bucket allowlist"
+            checked={draft.bucketAllowlistApproved}
+            onChange={(checked) => onDraftChange({ bucketAllowlistApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Access logging"
+            checked={draft.accessLoggingApproved}
+            onChange={(checked) => onDraftChange({ accessLoggingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Lifecycle policy"
+            checked={draft.lifecyclePolicyApproved}
+            onChange={(checked) => onDraftChange({ lifecyclePolicyApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="No sensitive material"
+            checked={draft.noSensitiveMaterialConfirmed}
+            onChange={(checked) => onDraftChange({ noSensitiveMaterialConfirmed: checked })}
+          />
+          <SecretPolicyToggle
+            label="Human review required"
+            checked={draft.humanReviewRequired}
+            onChange={(checked) => onDraftChange({ humanReviewRequired: checked })}
+          />
+        </div>
+        <label className="editor-field secret-policy-notes">
+          <span>Storage policy notes</span>
+          <textarea
+            value={draft.notes}
+            placeholder="Metadata only. Do not paste raw evidence, API keys, private keys, raw KYC, or personal data."
+            onChange={(event) => onDraftChange({ notes: event.target.value })}
+          />
+        </label>
+        <div className="inline-actions secret-policy-actions">
+          <span>
+            {report.externalObjectStorageStatus === "policy-ready-not-enabled"
+              ? "External object storage remains disabled until a separate storage adapter enablement review."
+              : report.nextActions[0]}
+          </span>
+          <button type="button" className="secondary" onClick={onEvaluate} disabled={syncStatus === "syncing"}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            {syncStatus === "syncing" ? "Evaluating Server Storage Policy" : "Evaluate Server Storage Policy"}
+          </button>
+        </div>
+        {syncStatus === "synced" ? <span className="save-state">Storage policy report synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. Object storage policy evaluation is audit preparation metadata only.</small>
+          </div>
+        ) : null}
+      </div>
+      <div className="provider-control-list secret-policy-control-list">
+        {report.controls.map((control) => (
+          <article key={control.id} className={`provider-control ${control.status}`}>
+            <header>
+              <span>{policyStatusLabel(control.status)}</span>
+              <strong>{control.label}</strong>
+            </header>
+            <p>{control.evidence}</p>
+            <small>{control.recoveryAction}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>External object storage remains disabled by default. Raw evidence bytes are not uploaded here.</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadObjectStoragePolicyJson("object-storage-policy.json", report)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Storage Policy JSON
+        </button>
       </div>
     </section>
   );
@@ -423,6 +633,16 @@ function downloadProviderPolicyJson(filename: string, report: ModelGatewayProvid
 
 function downloadSecretPolicyJson(filename: string, report: ModelGatewaySecretPolicyReport): void {
   const blob = new Blob([exportModelGatewaySecretPolicyJson(report)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadObjectStoragePolicyJson(filename: string, report: ObjectStoragePolicyReport): void {
+  const blob = new Blob([exportObjectStoragePolicyJson(report)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

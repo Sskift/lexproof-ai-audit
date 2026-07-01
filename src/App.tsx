@@ -90,6 +90,16 @@ import {
   ModelGatewaySecretPolicyClientError
 } from "./lib/modelGatewaySecretPolicyClient";
 import {
+  createObjectStoragePolicyReport,
+  type ObjectStoragePolicyContext,
+  type ObjectStoragePolicyDraft,
+  type ObjectStoragePolicyReport
+} from "./lib/objectStoragePolicy";
+import {
+  fetchObjectStoragePolicyReport,
+  ObjectStoragePolicyClientError
+} from "./lib/objectStoragePolicyClient";
+import {
   createHumanReviewDecision,
   createHumanReviewQueue,
   humanReviewStatusToAIEventStatus,
@@ -169,6 +179,19 @@ const defaultModelGatewaySecretPolicyDraft: ModelGatewaySecretPolicyDraft = {
   notes: ""
 };
 
+const defaultObjectStoragePolicyDraft: ObjectStoragePolicyDraft = {
+  policyOwner: "",
+  retentionDays: 0,
+  deletionSlaDays: 0,
+  encryptionAtRestApproved: false,
+  bucketAllowlistApproved: false,
+  accessLoggingApproved: false,
+  lifecyclePolicyApproved: false,
+  noSensitiveMaterialConfirmed: true,
+  humanReviewRequired: true,
+  notes: ""
+};
+
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
@@ -219,6 +242,12 @@ export default function App() {
   const [secretPolicySyncStatus, setSecretPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [secretPolicySyncError, setSecretPolicySyncError] = useState("");
   const [secretPolicySyncRecoveryAction, setSecretPolicySyncRecoveryAction] = useState("");
+  const [storagePolicyApiBaseUrl, setStoragePolicyApiBaseUrl] = useState("");
+  const [storagePolicyDraft, setStoragePolicyDraft] = useState<ObjectStoragePolicyDraft>(defaultObjectStoragePolicyDraft);
+  const [serverStoragePolicyReport, setServerStoragePolicyReport] = useState<ObjectStoragePolicyReport | null>(null);
+  const [storagePolicySyncStatus, setStoragePolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [storagePolicySyncError, setStoragePolicySyncError] = useState("");
+  const [storagePolicySyncRecoveryAction, setStoragePolicySyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -367,6 +396,29 @@ export default function App() {
   const activeModelGatewayProviderPolicyReport = serverProviderPolicyReport ?? modelGatewayProviderPolicyReport;
   const modelGatewaySecretPolicyReport = useMemo(() => createModelGatewaySecretPolicyReport(secretPolicyDraft), [secretPolicyDraft]);
   const activeModelGatewaySecretPolicyReport = serverSecretPolicyReport ?? modelGatewaySecretPolicyReport;
+  const objectStoragePolicyContext = useMemo<ObjectStoragePolicyContext>(
+    () => ({
+      workspaceId: project.id,
+      evidenceCount: project.evidenceItems.length,
+      retentionStatus: retentionPolicyReport.status,
+      vaultSyncAllowed: retentionPolicyReport.vaultSyncAllowed,
+      blockerCount: retentionPolicyReport.blockerCount,
+      manifestHash: manifest?.bundleHash
+    }),
+    [
+      manifest?.bundleHash,
+      project.evidenceItems.length,
+      project.id,
+      retentionPolicyReport.blockerCount,
+      retentionPolicyReport.status,
+      retentionPolicyReport.vaultSyncAllowed
+    ]
+  );
+  const objectStoragePolicyReport = useMemo(
+    () => createObjectStoragePolicyReport({ context: objectStoragePolicyContext, policy: storagePolicyDraft }),
+    [objectStoragePolicyContext, storagePolicyDraft]
+  );
+  const activeObjectStoragePolicyReport = serverStoragePolicyReport ?? objectStoragePolicyReport;
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -961,6 +1013,39 @@ export default function App() {
     }
   };
 
+  const updateStoragePolicyDraft = (updates: Partial<ObjectStoragePolicyDraft>) => {
+    setStoragePolicyDraft((current) => ({ ...current, ...updates }));
+    setServerStoragePolicyReport(null);
+    setStoragePolicySyncStatus("idle");
+    setStoragePolicySyncError("");
+    setStoragePolicySyncRecoveryAction("");
+  };
+
+  const evaluateStoragePolicyReport = async () => {
+    setStoragePolicySyncStatus("syncing");
+    setStoragePolicySyncError("");
+    setStoragePolicySyncRecoveryAction("");
+
+    try {
+      const report = await fetchObjectStoragePolicyReport({
+        apiBaseUrl: storagePolicyApiBaseUrl,
+        context: objectStoragePolicyContext,
+        policy: storagePolicyDraft
+      });
+      setServerStoragePolicyReport(report);
+      setStoragePolicySyncStatus("synced");
+    } catch (error) {
+      setStoragePolicySyncStatus("error");
+      if (error instanceof ObjectStoragePolicyClientError) {
+        setStoragePolicySyncError(error.message);
+        setStoragePolicySyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setStoragePolicySyncError(error instanceof Error ? error.message : "Object storage policy evaluation failed.");
+      setStoragePolicySyncRecoveryAction("Start the Phase 2 API and retry object storage policy evaluation.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1084,10 +1169,21 @@ export default function App() {
             secretPolicySyncStatus={secretPolicySyncStatus}
             secretPolicySyncError={secretPolicySyncError}
             secretPolicySyncRecoveryAction={secretPolicySyncRecoveryAction}
+            storagePolicyDraft={storagePolicyDraft}
+            storagePolicyContext={objectStoragePolicyContext}
+            storagePolicyReport={activeObjectStoragePolicyReport}
+            storagePolicySource={serverStoragePolicyReport ? "server" : "local"}
+            storagePolicyApiBaseUrl={storagePolicyApiBaseUrl}
+            storagePolicySyncStatus={storagePolicySyncStatus}
+            storagePolicySyncError={storagePolicySyncError}
+            storagePolicySyncRecoveryAction={storagePolicySyncRecoveryAction}
             onProviderPolicyApiBaseUrlChange={setProviderPolicyApiBaseUrl}
             onRefreshProviderPolicy={refreshProviderPolicyReport}
             onSecretPolicyDraftChange={updateSecretPolicyDraft}
             onEvaluateSecretPolicy={evaluateSecretPolicyReport}
+            onStoragePolicyApiBaseUrlChange={setStoragePolicyApiBaseUrl}
+            onStoragePolicyDraftChange={updateStoragePolicyDraft}
+            onEvaluateStoragePolicy={evaluateStoragePolicyReport}
             onNavigate={setActiveTab}
           />
 

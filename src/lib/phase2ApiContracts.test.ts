@@ -13,7 +13,7 @@ describe("Phase 2 backend API contracts", () => {
     const routes = listPhase2ApiRoutes();
     const domains = new Set(routes.map((route) => route.domain));
 
-    expect(domains).toEqual(new Set(["workspaces", "evidence-vault", "model-gateway", "human-review", "exports", "audit-log"]));
+    expect(domains).toEqual(new Set(["workspaces", "evidence-vault", "model-gateway", "human-review", "exports", "audit-log", "integrations"]));
     expect(routes).toContainEqual(
       expect.objectContaining({
         method: "POST",
@@ -80,6 +80,16 @@ describe("Phase 2 backend API contracts", () => {
         domain: "model-gateway",
         requestContract: "ModelGatewaySecretPolicyRequest",
         responseContract: "ModelGatewaySecretPolicyReport",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "POST",
+        path: "/api/integrations/object-storage/policy",
+        domain: "integrations",
+        requestContract: "ObjectStoragePolicyRequest",
+        responseContract: "ObjectStoragePolicyReport",
         implemented: true
       })
     );

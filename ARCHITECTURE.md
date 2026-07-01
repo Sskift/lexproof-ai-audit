@@ -15,6 +15,7 @@ lexproof-ai-audit/
     index.ts                 # API process entry point
     systemRoutes.ts          # Health and API preflight system routes
     modelGatewayRoutes.ts    # Model Gateway adapter, run, lookup, and summary routes
+    integrationPolicyRoutes.ts # Metadata-only integration policy evaluation routes
     counselPackExportRoutes.ts # Counsel Pack export-record create/list/lookup routes
     humanReviewRoutes.ts     # Human Review create/list/queue/update and linked target sync routes
     evidenceVaultRoutes.ts   # Evidence Vault upload/list/update/replacement/manifest routes
@@ -68,6 +69,8 @@ lexproof-ai-audit/
       modelGatewayProviderPolicyClient.ts # Browser client for metadata-only provider policy refresh
       modelGatewaySecretPolicy.ts # Metadata-only secret policy readiness reports and JSON export
       modelGatewaySecretPolicyClient.ts # Browser client for secret policy evaluation
+      objectStoragePolicy.ts # Metadata-only object storage policy readiness reports and JSON export
+      objectStoragePolicyClient.ts # Browser client for object storage policy evaluation
       modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
       auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts
       projectModel.ts        # Project/evidence types and validation
@@ -161,6 +164,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createEvidenceVaultManifest(workspace, persisted evidence records) in Phase 2 API
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
   -> createSecurityReviewChecklist(model connect, retention report, data boundary report, manifest hash)
+  -> createObjectStoragePolicyReport(retention context, manifest hash, object-storage policy draft)
   -> createWorkspaceActionQueue(project validation, source graph, source review, human review, security, data boundary, manifest/export status)
   -> createSimulatedAnchorReceipt(manifest)
   -> recommendCounselPackTemplate(project, audit)
@@ -680,6 +684,7 @@ Components are intentionally presentational and interaction-focused:
 - `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source update approval gates, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, and `regulatorySourceApproval.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
+- `IntegrationReadinessPanel` renders adapter readiness, Model Gateway provider/secret policy controls, Object Storage Policy Evaluation, server sync states, recovery states, and metadata-only JSON downloads while keeping external providers and object storage disabled by default.
 - `CounselQuestionsPanel` edits AI/rule/manual question text, priority, status, and local queue membership.
 - `CounselReviewStatusPanel` edits deterministic risk flag status, reviewer, and notes inside Counsel Pack export.
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
@@ -698,7 +703,7 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing/filtering. `server/app.ts` composes shared hooks and route modules; `server/systemRoutes.ts`, `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, `server/evidenceVaultRoutes.ts`, and `server/auditLogRoutes.ts` are W7 route modules split out of the monolithic app while preserving route contracts and repository-backed audit logging. `server/apiError.ts` provides the shared typed error response shape; Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack export, and Audit Log filter failures now include stable codes, the audit-prep boundary, and recovery guidance where useful. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, and real provider proxying are still deferred.
+The Week 2 backend design spike is documented in `docs/phase-2-backend-design-spike.md`. The executable contract draft lives in `src/lib/phase2ApiContracts.ts`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, Integration object-storage policy evaluation, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing/filtering. `server/app.ts` composes shared hooks and route modules; `server/systemRoutes.ts`, `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/integrationPolicyRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, `server/evidenceVaultRoutes.ts`, and `server/auditLogRoutes.ts` are route modules split out of the monolithic app while preserving route contracts and repository-backed audit logging. `server/apiError.ts` provides the shared typed error response shape; Workspace, Evidence Vault, Model Gateway, Integration policy, Human Review, Counsel Pack export, and Audit Log filter failures now include stable codes, the audit-prep boundary, and recovery guidance where useful. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, real object storage, and real provider proxying are still deferred.
 
 ### Model Gateway Responsibilities
 
@@ -714,6 +719,15 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
 `server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, evaluates metadata-only provider and secret policy reports, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters remain disabled placeholders even when secret policy controls evaluate ready, until a separate adapter enablement review is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository, automatically creates a `model-run` Human Review request for completed output, and appends audit-log records for both the run and the review queue action. It does not call external providers or store credentials.
+
+### Integration Policy Responsibilities
+
+- evaluate future integration-adapter readiness from metadata-only policy drafts
+- derive object-storage readiness from Evidence Retention status, Evidence Manifest hash, bounded retention/deletion settings, encryption, bucket allowlist, access logging, lifecycle policy, no-sensitive-material confirmation, and human-review enforcement
+- reject or redact policy metadata that contains credentials, private-key-like values, or raw KYC references
+- return `externalObjectStorageAllowed: false` even when all controls are ready
+
+`src/lib/objectStoragePolicy.ts` owns the object-storage policy report and JSON export. `src/lib/objectStoragePolicyClient.ts` posts only whitelisted context and policy fields from the workbench. `server/integrationPolicyRoutes.ts` exposes `POST /api/integrations/object-storage/policy`, sanitizes request fields, and returns a Not legal advice report without storing records, uploading objects, accepting raw evidence bytes, or enabling a real object storage adapter.
 
 ### Evidence Vault Responsibilities
 

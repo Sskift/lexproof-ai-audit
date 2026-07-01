@@ -93,9 +93,10 @@ Week 2 design-spike artifacts:
 
 - `docs/phase-2-backend-design-spike.md` records the backend stack decision, API route table, persistence-model scope, security boundaries, and health endpoint decision.
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
-- `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Human Review, and Audit Log workflows.
+- `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Integration policy evaluation, Human Review, and Audit Log workflows.
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
 - `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock success/failure receipts behind redaction, allowed-data-class, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
+- `server/integrationPolicyRoutes.ts` adds Object Storage Policy Evaluation for metadata-only retention, manifest, storage-control, and human-review readiness without enabling external object storage.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
 - `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.
 
@@ -166,6 +167,14 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - accepts only policy owner, KMS approval, rotation cadence, access review cadence, provider allowlist, egress logging, incident response, no-client-persistence, human-review enforcement, and notes
   - does not accept provider credentials, raw KYC, private keys, personal data, external provider calls, adapter enablement, or legal-advice output
   - returns `externalProviderProxyingAllowed: false` even when required controls evaluate ready
+
+### Integration Policies
+
+- `POST /api/integrations/object-storage/policy`
+  - evaluates future object-storage readiness from metadata-only context and policy fields
+  - accepts only evidence count, retention status, vault-sync allowance, manifest hash, policy owner, retention/deletion windows, encryption, bucket allowlist, access logging, lifecycle, sensitive-material confirmation, human-review enforcement, and notes
+  - does not accept raw evidence bytes, object contents, credentials, private keys, raw KYC, personal data, bucket writes, adapter enablement, or legal-advice output
+  - returns `externalObjectStorageAllowed: false` even when all required controls evaluate ready
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate

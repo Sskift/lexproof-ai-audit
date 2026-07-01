@@ -776,6 +776,102 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("evaluates object storage policy readiness without enabling external storage", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/integrations/object-storage/policy");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body.policy).toEqual({
+        policyOwner: "Storage owner",
+        retentionDays: 365,
+        deletionSlaDays: 30,
+        encryptionAtRestApproved: true,
+        bucketAllowlistApproved: true,
+        accessLoggingApproved: true,
+        lifecyclePolicyApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Policy approved for future object storage review."
+      });
+      expect(body.context).toEqual(
+        expect.objectContaining({
+          evidenceCount: expect.any(Number),
+          retentionStatus: expect.any(String),
+          vaultSyncAllowed: expect.any(Boolean),
+          blockerCount: expect.any(Number),
+          manifestHash: expect.stringMatching(/^[a-f0-9]{64}$/)
+        })
+      );
+      expect(String(init?.body)).not.toContain("rawEvidence");
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("sk-");
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-object-storage-policy-v1",
+          generatedAt: "2026-07-01T00:00:00.000Z",
+          overallStatus: "ready",
+          requiredControlCount: 10,
+          approvedControlCount: 10,
+          externalObjectStorageAllowed: false,
+          externalObjectStorageStatus: "policy-ready-not-enabled",
+          controls: [
+            {
+              id: "retention-boundary",
+              label: "Retention boundary",
+              status: "ready",
+              evidence: "Retention policy is ready for metadata-only vault handoff.",
+              recoveryAction: "Keep raw object storage disabled until adapter enablement review."
+            },
+            {
+              id: "encryption-at-rest",
+              label: "Encryption at rest",
+              status: "ready",
+              evidence: "Encryption at rest is approved for future object storage review.",
+              recoveryAction: "Keep encryption mandatory before adapter enablement."
+            }
+          ],
+          nextActions: ["Keep external object storage disabled until a separate storage adapter enablement review."],
+          notLegalAdviceBoundary: "Not legal advice. Object storage policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const storagePolicy = within(registry.getByRole("region", { name: /Object Storage Policy Evaluation/i }));
+
+    fireEvent.change(storagePolicy.getByLabelText(/Storage Policy API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.change(storagePolicy.getByLabelText(/Storage policy owner/i), { target: { value: "Storage owner" } });
+    fireEvent.change(storagePolicy.getByLabelText(/Retention days/i), { target: { value: "365" } });
+    fireEvent.change(storagePolicy.getByLabelText(/Deletion SLA days/i), { target: { value: "30" } });
+    fireEvent.click(storagePolicy.getByLabelText(/Encryption at rest/i));
+    fireEvent.click(storagePolicy.getByLabelText(/Bucket allowlist/i));
+    fireEvent.click(storagePolicy.getByLabelText(/Access logging/i));
+    fireEvent.click(storagePolicy.getByLabelText(/Lifecycle policy/i));
+    await waitFor(() => {
+      expect(storagePolicy.getByLabelText(/Encryption at rest/i)).toBeChecked();
+      expect(storagePolicy.getByLabelText(/Bucket allowlist/i)).toBeChecked();
+      expect(storagePolicy.getByLabelText(/Access logging/i)).toBeChecked();
+      expect(storagePolicy.getByLabelText(/Lifecycle policy/i)).toBeChecked();
+      expect(storagePolicy.getByText("9/10")).toBeInTheDocument();
+    });
+    fireEvent.change(storagePolicy.getByLabelText(/Storage policy notes/i), {
+      target: { value: "Policy approved for future object storage review." }
+    });
+    fireEvent.click(storagePolicy.getByRole("button", { name: /Evaluate Server Storage Policy/i }));
+
+    expect(await storagePolicy.findByText(/Storage policy report synced/i)).toBeInTheDocument();
+    expect(storagePolicy.getAllByText(/External object storage remains disabled/i).length).toBeGreaterThan(0);
+    expect(storagePolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
     const fetchMock = vi.fn(async () =>
       appJsonResponse(

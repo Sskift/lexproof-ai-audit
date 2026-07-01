@@ -1,0 +1,131 @@
+import { describe, expect, it, vi } from "vitest";
+import { fetchObjectStoragePolicyReport } from "./objectStoragePolicyClient";
+import type { ObjectStoragePolicyContext, ObjectStoragePolicyReport } from "./objectStoragePolicy";
+
+const readyReport: ObjectStoragePolicyReport = {
+  reportVersion: "lexproof-object-storage-policy-v1",
+  generatedAt: "2026-07-01T00:00:00.000Z",
+  overallStatus: "ready",
+  requiredControlCount: 10,
+  approvedControlCount: 10,
+  externalObjectStorageAllowed: false,
+  externalObjectStorageStatus: "policy-ready-not-enabled",
+  controls: [
+    {
+      id: "retention-boundary",
+      label: "Retention boundary",
+      status: "ready",
+      evidence: "Retention policy is ready for metadata-only vault handoff.",
+      recoveryAction: "Keep raw object storage disabled until adapter enablement review."
+    }
+  ],
+  nextActions: ["Keep external object storage disabled until a separate storage adapter enablement review."],
+  notLegalAdviceBoundary: "Not legal advice. Object storage policy is audit preparation metadata only."
+};
+
+describe("object storage policy client", () => {
+  it("posts storage policy metadata without sending raw evidence or credentials", async () => {
+    const policyWithUnexpectedRawFields = {
+      policyOwner: "Storage owner",
+      retentionDays: 365,
+      deletionSlaDays: 30,
+      encryptionAtRestApproved: true,
+      bucketAllowlistApproved: true,
+      accessLoggingApproved: true,
+      lifecyclePolicyApproved: true,
+      noSensitiveMaterialConfirmed: true,
+      humanReviewRequired: true,
+      notes: "Prepared for future storage adapter review.",
+      rawEvidenceBody: "raw document text should not be posted",
+      apiKey: "sk-live-abcdef1234567890abcdef1234567890"
+    };
+    const contextWithUnexpectedRawFields: ObjectStoragePolicyContext & { rawEvidenceBytes: string } = {
+      workspaceId: "workspace-storage",
+      evidenceCount: 2,
+      retentionStatus: "ready",
+      vaultSyncAllowed: true,
+      blockerCount: 0,
+      manifestHash: "c".repeat(64),
+      rawEvidenceBytes: "not allowed"
+    };
+    const fetcherMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit): Promise<Response> => ({
+      ok: true,
+      json: async () => readyReport
+    }) as Response);
+
+    const report = await fetchObjectStoragePolicyReport({
+      apiBaseUrl: "https://api.lexproof.test/",
+      fetcher: fetcherMock as unknown as typeof fetch,
+      context: contextWithUnexpectedRawFields,
+      policy: policyWithUnexpectedRawFields
+    });
+
+    expect(report).toBe(readyReport);
+    expect(fetcherMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetcherMock.mock.calls[0] ?? [];
+    expect(url).toBe("https://api.lexproof.test/api/integrations/object-storage/policy");
+    expect(init?.method).toBe("POST");
+    const body = JSON.parse(String(init?.body));
+    expect(body).toEqual({
+      context: {
+        workspaceId: "workspace-storage",
+        evidenceCount: 2,
+        retentionStatus: "ready",
+        vaultSyncAllowed: true,
+        blockerCount: 0,
+        manifestHash: "c".repeat(64)
+      },
+      policy: {
+        policyOwner: "Storage owner",
+        retentionDays: 365,
+        deletionSlaDays: 30,
+        encryptionAtRestApproved: true,
+        bucketAllowlistApproved: true,
+        accessLoggingApproved: true,
+        lifecyclePolicyApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Prepared for future storage adapter review."
+      }
+    });
+    expect(String(init?.body)).not.toContain("raw document text");
+    expect(String(init?.body)).not.toContain("apiKey");
+    expect(String(init?.body)).not.toContain("sk-live");
+  });
+
+  it("rejects malformed storage policy responses before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ ...readyReport, externalObjectStorageAllowed: true })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchObjectStoragePolicyReport({
+        fetcher,
+        context: {
+          workspaceId: "workspace-storage",
+          evidenceCount: 1,
+          retentionStatus: "ready",
+          vaultSyncAllowed: true,
+          blockerCount: 0,
+          manifestHash: "d".repeat(64)
+        },
+        policy: {
+          policyOwner: "Storage owner",
+          retentionDays: 365,
+          deletionSlaDays: 30,
+          encryptionAtRestApproved: true,
+          bucketAllowlistApproved: true,
+          accessLoggingApproved: true,
+          lifecyclePolicyApproved: true,
+          noSensitiveMaterialConfirmed: true,
+          humanReviewRequired: true,
+          notes: ""
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "OBJECT_STORAGE_POLICY_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning the metadata-only object storage policy contract."
+    });
+  });
+});

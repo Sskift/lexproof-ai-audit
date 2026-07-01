@@ -4,7 +4,8 @@ export type Phase2ApiDomain =
   | "model-gateway"
   | "human-review"
   | "exports"
-  | "audit-log";
+  | "audit-log"
+  | "integrations";
 
 export type Phase2ApiMethod = "GET" | "POST" | "PATCH";
 
@@ -93,6 +94,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "model-gateway",
       "ModelGatewaySecretPolicyRequest",
       "ModelGatewaySecretPolicyReport",
+      true
+    ),
+    createRoute(
+      "POST",
+      "/api/integrations/object-storage/policy",
+      "integrations",
+      "ObjectStoragePolicyRequest",
+      "ObjectStoragePolicyReport",
       true
     ),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),

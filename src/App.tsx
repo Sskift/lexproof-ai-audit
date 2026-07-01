@@ -158,7 +158,7 @@ import {
 } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
-import type { CounselPackExportRecord } from "./lib/phase2Types";
+import type { CounselPackExportRecord, RegulatorySourceApprovalSyncResult } from "./lib/phase2Types";
 import { createRegulatoryControlMatrix } from "./lib/regulatoryControlMatrix";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import {
@@ -166,6 +166,10 @@ import {
   type RegulatorySourcePack
 } from "./lib/regulatorySourcePack";
 import { createRegulatorySourceApprovalQueue } from "./lib/regulatorySourceApproval";
+import {
+  RegulatorySourceApprovalClientError,
+  syncRegulatorySourceApprovalQueue
+} from "./lib/regulatorySourceApprovalClient";
 import {
   createRegulatorySourceReviewPacket,
   type RegulatorySourceReviewPacket
@@ -339,6 +343,11 @@ export default function App() {
   const [grcDestinationPolicySyncStatus, setGrcDestinationPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [grcDestinationPolicySyncError, setGrcDestinationPolicySyncError] = useState("");
   const [grcDestinationPolicySyncRecoveryAction, setGrcDestinationPolicySyncRecoveryAction] = useState("");
+  const [sourceApprovalApiBaseUrl, setSourceApprovalApiBaseUrl] = useState("");
+  const [sourceApprovalSyncResult, setSourceApprovalSyncResult] = useState<RegulatorySourceApprovalSyncResult | null>(null);
+  const [sourceApprovalSyncStatus, setSourceApprovalSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [sourceApprovalSyncError, setSourceApprovalSyncError] = useState("");
+  const [sourceApprovalSyncRecoveryAction, setSourceApprovalSyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -698,6 +707,13 @@ export default function App() {
   useEffect(() => {
     setSelectedCounselPackTemplateId(recommendedCounselPackTemplate.id);
   }, [project.id, recommendedCounselPackTemplate.id]);
+
+  useEffect(() => {
+    setSourceApprovalSyncResult(null);
+    setSourceApprovalSyncStatus("idle");
+    setSourceApprovalSyncError("");
+    setSourceApprovalSyncRecoveryAction("");
+  }, [project.id, regulatorySourceApprovalQueue.totalItemCount]);
 
   useEffect(() => {
     let live = true;
@@ -1315,6 +1331,32 @@ export default function App() {
     }
   };
 
+  const syncSourceApprovalQueue = async () => {
+    setSourceApprovalSyncStatus("syncing");
+    setSourceApprovalSyncError("");
+    setSourceApprovalSyncRecoveryAction("");
+
+    try {
+      const result = await syncRegulatorySourceApprovalQueue({
+        apiBaseUrl: sourceApprovalApiBaseUrl,
+        workspaceId: project.id,
+        queue: regulatorySourceApprovalQueue,
+        createdBy: modelIntakeProfile.humanReviewOwner || "Compliance"
+      });
+      setSourceApprovalSyncResult(result);
+      setSourceApprovalSyncStatus("synced");
+    } catch (error) {
+      setSourceApprovalSyncStatus("error");
+      if (error instanceof RegulatorySourceApprovalClientError) {
+        setSourceApprovalSyncError(error.message);
+        setSourceApprovalSyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setSourceApprovalSyncError(error instanceof Error ? error.message : "Source approval sync failed.");
+      setSourceApprovalSyncRecoveryAction("Start the Phase 2 API and retry source approval sync.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1401,11 +1443,18 @@ export default function App() {
             graph={regulatoryGraph}
             sourceReview={regulatorySourceReview}
             sourceApprovalQueue={regulatorySourceApprovalQueue}
+            sourceApprovalApiBaseUrl={sourceApprovalApiBaseUrl}
+            sourceApprovalSyncResult={sourceApprovalSyncResult}
+            sourceApprovalSyncStatus={sourceApprovalSyncStatus}
+            sourceApprovalSyncError={sourceApprovalSyncError}
+            sourceApprovalSyncRecoveryAction={sourceApprovalSyncRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
             actionQueue={workspaceActionQueue}
             journey={workspaceJourney}
             sourceReviewPacket={regulatorySourceReviewPacket}
             manifestHash={manifest?.bundleHash}
+            onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}
+            onSyncSourceApprovalQueue={syncSourceApprovalQueue}
             onNavigate={setActiveTab}
           />
 

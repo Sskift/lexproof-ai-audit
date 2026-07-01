@@ -5,6 +5,7 @@ import type {
   EvidenceVaultRecord,
   HumanReviewRecord,
   ModelGatewayRun,
+  RegulatorySourceApprovalRecord,
   WorkspaceRecord
 } from "../src/lib/phase2Types.js";
 
@@ -25,6 +26,8 @@ export type ReviewWorkspaceRepository = {
   saveCounselPackExportRecord(record: CounselPackExportRecord): Promise<void>;
   listCounselPackExportRecords(workspaceId: string): Promise<CounselPackExportRecord[]>;
   findCounselPackExportRecord(workspaceId: string, exportId: string): Promise<CounselPackExportRecord | null>;
+  saveRegulatorySourceApprovalRecord(record: RegulatorySourceApprovalRecord): Promise<void>;
+  listRegulatorySourceApprovalRecords(workspaceId: string): Promise<RegulatorySourceApprovalRecord[]>;
   appendAuditLogRecord(record: AuditLogRecord): Promise<void>;
   listAuditLogRecords(workspaceId: string): Promise<AuditLogRecord[]>;
   close(): Promise<void>;
@@ -40,6 +43,7 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
   const modelRuns = new Map<string, ModelGatewayRun[]>();
   const humanReviews = new Map<string, HumanReviewRecord[]>();
   const counselPackExports = new Map<string, CounselPackExportRecord[]>();
+  const sourceApprovals = new Map<string, RegulatorySourceApprovalRecord[]>();
   const auditLogs = new Map<string, AuditLogRecord[]>();
 
   return {
@@ -105,6 +109,14 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
 
     async findCounselPackExportRecord(workspaceId, exportId) {
       return (counselPackExports.get(workspaceId) ?? []).find((record) => record.id === exportId) ?? null;
+    },
+
+    async saveRegulatorySourceApprovalRecord(record) {
+      sourceApprovals.set(record.workspaceId, upsertById(sourceApprovals.get(record.workspaceId) ?? [], record));
+    },
+
+    async listRegulatorySourceApprovalRecords(workspaceId) {
+      return sourceApprovals.get(workspaceId) ?? [];
     },
 
     async appendAuditLogRecord(record) {
@@ -254,6 +266,22 @@ export async function createPrismaReviewWorkspaceRepository(
         where: { workspaceId, id: exportId }
       });
       return record ? deserializeCounselPackExportRecord(record) : null;
+    },
+
+    async saveRegulatorySourceApprovalRecord(record) {
+      await prisma.regulatorySourceApprovalRecord.upsert({
+        where: { id: record.id },
+        update: serializeRegulatorySourceApprovalRecord(record),
+        create: serializeRegulatorySourceApprovalRecord(record)
+      });
+    },
+
+    async listRegulatorySourceApprovalRecords(workspaceId) {
+      const records = await prisma.regulatorySourceApprovalRecord.findMany({
+        where: { workspaceId },
+        orderBy: { createdAt: "asc" }
+      });
+      return records.map(deserializeRegulatorySourceApprovalRecord);
     },
 
     async appendAuditLogRecord(record) {
@@ -418,6 +446,38 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
   );
   await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourcePackHash", "TEXT NOT NULL DEFAULT ''");
   await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourceReviewStatus", "TEXT NOT NULL DEFAULT 'metadata-missing'");
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "RegulatorySourceApprovalRecord" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "workspaceId" TEXT NOT NULL,
+      "queueHash" TEXT NOT NULL,
+      "sourceApprovalItemId" TEXT NOT NULL,
+      "clauseId" TEXT NOT NULL,
+      "jurisdiction" TEXT NOT NULL,
+      "regulator" TEXT NOT NULL,
+      "citation" TEXT NOT NULL,
+      "sourceName" TEXT NOT NULL,
+      "sourceUrl" TEXT NOT NULL,
+      "priority" TEXT NOT NULL,
+      "approvalStatus" TEXT NOT NULL,
+      "reviewStatus" TEXT NOT NULL,
+      "effectiveAsOf" TEXT NOT NULL,
+      "lastReviewedAt" TEXT NOT NULL,
+      "nextReviewDueAt" TEXT NOT NULL,
+      "reviewerNotes" TEXT NOT NULL,
+      "nextAction" TEXT NOT NULL,
+      "approvalGate" TEXT NOT NULL,
+      "status" TEXT NOT NULL,
+      "matchingBehaviorChanged" BOOLEAN NOT NULL,
+      "createdBy" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL,
+      "notLegalAdviceBoundary" TEXT NOT NULL
+    );
+  `);
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "RegulatorySourceApprovalRecord_workspaceId_idx" ON "RegulatorySourceApprovalRecord"("workspaceId");`
+  );
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "AuditLogRecord" (
@@ -817,6 +877,95 @@ function parseCounselPackExportSourceReviewStatus(value: string | null | undefin
     return value;
   }
   return "metadata-missing";
+}
+
+function serializeRegulatorySourceApprovalRecord(record: RegulatorySourceApprovalRecord) {
+  return {
+    id: record.id,
+    workspaceId: record.workspaceId,
+    queueHash: record.queueHash,
+    sourceApprovalItemId: record.sourceApprovalItemId,
+    clauseId: record.clauseId,
+    jurisdiction: record.jurisdiction,
+    regulator: record.regulator,
+    citation: record.citation,
+    sourceName: record.sourceName,
+    sourceUrl: record.sourceUrl,
+    priority: record.priority,
+    approvalStatus: record.approvalStatus,
+    reviewStatus: record.reviewStatus,
+    effectiveAsOf: record.effectiveAsOf,
+    lastReviewedAt: record.lastReviewedAt,
+    nextReviewDueAt: record.nextReviewDueAt,
+    reviewerNotes: record.reviewerNotes,
+    nextAction: record.nextAction,
+    approvalGate: record.approvalGate,
+    status: record.status,
+    matchingBehaviorChanged: record.matchingBehaviorChanged,
+    createdBy: record.createdBy,
+    createdAt: new Date(record.createdAt),
+    notLegalAdviceBoundary: record.notLegalAdviceBoundary
+  };
+}
+
+type PersistedRegulatorySourceApprovalRecord = {
+  id: string;
+  workspaceId: string;
+  queueHash: string;
+  sourceApprovalItemId: string;
+  clauseId: string;
+  jurisdiction: string;
+  regulator: string;
+  citation: string;
+  sourceName: string;
+  sourceUrl: string;
+  priority: string;
+  approvalStatus: string;
+  reviewStatus: string;
+  effectiveAsOf: string;
+  lastReviewedAt: string;
+  nextReviewDueAt: string;
+  reviewerNotes: string;
+  nextAction: string;
+  approvalGate: string;
+  status: string;
+  matchingBehaviorChanged: boolean;
+  createdBy: string;
+  createdAt: Date;
+  notLegalAdviceBoundary: string;
+};
+
+function deserializeRegulatorySourceApprovalRecord(
+  record: PersistedRegulatorySourceApprovalRecord
+): RegulatorySourceApprovalRecord {
+  return {
+    recordVersion: "lexproof-source-approval-record-v1",
+    id: record.id,
+    workspaceId: record.workspaceId,
+    queueHash: record.queueHash,
+    sourceApprovalItemId: record.sourceApprovalItemId,
+    clauseId: record.clauseId,
+    jurisdiction: record.jurisdiction,
+    regulator: record.regulator,
+    citation: record.citation,
+    sourceName: record.sourceName,
+    sourceUrl: record.sourceUrl,
+    priority: record.priority as RegulatorySourceApprovalRecord["priority"],
+    approvalStatus: record.approvalStatus as RegulatorySourceApprovalRecord["approvalStatus"],
+    reviewStatus: record.reviewStatus as RegulatorySourceApprovalRecord["reviewStatus"],
+    effectiveAsOf: record.effectiveAsOf,
+    lastReviewedAt: record.lastReviewedAt,
+    nextReviewDueAt: record.nextReviewDueAt,
+    reviewerNotes: record.reviewerNotes,
+    nextAction: record.nextAction,
+    approvalGate:
+      "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
+    status: "pending-review",
+    matchingBehaviorChanged: false,
+    createdBy: record.createdBy,
+    createdAt: record.createdAt.toISOString(),
+    notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
+  };
 }
 
 function serializeAuditLogRecord(record: AuditLogRecord) {

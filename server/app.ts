@@ -6,6 +6,7 @@ import { registerEvidenceVaultRoutes } from "./evidenceVaultRoutes.js";
 import { registerHumanReviewRoutes } from "./humanReviewRoutes.js";
 import { registerIntegrationPolicyRoutes } from "./integrationPolicyRoutes.js";
 import { registerModelGatewayRoutes } from "./modelGatewayRoutes.js";
+import { registerSourceApprovalRoutes } from "./sourceApprovalRoutes.js";
 import { registerSystemRoutes } from "./systemRoutes.js";
 import { registerWorkspaceRoutes } from "./workspaceRoutes.js";
 import { createMemoryReviewWorkspaceRepository, type ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
@@ -35,6 +36,7 @@ export function buildServer(options: BuildServerOptions = {}) {
   registerModelGatewayRoutes(server, { repository });
   registerCounselPackExportRoutes(server, { repository });
   registerHumanReviewRoutes(server, { repository });
+  registerSourceApprovalRoutes(server, { repository });
   registerEvidenceVaultRoutes(server, { repository });
   registerWorkspaceRoutes(server, { repository });
   registerAuditLogRoutes(server, { repository });

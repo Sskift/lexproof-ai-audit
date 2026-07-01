@@ -47,10 +47,12 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Download Control Matrix JSON** to show the metadata-only handoff with evidence coverage, source review status, local counsel route, next action, and no compliance conclusion.
    - Click **Download Source Review Packet JSON** to show the metadata-only source refresh action queue, clause-match targets, packet hash, and Not legal advice boundary.
    - If source review is due, show the **Source Update Approval Queue** and click **Download Source Approval Queue JSON** to show that source updates cannot affect matching behavior until counsel or compliance review records refreshed source metadata.
+   - When the Phase 2 API is running, enter `http://127.0.0.1:8787` in **Source Approval API base URL** and click **Sync Source Approval Queue** to persist metadata-only source approval records while confirming matching behavior is unchanged.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
    - Screenshot: `docs/assets/screenshots/workspace-journey.png`.
    - Screenshot: `docs/assets/screenshots/source-review-packet.png`.
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
+   - Screenshot: `docs/assets/screenshots/source-approval-api-sync.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.
    - Optional Brazil path screenshot after **Start Brazil VASP source review**: `docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png`.
    - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.

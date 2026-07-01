@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck } from "lucide-react";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
 import type { AuditResult } from "../lib/auditEngine";
 import type { RegulatoryControlMatrix } from "../lib/regulatoryControlMatrix";
@@ -14,6 +14,7 @@ import {
 } from "../lib/regulatorySourceApproval";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { ProjectProfile } from "../lib/projectModel";
+import type { RegulatorySourceApprovalSyncResult } from "../lib/phase2Types";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
 
@@ -23,11 +24,18 @@ type RegulatoryCommandCenterProps = {
   graph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
   sourceApprovalQueue: RegulatorySourceApprovalQueue;
+  sourceApprovalApiBaseUrl: string;
+  sourceApprovalSyncResult: RegulatorySourceApprovalSyncResult | null;
+  sourceApprovalSyncStatus: "idle" | "syncing" | "synced" | "error";
+  sourceApprovalSyncError: string;
+  sourceApprovalSyncRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
   actionQueue: WorkspaceActionQueue;
   journey: WorkspaceJourney;
   sourceReviewPacket: RegulatorySourceReviewPacket | null;
   manifestHash?: string;
+  onSourceApprovalApiBaseUrlChange: (value: string) => void;
+  onSyncSourceApprovalQueue: () => Promise<void> | void;
   onNavigate: (tab: WorkspaceActionTarget) => void;
 };
 
@@ -37,11 +45,18 @@ export function RegulatoryCommandCenter({
   graph,
   sourceReview,
   sourceApprovalQueue,
+  sourceApprovalApiBaseUrl,
+  sourceApprovalSyncResult,
+  sourceApprovalSyncStatus,
+  sourceApprovalSyncError,
+  sourceApprovalSyncRecoveryAction,
   controlMatrix,
   actionQueue,
   journey,
   sourceReviewPacket,
   manifestHash,
+  onSourceApprovalApiBaseUrlChange,
+  onSyncSourceApprovalQueue,
   onNavigate
 }: RegulatoryCommandCenterProps) {
   const topClauses = graph.matchedClauses.slice(0, 4);
@@ -202,6 +217,44 @@ export function RegulatoryCommandCenter({
           <Metric label="Open gates" value={sourceApprovalQueue.totalItemCount} helper={sourceApprovalQueue.status} />
         </div>
         <p>{sourceApprovalQueue.notLegalAdviceBoundary}</p>
+        <div className={`provider-policy-sync ${sourceApprovalSyncStatus}`}>
+          <label className="editor-field">
+            <span>Source Approval API base URL</span>
+            <input
+              type="url"
+              value={sourceApprovalApiBaseUrl}
+              placeholder="http://127.0.0.1:8787"
+              onChange={(event) => onSourceApprovalApiBaseUrlChange(event.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="secondary"
+            onClick={onSyncSourceApprovalQueue}
+            disabled={sourceApprovalSyncStatus === "syncing"}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {sourceApprovalSyncStatus === "syncing" ? "Syncing Source Approval Queue" : "Sync Source Approval Queue"}
+          </button>
+          <small>
+            Syncs source approval metadata only. Source matching remains gated until counsel or compliance review records refreshed
+            metadata.
+          </small>
+          {sourceApprovalSyncStatus === "synced" && sourceApprovalSyncResult ? (
+            <span className="save-state">
+              Source approvals synced: {sourceApprovalSyncResult.syncedCount} record
+              {sourceApprovalSyncResult.syncedCount === 1 ? "" : "s"}. Matching behavior unchanged. Queue hash{" "}
+              {sourceApprovalSyncResult.queueHash.slice(0, 12)}...
+            </span>
+          ) : null}
+          {sourceApprovalSyncError ? (
+            <div className="provider-policy-error" role="alert">
+              <strong>{sourceApprovalSyncError}</strong>
+              {sourceApprovalSyncRecoveryAction ? <span>{sourceApprovalSyncRecoveryAction}</span> : null}
+              <small>Not legal advice. Source approval sync is audit preparation workflow metadata only.</small>
+            </div>
+          ) : null}
+        </div>
         <div className="source-approval-list">
           {sourceApprovalQueue.items.length === 0 ? (
             <p className="empty-state">No source update approval actions are open. Source matching remains tied to reviewed metadata.</p>

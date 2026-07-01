@@ -3,6 +3,7 @@ export type Phase2ApiDomain =
   | "evidence-vault"
   | "model-gateway"
   | "human-review"
+  | "source-approvals"
   | "exports"
   | "audit-log"
   | "integrations";
@@ -135,6 +136,22 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     createRoute("GET", "/api/workspaces/:workspaceId/reviews/queue", "human-review", "HumanReviewQueueRequest", "ServerHumanReviewQueueView", true),
     createRoute("PATCH", "/api/workspaces/:workspaceId/reviews/:reviewId", "human-review", "UpdateHumanReviewRequest", "HumanReviewRecord", true),
     createRoute("GET", "/api/workspaces/:workspaceId/reviews", "human-review", "HumanReviewListRequest", "HumanReviewRecord[]", true),
+    createRoute(
+      "POST",
+      "/api/workspaces/:workspaceId/source-approvals",
+      "source-approvals",
+      "SourceApprovalSyncRequest",
+      "RegulatorySourceApprovalSyncResult",
+      true
+    ),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/source-approvals",
+      "source-approvals",
+      "SourceApprovalListRequest",
+      "RegulatorySourceApprovalRecord[]",
+      true
+    ),
     createRoute(
       "POST",
       "/api/workspaces/:workspaceId/exports/counsel-pack",
@@ -329,6 +346,35 @@ model CounselPackExportRecord {
   sourceReviewStatus     String
   createdBy              String
   status                 String
+  createdAt              DateTime
+  notLegalAdviceBoundary String
+
+  @@index([workspaceId])
+}
+
+model RegulatorySourceApprovalRecord {
+  id                     String   @id
+  workspaceId            String
+  queueHash              String
+  sourceApprovalItemId   String
+  clauseId               String
+  jurisdiction           String
+  regulator              String
+  citation               String
+  sourceName             String
+  sourceUrl              String
+  priority               String
+  approvalStatus         String
+  reviewStatus           String
+  effectiveAsOf          String
+  lastReviewedAt         String
+  nextReviewDueAt        String
+  reviewerNotes          String
+  nextAction             String
+  approvalGate           String
+  status                 String
+  matchingBehaviorChanged Boolean
+  createdBy              String
   createdAt              DateTime
   notLegalAdviceBoundary String
 

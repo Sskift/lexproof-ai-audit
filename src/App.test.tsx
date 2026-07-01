@@ -177,6 +177,86 @@ describe("App", () => {
     }
   });
 
+  it("syncs Source Update Approval Queue metadata to the Phase 2 API", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-approvals");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body.createdBy).toBe("Compliance");
+      expect(body.queue).toEqual(
+        expect.objectContaining({
+          queueVersion: "lexproof-regulatory-source-approval-queue-v1",
+          status: expect.stringMatching(/needs-approval|needs-metadata/),
+          totalItemCount: expect.any(Number),
+          notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
+        })
+      );
+      expect(body.queue.items.length).toBeGreaterThan(0);
+      expect(String(init?.body)).not.toContain("rawSourceBody");
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("sk-");
+      return appJsonResponse(
+        {
+          syncVersion: "lexproof-source-approval-sync-v1",
+          workspaceId: "sample-yieldpassport",
+          queueHash: "a".repeat(64),
+          syncedCount: body.queue.items.length,
+          records: body.queue.items.map((item: { id: string; clauseId: string; jurisdiction: string; citation: string }, index: number) => ({
+            recordVersion: "lexproof-source-approval-record-v1",
+            id: `source-approval-record-${index + 1}`,
+            workspaceId: "sample-yieldpassport",
+            queueHash: "a".repeat(64),
+            sourceApprovalItemId: item.id,
+            clauseId: item.clauseId,
+            jurisdiction: item.jurisdiction,
+            regulator: "Reviewer",
+            citation: item.citation,
+            sourceName: "Reviewed source",
+            sourceUrl: "https://example.test/source",
+            priority: "P1",
+            approvalStatus: "approval-required",
+            reviewStatus: "review-due",
+            effectiveAsOf: "2024-06-30",
+            lastReviewedAt: "2026-06-01",
+            nextReviewDueAt: "2026-09-01",
+            reviewerNotes: "Review source freshness before counsel handoff.",
+            nextAction: "Refresh and approve source metadata before it changes source matching.",
+            approvalGate:
+              "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
+            status: "pending-review",
+            matchingBehaviorChanged: false,
+            createdBy: "Compliance",
+            createdAt: "2026-10-01T00:00:00.000Z",
+            notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
+          })),
+          notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
+        },
+        201
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      const queue = screen.getByRole("region", { name: /Source Update Approval Queue/i });
+      fireEvent.change(within(queue).getByLabelText(/Source Approval API base URL/i), {
+        target: { value: "https://api.lexproof.test" }
+      });
+      fireEvent.click(within(queue).getByRole("button", { name: /Sync Source Approval Queue/i }));
+
+      expect(await within(queue).findByText(/Source approvals synced/i)).toBeInTheDocument();
+      expect(within(queue).getByText(/Matching behavior unchanged/i)).toBeInTheDocument();
+      expect(within(queue).getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("includes the Source Update Approval Queue in the Counsel Pack Markdown preview when approvals are open", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));

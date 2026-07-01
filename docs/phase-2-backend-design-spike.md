@@ -182,6 +182,15 @@ The chain-anchor policy route accepts only metadata-only context and policy fiel
 
 The GRC destination policy route accepts only metadata-only context and policy fields: workspace ID, remediation item count, Export Safety status, export blocker count, integration adapter status, local ticket export availability, policy owner, destination system, destination queue, field mapping approval, authentication policy approval, redaction policy approval, ticket ownership approval, retry/audit logging approval, sensitive-material confirmation, human-review enforcement, and notes. It drops unrecognized raw ticket bodies, API keys, webhook secrets, credentials, private-key, raw KYC, and personal-data fields before evaluation. The response includes required controls, next actions, JSON-exportable policy metadata, `exportMode: metadata-only-json`, and the Not legal advice boundary. It does not persist records, collect credentials, send raw ticket payloads, create Jira/Linear/ServiceNow/GRC records, enable destination adapters, or make legal decisions.
 
+## Source Approval Routes
+
+The first Source Approval routes are implemented in `server/sourceApprovalRoutes.ts`, `src/lib/regulatorySourceApprovalSync.ts`, `src/lib/regulatorySourceApprovalClient.ts`, and `server/reviewWorkspaceRepository.ts`:
+
+- `POST /api/workspaces/:workspaceId/source-approvals`
+- `GET /api/workspaces/:workspaceId/source-approvals`
+
+The POST route accepts only whitelisted Source Update Approval Queue metadata, creates `lexproof-source-approval-record-v1` records with `matchingBehaviorChanged: false`, stores them through the repository, and appends a source-approval audit-log entry. It drops unrecognized raw source bodies, API keys, webhook secrets, and similar extras before processing, and rejects credentials, private keys, raw KYC, personal data, or legal conclusions inside allowed fields without echoing unsafe text. The route does not update source matching behavior, approve legal compliance, ingest raw source bodies, or create external tickets.
+
 ## Human Review Routes
 
 The first Human Review routes are implemented in `server/humanReviewRoutes.ts` and backed by `server/humanReviewService.ts`, `src/lib/serverHumanReviewQueue.ts`, `src/lib/serverHumanReviewEffects.ts`, and `server/reviewWorkspaceRepository.ts`:

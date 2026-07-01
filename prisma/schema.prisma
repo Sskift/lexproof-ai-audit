@@ -110,6 +110,35 @@ model CounselPackExportRecord {
   @@index([workspaceId])
 }
 
+model RegulatorySourceApprovalRecord {
+  id                      String   @id
+  workspaceId             String
+  queueHash               String
+  sourceApprovalItemId    String
+  clauseId                String
+  jurisdiction            String
+  regulator               String
+  citation                String
+  sourceName              String
+  sourceUrl               String
+  priority                String
+  approvalStatus          String
+  reviewStatus            String
+  effectiveAsOf           String
+  lastReviewedAt          String
+  nextReviewDueAt         String
+  reviewerNotes           String
+  nextAction              String
+  approvalGate            String
+  status                  String
+  matchingBehaviorChanged Boolean
+  createdBy               String
+  createdAt               DateTime
+  notLegalAdviceBoundary  String
+
+  @@index([workspaceId])
+}
+
 model AuditLogRecord {
   id                     String   @id
   workspaceId            String

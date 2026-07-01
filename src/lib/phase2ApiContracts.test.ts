@@ -13,7 +13,18 @@ describe("Phase 2 backend API contracts", () => {
     const routes = listPhase2ApiRoutes();
     const domains = new Set(routes.map((route) => route.domain));
 
-    expect(domains).toEqual(new Set(["workspaces", "evidence-vault", "model-gateway", "human-review", "exports", "audit-log", "integrations"]));
+    expect(domains).toEqual(
+      new Set([
+        "workspaces",
+        "evidence-vault",
+        "model-gateway",
+        "human-review",
+        "source-approvals",
+        "exports",
+        "audit-log",
+        "integrations"
+      ])
+    );
     expect(routes).toContainEqual(
       expect.objectContaining({
         method: "POST",
@@ -136,6 +147,26 @@ describe("Phase 2 backend API contracts", () => {
         method: "POST",
         path: "/api/workspaces/:workspaceId/reviews",
         domain: "human-review",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "POST",
+        path: "/api/workspaces/:workspaceId/source-approvals",
+        domain: "source-approvals",
+        requestContract: "SourceApprovalSyncRequest",
+        responseContract: "RegulatorySourceApprovalSyncResult",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/source-approvals",
+        domain: "source-approvals",
+        requestContract: "SourceApprovalListRequest",
+        responseContract: "RegulatorySourceApprovalRecord[]",
         implemented: true
       })
     );

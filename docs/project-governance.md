@@ -18,6 +18,30 @@ Use these files as the single source of truth:
 
 If two docs appear to conflict, preserve the stricter privacy, non-advice, architecture, and verification rule, then update the stale file in the same documentation slice.
 
+## Agent Operating Contract
+
+Every agent or contributor must treat the four governance docs as constraints, not optional reading:
+
+1. `docs/work-universe.md` answers **what can be built** and the direction of future work.
+2. `docs/architecture-guardrails.md` answers **where code belongs** and how to avoid structural drift.
+3. `docs/engineering-workflow.md` answers **how to test, run, stage, commit, push, and keep the repository clean**.
+4. This file answers **which rule wins** when scope, architecture, workflow, and product boundaries overlap.
+
+For any non-trivial task, the implementation note, issue, or agent prompt must include:
+
+- Workstream ID from `docs/work-universe.md`.
+- User journey step.
+- Owning modules by layer.
+- Privacy boundary.
+- Not legal advice boundary.
+- Targeted verification command.
+- Whether a screenshot is required.
+- Files expected in the commit.
+
+If those fields cannot be filled, the task is too broad or underspecified. Narrow it before editing.
+
+Direct-to-main remains allowed only when the change is scoped, verified, and easy to audit. Long-running or risky work can use a branch, but the same gates still apply before merging or pushing.
+
 ## Required Start Gate
 
 Before changing source code, data, docs, screenshots, or tests:

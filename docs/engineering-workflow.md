@@ -57,6 +57,48 @@ Implement <workstream/slice>. User journey: <flow>. Put domain logic in <src/lib
 
 If the prompt cannot be filled without guessing, narrow the slice before editing.
 
+## Repository Cleanliness Contract
+
+The repository must stay runnable and inspectable after every pushed change.
+
+Before editing:
+
+```bash
+git status -sb
+git diff --stat
+```
+
+Rules:
+
+- If `git status -sb` shows unrelated modified files, leave them unstaged and do not reformat them.
+- If an unrelated change is in a file you must edit, inspect it with `git diff -- <file>` and work with it without reverting user work.
+- Do not run destructive cleanup commands such as `git reset --hard` or `git checkout -- <file>` unless the user explicitly asks for that exact operation.
+- Do not use `git add .` unless every changed file was inspected and belongs to the current slice.
+- Do not commit ignored runtime artifacts, including local SQLite files, `dist`, `server-dist`, coverage, `*.tsbuildinfo`, `.env`, downloaded exports, or throwaway screenshots.
+
+Cleanliness checks before staging:
+
+```bash
+git status -sb
+git diff --stat
+git diff --check
+```
+
+Cleanliness checks after push:
+
+```bash
+git status -sb
+git log --oneline --decorate -3
+```
+
+Expected post-push status:
+
+```text
+## main...origin/main
+```
+
+If ignored local databases or build folders exist, they may stay on disk. They must not appear in `git status -sb` and must not be used as proof of production state.
+
 ## Test Selection Matrix
 
 | Change type | Minimum targeted verification | Full gate |
@@ -158,6 +200,64 @@ curl http://127.0.0.1:8787/api/health
 ```
 
 Expected result: a JSON health response from the local API. Do not commit the local SQLite file.
+
+### Local Launch Profiles
+
+Use one of these profiles. Do not invent a new launch path unless the scripts change.
+
+**Frontend-only product smoke**
+
+```bash
+npm run dev -- --port 5173
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+Use for local-first UI, pure `src/lib`, docs, copy, and screenshot checks that do not require server persistence.
+
+**Phase 2 API smoke**
+
+```bash
+npm run build:server
+DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+```
+
+In another shell:
+
+```bash
+curl http://127.0.0.1:8787/api/health
+```
+
+Use for server route, repository, policy route, Evidence Vault, Model Gateway, Human Review, Counsel Pack export, Source Review, Source Approval, and audit-log work.
+
+**Full workbench plus API smoke**
+
+Shell 1:
+
+```bash
+npm run build:server
+DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+```
+
+Shell 2:
+
+```bash
+npm run dev -- --port 5173
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+Use for end-to-end journeys that connect Model Gateway, Evidence Vault, Human Review, regulatory source sync, and Counsel Pack exports.
+
+Stop long-running dev servers before final handoff. Local database files are ignored, but they are still disposable demo artifacts.
 
 ### Browser Smoke Recipes
 
@@ -292,6 +392,27 @@ Keep the test suite useful:
 - Remove or update obsolete tests when behavior intentionally changes.
 
 If a proposed test would still pass while the user journey is broken, rewrite it or do not add it.
+
+### Test Triage Checklist
+
+Use this checklist before adding a test:
+
+| Question | If yes | If no |
+| --- | --- | --- |
+| Does a new function score, validate, hash, match, transition, export, call an API, or enforce a boundary? | Add one focused unit test in the owning `src/lib` or `server` test file | Do not add a logic test |
+| Does a route accept, reject, persist, or audit new request data? | Add or update the route/service test | Do not add a server test |
+| Can the user click into a new state, blocker, empty state, or recovery path? | Add one App/component workflow test | Prefer screenshot/manual smoke only |
+| Is the change docs-only or copy-only? | Run full verification before push | Do not add tests |
+| Is the same behavior already proven at a lower layer? | Add a higher-layer test only if the integration can break independently | Avoid duplicate coverage |
+
+Maximum normal test budget per slice:
+
+- One primary domain test file or one focused case in an existing file.
+- One route/service test file when API behavior changes.
+- One UI workflow test when a visible state or action changes.
+- Zero tests for docs-only changes.
+
+Exceptions require a reason in the commit or final handoff, such as a cross-layer security boundary or a regression that previously escaped.
 
 ## Commit and Push Gate
 

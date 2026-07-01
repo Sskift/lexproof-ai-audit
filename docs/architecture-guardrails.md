@@ -17,6 +17,64 @@ React Workbench (src/App.tsx, src/components)
 
 The intended shape is a modular monolith for the hackathon and early pilot phase. Add focused modules inside the existing folders before adding new top-level packages. A new top-level directory needs a clear runtime boundary, such as a worker, CLI, or independent package that cannot live cleanly in `src`, `server`, `docs`, or `prisma`.
 
+## Target Architecture Blueprint
+
+LexProof has one product architecture: a local-first review workbench with an optional Phase 2 API boundary. New features must strengthen this architecture instead of adding disconnected demo islands.
+
+```text
+Browser runtime
+  React components
+    collect input, render workflow state, show empty/error/recovery actions
+  src/lib domain modules
+    validate, score, hash, match sources, build artifacts, enforce boundaries
+  src/data static data
+    synthetic scenarios, evidence templates, reviewed source references
+  src/lib/*Client.ts
+    typed browser-to-API requests with sanitized errors
+
+Server runtime
+  server/app.ts
+    composes route modules and shared hooks
+  server/*Routes.ts
+    parse requests, call services, return typed responses
+  server/*Service.ts
+    validate, hash, transition state, create receipts, append audit summaries
+  server/reviewWorkspaceRepository.ts
+    memory and Prisma repository implementations
+  prisma/schema.prisma
+    durable metadata schema only
+```
+
+Data moves in one direction for user workflows:
+
+```text
+Project facts
+  -> deterministic audit and source graph
+  -> evidence/model intake
+  -> human review
+  -> vault/manifest/audit log
+  -> counsel/submission/export artifacts
+```
+
+AI and external systems are side inputs only. They may create draft audit-prep questions, receipts, or metadata records, but they must not alter deterministic risk scores or source matching without a focused domain function and tests.
+
+## Feature Addition Protocol
+
+Use this protocol before creating or moving files:
+
+1. Name the workstream from `docs/work-universe.md`.
+2. Name the user journey step, such as `Evidence Ledger -> Evidence Vault -> Counsel Pack`.
+3. Add or update the smallest `src/lib` domain function first when behavior changes.
+4. Add static/demo data in `src/data` only when the behavior needs reviewed source, scenario, or template material.
+5. Add a server route/service only when durability, audit logging, model gateway, vault, review, export, or policy evaluation is required.
+6. Add a typed client in `src/lib/<feature>Client.ts` before wiring React to a server route.
+7. Add UI in one focused component or the existing owning component.
+8. Update README/docs only for user-visible behavior, API contracts, demo flow, or governance rules.
+9. Add tests only for new core behavior or user-visible workflow state.
+10. Capture screenshots only for durable judge-visible UI changes.
+
+If a slice needs more than one new domain module, one new route family, and one new panel, split it unless the pieces are inseparable for a runnable journey.
+
 ## Architecture Contract
 
 LexProof should grow as a layered review workspace, not as a collection of disconnected demos. New work must preserve these contracts:
@@ -29,6 +87,30 @@ LexProof should grow as a layered review workspace, not as a collection of disco
 - **Documentation contract:** README explains how to run and demo; `docs/project-governance.md` is the operating contract; `docs/work-universe.md` defines what to build; this file defines where it belongs; `docs/engineering-workflow.md` defines how to verify and keep the repository clean.
 
 If a proposed feature cannot name its frontend, domain, backend, data, and verification boundaries, split it before implementation.
+
+## No-Drift Placement Rules
+
+Use these rules to stop architecture drift during normal agent work:
+
+| Change pressure | Correct response | Drift to reject |
+| --- | --- | --- |
+| A component needs a new status calculation | Move the calculation to `src/lib/<context>.ts` and import the result | Inline branching rules spread across JSX |
+| A panel needs to call an API | Create or reuse `src/lib/<feature>Client.ts` | Multiple direct `fetch` calls in components |
+| A route needs validation | Put reusable validation in a service or shared domain helper | Route handlers that mutate before validation |
+| A regulatory rule needs source text | Add reviewed metadata to `src/data/regulatoryClauses.ts` | Hard-coded legal/source copy in a component |
+| An export needs new content | Extend the export builder in `src/lib` and test it | String assembly in JSX or route handlers |
+| A workflow needs server state | Add repository methods and route tests | UI-only state pretending to be durable |
+| A screenshot proves only decoration | Do not commit it | Screenshot churn without workflow value |
+
+Naming conventions:
+
+- Domain modules: `src/lib/<boundedContext>.ts`.
+- Domain tests: `src/lib/<boundedContext>.test.ts`.
+- Browser API clients: `src/lib/<boundedContext>Client.ts`.
+- React workflow panels: `src/components/<WorkflowPanel>.tsx`.
+- Server route families: `server/<boundedContext>Routes.ts`.
+- Server services: `server/<boundedContext>Service.ts`.
+- Repository changes: extend `server/reviewWorkspaceRepository.ts` before route code depends on persistence.
 
 ## Dependency Rules
 

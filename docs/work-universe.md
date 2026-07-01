@@ -78,6 +78,42 @@ LexProof should not copy any one category. The 10x direction is to combine:
 
 The differentiator is a counsel-ready audit preparation workspace for AI and Web3 launch risk. It must stay sharper than a generic legal AI assistant, safer than an unaudited model workflow, and more reviewable than a normal compliance checklist.
 
+## Work Universe Control Board
+
+This is the canonical inventory for future work. Every feature, frontend change, backend route, data expansion, test, screenshot, and demo improvement must map to one row below before implementation starts.
+
+| Work lane | What must be built | Frontend surface | Backend/domain/data owner | Verification path | Direction |
+| --- | --- | --- | --- | --- | --- |
+| W1 Regulatory intelligence | Deeper jurisdiction controls, source refresh review, local-counsel routing, source update approval, source-pack exports | Regulatory Command Center, Jurisdiction Checklist, Source Review Ledger, Source Approval Queue | `src/data/regulatoryClauses.ts`, `src/lib/regulatoryGraph.ts`, `src/lib/regulatorySourceReview.ts`, `server/source*Routes.ts` | Clause matching tests, source review sync route tests, screenshot for new command-center state | Build source-backed review triggers, not legal conclusions |
+| W2 Evidence operations | Evidence requests, metadata intake, file hashes, retention gates, vault lineage, duplicate/replacement recovery, manifests | Evidence Ledger, Evidence Retention, Evidence Vault panels | `src/lib/evidence*.ts`, `src/lib/retentionPolicy.ts`, `server/evidenceVault*` | Stable hash tests, transition tests, duplicate/replacement route tests, screenshot for new recovery state | Make evidence metadata verifiable and recoverable without raw files |
+| W3 Model governance | BYOM/BYOK setup, redaction gate, provider/secret policy, gateway receipts, model-run evaluation, failure recovery | Model Settings, AI Review, Model Intake, Secure Review Workspace | `src/lib/model*.ts`, `src/lib/aiReview.ts`, `server/modelGateway*` | Model validation tests, policy route tests, receipt hash tests, UI failure-state test | Treat AI output as draft audit prep requiring human review |
+| W4 Human review | Review queue by target, reviewer assignment, due dates, return/reject/reviewed flows, timeline export, linked status effects | Human Review queue and timeline surfaces | `src/lib/humanReviewWorkflow.ts`, `src/lib/serverHumanReviewEffects.ts`, `server/humanReview*` | Queue/filter tests, linked effect tests, route tests, screenshot for reviewed/rejected flow | Make review operational while avoiding legal approval language |
+| W5 Counsel and submission exports | Versioned Counsel Pack, source pack, submission pack, export safety gate, print/PDF handoff, diff and receipt exports | Counsel Pack, Sources, Submission Pack | `src/lib/counselPack*.ts`, `src/lib/submissionPack.ts`, `server/counselPackExport*` | Markdown/export tests, version diff tests, export blocker tests | Produce reproducible audit-prep artifacts with hashes and limitations |
+| W6 Workbench experience | First-screen cockpit, journey rail, action queue, dense panels, empty/error/recovery states, responsive polish | `src/App.tsx`, `src/components/*`, `src/styles.css` | Domain state remains in `src/lib`; static demo data in `src/data` | App workflow tests, desktop/mobile screenshots for durable UI changes | Make the product feel like a serious GRC/legal ops workbench |
+| W7 Backend platform | Route modules, repository adapters, Prisma state, audit logs, typed errors, health/preflight, future background jobs | Secure Review Workspace and API-connected panels | `server/*Routes.ts`, `server/*Service.ts`, `server/reviewWorkspaceRepository.ts`, `prisma/schema.prisma` | Route/service/repository tests, `npm run build:server`, `npm run verify` | Keep API behavior durable, typed, and metadata-only by default |
+| W8 Security and privacy | Classification, redaction, retention, upload/export blockers, safe audit log export, readiness gates | Redaction Gate, Export Safety Gate, Security Review, Integration Readiness | `src/lib/dataClassification.ts`, `src/lib/dataBoundary.ts`, `src/lib/evidenceUploadBoundary.ts`, policy routes | Boundary tests, redaction tests, policy route tests, negative tests for unsafe data | Block secrets, private keys, raw KYC, personal data, and raw evidence leakage |
+| W9 Integrations | Disabled-by-default provider, object storage, OCR/parser, GRC/ticket, and optional chain-anchor adapters | Integration Readiness Registry and adapter panels | `src/lib/*Policy.ts`, focused clients/services, future adapter routes | Adapter policy tests, no-real-call tests, failure recovery tests | Add real integrations only after policy, retention, and audit controls exist |
+| W10 Demo and judge readiness | Clean-clone script, screenshot set, demo scenarios, API preflight, known limitations, hackathon submission materials | Demo Scenario Library, Demo Readiness, README, docs | `src/lib/demoScenarioLibrary.ts`, `src/lib/demoReadiness.ts`, docs | Scenario/readiness tests, `npm run verify`, documented smoke path | Make judging reproducible without credentials or private data |
+| W11 Pilot operations | Accounts, orgs, roles, reviewer permissions, matter sharing, workspace activity, durable settings | Future admin/workspace surfaces only after W1-W10 are stable | Future auth/RBAC service and repository tables | Permission model tests, route tests, threat-model review | Defer until single-user secure review flow is stable |
+| W12 Production readiness | Observability, background jobs, migration discipline, deployment, enterprise reporting, custom controls | Future ops/admin surfaces | Future worker/deploy modules, server metrics, policy packs | Build/deploy smoke, migration tests, operational runbook | Defer until pilot workflows prove demand |
+
+## Build Order And Direction
+
+Use this order unless a user explicitly narrows a different slice:
+
+1. **Close demo gaps first:** Any judge-visible flow with unclear empty, error, recovery, or export state beats a new integration.
+2. **Deepen jurisdiction evidence next:** Expand source/control coverage for RWA, DAO governance, custody, AI legal workflow, marketing claims, and Brazil/Singapore/UAE/UK/EU/US routes when each addition has reviewed source metadata and tests.
+3. **Harden secure review loops:** Model Gateway, Human Review, Evidence Vault, Audit Log, and Counsel Pack should behave as one journey before new product areas are added.
+4. **Make integrations policy-real before adapter-real:** Every external adapter starts as a metadata-only policy evaluation with disabled state, failure state, and no real side effects.
+5. **Only then add pilot infrastructure:** Auth, organizations, sharing, raw document intake, and real storage belong after the current single-user flow remains stable under `npm run verify` and browser smoke.
+
+Rejected directions:
+
+- Generic chatbot features that bypass deterministic audit and human review.
+- Region-law answers that read as legal advice instead of source-backed review triggers.
+- Real KYC, raw customer document storage, private-key handling, or real chain writes in the demo.
+- Parallel demo-only pages that do not connect to the North-Star Journey.
+
 ## Complete Build Universe
 
 This is the full scope boundary. New work should fit one of these capabilities or explicitly amend this file before implementation.

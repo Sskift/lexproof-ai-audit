@@ -42,12 +42,12 @@ It defines route metadata for:
 | --- | --- |
 | Workspaces | `POST /api/workspaces`, `GET /api/workspaces/:workspaceId`, `PATCH /api/workspaces/:workspaceId` |
 | Evidence Vault | `POST /api/workspaces/:workspaceId/evidence`, `GET /api/workspaces/:workspaceId/evidence`, `PATCH /api/workspaces/:workspaceId/evidence/:evidenceId`, `POST /api/workspaces/:workspaceId/evidence/:evidenceId/replacement`, `GET /api/workspaces/:workspaceId/evidence-manifest` |
-| Model Gateway | `GET /api/model-gateway/adapters`, `GET /api/model-gateway/provider-policy`, `POST /api/model-gateway/provider-policy`, `POST /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs/:runId` |
+| Model Gateway | `GET /api/model-gateway/adapters`, `GET /api/model-gateway/provider-policy`, `POST /api/model-gateway/provider-policy`, `POST /api/model-gateway/secret-policy`, `POST /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs`, `GET /api/workspaces/:workspaceId/model-runs/:runId` |
 | Human Review | `POST /api/workspaces/:workspaceId/reviews`, `PATCH /api/workspaces/:workspaceId/reviews/:reviewId`, `GET /api/workspaces/:workspaceId/reviews`, `GET /api/workspaces/:workspaceId/reviews/queue` |
 | Exports | `POST /api/workspaces/:workspaceId/exports/counsel-pack`, `GET /api/workspaces/:workspaceId/exports`, `GET /api/workspaces/:workspaceId/exports/:exportId` |
 | Audit Log | `GET /api/workspaces/:workspaceId/audit-log` |
 
-Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export Records, and Audit Log routes are now marked `implemented: true`. Export routes persist metadata-only records for local Counsel Pack versions; they do not store raw Markdown, raw PDF content, credentials, KYC, personal data, or legal conclusions. Model Gateway exposes adapter readiness, successful run receipts, and safe failure receipts, but enables only the mock adapter until provider proxy and server-side secret policy are added. Evidence Vault persists metadata only, not uploaded file bytes.
+Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export Records, and Audit Log routes are now marked `implemented: true`. Export routes persist metadata-only records for local Counsel Pack versions; they do not store raw Markdown, raw PDF content, credentials, KYC, personal data, or legal conclusions. Model Gateway exposes adapter readiness, provider policy reports, secret policy evaluation reports, successful run receipts, and safe failure receipts, but enables only the mock adapter until provider proxy enablement is separately reviewed. Evidence Vault persists metadata only, not uploaded file bytes.
 
 ## Persistence Contract Source
 
@@ -155,11 +155,12 @@ The first Model Gateway routes are implemented in `server/modelGatewayRoutes.ts`
 - `GET /api/model-gateway/adapters`
 - `GET /api/model-gateway/provider-policy`
 - `POST /api/model-gateway/provider-policy`
+- `POST /api/model-gateway/secret-policy`
 - `POST /api/workspaces/:workspaceId/model-runs`
 - `GET /api/workspaces/:workspaceId/model-runs`
 - `GET /api/workspaces/:workspaceId/model-runs/:runId`
 
-The adapters route returns provider readiness without credentials. The provider-policy routes return the server registry policy report, required controls, next actions, and Not legal advice boundary without accepting credentials or enabling external provider proxying. `POST /api/model-gateway/provider-policy` accepts only sanitized Model Connect receipt metadata: provider, mode, status, and blockers. The model-runs POST route validates Redaction Gate status, allowed data classes, credential material, raw KYC/personal-data markers, final-legal-decision purposes, human-review owner, and provider adapter availability.
+The adapters route returns provider readiness without credentials. The provider-policy routes return the server registry policy report, required controls, next actions, and Not legal advice boundary without accepting credentials or enabling external provider proxying. `POST /api/model-gateway/provider-policy` accepts only sanitized Model Connect receipt metadata: provider, mode, status, and blockers. `POST /api/model-gateway/secret-policy` accepts only sanitized policy metadata such as policy owner, KMS approval, rotation cadence, access review cadence, allowlist, egress logging, incident response, no-client-persistence, human-review enforcement, and notes; it never accepts provider credentials and still returns `externalProviderProxyingAllowed: false`. The model-runs POST route validates Redaction Gate status, allowed data classes, credential material, raw KYC/personal-data markers, final-legal-decision purposes, human-review owner, and provider adapter availability.
 
 Successful mock runs persist a receipt with payload hash, response hash, source evidence hash, provider metadata, attempt count, retry state, human-review status, and the non-advice boundary. Boundary failures and disabled adapter attempts persist a safe failure receipt with run ID, status, error code, retry state, and remediation steps, then return a typed 400 response that includes a stable code, recovery guidance, and no raw payloads or credential material. Missing run lookups return a typed 404 response with the audit-prep boundary. Both success and failure paths append audit-log records. The route does not call external providers or persist credentials.
 

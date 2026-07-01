@@ -87,6 +87,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "ModelGatewayProviderPolicyReport",
       true
     ),
+    createRoute(
+      "POST",
+      "/api/model-gateway/secret-policy",
+      "model-gateway",
+      "ModelGatewaySecretPolicyRequest",
+      "ModelGatewaySecretPolicyReport",
+      true
+    ),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),

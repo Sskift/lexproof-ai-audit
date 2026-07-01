@@ -64,6 +64,10 @@ lexproof-ai-audit/
       modelConnectionReadiness.ts # Model configuration and redaction readiness summary
       modelIntake.ts         # Model connection profile validation and AI event hashes
       modelReviewLedger.ts   # AI review run receipts and model payload/response hashes
+      modelGatewayProviderPolicy.ts # Disabled-by-default provider policy reports and JSON export
+      modelGatewayProviderPolicyClient.ts # Browser client for metadata-only provider policy refresh
+      modelGatewaySecretPolicy.ts # Metadata-only secret policy readiness reports and JSON export
+      modelGatewaySecretPolicyClient.ts # Browser client for secret policy evaluation
       modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
       auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts
       projectModel.ts        # Project/evidence types and validation
@@ -702,13 +706,14 @@ The Week 2 backend design spike is documented in `docs/phase-2-backend-design-sp
 - apply Redaction Gate checks before provider calls
 - enforce allowed data classes before run creation
 - keep provider credentials out of React state and exports
+- evaluate metadata-only provider and secret policy reports without enabling external provider proxying
 - record provider label, model, purpose, payload hash, response hash, source evidence hash, status, redaction status, retry state, and provider policy metadata
 - persist blocked/failed run receipts with error codes and remediation steps
 - automatically queue human-review-required records for completed Model Gateway output
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters are disabled placeholders until server-side secret policy is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository, automatically creates a `model-run` Human Review request for completed output, and appends audit-log records for both the run and the review queue action. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, evaluates metadata-only provider and secret policy reports, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters remain disabled placeholders even when secret policy controls evaluate ready, until a separate adapter enablement review is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository, automatically creates a `model-run` Human Review request for completed output, and appends audit-log records for both the run and the review queue action. It does not call external providers or store credentials.
 
 ### Evidence Vault Responsibilities
 

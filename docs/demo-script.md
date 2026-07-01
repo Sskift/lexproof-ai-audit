@@ -62,6 +62,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Keep **Mock local reviewer** selected for the live demo, then click **Validate Model Connect**.
    - Show the receipt, Model Access Workflow, Model Connection Readiness, and Redaction Gate.
    - In **Integration Readiness Registry**, click **Refresh Server Provider Policy** after validation to show the receipt-aware policy refresh. The request sends only provider, mode, status, and blocker metadata; session API keys, endpoint hosts, model names, provider labels, and raw evidence are not sent.
+   - Fill **Secret Policy Evaluation** with synthetic policy metadata, click **Evaluate Server Secret Policy**, and show that the report can become ready while **External proxying** remains disabled. Download the Secret Policy JSON if time allows. Not legal advice.
    - Screenshot: `docs/assets/screenshots/demo-01-model-connect.png`.
 
 3. **Select or upload evidence**
@@ -90,7 +91,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 
 6. **Sync vault and gateway journey**
    - Open the **Secure Review Workspace** panel at the top of the app.
-   - In **Integration Readiness Registry**, show **Model Gateway Provider Policy** with mock-only enabled status, disabled external model adapters, required provider controls, and **Download Provider Policy JSON**. Not legal advice.
+   - In **Integration Readiness Registry**, show **Model Gateway Provider Policy** with mock-only enabled status, disabled external model adapters, required provider controls, **Secret Policy Evaluation**, **Download Provider Policy JSON**, and **Download Secret Policy JSON**. Not legal advice.
    - Enter `http://127.0.0.1:8787` in **Provider Policy API base URL**, click **Refresh Server Provider Policy**, and show **Server provider policy synced**. If the API is down, show the recovery action instead of collecting credentials.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.

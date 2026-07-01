@@ -2165,6 +2165,100 @@ textarea {
   align-items: center;
 }
 
+.secret-policy-panel {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.secret-policy-panel.ready {
+  border-color: #b8d8c8;
+  background: #f8fffb;
+}
+
+.secret-policy-panel.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.secret-policy-panel h4 {
+  margin: 0;
+  color: #172431;
+  font-size: 0.95rem;
+}
+
+.secret-policy-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.secret-policy-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(110px, 0.6fr) minmax(150px, 0.8fr);
+  gap: 9px;
+  align-items: start;
+}
+
+.secret-policy-form.synced {
+  padding: 8px;
+  border: 1px solid #b8d8c8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.secret-policy-form.error {
+  padding: 8px;
+  border: 1px solid #e2a7a1;
+  border-radius: 8px;
+  background: #fffdfb;
+}
+
+.secret-policy-checklist {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.secret-policy-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #283848;
+  font-size: 0.83rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.secret-policy-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #2362a5;
+}
+
+.secret-policy-notes,
+.secret-policy-actions,
+.secret-policy-form > .save-state,
+.secret-policy-form > .provider-policy-error {
+  grid-column: 1 / -1;
+}
+
+.secret-policy-actions {
+  align-items: center;
+}
+
+.secret-policy-control-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .integration-next-actions {
   display: grid;
   gap: 6px;
@@ -5609,6 +5703,9 @@ textarea {
   .provider-policy-sync,
   .provider-policy-grid,
   .provider-control-list,
+  .secret-policy-form,
+  .secret-policy-checklist,
+  .secret-policy-control-list,
   .grc-ticket-list,
   .retention-grid,
   .vault-sync-grid,

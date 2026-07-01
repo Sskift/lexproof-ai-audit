@@ -91,6 +91,52 @@ describe("model gateway route module", () => {
     await repository.close();
   });
 
+  it("evaluates secret policy readiness without accepting provider credentials or enabling external proxying", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerModelGatewayRoutes(server, { repository });
+
+    const policyResponse = await server.inject({
+      method: "POST",
+      url: "/api/model-gateway/secret-policy",
+      payload: {
+        policy: {
+          policyOwner: "Security lead",
+          kmsBackedStorageApproved: true,
+          rotationDays: 30,
+          accessReviewCadence: "quarterly",
+          providerAllowlistApproved: true,
+          egressLoggingApproved: true,
+          incidentResponseRunbookApproved: true,
+          noClientSecretPersistence: true,
+          humanReviewRequired: true,
+          notes: "Ready for future adapter review.",
+          apiKey: "sk-live-abcdef1234567890abcdef1234567890"
+        }
+      }
+    });
+
+    expect(policyResponse.statusCode).toBe(200);
+    expect(policyResponse.json()).toEqual(
+      expect.objectContaining({
+        reportVersion: "lexproof-model-gateway-secret-policy-v1",
+        overallStatus: "ready",
+        externalProviderProxyingAllowed: false,
+        externalProviderProxyingStatus: "policy-ready-not-enabled",
+        notLegalAdviceBoundary: "Not legal advice. Model Gateway secret policy is audit preparation metadata only."
+      })
+    );
+    expect(policyResponse.json().controls).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "kms-secret-storage", status: "ready" })])
+    );
+    expect(policyResponse.body).not.toContain("sk-live-abcdef");
+    expect(policyResponse.body).not.toContain("apiKey");
+    expect(policyResponse.body.toLowerCase()).not.toContain("legal opinion");
+
+    await server.close();
+    await repository.close();
+  });
+
   it("registers metadata-only adapter, run, lookup, and summary routes without raw payload leakage", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();

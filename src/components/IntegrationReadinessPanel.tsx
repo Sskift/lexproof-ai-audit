@@ -10,6 +10,11 @@ import {
   type ModelGatewayProviderPolicyReport,
   type ModelGatewayProviderPolicyStatus
 } from "../lib/modelGatewayProviderPolicy";
+import {
+  exportModelGatewaySecretPolicyJson,
+  type ModelGatewaySecretPolicyDraft,
+  type ModelGatewaySecretPolicyReport
+} from "../lib/modelGatewaySecretPolicy";
 
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
@@ -19,8 +24,16 @@ type IntegrationReadinessPanelProps = {
   providerPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
   providerPolicySyncError: string;
   providerPolicySyncRecoveryAction: string;
+  secretPolicyDraft: ModelGatewaySecretPolicyDraft;
+  secretPolicyReport: ModelGatewaySecretPolicyReport;
+  secretPolicySource: "local" | "server";
+  secretPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  secretPolicySyncError: string;
+  secretPolicySyncRecoveryAction: string;
   onProviderPolicyApiBaseUrlChange: (value: string) => void;
   onRefreshProviderPolicy: () => Promise<void> | void;
+  onSecretPolicyDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
+  onEvaluateSecretPolicy: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -42,8 +55,16 @@ export function IntegrationReadinessPanel({
   providerPolicySyncStatus,
   providerPolicySyncError,
   providerPolicySyncRecoveryAction,
+  secretPolicyDraft,
+  secretPolicyReport,
+  secretPolicySource,
+  secretPolicySyncStatus,
+  secretPolicySyncError,
+  secretPolicySyncRecoveryAction,
   onProviderPolicyApiBaseUrlChange,
   onRefreshProviderPolicy,
+  onSecretPolicyDraftChange,
+  onEvaluateSecretPolicy,
   onNavigate
 }: IntegrationReadinessPanelProps) {
   return (
@@ -74,8 +95,16 @@ export function IntegrationReadinessPanel({
         syncStatus={providerPolicySyncStatus}
         syncError={providerPolicySyncError}
         syncRecoveryAction={providerPolicySyncRecoveryAction}
+        secretPolicyDraft={secretPolicyDraft}
+        secretPolicyReport={secretPolicyReport}
+        secretPolicySource={secretPolicySource}
+        secretPolicySyncStatus={secretPolicySyncStatus}
+        secretPolicySyncError={secretPolicySyncError}
+        secretPolicySyncRecoveryAction={secretPolicySyncRecoveryAction}
         onApiBaseUrlChange={onProviderPolicyApiBaseUrlChange}
         onRefresh={onRefreshProviderPolicy}
+        onSecretPolicyDraftChange={onSecretPolicyDraftChange}
+        onEvaluateSecretPolicy={onEvaluateSecretPolicy}
       />
       <div className="integration-next-actions">
         <strong>Adapter recovery path</strong>
@@ -96,8 +125,16 @@ function ModelGatewayProviderPolicyPanel({
   syncStatus,
   syncError,
   syncRecoveryAction,
+  secretPolicyDraft,
+  secretPolicyReport,
+  secretPolicySource,
+  secretPolicySyncStatus,
+  secretPolicySyncError,
+  secretPolicySyncRecoveryAction,
   onApiBaseUrlChange,
-  onRefresh
+  onRefresh,
+  onSecretPolicyDraftChange,
+  onEvaluateSecretPolicy
 }: {
   report: ModelGatewayProviderPolicyReport;
   source: "local" | "server";
@@ -105,8 +142,16 @@ function ModelGatewayProviderPolicyPanel({
   syncStatus: "idle" | "syncing" | "synced" | "error";
   syncError: string;
   syncRecoveryAction: string;
+  secretPolicyDraft: ModelGatewaySecretPolicyDraft;
+  secretPolicyReport: ModelGatewaySecretPolicyReport;
+  secretPolicySource: "local" | "server";
+  secretPolicySyncStatus: "idle" | "syncing" | "synced" | "error";
+  secretPolicySyncError: string;
+  secretPolicySyncRecoveryAction: string;
   onApiBaseUrlChange: (value: string) => void;
   onRefresh: () => Promise<void> | void;
+  onSecretPolicyDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
+  onEvaluateSecretPolicy: () => Promise<void> | void;
 }) {
   return (
     <section className={`model-gateway-provider-policy ${report.overallStatus}`} aria-label="Model Gateway Provider Policy">
@@ -176,6 +221,16 @@ function ModelGatewayProviderPolicyPanel({
           </article>
         ))}
       </div>
+      <ModelGatewaySecretPolicyPanel
+        draft={secretPolicyDraft}
+        report={secretPolicyReport}
+        source={secretPolicySource}
+        syncStatus={secretPolicySyncStatus}
+        syncError={secretPolicySyncError}
+        syncRecoveryAction={secretPolicySyncRecoveryAction}
+        onDraftChange={onSecretPolicyDraftChange}
+        onEvaluate={onEvaluateSecretPolicy}
+      />
       <div className="inline-actions provider-policy-actions">
         <span>{report.nextActions[0]}</span>
         <button
@@ -191,8 +246,183 @@ function ModelGatewayProviderPolicyPanel({
   );
 }
 
+function ModelGatewaySecretPolicyPanel({
+  draft,
+  report,
+  source,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onDraftChange,
+  onEvaluate
+}: {
+  draft: ModelGatewaySecretPolicyDraft;
+  report: ModelGatewaySecretPolicyReport;
+  source: "local" | "server";
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onDraftChange: (updates: Partial<ModelGatewaySecretPolicyDraft>) => void;
+  onEvaluate: () => Promise<void> | void;
+}) {
+  return (
+    <section className={`secret-policy-panel ${report.overallStatus}`} aria-label="Model Gateway Secret Policy Evaluation">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldCheck size={17} aria-hidden="true" />
+          <h4>Secret Policy Evaluation</h4>
+        </div>
+        <span className={`workflow-status ${report.overallStatus}`}>{policyStatusLabel(report.overallStatus)}</span>
+      </div>
+      <p className="section-note">{report.notLegalAdviceBoundary}</p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Approved controls" value={`${report.approvedControlCount}/${report.requiredControlCount}`} />
+        <ProviderPolicyFact label="Policy source" value={source === "server" ? "Server" : "Local"} />
+        <ProviderPolicyFact label="External proxying" value={report.externalProviderProxyingAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className={`secret-policy-form ${syncStatus}`}>
+        <label className="editor-field">
+          <span>Secret policy owner</span>
+          <input
+            type="text"
+            value={draft.policyOwner}
+            placeholder="Security lead"
+            onChange={(event) => onDraftChange({ policyOwner: event.target.value })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Rotation days</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.rotationDays}
+            onChange={(event) => onDraftChange({ rotationDays: Number(event.target.value) })}
+          />
+        </label>
+        <label className="editor-field">
+          <span>Access review cadence</span>
+          <select
+            value={draft.accessReviewCadence}
+            onChange={(event) =>
+              onDraftChange({
+                accessReviewCadence: event.target.value as ModelGatewaySecretPolicyDraft["accessReviewCadence"]
+              })
+            }
+          >
+            <option value="none">None</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="annual">Annual</option>
+          </select>
+        </label>
+        <div className="secret-policy-checklist" aria-label="Secret policy controls">
+          <SecretPolicyToggle
+            label="KMS-backed secret storage"
+            checked={draft.kmsBackedStorageApproved}
+            onChange={(checked) => onDraftChange({ kmsBackedStorageApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Provider allowlist"
+            checked={draft.providerAllowlistApproved}
+            onChange={(checked) => onDraftChange({ providerAllowlistApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Egress logging"
+            checked={draft.egressLoggingApproved}
+            onChange={(checked) => onDraftChange({ egressLoggingApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="Incident response runbook"
+            checked={draft.incidentResponseRunbookApproved}
+            onChange={(checked) => onDraftChange({ incidentResponseRunbookApproved: checked })}
+          />
+          <SecretPolicyToggle
+            label="No client secret persistence"
+            checked={draft.noClientSecretPersistence}
+            onChange={(checked) => onDraftChange({ noClientSecretPersistence: checked })}
+          />
+          <SecretPolicyToggle
+            label="Human review required"
+            checked={draft.humanReviewRequired}
+            onChange={(checked) => onDraftChange({ humanReviewRequired: checked })}
+          />
+        </div>
+        <label className="editor-field secret-policy-notes">
+          <span>Secret policy notes</span>
+          <textarea
+            value={draft.notes}
+            placeholder="Metadata only. Do not paste API keys, private keys, raw KYC, or personal data."
+            onChange={(event) => onDraftChange({ notes: event.target.value })}
+          />
+        </label>
+        <div className="inline-actions secret-policy-actions">
+          <span>
+            {report.externalProviderProxyingStatus === "policy-ready-not-enabled"
+              ? "External provider proxying remains disabled until a separate adapter enablement review."
+              : report.nextActions[0]}
+          </span>
+          <button type="button" className="secondary" onClick={onEvaluate} disabled={syncStatus === "syncing"}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            {syncStatus === "syncing" ? "Evaluating Server Secret Policy" : "Evaluate Server Secret Policy"}
+          </button>
+        </div>
+        {syncStatus === "synced" ? <span className="save-state">Secret policy report synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. Secret policy evaluation is audit preparation metadata only.</small>
+          </div>
+        ) : null}
+      </div>
+      <div className="provider-control-list secret-policy-control-list">
+        {report.controls.map((control) => (
+          <article key={control.id} className={`provider-control ${control.status}`}>
+            <header>
+              <span>{policyStatusLabel(control.status)}</span>
+              <strong>{control.label}</strong>
+            </header>
+            <p>{control.evidence}</p>
+            <small>{control.recoveryAction}</small>
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>External provider adapters remain disabled by default. No credentials are collected here.</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadSecretPolicyJson("model-gateway-secret-policy.json", report)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Secret Policy JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function SecretPolicyToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="secret-policy-toggle">
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span>{label}</span>
+    </label>
+  );
+}
+
 function downloadProviderPolicyJson(filename: string, report: ModelGatewayProviderPolicyReport): void {
   const blob = new Blob([exportModelGatewayProviderPolicyJson(report)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadSecretPolicyJson(filename: string, report: ModelGatewaySecretPolicyReport): void {
+  const blob = new Blob([exportModelGatewaySecretPolicyJson(report)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

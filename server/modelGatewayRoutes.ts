@@ -3,6 +3,7 @@ import { createHumanReviewRecord } from "./humanReviewService.js";
 import {
   createModelGatewayRun,
   createServerModelGatewayProviderPolicyReport,
+  createServerModelGatewaySecretPolicyReport,
   listModelGatewayAdapters
 } from "./modelGatewayService.js";
 import { createApiErrorResponse } from "./apiError.js";
@@ -10,6 +11,7 @@ import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 import { createAuditLogRecord, createModelGatewayRunSummary } from "../src/lib/phase2Types.js";
 import type { ModelGatewayProviderPolicyModelConnectReceipt } from "../src/lib/modelGatewayProviderPolicy.js";
+import type { ModelGatewaySecretPolicyAccessReviewCadence, ModelGatewaySecretPolicyDraft } from "../src/lib/modelGatewaySecretPolicy.js";
 
 export type ModelGatewayRoutesOptions = {
   repository: ReviewWorkspaceRepository;
@@ -22,6 +24,9 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
   server.get("/api/model-gateway/provider-policy", async () => createServerModelGatewayProviderPolicyReport());
   server.post<{ Body: ModelGatewayProviderPolicyRequestBody }>("/api/model-gateway/provider-policy", async (request) =>
     createServerModelGatewayProviderPolicyReport(toModelGatewayProviderPolicyReceipt(request.body?.modelConnectReceipt))
+  );
+  server.post<{ Body: ModelGatewaySecretPolicyRequestBody }>("/api/model-gateway/secret-policy", async (request) =>
+    createServerModelGatewaySecretPolicyReport(toModelGatewaySecretPolicyDraft(request.body?.policy))
   );
 
   server.post<{ Params: { workspaceId: string }; Body: ModelGatewayRequestBody }>(
@@ -156,6 +161,10 @@ type ModelGatewayProviderPolicyRequestBody = {
   modelConnectReceipt?: unknown;
 };
 
+type ModelGatewaySecretPolicyRequestBody = {
+  policy?: unknown;
+};
+
 function toModelGatewayProviderPolicyReceipt(value: unknown): ModelGatewayProviderPolicyModelConnectReceipt | null {
   if (!isRecord(value)) {
     return null;
@@ -193,6 +202,44 @@ function isReceiptStatus(value: unknown): value is ModelGatewayProviderPolicyMod
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toModelGatewaySecretPolicyDraft(value: unknown): ModelGatewaySecretPolicyDraft {
+  const policy = isRecord(value) ? value : {};
+
+  return {
+    policyOwner: stringField(policy.policyOwner),
+    kmsBackedStorageApproved: policy.kmsBackedStorageApproved === true,
+    rotationDays: numberField(policy.rotationDays),
+    accessReviewCadence: isAccessReviewCadence(policy.accessReviewCadence) ? policy.accessReviewCadence : "none",
+    providerAllowlistApproved: policy.providerAllowlistApproved === true,
+    egressLoggingApproved: policy.egressLoggingApproved === true,
+    incidentResponseRunbookApproved: policy.incidentResponseRunbookApproved === true,
+    noClientSecretPersistence: policy.noClientSecretPersistence === true,
+    humanReviewRequired: policy.humanReviewRequired === true,
+    notes: stringField(policy.notes)
+  };
+}
+
+function isAccessReviewCadence(value: unknown): value is ModelGatewaySecretPolicyAccessReviewCadence {
+  return value === "none" || value === "monthly" || value === "quarterly" || value === "annual";
+}
+
+function stringField(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function numberField(value: unknown): number {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
 }
 
 function createModelGatewayRunNotFoundError() {

@@ -8,6 +8,11 @@ import {
   type ModelGatewayProviderPolicyAdapter,
   type ModelGatewayProviderPolicyModelConnectReceipt
 } from "../src/lib/modelGatewayProviderPolicy.js";
+import {
+  createModelGatewaySecretPolicyReport,
+  type ModelGatewaySecretPolicyDraft,
+  type ModelGatewaySecretPolicyReport
+} from "../src/lib/modelGatewaySecretPolicy.js";
 
 export type ModelGatewayAdapterDescriptor = ModelGatewayProviderPolicyAdapter;
 
@@ -43,6 +48,13 @@ export function createServerModelGatewayProviderPolicyReport(
     modelConnectReceipt,
     generatedAt: createdAt
   });
+}
+
+export function createServerModelGatewaySecretPolicyReport(
+  policy: ModelGatewaySecretPolicyDraft,
+  createdAt?: string
+): ModelGatewaySecretPolicyReport {
+  return createModelGatewaySecretPolicyReport(policy, createdAt);
 }
 
 export function createModelGatewayRun(input: CreateModelGatewayRunInput): ModelGatewayRunResult {

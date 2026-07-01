@@ -77,9 +77,18 @@ import {
   type ModelGatewayProviderPolicyReport
 } from "./lib/modelGatewayProviderPolicy";
 import {
+  createModelGatewaySecretPolicyReport,
+  type ModelGatewaySecretPolicyDraft,
+  type ModelGatewaySecretPolicyReport
+} from "./lib/modelGatewaySecretPolicy";
+import {
   fetchModelGatewayProviderPolicy,
   ModelGatewayProviderPolicyClientError
 } from "./lib/modelGatewayProviderPolicyClient";
+import {
+  fetchModelGatewaySecretPolicyReport,
+  ModelGatewaySecretPolicyClientError
+} from "./lib/modelGatewaySecretPolicyClient";
 import {
   createHumanReviewDecision,
   createHumanReviewQueue,
@@ -147,6 +156,19 @@ const HUMAN_REVIEW_DECISIONS_KEY = "lexproof.humanReviewDecisions.v1";
 const COUNSEL_PACK_VERSIONS_KEY = "lexproof.counselPackVersions.v1";
 const COUNSEL_PACK_SERVER_EXPORTS_KEY = "lexproof.counselPackServerExports.v1";
 
+const defaultModelGatewaySecretPolicyDraft: ModelGatewaySecretPolicyDraft = {
+  policyOwner: "",
+  kmsBackedStorageApproved: false,
+  rotationDays: 0,
+  accessReviewCadence: "none",
+  providerAllowlistApproved: false,
+  egressLoggingApproved: false,
+  incidentResponseRunbookApproved: false,
+  noClientSecretPersistence: true,
+  humanReviewRequired: true,
+  notes: ""
+};
+
 const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
   { id: "wizard", label: "Audit Wizard", icon: ClipboardList },
   { id: "ai", label: "AI Review", icon: Bot },
@@ -192,6 +214,11 @@ export default function App() {
   const [providerPolicySyncStatus, setProviderPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [providerPolicySyncError, setProviderPolicySyncError] = useState("");
   const [providerPolicySyncRecoveryAction, setProviderPolicySyncRecoveryAction] = useState("");
+  const [secretPolicyDraft, setSecretPolicyDraft] = useState<ModelGatewaySecretPolicyDraft>(defaultModelGatewaySecretPolicyDraft);
+  const [serverSecretPolicyReport, setServerSecretPolicyReport] = useState<ModelGatewaySecretPolicyReport | null>(null);
+  const [secretPolicySyncStatus, setSecretPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [secretPolicySyncError, setSecretPolicySyncError] = useState("");
+  const [secretPolicySyncRecoveryAction, setSecretPolicySyncRecoveryAction] = useState("");
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -338,6 +365,8 @@ export default function App() {
     [modelConnectReceipt]
   );
   const activeModelGatewayProviderPolicyReport = serverProviderPolicyReport ?? modelGatewayProviderPolicyReport;
+  const modelGatewaySecretPolicyReport = useMemo(() => createModelGatewaySecretPolicyReport(secretPolicyDraft), [secretPolicyDraft]);
+  const activeModelGatewaySecretPolicyReport = serverSecretPolicyReport ?? modelGatewaySecretPolicyReport;
   const workspaceActionQueue = useMemo(
     () =>
       createWorkspaceActionQueue({
@@ -612,6 +641,14 @@ export default function App() {
     setProviderPolicySyncStatus("idle");
     setProviderPolicySyncError("");
     setProviderPolicySyncRecoveryAction("");
+  };
+
+  const updateSecretPolicyDraft = (updates: Partial<ModelGatewaySecretPolicyDraft>) => {
+    setSecretPolicyDraft((current) => ({ ...current, ...updates }));
+    setServerSecretPolicyReport(null);
+    setSecretPolicySyncStatus("idle");
+    setSecretPolicySyncError("");
+    setSecretPolicySyncRecoveryAction("");
   };
 
   const updateModelSettings = (settings: ModelSettings) => {
@@ -900,6 +937,30 @@ export default function App() {
     }
   };
 
+  const evaluateSecretPolicyReport = async () => {
+    setSecretPolicySyncStatus("syncing");
+    setSecretPolicySyncError("");
+    setSecretPolicySyncRecoveryAction("");
+
+    try {
+      const report = await fetchModelGatewaySecretPolicyReport({
+        apiBaseUrl: providerPolicyApiBaseUrl,
+        policy: secretPolicyDraft
+      });
+      setServerSecretPolicyReport(report);
+      setSecretPolicySyncStatus("synced");
+    } catch (error) {
+      setSecretPolicySyncStatus("error");
+      if (error instanceof ModelGatewaySecretPolicyClientError) {
+        setSecretPolicySyncError(error.message);
+        setSecretPolicySyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setSecretPolicySyncError(error instanceof Error ? error.message : "Secret policy evaluation failed.");
+      setSecretPolicySyncRecoveryAction("Start the Phase 2 API and retry secret policy evaluation.");
+    }
+  };
+
   const addAIEvent = (event: AIEventRecord) => {
     setAIEvents((current) => [event, ...current].slice(0, 80));
   };
@@ -1017,8 +1078,16 @@ export default function App() {
             providerPolicySyncStatus={providerPolicySyncStatus}
             providerPolicySyncError={providerPolicySyncError}
             providerPolicySyncRecoveryAction={providerPolicySyncRecoveryAction}
+            secretPolicyDraft={secretPolicyDraft}
+            secretPolicyReport={activeModelGatewaySecretPolicyReport}
+            secretPolicySource={serverSecretPolicyReport ? "server" : "local"}
+            secretPolicySyncStatus={secretPolicySyncStatus}
+            secretPolicySyncError={secretPolicySyncError}
+            secretPolicySyncRecoveryAction={secretPolicySyncRecoveryAction}
             onProviderPolicyApiBaseUrlChange={setProviderPolicyApiBaseUrl}
             onRefreshProviderPolicy={refreshProviderPolicyReport}
+            onSecretPolicyDraftChange={updateSecretPolicyDraft}
+            onEvaluateSecretPolicy={evaluateSecretPolicyReport}
             onNavigate={setActiveTab}
           />
 

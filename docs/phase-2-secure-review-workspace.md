@@ -161,6 +161,11 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - evaluates the server-side provider registry policy from sanitized Model Connect receipt metadata only
   - accepts only provider, mode, status, and blockers
   - does not accept session API keys, endpoint hosts, model names, provider labels, raw evidence, external provider calls, or legal-advice output
+- `POST /api/model-gateway/secret-policy`
+  - evaluates future server-side secret handling readiness from metadata-only policy fields
+  - accepts only policy owner, KMS approval, rotation cadence, access review cadence, provider allowlist, egress logging, incident response, no-client-persistence, human-review enforcement, and notes
+  - does not accept provider credentials, raw KYC, private keys, personal data, external provider calls, adapter enablement, or legal-advice output
+  - returns `externalProviderProxyingAllowed: false` even when required controls evaluate ready
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate

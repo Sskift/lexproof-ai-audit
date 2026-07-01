@@ -512,8 +512,9 @@ describe("App", () => {
     expect(policy.getByText(/OpenAI-compatible gateway disabled/i)).toBeInTheDocument();
     expect(policy.getByText(/Enterprise model proxy gateway disabled/i)).toBeInTheDocument();
     expect(policy.getByText("Server-side secret policy")).toBeInTheDocument();
-    expect(policy.getByText("Provider allowlist")).toBeInTheDocument();
-    expect(policy.getByText("Human review enforcement")).toBeInTheDocument();
+    expect(policy.getAllByText("Provider allowlist").length).toBeGreaterThan(0);
+    expect(policy.getAllByText("Human review enforcement").length).toBeGreaterThan(0);
+    expect(policy.getByRole("heading", { name: /Secret Policy Evaluation/i })).toBeInTheDocument();
     expect(policy.getByRole("button", { name: /Download Provider Policy JSON/i })).toBeEnabled();
     expect(policy.getByText(/Not legal advice. Model Gateway provider policy is audit preparation metadata only./i)).toBeInTheDocument();
   });
@@ -690,6 +691,88 @@ describe("App", () => {
     expect(policy.getByText(/OpenAI-compatible gateway needs policy/i)).toBeInTheDocument();
     expect(policy.getByText(/No KMS-backed provider credential storage/i)).toBeInTheDocument();
     expect(policy.queryByText(/sk-test-session-only/i)).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("evaluates Model Gateway secret policy readiness without enabling external providers", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/model-gateway/secret-policy");
+      expect(init?.method).toBe("POST");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      expect(body).toEqual({
+        policy: {
+          policyOwner: "Security lead",
+          kmsBackedStorageApproved: true,
+          rotationDays: 30,
+          accessReviewCadence: "quarterly",
+          providerAllowlistApproved: true,
+          egressLoggingApproved: true,
+          incidentResponseRunbookApproved: true,
+          noClientSecretPersistence: true,
+          humanReviewRequired: true,
+          notes: "Policy approved for future gateway review."
+        }
+      });
+      expect(String(init?.body)).not.toContain("apiKey");
+      expect(String(init?.body)).not.toContain("sk-");
+      return appJsonResponse(
+        {
+          reportVersion: "lexproof-model-gateway-secret-policy-v1",
+          generatedAt: "2026-07-01T00:00:00.000Z",
+          overallStatus: "ready",
+          requiredControlCount: 7,
+          approvedControlCount: 7,
+          externalProviderProxyingAllowed: false,
+          externalProviderProxyingStatus: "policy-ready-not-enabled",
+          controls: [
+            {
+              id: "kms-secret-storage",
+              label: "KMS-backed secret storage",
+              status: "ready",
+              evidence: "KMS-backed provider credential storage is approved for future server gateway review.",
+              recoveryAction: "Keep KMS-backed secret storage mandatory before adapter enablement."
+            },
+            {
+              id: "provider-allowlist",
+              label: "Provider allowlist",
+              status: "ready",
+              evidence: "Provider allowlist is approved for future server gateway review.",
+              recoveryAction: "Keep provider allowlist mandatory before adapter enablement."
+            }
+          ],
+          nextActions: ["Keep external provider proxying disabled until an adapter enablement change is reviewed."],
+          notLegalAdviceBoundary: "Not legal advice. Model Gateway secret policy is audit preparation metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const policy = within(registry.getByRole("region", { name: /Model Gateway Provider Policy/i }));
+
+    fireEvent.change(policy.getByLabelText(/Provider Policy API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.change(policy.getByLabelText(/Secret policy owner/i), { target: { value: "Security lead" } });
+    fireEvent.change(policy.getByLabelText(/Rotation days/i), { target: { value: "30" } });
+    fireEvent.change(policy.getByLabelText(/Access review cadence/i), { target: { value: "quarterly" } });
+    fireEvent.click(policy.getByLabelText(/KMS-backed secret storage/i));
+    fireEvent.click(policy.getByLabelText(/Provider allowlist/i));
+    fireEvent.click(policy.getByLabelText(/Egress logging/i));
+    fireEvent.click(policy.getByLabelText(/Incident response runbook/i));
+    fireEvent.change(policy.getByLabelText(/Secret policy notes/i), {
+      target: { value: "Policy approved for future gateway review." }
+    });
+    fireEvent.click(policy.getByRole("button", { name: /Evaluate Server Secret Policy/i }));
+
+    expect(await policy.findByText(/Secret policy report synced/i)).toBeInTheDocument();
+    expect(policy.getAllByText(/KMS-backed secret storage/i).length).toBeGreaterThan(0);
+    expect(policy.getByText(/External provider proxying remains disabled/i)).toBeInTheDocument();
+    expect(policy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

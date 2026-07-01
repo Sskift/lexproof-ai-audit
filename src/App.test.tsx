@@ -120,6 +120,58 @@ describe("App", () => {
     }
   });
 
+  it("shows and downloads a jurisdiction evidence map without legal conclusions", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:jurisdiction-evidence-map");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const map = await screen.findByRole("region", { name: /Jurisdiction Evidence Map/i });
+      expect(within(map).getByText(/Not legal advice. Jurisdiction evidence maps are audit preparation workflow metadata only./i)).toBeInTheDocument();
+      expect(within(map).getAllByText(/European Union/i).length).toBeGreaterThan(0);
+      expect(within(map).getByRole("button", { name: /Download Jurisdiction Evidence Map JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(map).getByRole("button", { name: /Download Jurisdiction Evidence Map JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:jurisdiction-evidence-map");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Jurisdiction Evidence Map JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          mapVersion: "lexproof-jurisdiction-evidence-map-v1",
+          status: "needs-evidence",
+          notLegalAdviceBoundary: "Not legal advice. Jurisdiction evidence maps are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.mapHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.jurisdictions.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("filters the Regulatory Control Matrix to a specific jurisdiction and source control", async () => {
     render(<App />);
 

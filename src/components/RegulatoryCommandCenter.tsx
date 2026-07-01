@@ -1,6 +1,8 @@
 import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck, UserCheck } from "lucide-react";
+import { JurisdictionEvidenceMapPanel } from "./JurisdictionEvidenceMapPanel";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
 import type { AuditResult } from "../lib/auditEngine";
+import type { JurisdictionEvidenceMap } from "../lib/jurisdictionEvidenceMap";
 import {
   downloadLocalCounselRoutingPlanJson,
   type LocalCounselRoutingPlan
@@ -39,6 +41,7 @@ type RegulatoryCommandCenterProps = {
   sourceApprovalSyncError: string;
   sourceApprovalSyncRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
+  jurisdictionEvidenceMap: JurisdictionEvidenceMap | null;
   localCounselRoutingPlan: LocalCounselRoutingPlan | null;
   actionQueue: WorkspaceActionQueue;
   journey: WorkspaceJourney;
@@ -68,6 +71,7 @@ export function RegulatoryCommandCenter({
   sourceApprovalSyncError,
   sourceApprovalSyncRecoveryAction,
   controlMatrix,
+  jurisdictionEvidenceMap,
   localCounselRoutingPlan,
   actionQueue,
   journey,
@@ -169,6 +173,10 @@ export function RegulatoryCommandCenter({
       </div>
 
       <RegulatoryControlMatrixPanel matrix={controlMatrix} />
+
+      {jurisdictionEvidenceMap ? (
+        <JurisdictionEvidenceMapPanel map={jurisdictionEvidenceMap} projectId={project.id} />
+      ) : null}
 
       {localCounselRoutingPlan ? (
         <section className="local-counsel-routing" aria-label="Local Counsel Routing Plan">

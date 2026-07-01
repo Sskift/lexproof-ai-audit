@@ -182,6 +182,10 @@ import type {
   RegulatorySourceApprovalSyncResult,
   RegulatorySourceReviewSyncResult
 } from "./lib/phase2Types";
+import {
+  createJurisdictionEvidenceMap,
+  type JurisdictionEvidenceMap
+} from "./lib/jurisdictionEvidenceMap";
 import { createRegulatoryControlMatrix } from "./lib/regulatoryControlMatrix";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import {
@@ -384,6 +388,7 @@ export default function App() {
   const [sourceReviewSyncStatus, setSourceReviewSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [sourceReviewSyncError, setSourceReviewSyncError] = useState("");
   const [sourceReviewSyncRecoveryAction, setSourceReviewSyncRecoveryAction] = useState("");
+  const [jurisdictionEvidenceMap, setJurisdictionEvidenceMap] = useState<JurisdictionEvidenceMap | null>(null);
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -404,6 +409,19 @@ export default function App() {
     () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
     [regulatoryGraph, regulatorySourceReview]
   );
+  useEffect(() => {
+    let active = true;
+
+    createJurisdictionEvidenceMap({ matrix: regulatoryControlMatrix }).then((nextMap) => {
+      if (active) {
+        setJurisdictionEvidenceMap(nextMap);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [regulatoryControlMatrix]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
   const demoReadinessReport = useMemo(
@@ -1760,6 +1778,7 @@ export default function App() {
             sourceApprovalSyncError={sourceApprovalSyncError}
             sourceApprovalSyncRecoveryAction={sourceApprovalSyncRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
+            jurisdictionEvidenceMap={jurisdictionEvidenceMap}
             localCounselRoutingPlan={localCounselRoutingPlan}
             actionQueue={workspaceActionQueue}
             journey={workspaceJourney}

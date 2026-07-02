@@ -47,7 +47,7 @@ const secretWebhookUrlPattern =
 const credentialConnectionUriPattern =
   /\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqp|amqps|https?):\/\/[^\s/@:]+:[^\s/@]{6,}@[^\s"'<>]+/;
 const credentialFieldPattern =
-  /(["']?)(\b(?:api[_\-\s]?key|secret[_\-\s]?key|client[_\-\s]?secret|client secret|bearer token|access[_\-\s]?token|refresh[_\-\s]?token|session[_\-\s]?token|webhook[_\-\s]?secret|signing[_\-\s]?secret|webhook[_\-\s]?url|password|passphrase)\b)\1(\s*[:=]\s*["']?)[^"',;\s]{8,}["']?/gi;
+  /(["']?)(\b(?:api[_\-\s]?key|apiKey|secret[_\-\s]?key|secretKey|client[_\-\s]?secret|client secret|clientSecret|bearer token|bearerToken|access[_\-\s]?token|accessToken|refresh[_\-\s]?token|refreshToken|session[_\-\s]?token|sessionToken|webhook[_\-\s]?secret|webhookSecret|signing[_\-\s]?secret|signingSecret|webhook[_\-\s]?url|webhookUrl|password|passphrase)\b)\1(\s*[:=]\s*["']?)[^"',;\s]{8,}["']?/gi;
 const pemPrivateKeyBlockPattern =
   /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;

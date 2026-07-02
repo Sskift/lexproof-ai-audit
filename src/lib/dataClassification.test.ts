@@ -10,6 +10,8 @@ const jwtToken =
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
 const connectorPassword = "Sup3rSecret!2026";
 const refreshToken = "rt_abcdef1234567890abcdef";
+const clientSecret = "client-secret-value-abcdef123456";
+const accessToken = "access-token-value-abcdef123456";
 const githubToken = ["ghp", "syntheticTokenValue1234567890"].join("_");
 const slackToken = ["xoxb", "123456789012", "syntheticSlackTokenValue"].join("-");
 const databaseConnectionUri = "postgres://audit_user:Sup3rSecretPass@db.internal.example.com:5432/lexproof";
@@ -140,6 +142,24 @@ describe("classifyDataBoundaryText", () => {
     expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
     expect(serialized).not.toContain(connectorPassword);
     expect(serialized).not.toContain(refreshToken);
+  });
+
+  it("blocks camelCase credential fields without exposing integration setting values", () => {
+    const findings = classifyDataBoundaryText(
+      `Adapter settings {"clientSecret":"${clientSecret}","accessToken":"${accessToken}","webhookSecret":"${signingSecret}"}.`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 3
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
+    expect(serialized).not.toContain(clientSecret);
+    expect(serialized).not.toContain(accessToken);
+    expect(serialized).not.toContain(signingSecret);
   });
 
   it("blocks third-party integration tokens without exposing token bodies", () => {
@@ -354,6 +374,19 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-secret]");
     expect(redacted).not.toContain(connectorPassword);
     expect(redacted).not.toContain(refreshToken);
+  });
+
+  it("redacts camelCase credential field values from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(
+      `clientSecret="${clientSecret}"; accessToken=${accessToken}; webhookSecret=${signingSecret}`
+    );
+
+    expect(redacted).toContain('clientSecret="[redacted-secret]"');
+    expect(redacted).toContain("accessToken=[redacted-secret]");
+    expect(redacted).toContain("webhookSecret=[redacted-secret]");
+    expect(redacted).not.toContain(clientSecret);
+    expect(redacted).not.toContain(accessToken);
+    expect(redacted).not.toContain(signingSecret);
   });
 
   it("redacts third-party integration tokens from reusable boundary snippets", () => {

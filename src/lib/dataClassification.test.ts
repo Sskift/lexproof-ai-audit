@@ -4,6 +4,7 @@ import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassifica
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const bearerToken = "eyJhbGciOiJIUzI1NiJ9.auditPrepPayload.signature";
 const standaloneBearerToken = "eyJhbGciOiJSUzI1NiJ9.auditEvidencePayload.signature";
+const basicAuthCredential = ["dXNlcl9uYW1l", "OlN5bnRoZXRpY0Jhc2ljQ3JlZGVudGlhbA=="].join("");
 const jwtToken =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJsZXhwcm9vZiIsInN1YiI6ImRlbW8ifQ.invalidSignatureHash";
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
@@ -82,6 +83,22 @@ describe("classifyDataBoundaryText", () => {
     });
     expect(credentialFinding?.redactedSnippet).toContain("Bearer [redacted-secret]");
     expect(serialized).not.toContain(standaloneBearerToken);
+  });
+
+  it("blocks Basic auth credentials without exposing encoded payloads", () => {
+    const findings = classifyDataBoundaryText(
+      `Parser adapter draft includes Authorization: Basic ${basicAuthCredential} and a copied Basic ${basicAuthCredential} note.`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 2
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("Basic [redacted-secret]");
+    expect(serialized).not.toContain(basicAuthCredential);
   });
 
   it("blocks unlabeled JWT credentials without exposing compact token values", () => {
@@ -263,6 +280,16 @@ describe("redactClassifiedText", () => {
 
     expect(redacted).toContain("Bearer [redacted-secret]");
     expect(redacted).not.toContain(standaloneBearerToken);
+  });
+
+  it("redacts Basic auth credentials from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(
+      `Authorization: Basic ${basicAuthCredential}; copied Basic ${basicAuthCredential}`
+    );
+
+    expect(redacted).toContain("Authorization: Basic [redacted-secret]");
+    expect(redacted).toContain("Basic [redacted-secret]");
+    expect(redacted).not.toContain(basicAuthCredential);
   });
 
   it("redacts unlabeled JWT credentials from reusable boundary snippets", () => {

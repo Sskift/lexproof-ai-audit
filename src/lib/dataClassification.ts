@@ -35,7 +35,9 @@ const governmentIdPattern =
   /\b(?:driver'?s?\s+licen[cs]e|driving\s+licen[cs]e|national\s+id|government\s+id)\s*(?:number|no\.?|id)?\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{4,24}\b/;
 const jwtCredentialPattern = /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/;
 const bearerCredentialPattern = /\bbearer\s+[A-Za-z0-9._~+/=-]{12,}\b/;
+const basicCredentialPattern = /\bbasic\s+[A-Za-z0-9+/]{16,}={0,2}/;
 const authorizationBearerPattern = /\bauthorization\s*:\s*bearer\s+[A-Za-z0-9._~+/=-]{12,}\b/;
+const authorizationBasicPattern = /\bauthorization\s*:\s*basic\s+[A-Za-z0-9+/]{16,}={0,2}/;
 const cloudAccessKeyPattern = /\b(?:aws\s+access\s+key(?:\s+id)?\s*[:=]?\s*)?(?:AKIA|ASIA)[0-9A-Z]{16}\b/;
 const integrationTokenPattern =
   /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,})\b/;
@@ -80,7 +82,7 @@ const classificationRules: ClassificationRule[] = [
     dataClass: "credential-material",
     severity: "block",
     pattern: new RegExp(
-      `${authorizationBearerPattern.source}|${bearerCredentialPattern.source}|${jwtCredentialPattern.source}|${integrationTokenPattern.source}|${credentialConnectionUriPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
+      `${authorizationBearerPattern.source}|${authorizationBasicPattern.source}|${bearerCredentialPattern.source}|${basicCredentialPattern.source}|${jwtCredentialPattern.source}|${integrationTokenPattern.source}|${credentialConnectionUriPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
       "gi"
     ),
     message: "Credential fields must be removed before export handoff."
@@ -157,7 +159,9 @@ export function redactClassifiedText(value: string): string {
     .replace(walletSecretPhrasePattern, "[redacted-private-key]")
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
     .replace(new RegExp(authorizationBearerPattern.source, "gi"), "Authorization: Bearer [redacted-secret]")
+    .replace(new RegExp(authorizationBasicPattern.source, "gi"), "Authorization: Basic [redacted-secret]")
     .replace(new RegExp(bearerCredentialPattern.source, "gi"), "Bearer [redacted-secret]")
+    .replace(new RegExp(basicCredentialPattern.source, "gi"), "Basic [redacted-secret]")
     .replace(new RegExp(jwtCredentialPattern.source, "gi"), "[redacted-jwt]")
     .replace(new RegExp(integrationTokenPattern.source, "gi"), "[redacted-integration-token]")
     .replace(new RegExp(credentialConnectionUriPattern.source, "gi"), "[redacted-connection-uri]")

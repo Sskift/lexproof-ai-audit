@@ -874,6 +874,95 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches India FIU-IND and PMLA VDA source controls without legal conclusions", () => {
+    const indiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-india-vda-pmla",
+      projectName: "Mumbai VDA PMLA Review",
+      jurisdictions: ["India"],
+      entityType: "Virtual digital asset service provider operations team",
+      assetModel: "Virtual digital asset exchange, transfer, and custody service with issuer offer-sale review assumptions",
+      userType: "Indian retail users and compliance reviewers",
+      custodyModel: "Platform holds user VDA balances with hosted wallet controls, transfer approvals, custody boundary, and incident escalation placeholders",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction-monitoring summaries",
+      aiUsage: "AI drafts India VDA AML/CFT evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned India VDA AML/CFT review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(indiaProject);
+    const graph = createRegulatoryGraph(indiaProject, audit, indiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(expect.arrayContaining(["in-fiu-pmla-vda-aml-cft"]));
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "in-fiu-pmla-vda-aml-cft")).toMatchObject({
+      jurisdiction: "India",
+      regulator: "Financial Intelligence Unit - India / Ministry of Finance",
+      sourceUrl: "https://fiuindia.gov.in/pdfs/AML_legislation/AMLCFTguidelines10032023.pdf",
+      citation:
+        "PMLA VDA Notification S.O. 1072(E), 7 March 2023; FIU-IND AML/CFT Guidelines for Reporting Entities Providing Services Related to VDAs, 10 March 2023",
+      topic: "aml-cft",
+      coverageStatus: "missing",
+      localCounselRole: "India VDA / PMLA AML counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "India VDA SP FIU-IND registration and activity-scope evidence",
+        "India VDA AML/CFT reporting, CDD/EDD, STR, and Travel Rule evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "India")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "India VDA / PMLA AML counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks India FIU-IND and PMLA VDA controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `india-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const indiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-india-vda-pmla-covered",
+      projectName: "Mumbai VDA PMLA Review",
+      jurisdictions: ["IN"],
+      entityType: "Virtual digital asset service provider operations team",
+      assetModel: "Virtual digital asset exchange, transfer, and custody service with issuer offer-sale review assumptions",
+      userType: "Indian retail users and compliance reviewers",
+      custodyModel: "Platform holds user VDA balances with hosted wallet controls, transfer approvals, custody boundary, and incident escalation placeholders",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction-monitoring summaries",
+      aiUsage: "AI drafts India VDA AML/CFT evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned India VDA AML/CFT review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(indiaProject);
+    const graph = createRegulatoryGraph(indiaProject, audit, indiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "in-fiu-pmla-vda-aml-cft")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Custody and signer control runbook",
+        "India VDA SP FIU-IND registration and AML reporting register"
+      ])
+    });
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "India")).toMatchObject({
+      readiness: "ready-for-counsel",
+      coveredEvidenceCount: 2,
+      missingEvidenceCount: 0
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "in-fiu-pmla-vda-aml-cft" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

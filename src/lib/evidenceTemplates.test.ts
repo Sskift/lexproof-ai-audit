@@ -104,6 +104,7 @@ describe("evidence templates", () => {
         "Canada CTP PRU custody and investor-protection register",
         "Australia digital asset financial services and VASP AML register",
         "Korea VASP user protection and AML reporting register",
+        "India VDA SP FIU-IND registration and AML reporting register",
         "US FinCEN CVC MSB and BSA transfer control register",
         "Wallet sanctions screening and escalation controls"
       ])
@@ -120,6 +121,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-ca-csa-ctp-pru-custody-investor-protection");
     expect(serializedSources).toContain("regulatory control: control-au-asic-austrac-digital-asset-financial-services");
     expect(serializedSources).toContain("regulatory control: control-kr-fsc-kofiu-vasp-user-protection-aml");
+    expect(serializedSources).toContain("regulatory control: control-in-fiu-pmla-vda-aml-cft");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");

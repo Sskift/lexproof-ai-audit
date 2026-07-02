@@ -272,6 +272,39 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Mumbai VDA PMLA Review",
+    entityType: "Virtual digital asset service provider operations team",
+    jurisdictions: ["India"],
+    assetModel: "Virtual digital asset exchange, transfer, and custody service with issuer offer-sale review assumptions",
+    userType: "Indian retail users, compliance reviewers, and local counsel",
+    custodyModel:
+      "Platform holds user VDA balances with hosted wallet controls, transfer approvals, custody boundary, and incident escalation placeholders",
+    dataSensitivity:
+      "CDD status summaries, wallet-risk metadata, transaction-monitoring summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts audit-prep evidence summaries for human review and India counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only FIU-IND/PMLA handoff",
+    operatingStage: "Planned India VDA AML/CFT review before local counsel signoff",
+    evidenceItems: [
+      {
+        label: "India regulator source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date; control evidence remains requested."
+      },
+      {
+        label: "India operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service scope, custody boundary, reviewer owner, and counsel handoff timing; regulatory-control evidence remains requested."
+      },
+      {
+        label: "India evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic requested-control placeholders and evidence owners without identity files, wallet secrets, or customer records."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

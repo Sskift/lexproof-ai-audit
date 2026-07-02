@@ -41,6 +41,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Canada source path: click **Start Canada CTP custody review** to load `MapleVault CTP Custody Review` and start in Jurisdiction Checklist for CSA CTP PRU custody controls, registration and PRU evidence gaps, client-asset custody and segregation, acceptable third-party custodian assurance, no re-hypothecation, no leverage, VRCA consent, and counsel export.
    - Optional Australia source path: click **Start Australia digital asset review** to load `SouthernCross Digital Asset Review` and start in Jurisdiction Checklist for ASIC digital-asset financial-services controls, AUSTRAC VASP AML/CTF evidence gaps, CDD, travel-rule, reporting, recordkeeping, and counsel export.
    - Optional Korea source path: click **Start Korea VASP user protection review** to load `HanRiver VASP User Protection Review` and start in Jurisdiction Checklist for FSC user-asset protection and KoFIU VASP reporting / AML evidence gaps, CDD/EDD, STR, Travel Rule, real-name account, and counsel export.
+   - Optional India source path: click **Start India VDA PMLA review** to load `Mumbai VDA PMLA Review` and start in Jurisdiction Checklist for FIU-IND/PMLA VDA service provider controls, Reporting Entity registration, AML/CFT/CPF, CDD/EDD, STR/monthly reporting, Travel Rule, record-retention evidence gaps, and counsel export.
    - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / EU MiCA / UK FCA / UAE VARA 2024 promotion, marketing-communication, risk-warning, KOL/incentive, and recordkeeping source gaps.
    - On the marketing path, show the first-screen **Workspace Action Queue** item **Recertify stale evidence** for the stale source-linked `Claims inventory` record, then click it to route into Evidence Ledger. Not legal advice.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
@@ -53,6 +54,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Canada path screenshot: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Australia path screenshot: `docs/assets/screenshots/australia-digital-asset-source-graph.png`.
    - Korea path screenshot: `docs/assets/screenshots/korea-vasp-user-protection-source-graph.png`.
+   - India path screenshot: `docs/assets/screenshots/india-vda-pmla-source-graph.png`.
    - Marketing path screenshot: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
    - UAE VARA 2024 marketing source screenshot: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - EU MiCA marketing source screenshot: `docs/assets/screenshots/eu-mica-marketing-source-graph.png`.
@@ -91,6 +93,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Canada path screenshot after **Start Canada CTP custody review**: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Optional Australia path screenshot after **Start Australia digital asset review**: `docs/assets/screenshots/australia-digital-asset-source-graph.png`.
    - Optional Korea path screenshot after **Start Korea VASP user protection review**: `docs/assets/screenshots/korea-vasp-user-protection-source-graph.png`.
+   - Optional India path screenshot after **Start India VDA PMLA review**: `docs/assets/screenshots/india-vda-pmla-source-graph.png`.
    - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
    - Optional VARA 2024 marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - Optional EU MiCA marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/eu-mica-marketing-source-graph.png`.

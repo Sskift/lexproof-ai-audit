@@ -204,6 +204,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "india-vda-pmla-source-path",
+    projectName: "Mumbai VDA PMLA Review",
+    title: "India VDA PMLA review",
+    summary:
+      "India FIU-IND/PMLA VDA service provider review with Reporting Entity registration, AML/CFT/CPF program, KYC/CDD/EDD, STR/monthly reporting, risk assessment, Travel Rule, and record-retention evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect India FIU-IND/PMLA source graph",
+      "Review VDA activity-scope and Reporting Entity evidence gaps",
+      "Check AML/CFT, CDD/EDD, STR, Travel Rule, and reporting evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["India", "FIU-IND", "PMLA", "VDA AML/CFT"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

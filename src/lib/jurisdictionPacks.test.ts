@@ -17,6 +17,7 @@ const project: ProjectProfile = {
     "Canada",
     "Australia",
     "South Korea",
+    "India",
     "Switzerland",
     "United Arab Emirates",
     "Brazil"
@@ -56,6 +57,7 @@ describe("createJurisdictionPacks", () => {
         "Canada",
         "Australia",
         "South Korea",
+        "India",
         "Switzerland",
         "United Arab Emirates",
         "Brazil"
@@ -161,6 +163,19 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         "FSC user-asset protection and custody control",
         "KoFIU VASP reporting, AML/CFT, CDD, and STR control"
+      ])
+    );
+
+    const indiaPack = packs.find((pack) => pack.jurisdiction === "India");
+    expect(indiaPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "India VDA / PMLA AML counsel"
+      }
+    });
+    expect(indiaPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "FIU-IND Reporting Entity registration and activity-scope control",
+        "India VDA AML/CFT reporting, CDD/EDD, STR, and Travel Rule control"
       ])
     );
 

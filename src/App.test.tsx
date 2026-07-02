@@ -872,6 +872,26 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the India VDA PMLA scenario with FIU-IND evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start India VDA PMLA review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Mumbai VDA PMLA Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /PMLA VDA Notification S\.O\. 1072\(E\), 7 March 2023; FIU-IND AML\/CFT Guidelines for Reporting Entities Providing Services Related to VDAs, 10 March 2023/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/India VDA \/ PMLA AML counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/India VDA SP FIU-IND registration and activity-scope evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/India VDA AML\/CFT reporting, CDD\/EDD, STR, and Travel Rule evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

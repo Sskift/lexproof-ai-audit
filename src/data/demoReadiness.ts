@@ -9,6 +9,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/canada-ctp-custody-source-graph.png",
   "docs/assets/screenshots/australia-digital-asset-source-graph.png",
   "docs/assets/screenshots/korea-vasp-user-protection-source-graph.png",
+  "docs/assets/screenshots/india-vda-pmla-source-graph.png",
   "docs/assets/screenshots/demo-scenario-library-marketing-claims.png",
   "docs/assets/screenshots/counsel-pack-marketing-claims-template.png",
   "docs/assets/screenshots/regulatory-control-matrix.png",

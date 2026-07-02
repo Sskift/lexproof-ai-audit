@@ -273,6 +273,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(koreaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded India VDA PMLA path for FIU-IND source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const indiaScenario = findDemoScenarioById(demoScenarios, "india-vda-pmla-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(indiaScenario).toEqual(
+      expect.objectContaining({
+        title: "India VDA PMLA review",
+        projectName: "Mumbai VDA PMLA Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["India", "FIU-IND", "PMLA", "VDA AML/CFT"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(indiaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect India FIU-IND/PMLA source graph",
+        "Review VDA activity-scope and Reporting Entity evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(indiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

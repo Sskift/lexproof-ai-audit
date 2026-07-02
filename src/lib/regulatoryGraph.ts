@@ -264,6 +264,9 @@ function jurisdictionAliases(jurisdiction: string): string[] {
     "south korea": ["south korea", "korea", "kr", "republic of korea", "korean"],
     korea: ["south korea", "korea", "kr", "republic of korea", "korean"],
     kr: ["south korea", "korea", "kr", "republic of korea", "korean"],
+    india: ["india", "in", "indian", "bharat"],
+    in: ["india", "in", "indian", "bharat"],
+    bharat: ["india", "in", "indian", "bharat"],
     switzerland: ["switzerland", "swiss", "ch"],
     "united arab emirates": ["united arab emirates", "uae", "dubai", "abu dhabi"],
     brazil: ["brazil", "br", "brasil"]

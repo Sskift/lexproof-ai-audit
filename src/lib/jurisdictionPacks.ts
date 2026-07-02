@@ -44,6 +44,7 @@ type PackTemplate = {
     | "Canada"
     | "Australia"
     | "South Korea"
+    | "India"
     | "Switzerland"
     | "United Arab Emirates"
     | "Brazil";
@@ -367,6 +368,54 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "customer due diligence",
           "suspicious transaction report",
           "travel rule"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "India",
+    aliases: ["india", "in", "indian", "bharat"],
+    summary:
+      "Prepare VDA activity-scope, FIU-IND Reporting Entity registration, AML/CFT/CPF program, Designated Director / Principal Officer, KYC/CDD/EDD, STR/reporting, risk assessment, Travel Rule, record-retention, and local counsel handoff controls for India.",
+    recommendedRole: "India VDA / PMLA AML counsel",
+    controls: [
+      {
+        id: "in-fiu-registration-activity-scope-control",
+        title: "FIU-IND Reporting Entity registration and activity-scope control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "india vda service provider",
+          "india fiu-ind registration",
+          "india pmla reporting entity",
+          "designated director",
+          "principal officer",
+          "client money account",
+          "aml/cft/cpf program",
+          "board senior management",
+          "india vda sp activity scope",
+          "vda activity scope"
+        ]
+      },
+      {
+        id: "in-vda-aml-reporting-cdd-str-control",
+        title: "India VDA AML/CFT reporting, CDD/EDD, STR, and Travel Rule control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "india vda aml cft",
+          "fiu-ind reporting",
+          "india suspicious transaction report",
+          "india travel rule",
+          "india transaction monitoring",
+          "india risk assessment",
+          "fingate vasp reporting",
+          "ground of suspicion",
+          "india record retention",
+          "india no anonymous wallet",
+          "india beneficial ownership"
         ]
       }
     ]

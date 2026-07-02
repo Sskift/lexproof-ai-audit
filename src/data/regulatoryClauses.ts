@@ -1420,6 +1420,86 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "in-fiu-pmla-vda-aml-cft",
+    jurisdiction: "India",
+    regulator: "Financial Intelligence Unit - India / Ministry of Finance",
+    sourceName: "PMLA virtual digital asset notification and FIU-IND AML/CFT guidelines for VDA service providers",
+    sourceUrl: "https://fiuindia.gov.in/pdfs/AML_legislation/AMLCFTguidelines10032023.pdf",
+    citation:
+      "PMLA VDA Notification S.O. 1072(E), 7 March 2023; FIU-IND AML/CFT Guidelines for Reporting Entities Providing Services Related to VDAs, 10 March 2023",
+    topic: "aml-cft",
+    summary:
+      "Prepare India VDA activity-scope, FIU-IND Reporting Entity registration, AML/CFT/CPF program, board/senior management policy controls, Designated Director / Principal Officer, KYC/CDD/EDD, sanctions and blockchain-analytics screening, STR/monthly reporting, risk assessment, record retention, Travel Rule/VDA transfer reporting, and no-raw-KYC evidence for local counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "india",
+      "indian",
+      "fiu-ind",
+      "fiu ind",
+      "pmla",
+      "virtual digital asset",
+      "vda",
+      "vda service provider",
+      "reporting entity",
+      "fingate",
+      "travel rule",
+      "principal officer",
+      "designated director",
+      "suspicious transaction report"
+    ],
+    evidenceRequests: [
+      {
+        id: "in-fiu-vda-registration-activity-scope",
+        title: "India VDA SP FIU-IND registration and activity-scope evidence",
+        reason:
+          "India VDA review needs exchange, transfer, safekeeping/administration/control-instrument, issuer offer-sale financial-service, Reporting Entity registration, bank/FI account disclosure, Designated Director / Principal Officer, AML/CFT/CPF program, and board/senior management policy evidence before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "india vda service provider",
+          "india fiu-ind registration",
+          "india pmla reporting entity",
+          "designated director",
+          "principal officer",
+          "client money account",
+          "aml/cft/cpf program",
+          "board senior management",
+          "india vda sp activity scope",
+          "vda activity scope"
+        ]
+      },
+      {
+        id: "in-fiu-vda-aml-reporting-cdd-str-travel-rule",
+        title: "India VDA AML/CFT reporting, CDD/EDD, STR, and Travel Rule evidence",
+        reason:
+          "Counsel and compliance review need KYC/CDD/EDD, beneficial ownership, no anonymous or fictitious wallets, sanctions and blockchain-analytics screening, transaction monitoring, monthly reporting, STR seven-working-day escalation, record retention, Travel Rule/VDA transfer reporting, and FINGate/reporting-format handoff without raw KYC.",
+        priority: "P1",
+        keywords: [
+          "india vda aml cft",
+          "fiu-ind reporting",
+          "india suspicious transaction report",
+          "india travel rule",
+          "india transaction monitoring",
+          "india risk assessment",
+          "fingate vasp reporting",
+          "ground of suspicion",
+          "india record retention",
+          "india no anonymous wallet",
+          "india beneficial ownership"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which India VDA activity-scope, FIU-IND registration, Reporting Entity, AML/CFT/CPF program, Designated Director, Principal Officer, bank/FI account, or client-money assumptions should local counsel review?",
+      "What metadata-only evidence shows KYC/CDD/EDD, beneficial ownership, sanctions/blockchain analytics screening, transaction monitoring, STR/monthly reporting, record retention, Travel Rule, FINGate reporting, and no anonymous or fictitious wallet controls without raw KYC, PAN/Aadhaar, OVDs, wallet secrets, or customer records?"
+    ],
+    localCounselRole: "India VDA / PMLA AML counsel",
+    effectiveAsOf: "2023-03-10",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against India eGazette S.O. 1072(E), FIU-IND AML/CFT VDA guidelines, FIU-IND downloads registry, PIB enforcement press release, and VASP reporting-format manual for activity scope, registration, AML/CFT/CPF, KYC/CDD/EDD, reporting, recordkeeping, STR, risk assessment, Travel Rule, and evidence-routing metadata; route interpretation to India local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",
@@ -1680,7 +1760,14 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
         reason:
           "Brazil capital-markets review needs token rights, investment expectation, public distribution, disclosure, and intermediary assumptions before external reliance.",
         priority: "P1",
-        keywords: ["crypto security", "token rights", "investment expectation", "public distribution", "disclosure", "intermediary"]
+        keywords: [
+          "crypto security",
+          "token rights",
+          "investment expectation",
+          "public distribution",
+          "disclosure assumptions",
+          "intermediary assumptions"
+        ]
       },
       {
         id: "br-cvm-public-communication-review",

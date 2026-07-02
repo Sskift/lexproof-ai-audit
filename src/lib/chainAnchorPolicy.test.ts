@@ -87,4 +87,42 @@ describe("chain anchor policy", () => {
     expect(json).not.toContain("passport data");
     expect(json.toLowerCase()).not.toContain("signed transaction");
   });
+
+  it("blocks direct personal identifiers in anchor policy metadata before external chain review", () => {
+    const report = createChainAnchorPolicyReport({
+      context: {
+        workspaceId: "workspace-anchor",
+        evidenceCount: 2,
+        retentionStatus: "ready",
+        vaultSyncAllowed: true,
+        blockerCount: 0,
+        exportBlockerCount: 0,
+        manifestHash: "c".repeat(64),
+        counselPackVersionCount: 1,
+        simulatedAnchorAvailable: true
+      },
+      policy: {
+        policyOwner: "Anchor owner jane.reviewer@example.com",
+        targetNetwork: "ethereum-sepolia",
+        walletCustodyModel: "Multisig policy wallet controlled by compliance operations.",
+        signerRole: "Compliance reviewer",
+        transactionLoggingApproved: true,
+        privacyReviewApproved: true,
+        publicPayloadLimitedApproved: true,
+        userConsentApproved: true,
+        noRawEvidenceOnChainConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Escalate signing exceptions by phone +1 415 555 0100 before anchor adapter review."
+      }
+    });
+
+    const json = JSON.stringify(report);
+
+    expect(report.overallStatus).toBe("blocked");
+    expect(report.externalChainAnchoringStatus).toBe("blocked-by-metadata");
+    expect(report.controls).toEqual(expect.arrayContaining([expect.objectContaining({ id: "metadata-boundary", status: "blocked" })]));
+    expect(json).not.toContain("jane.reviewer@example.com");
+    expect(json).not.toContain("+1 415 555 0100");
+    expect(report.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });

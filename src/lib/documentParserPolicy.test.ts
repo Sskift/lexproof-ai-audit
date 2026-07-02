@@ -80,4 +80,40 @@ describe("document parser policy", () => {
     expect(json).not.toContain("passport scan");
     expect(json.toLowerCase()).not.toContain("legal opinion");
   });
+
+  it("blocks direct personal identifiers in parser policy metadata before external parsing review", () => {
+    const report = createDocumentParserPolicyReport({
+      context: {
+        workspaceId: "workspace-parser",
+        evidenceCount: 2,
+        retentionStatus: "ready",
+        vaultSyncAllowed: true,
+        blockerCount: 0,
+        exportBlockerCount: 0,
+        manifestHash: "f".repeat(64)
+      },
+      policy: {
+        policyOwner: "Parser owner jane.reviewer@example.com",
+        maxDocumentSizeMb: 10,
+        rawDocumentRetentionDays: 14,
+        deletionSlaDays: 7,
+        parsingPurpose: "Extract metadata, source citations, and evidence summaries for audit preparation.",
+        redactionBeforeParsingApproved: true,
+        noTrainingUseConfirmed: true,
+        accessLoggingApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Parser exception contact phone +1 415 555 0100."
+      }
+    });
+
+    const json = JSON.stringify(report);
+
+    expect(report.overallStatus).toBe("blocked");
+    expect(report.externalDocumentParsingStatus).toBe("blocked-by-metadata");
+    expect(report.controls).toEqual(expect.arrayContaining([expect.objectContaining({ id: "metadata-boundary", status: "blocked" })]));
+    expect(json).not.toContain("jane.reviewer@example.com");
+    expect(json).not.toContain("+1 415 555 0100");
+    expect(report.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });

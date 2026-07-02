@@ -50,10 +50,39 @@ describe("model gateway secret policy", () => {
 
     expect(report.overallStatus).toBe("blocked");
     expect(report.controls).toEqual(expect.arrayContaining([expect.objectContaining({ id: "metadata-boundary", status: "blocked" })]));
-    expect(report.nextActions).toEqual(expect.arrayContaining(["Remove credentials, private keys, and raw KYC references from policy metadata."]));
+    expect(report.nextActions).toEqual(
+      expect.arrayContaining(["Remove credentials, private keys, raw KYC, and personal data from policy metadata."])
+    );
     expect(json).not.toContain("sk-live-abcdef");
     expect(json).not.toContain("0x1234567890abcdef");
     expect(json).not.toContain("passport scan");
     expect(json.toLowerCase()).not.toContain("legal opinion");
+  });
+
+  it("blocks direct personal identifiers in secret policy metadata before external provider review", () => {
+    const report = createModelGatewaySecretPolicyReport({
+      policyOwner: "Security lead jane.reviewer@example.com",
+      kmsBackedStorageApproved: true,
+      rotationDays: 30,
+      accessReviewCadence: "quarterly",
+      providerAllowlistApproved: true,
+      egressLoggingApproved: true,
+      incidentResponseRunbookApproved: true,
+      noClientSecretPersistence: true,
+      humanReviewRequired: true,
+      notes: "Escalate access exceptions by phone +1 415 555 0100 before enabling provider proxying."
+    });
+
+    const json = JSON.stringify(report);
+
+    expect(report.overallStatus).toBe("blocked");
+    expect(report.externalProviderProxyingStatus).toBe("blocked-by-metadata");
+    expect(report.controls).toEqual(expect.arrayContaining([expect.objectContaining({ id: "metadata-boundary", status: "blocked" })]));
+    expect(report.nextActions).toEqual(
+      expect.arrayContaining(["Remove credentials, private keys, raw KYC, and personal data from policy metadata."])
+    );
+    expect(json).not.toContain("jane.reviewer@example.com");
+    expect(json).not.toContain("+1 415 555 0100");
+    expect(report.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 });

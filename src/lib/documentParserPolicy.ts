@@ -67,7 +67,7 @@ export type CreateDocumentParserPolicyReportInput = {
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Document parser policy is audit preparation metadata only." as const;
-const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc"]);
+const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc", "personal-data"]);
 
 export function createDocumentParserPolicyReport(
   input: CreateDocumentParserPolicyReportInput,
@@ -147,10 +147,10 @@ function createControls(
       label: "Policy metadata boundary",
       status: hasBlockedMetadata ? "blocked" : "ready",
       evidence: hasBlockedMetadata
-        ? "Policy metadata contains blocked secret, private-key, raw KYC, or legal-decision references."
+        ? "Policy metadata contains blocked secret, private-key, raw KYC, personal-data, or legal-decision references."
         : "Policy metadata is limited to parser routing details and excludes raw document content.",
       recoveryAction: hasBlockedMetadata
-        ? "Remove credentials, private keys, raw KYC references, and final legal-decision requests from parser policy metadata."
+        ? "Remove credentials, private keys, raw KYC, personal data, and final legal-decision requests from parser policy metadata."
         : "Keep parser policy metadata free of credentials, private keys, raw KYC, personal data, and raw document text."
     },
     {

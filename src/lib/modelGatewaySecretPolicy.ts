@@ -49,14 +49,15 @@ export type ModelGatewaySecretPolicyReport = {
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Model Gateway secret policy is audit preparation metadata only." as const;
 const REQUIRED_CONTROL_COUNT = 7;
-const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc"]);
+const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc", "personal-data"]);
 
 export function createModelGatewaySecretPolicyReport(
   input: ModelGatewaySecretPolicyDraft,
   generatedAt = new Date().toISOString()
 ): ModelGatewaySecretPolicyReport {
+  const rawPolicyText = `${input.policyOwner} ${input.notes}`;
   const normalized = normalizePolicyDraft(input);
-  const metadataFindings = classifyDataBoundaryText(`${normalized.policyOwner} ${normalized.notes}`);
+  const metadataFindings = classifyDataBoundaryText(rawPolicyText);
   const hasBlockedMetadata = metadataFindings.some((finding) => blockedPolicyMetadataClasses.has(finding.dataClass));
   const controls = createControls(normalized, hasBlockedMetadata);
   const requiredControls = controls.filter((control) => control.id !== "metadata-boundary");
@@ -103,10 +104,10 @@ function createControls(input: ModelGatewaySecretPolicyDraft, hasBlockedMetadata
       label: "Policy metadata boundary",
       status: hasBlockedMetadata ? "blocked" : "ready",
       evidence: hasBlockedMetadata
-        ? "Policy metadata contains blocked secret, private-key, or raw KYC references."
+        ? "Policy metadata contains blocked secret, private-key, raw KYC, or personal-data references."
         : "Policy metadata is limited to audit-prep routing details and excludes provider credentials.",
       recoveryAction: hasBlockedMetadata
-        ? "Remove credentials, private keys, and raw KYC references from policy metadata."
+        ? "Remove credentials, private keys, raw KYC, and personal data from policy metadata."
         : "Keep policy metadata free of credentials, private keys, raw KYC, and personal data."
     },
     {
@@ -207,7 +208,7 @@ function createNextActions(
   controls: ModelGatewaySecretPolicyControl[]
 ): string[] {
   if (status === "blocked") {
-    return ["Remove credentials, private keys, and raw KYC references from policy metadata."];
+    return ["Remove credentials, private keys, raw KYC, and personal data from policy metadata."];
   }
 
   if (status === "ready") {

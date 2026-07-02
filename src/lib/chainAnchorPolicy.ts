@@ -70,7 +70,7 @@ export type CreateChainAnchorPolicyReportInput = {
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Chain anchor policy is audit preparation metadata only." as const;
-const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc"]);
+const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc", "personal-data"]);
 
 export function createChainAnchorPolicyReport(
   input: CreateChainAnchorPolicyReportInput,

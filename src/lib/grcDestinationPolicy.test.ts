@@ -81,4 +81,39 @@ describe("GRC destination policy", () => {
     expect(json).not.toContain("passport data");
     expect(json.toLowerCase()).not.toContain("push tickets");
   });
+
+  it("blocks direct personal identifiers in destination metadata before external ticket review", () => {
+    const report = createGrcDestinationPolicyReport({
+      context: {
+        workspaceId: "workspace-grc",
+        remediationItemCount: 2,
+        exportSafetyStatus: "clean",
+        exportBlockerCount: 0,
+        integrationAdapterStatus: "ready",
+        localTicketExportAvailable: true
+      },
+      policy: {
+        policyOwner: "GRC owner jane.reviewer@example.com",
+        destinationSystem: "jira",
+        destinationQueue: "LEGAL-AUDIT",
+        fieldMappingApproved: true,
+        authenticationPolicyApproved: true,
+        redactionPolicyApproved: true,
+        ticketOwnershipApproved: true,
+        retryAndAuditLoggingApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Ticket exception contact phone +1 415 555 0100 before destination adapter review."
+      }
+    });
+
+    const json = JSON.stringify(report);
+
+    expect(report.overallStatus).toBe("blocked");
+    expect(report.externalGrcTicketCreationStatus).toBe("blocked-by-metadata");
+    expect(report.controls).toEqual(expect.arrayContaining([expect.objectContaining({ id: "metadata-boundary", status: "blocked" })]));
+    expect(json).not.toContain("jane.reviewer@example.com");
+    expect(json).not.toContain("+1 415 555 0100");
+    expect(report.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });

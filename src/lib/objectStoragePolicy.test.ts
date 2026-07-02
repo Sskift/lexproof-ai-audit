@@ -76,4 +76,38 @@ describe("object storage policy", () => {
     expect(json).not.toContain("passport scan");
     expect(json.toLowerCase()).not.toContain("legal opinion");
   });
+
+  it("blocks direct personal identifiers in storage policy metadata before external storage review", () => {
+    const report = createObjectStoragePolicyReport({
+      context: {
+        workspaceId: "workspace-storage",
+        evidenceCount: 2,
+        retentionStatus: "ready",
+        vaultSyncAllowed: true,
+        blockerCount: 0,
+        manifestHash: "c".repeat(64)
+      },
+      policy: {
+        policyOwner: "Storage owner jane.reviewer@example.com",
+        retentionDays: 365,
+        deletionSlaDays: 30,
+        encryptionAtRestApproved: true,
+        bucketAllowlistApproved: true,
+        accessLoggingApproved: true,
+        lifecyclePolicyApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Escalation phone +1 415 555 0100 for object storage adapter review."
+      }
+    });
+
+    const json = JSON.stringify(report);
+
+    expect(report.overallStatus).toBe("blocked");
+    expect(report.externalObjectStorageStatus).toBe("blocked-by-metadata");
+    expect(report.controls).toEqual(expect.arrayContaining([expect.objectContaining({ id: "metadata-boundary", status: "blocked" })]));
+    expect(json).not.toContain("jane.reviewer@example.com");
+    expect(json).not.toContain("+1 415 555 0100");
+    expect(report.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });

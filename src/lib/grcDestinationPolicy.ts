@@ -70,7 +70,7 @@ export type CreateGrcDestinationPolicyReportInput = {
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. GRC destination policy is audit preparation metadata only." as const;
-const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc"]);
+const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc", "personal-data"]);
 
 export function createGrcDestinationPolicyReport(
   input: CreateGrcDestinationPolicyReportInput,

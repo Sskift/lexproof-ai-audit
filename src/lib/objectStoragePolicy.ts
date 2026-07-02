@@ -65,7 +65,7 @@ export type CreateObjectStoragePolicyReportInput = {
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Object storage policy is audit preparation metadata only." as const;
-const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc"]);
+const blockedPolicyMetadataClasses = new Set(["credential-material", "private-key-material", "raw-kyc", "personal-data"]);
 
 export function createObjectStoragePolicyReport(
   input: CreateObjectStoragePolicyReportInput,
@@ -139,10 +139,10 @@ function createControls(
       label: "Policy metadata boundary",
       status: hasBlockedMetadata ? "blocked" : "ready",
       evidence: hasBlockedMetadata
-        ? "Policy metadata contains blocked secret, private-key, or raw KYC references."
+        ? "Policy metadata contains blocked secret, private-key, raw KYC, or personal-data references."
         : "Policy metadata is limited to storage routing details and excludes raw evidence bytes.",
       recoveryAction: hasBlockedMetadata
-        ? "Remove credentials, private keys, and raw KYC references from object storage policy metadata."
+        ? "Remove credentials, private keys, raw KYC, and personal data from object storage policy metadata."
         : "Keep policy metadata free of credentials, private keys, raw KYC, personal data, and raw evidence content."
     },
     {

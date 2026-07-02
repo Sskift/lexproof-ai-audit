@@ -9,6 +9,8 @@ const jwtToken =
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
 const connectorPassword = "Sup3rSecret!2026";
 const refreshToken = "rt_abcdef1234567890abcdef";
+const githubToken = ["ghp", "syntheticTokenValue1234567890"].join("_");
+const slackToken = ["xoxb", "123456789012", "syntheticSlackTokenValue"].join("-");
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const pemPrivateKey = [
   "-----BEGIN PRIVATE KEY-----",
@@ -111,6 +113,23 @@ describe("classifyDataBoundaryText", () => {
     expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
     expect(serialized).not.toContain(connectorPassword);
     expect(serialized).not.toContain(refreshToken);
+  });
+
+  it("blocks third-party integration tokens without exposing token bodies", () => {
+    const findings = classifyDataBoundaryText(`GRC connector notes include ${githubToken} and ${slackToken}.`);
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 2
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-integration-token]");
+    expect(serialized).not.toContain(githubToken);
+    expect(serialized).not.toContain(slackToken);
+    expect(serialized).not.toContain("syntheticTokenValue");
+    expect(serialized).not.toContain("syntheticSlackTokenValue");
   });
 
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
@@ -245,6 +264,16 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-secret]");
     expect(redacted).not.toContain(connectorPassword);
     expect(redacted).not.toContain(refreshToken);
+  });
+
+  it("redacts third-party integration tokens from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`Tokens: ${githubToken}; ${slackToken}`);
+
+    expect(redacted.match(/\[redacted-integration-token\]/g)?.length).toBe(2);
+    expect(redacted).not.toContain(githubToken);
+    expect(redacted).not.toContain(slackToken);
+    expect(redacted).not.toContain("syntheticTokenValue");
+    expect(redacted).not.toContain("syntheticSlackTokenValue");
   });
 
   it("redacts direct personal identifiers from reusable boundary snippets", () => {

@@ -764,6 +764,66 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks cross-border marketing source controls covered when marketing template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("marketing-claims-review").map((item, index) => ({
+      ...item,
+      id: `marketing-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const marketingProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-cross-border-marketing-template-covered",
+      projectName: "SignalBridge Marketing Review",
+      jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+      assetModel: "Virtual asset public education and product-positioning campaign with paid creator endorsements and no token sale",
+      userType: "US, UK, and UAE retail audience segments, community followers, and exchange listing reviewers",
+      custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
+      dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
+      aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
+      blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
+      operatingStage: "Planned public marketing campaign with influencer endorsements before US, UK, and UAE counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const graph = createRegulatoryGraph(marketingProject, audit, marketingProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ftc-endorsement-advertising-guides")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: [
+        "Claims substantiation and risk disclosure register",
+        "Creator endorsement and material connection log"
+      ]
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-fca-crypto-financial-promotions")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["UK financial promotion approval pack"]
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-va-regulations-activity-scope")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-marketing-regulations-2024")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["UAE VARA approval and risk-warning archive", "UAE KOL incentive and recordkeeping log"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "us-ftc-endorsement-advertising-guides" }),
+        expect.objectContaining({ clauseId: "uk-fca-crypto-financial-promotions" }),
+        expect.objectContaining({ clauseId: "uae-vara-va-regulations-activity-scope" }),
+        expect.objectContaining({ clauseId: "uae-vara-marketing-regulations-2024" })
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches US and UK DAO governance source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(daoGovernanceProject);
     const graph = createRegulatoryGraph(daoGovernanceProject, audit, daoGovernanceProject.evidenceItems);

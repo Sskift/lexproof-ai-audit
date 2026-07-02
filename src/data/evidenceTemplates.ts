@@ -160,5 +160,88 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       }
     ]
+  },
+  {
+    id: "marketing-claims-review",
+    title: "Marketing Claims Review",
+    shortLabel: "marketing claims",
+    description:
+      "Claims, endorsement, financial promotion, VARA approval, KOL incentive, and activity-scope evidence requests for cross-border virtual asset campaigns.",
+    triggerKeywords: [
+      "marketing",
+      "promotion",
+      "claims",
+      "advertising",
+      "endorsement",
+      "creator",
+      "kol",
+      "incentive",
+      "campaign",
+      "financial promotion",
+      "risk warning"
+    ],
+    notLegalAdviceBoundary: "Not legal advice. These are marketing evidence requests for audit preparation.",
+    items: [
+      {
+        label: "Claims substantiation and risk disclosure register",
+        kind: "Register",
+        content:
+          "Requested: document claim inventory, claims substantiation sources, advertising claim owners, risk disclosure, channel, audience, reviewer, and source-lineage notes.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-us-ftc-endorsement-advertising-guides",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Creator endorsement and material connection log",
+        kind: "Log",
+        content:
+          "Requested: document endorsement, testimonial, material connection, creator disclosure, approval routing, monitoring owner, and retained review evidence.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-us-ftc-endorsement-advertising-guides",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "UK financial promotion approval pack",
+        kind: "Checklist",
+        content:
+          "Requested: summarize financial promotion copy, approval pack owner, clear-and-balanced review, client categorisation, appropriateness, positive friction, eligibility assumptions, and retail-access restrictions.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-uk-fca-crypto-financial-promotions",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "UAE activity scope and access control memo",
+        kind: "Memo",
+        content:
+          "Requested: summarize virtual asset activity scope, issuance assumptions, licensing assumptions, regulated activity mapping, cross-border access control, and counsel review owner.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-uae-vara-va-regulations-activity-scope",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "UAE VARA approval and risk-warning archive",
+        kind: "Archive",
+        content:
+          "Requested: document VARA approval route, VASP approval route, approval route owner, promotional label, guaranteed return claim controls, misleading-claim checks, and UAE review owner.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-uae-vara-marketing-regulations-2024",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "UAE KOL incentive and recordkeeping log",
+        kind: "Log",
+        content:
+          "Requested: document KOL and key opinion leader remuneration, paid post scope, incentive compliance confirmation, recordkeeping owner, marketing record, distribution details, and eight year archive assumptions.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-uae-vara-marketing-regulations-2024",
+        status: "requested",
+        owner: "Compliance"
+      }
+    ]
   }
 ];

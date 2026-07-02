@@ -32,12 +32,32 @@ const aiLegalWorkflowProject: ProjectProfile = {
   evidenceItems: []
 };
 
+const marketingClaimsProject: ProjectProfile = {
+  id: "template-marketing-claims",
+  projectName: "SignalBridge Marketing Review",
+  entityType: "Virtual asset marketing operations team",
+  jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+  assetModel: "Virtual asset public education campaign with paid creator endorsements, KOL incentives, and no token sale",
+  userType: "US, UK, and UAE retail audience segments, creator followers, and exchange listing reviewers",
+  custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
+  dataSensitivity: "Audience-segment summaries and approval metadata only",
+  aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
+  blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
+  operatingStage: "Planned public marketing campaign before US, UK, and UAE counsel review",
+  evidenceItems: []
+};
+
 describe("evidence templates", () => {
-  it("lists the three hackathon-critical evidence template scenarios", () => {
+  it("lists the hackathon-critical evidence template scenarios", () => {
     const templates = listEvidenceTemplates();
 
     expect(templates.map((template) => template.id)).toEqual(
-      expect.arrayContaining(["tokenized-yield-rwa", "dao-governance-multisig", "ai-compliance-workflow"])
+      expect.arrayContaining([
+        "tokenized-yield-rwa",
+        "dao-governance-multisig",
+        "ai-compliance-workflow",
+        "marketing-claims-review"
+      ])
     );
     expect(templates.every((template) => template.items.length >= 3)).toBe(true);
     expect(templates.every((template) => template.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
@@ -87,6 +107,33 @@ describe("evidence templates", () => {
     });
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");
     expect(serializedSources).toContain("regulatory control: control-uk-ico-ai-data-protection-governance");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
+  });
+
+  it("recommends marketing claims evidence with US, UK, and UAE regulatory control links", () => {
+    const recommended = recommendEvidenceTemplates(marketingClaimsProject);
+    const items = createEvidenceItemsFromTemplate("marketing-claims-review");
+    const serializedSources = items.map((item) => item.source ?? "").join("\n");
+
+    expect(recommended[0]).toMatchObject({
+      id: "marketing-claims-review",
+      title: "Marketing Claims Review"
+    });
+    expect(items.map((item) => item.label)).toEqual(
+      expect.arrayContaining([
+        "Claims substantiation and risk disclosure register",
+        "Creator endorsement and material connection log",
+        "UK financial promotion approval pack",
+        "UAE VARA approval and risk-warning archive",
+        "UAE KOL incentive and recordkeeping log"
+      ])
+    );
+    expect(serializedSources).toContain("regulatory control: control-us-ftc-endorsement-advertising-guides");
+    expect(serializedSources).toContain("regulatory control: control-uk-fca-crypto-financial-promotions");
+    expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");
+    expect(serializedSources).toContain("regulatory control: control-uae-vara-marketing-regulations-2024");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");

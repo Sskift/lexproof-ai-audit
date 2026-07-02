@@ -36,14 +36,14 @@ const marketingClaimsProject: ProjectProfile = {
   id: "template-marketing-claims",
   projectName: "SignalBridge Marketing Review",
   entityType: "Virtual asset marketing operations team",
-  jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+  jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],
   assetModel: "Virtual asset public education campaign with paid creator endorsements, KOL incentives, and no token sale",
-  userType: "US, UK, and UAE retail audience segments, creator followers, and exchange listing reviewers",
+  userType: "US, EU, UK, and UAE retail audience segments, creator followers, and exchange listing reviewers",
   custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
   dataSensitivity: "Audience-segment summaries and approval metadata only",
   aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
   blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
-  operatingStage: "Planned public marketing campaign before US, UK, and UAE counsel review",
+  operatingStage: "Planned public marketing campaign before US, EU MiCA, UK, and UAE counsel review",
   evidenceItems: []
 };
 
@@ -140,7 +140,7 @@ describe("evidence templates", () => {
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
   });
 
-  it("recommends marketing claims evidence with US, UK, and UAE regulatory control links", () => {
+  it("recommends marketing claims evidence with US, EU, UK, and UAE regulatory control links", () => {
     const recommended = recommendEvidenceTemplates(marketingClaimsProject);
     const items = createEvidenceItemsFromTemplate("marketing-claims-review");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
@@ -154,11 +154,13 @@ describe("evidence templates", () => {
         "Claims substantiation and risk disclosure register",
         "Creator endorsement and material connection log",
         "UK financial promotion approval pack",
+        "EU MiCA marketing communication review pack",
         "UAE VARA approval and risk-warning archive",
         "UAE KOL incentive and recordkeeping log"
       ])
     );
     expect(serializedSources).toContain("regulatory control: control-us-ftc-endorsement-advertising-guides");
+    expect(serializedSources).toContain("regulatory control: control-eu-mica-marketing-communications");
     expect(serializedSources).toContain("regulatory control: control-uk-fca-crypto-financial-promotions");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-marketing-regulations-2024");

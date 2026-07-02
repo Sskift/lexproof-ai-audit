@@ -279,6 +279,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Counsel"
       },
       {
+        label: "EU MiCA marketing communication review pack",
+        kind: "Checklist",
+        content:
+          "Requested: summarize EU MiCA marketing communication labels, crypto-asset marketing communication copy, white paper consistency, communication label, offeror website contact, home Member State notification, host Member State, member state audience, marketing communication notification, publication timing, source-lineage evidence, and reviewer owner without raw audience onboarding files.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-eu-mica-marketing-communications",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
         label: "UAE activity scope and access control memo",
         kind: "Memo",
         content:

@@ -146,15 +146,15 @@ export const sampleProfiles: AuditProfile[] = [
   {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
-    jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+    jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],
     assetModel:
       "Virtual asset public education and product-positioning campaign with paid creator endorsements, KOL incentives, and no token sale in demo scope",
-    userType: "US, UK, and UAE retail audience segments, community followers, and exchange listing reviewers",
+    userType: "US, EU, UK, and UAE retail audience segments, community followers, and exchange listing reviewers",
     custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
     dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
     aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
     blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
-    operatingStage: "Planned public marketing campaign before US, UK, and UAE VARA 2024 marketing counsel review",
+    operatingStage: "Planned public marketing campaign before US, EU MiCA, UK, and UAE VARA 2024 marketing counsel review",
     evidenceItems: [
       {
         label: "Claims inventory",

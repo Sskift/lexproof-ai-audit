@@ -181,13 +181,13 @@ describe("validateDemoScenarioLibrary", () => {
         title: "Marketing claims review",
         projectName: "SignalBridge Marketing Review",
         recommendedStartTab: "counsel",
-        focusTags: expect.arrayContaining(["Marketing claims", "US FTC", "UK FCA", "VARA 2024 marketing"]),
+        focusTags: expect.arrayContaining(["Marketing claims", "US FTC", "EU MiCA", "UK FCA", "VARA 2024 marketing"]),
         expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Marketing Claims Counsel Pack", "Source Pack JSON"])
       })
     );
     expect(marketingScenario?.judgePath).toEqual(
       expect.arrayContaining([
-        "Inspect US, UK, and VARA 2024 marketing source controls",
+        "Inspect US, EU MiCA, UK, and VARA 2024 marketing source controls",
         "Review promotion approval evidence gaps",
         "Review KOL, incentive, and recordkeeping evidence gaps",
         "Export Marketing Claims counsel pack"

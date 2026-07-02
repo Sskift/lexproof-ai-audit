@@ -408,7 +408,7 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
         reason:
           "US marketing review needs claim inventory, substantiation source, risk disclosure, channel, audience, and reviewer evidence before external reliance.",
         priority: "P0",
-        keywords: ["claim inventory", "claims substantiation", "advertising claim", "risk disclosure", "reviewer", "channel", "audience"]
+        keywords: ["claim inventory", "claims substantiation", "advertising claim", "risk disclosure", "campaign channel"]
       },
       {
         id: "us-endorsement-material-connection-disclosure",
@@ -428,6 +428,69 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-07-01",
     reviewerNotes:
       "Source metadata reviewed against FTC Endorsement Guides, 16 C.F.R. Part 255, for claims, endorsements, material connections, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "eu-mica-marketing-communications",
+    jurisdiction: "European Union",
+    regulator: "European Union / ESMA",
+    sourceName: "Regulation (EU) 2023/1114 on markets in crypto-assets - marketing communications",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+    citation: "Regulation (EU) 2023/1114, Articles 7-8",
+    topic: "marketing",
+    summary:
+      "Prepare crypto-asset marketing communication identification, white-paper consistency, publication timing, host Member State audience, and notification evidence for EU MiCA counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "marketing",
+      "promotion",
+      "campaign",
+      "risk warning",
+      "product-positioning",
+      "crypto-asset marketing communication",
+      "white paper consistency",
+      "host member state",
+      "member state audience"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-mica-marketing-identification-white-paper-consistency",
+        title: "EU MiCA marketing communication identification and white-paper consistency evidence",
+        reason:
+          "EU crypto-asset marketing review needs marketing-communication labels, claim inventory, white-paper consistency, website/contact references, and reviewer-owner evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "eu mica marketing communication",
+          "crypto-asset marketing communication",
+          "white paper consistency",
+          "communication label",
+          "offeror website contact"
+        ]
+      },
+      {
+        id: "eu-mica-marketing-notification-publication-timing",
+        title: "EU MiCA marketing notification and publication-timing evidence",
+        reason:
+          "Cross-border EU campaign review needs home/host Member State audience mapping, marketing notification assumptions, publication timing, and source-lineage evidence without raw user onboarding files.",
+        priority: "P1",
+        keywords: [
+          "home member state notification",
+          "host member state",
+          "marketing communication notification",
+          "publication timing",
+          "member state audience"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which EU MiCA marketing communication, white-paper consistency, and publication-timing assumptions should EU crypto-asset counsel review?",
+      "What evidence shows home or host Member State audience routing, notification assumptions, reviewer ownership, and source lineage without exporting raw audience files?"
+    ],
+    localCounselRole: "EU crypto-asset marketing counsel",
+    effectiveAsOf: "2024-12-30",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against MiCA Articles 7-8 and ESMA's MiCA single rulebook entries for crypto-asset marketing communications, white-paper consistency, notification, host Member State, and publication-timing evidence routing; route interpretation to EU local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

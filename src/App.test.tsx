@@ -800,10 +800,13 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
 
     expect(screen.getAllByText(/16 C\.F\.R\. Part 255/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Regulation \(EU\) 2023\/1114, Articles 7-8/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/FCA PS23\/6 and FG23\/3/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/VARA Virtual Assets and Related Activities Regulations 2023/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/VARA Regulations on the Marketing of Virtual Assets and Related Activities 2024/i).length).toBeGreaterThan(0);
     expect((await screen.findAllByText(/US endorsement and material-connection disclosure evidence/i)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU MiCA marketing communication identification and white-paper consistency evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU MiCA marketing notification and publication-timing evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/UK financial promotion approval pack/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/UAE VARA marketing approval and risk-warning evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/UAE VARA KOL, incentive, and marketing recordkeeping evidence/i).length).toBeGreaterThan(0);

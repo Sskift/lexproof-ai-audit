@@ -135,18 +135,18 @@ export const demoScenarios: DemoScenario[] = [
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",
     summary:
-      "US FTC, UK FCA, and VARA 2024 virtual-asset marketing review with creator endorsement, KOL incentive, risk-warning, recordkeeping, and counsel handoff evidence gaps.",
+      "US FTC, EU MiCA, UK FCA, and VARA 2024 virtual-asset marketing review with creator endorsement, cross-border communication, KOL incentive, risk-warning, recordkeeping, and counsel handoff evidence gaps.",
     estimatedMinutes: 6,
     recommendedStartTab: "counsel",
     judgePath: [
-      "Inspect US, UK, and VARA 2024 marketing source controls",
+      "Inspect US, EU MiCA, UK, and VARA 2024 marketing source controls",
       "Review promotion approval evidence gaps",
       "Review KOL, incentive, and recordkeeping evidence gaps",
       "Select Marketing Claims counsel pack",
       "Export Marketing Claims counsel pack"
     ],
     expectedArtifacts: ["Regulatory Source Graph", "Marketing Claims Counsel Pack", "Source Pack JSON"],
-    focusTags: ["Marketing claims", "US FTC", "UK FCA", "VARA 2024 marketing"],
+    focusTags: ["Marketing claims", "US FTC", "EU MiCA", "UK FCA", "VARA 2024 marketing"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   }
 ];

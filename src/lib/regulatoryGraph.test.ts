@@ -826,19 +826,19 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches US advertising disclosure controls for cross-border marketing claims without legal conclusions", () => {
+  it("matches US, EU, UK, and UAE marketing source controls for cross-border marketing claims without legal conclusions", () => {
     const marketingProject: ProjectProfile = {
       ...baseProject,
       id: "project-cross-border-marketing-us",
       projectName: "SignalBridge Marketing Review",
-      jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+      jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],
       assetModel: "Virtual asset public education and product-positioning campaign with paid creator endorsements and no token sale",
-      userType: "US retail audience segments, community followers, and exchange listing reviewers",
+      userType: "US, EU, UK, and UAE retail audience segments, community followers, and exchange listing reviewers",
       custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
       dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
       aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
       blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
-      operatingStage: "Planned public marketing campaign with influencer endorsements before US, UK, and UAE counsel review",
+      operatingStage: "Planned public marketing campaign with influencer endorsements before US, EU MiCA, UK, and UAE counsel review",
       evidenceItems: []
     };
     const audit = analyzeAuditProfile(marketingProject);
@@ -847,6 +847,7 @@ describe("createRegulatoryGraph", () => {
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
       expect.arrayContaining([
         "us-ftc-endorsement-advertising-guides",
+        "eu-mica-marketing-communications",
         "uk-fca-crypto-financial-promotions",
         "uae-vara-va-regulations-activity-scope",
         "uae-vara-marketing-regulations-2024"
@@ -866,6 +867,15 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "US advertising / consumer protection counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-marketing-communications")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union / ESMA",
+      citation: "Regulation (EU) 2023/1114, Articles 7-8",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+      topic: "marketing",
+      coverageStatus: "missing",
+      localCounselRole: "EU crypto-asset marketing counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-marketing-regulations-2024")).toMatchObject({
       jurisdiction: "United Arab Emirates",
       regulator: "Dubai Virtual Assets Regulatory Authority",
@@ -878,6 +888,8 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "US advertising claims substantiation and disclosure evidence",
         "US endorsement and material-connection disclosure evidence",
+        "EU MiCA marketing communication identification and white-paper consistency evidence",
+        "EU MiCA marketing notification and publication-timing evidence",
         "UAE VARA marketing approval and risk-warning evidence",
         "UAE VARA KOL, incentive, and marketing recordkeeping evidence"
       ])
@@ -950,14 +962,14 @@ describe("createRegulatoryGraph", () => {
       ...baseProject,
       id: "project-cross-border-marketing-template-covered",
       projectName: "SignalBridge Marketing Review",
-      jurisdictions: ["United States", "United Kingdom", "United Arab Emirates"],
+      jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],
       assetModel: "Virtual asset public education and product-positioning campaign with paid creator endorsements and no token sale",
-      userType: "US, UK, and UAE retail audience segments, community followers, and exchange listing reviewers",
+      userType: "US, EU, UK, and UAE retail audience segments, community followers, and exchange listing reviewers",
       custodyModel: "No custody; campaign team cannot approve wallet transfers or hold client virtual assets",
       dataSensitivity: "Audience-segment summaries and approval metadata only; raw onboarding files excluded from demo evidence",
       aiUsage: "AI drafts promotion-risk summaries for human review and local counsel routing",
       blockchainUse: "Simulated hash receipt for approved campaign archive metadata",
-      operatingStage: "Planned public marketing campaign with influencer endorsements before US, UK, and UAE counsel review",
+      operatingStage: "Planned public marketing campaign with influencer endorsements before US, EU MiCA, UK, and UAE counsel review",
       evidenceItems
     };
     const audit = analyzeAuditProfile(marketingProject);
@@ -978,6 +990,12 @@ describe("createRegulatoryGraph", () => {
       totalEvidenceRequestCount: 2,
       matchedEvidenceLabels: ["UK financial promotion approval pack"]
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-marketing-communications")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["EU MiCA marketing communication review pack"]
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-va-regulations-activity-scope")).toMatchObject({
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
@@ -992,6 +1010,7 @@ describe("createRegulatoryGraph", () => {
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "us-ftc-endorsement-advertising-guides" }),
+        expect.objectContaining({ clauseId: "eu-mica-marketing-communications" }),
         expect.objectContaining({ clauseId: "uk-fca-crypto-financial-promotions" }),
         expect.objectContaining({ clauseId: "uae-vara-va-regulations-activity-scope" }),
         expect.objectContaining({ clauseId: "uae-vara-marketing-regulations-2024" })

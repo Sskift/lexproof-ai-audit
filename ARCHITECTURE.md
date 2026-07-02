@@ -66,6 +66,7 @@ lexproof-ai-audit/
     lib/
       auditEngine.ts         # Pure audit engine and memo/hash helpers
       demoScenarioLibrary.ts # Demo scenario validation and lookup helpers
+      demoRunbook.ts         # Metadata-only clean-clone judge runbook artifact and hash
       aiReview.ts            # AI review payload, redaction gate, missing evidence checklist
       modelProvider.ts       # Mock and OpenAI-compatible model provider adapters
       modelAccessWorkflow.ts # Model setup, run, and human-review workflow status
@@ -151,6 +152,7 @@ lexproof-ai-audit/
 ```text
 demoScenarios, sampleProfiles, or blank project
   -> validateDemoScenarioLibrary(demoScenarios, sampleProfiles)
+  -> createDemoRunbook(demo readiness report, demoScenarios) for clean-clone judge handoff
   -> ProjectProfile in App state
   -> localStorage persistence when valid
   -> analyzeAuditProfile(project)
@@ -791,6 +793,15 @@ Own the judge-ready scenario launcher:
 - `findDemoScenarioById()` is the UI lookup helper used before loading a sample profile.
 
 Scenario paths are synthetic audit preparation routes only. They must not create parallel scoring logic or require private credentials.
+
+### `src/lib/demoRunbook.ts`
+
+Owns the downloadable clean-clone judge runbook:
+
+- `createDemoRunbook()` turns Demo Readiness checks and scenario metadata into a metadata-only runbook with commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash.
+- `exportDemoRunbookJson()` and `downloadDemoRunbookJson()` provide the JSON handoff from Judge Demo Readiness.
+
+The runbook is demo readiness metadata only. It redacts classified text, does not store credentials or raw evidence, and repeats the Not legal advice boundary.
 
 ### `src/App.tsx`
 

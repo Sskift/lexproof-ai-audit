@@ -497,10 +497,11 @@ Implemented first slice:
 
 - Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The seeded set now includes RWA launch, DAO review, public-source review, AI legal workflow review, Brazil VASP source review, Singapore DPT custody review, and marketing claims review paths. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
 - Submission Pack artifact in `src/lib/submissionPack.ts` and `SubmissionPackPanel`: generates a metadata-only judge packet with stable pack hash, manifest/source-pack hashes, export safety summary, demo readiness, required assets, hackathon mapping, known limitations, and JSON download.
+- Demo Runbook artifact in `src/lib/demoRunbook.ts` and `DemoReadinessPanel`: generates a metadata-only clean-clone runbook with scenario paths, screenshots, API preflight status, limitations, Not legal advice boundary, stable runbook hash, and JSON download for hackathon judges.
 
 Build:
 
-- One canonical demo script for a clean clone.
+- Keep the canonical demo script and Demo Runbook JSON aligned for a clean clone.
 - Screenshots for every judge-visible workflow after UI changes.
 - Additional seeded scenario library entries only when they map to real product workflows and remain synthetic.
 - Expand the generated Submission Pack only when new real workflows need new evidence, readiness, or limitation fields.

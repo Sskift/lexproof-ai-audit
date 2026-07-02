@@ -471,6 +471,37 @@ textarea {
   font-size: 0.76rem;
 }
 
+.demo-readiness-runbook {
+  display: grid;
+  gap: 8px;
+  align-items: start;
+  padding: 9px;
+  border: 1px solid #c9d9e4;
+  border-radius: 8px;
+  background: #f7fbff;
+}
+
+.demo-readiness-runbook strong,
+.demo-readiness-runbook span {
+  display: block;
+  line-height: 1.35;
+}
+
+.demo-readiness-runbook strong {
+  color: #172431;
+}
+
+.demo-readiness-runbook span {
+  color: #53616f;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.demo-readiness-runbook button {
+  justify-self: start;
+  min-height: 36px;
+}
+
 .demo-readiness-api {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, MonitorCheck, PlayCircle, ServerCog, TerminalSquare, TriangleAlert } from "lucide-react";
-import type { DemoScenarioValidationResult } from "../lib/demoScenarioLibrary";
+import { CheckCircle2, Download, MonitorCheck, PlayCircle, ServerCog, TerminalSquare, TriangleAlert } from "lucide-react";
+import type { DemoScenario, DemoScenarioValidationResult } from "../lib/demoScenarioLibrary";
 import {
   checkDemoApiPreflight,
   createDemoReadinessReport,
@@ -8,26 +8,29 @@ import {
   type DemoReadinessCheckStatus,
   type DemoReadinessStatus
 } from "../lib/demoReadiness";
+import { createDemoRunbook, downloadDemoRunbookJson, type DemoRunbook } from "../lib/demoRunbook";
 
 type DemoReadinessPanelProps = {
   scenarioValidation: DemoScenarioValidationResult;
-  scenarioCount: number;
+  scenarios: DemoScenario[];
   screenshotRefs: string[];
 };
 
-export function DemoReadinessPanel({ scenarioValidation, scenarioCount, screenshotRefs }: DemoReadinessPanelProps) {
+export function DemoReadinessPanel({ scenarioValidation, scenarios, screenshotRefs }: DemoReadinessPanelProps) {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [apiPreflight, setApiPreflight] = useState<DemoApiPreflight>({ status: "not-checked" });
   const [checking, setChecking] = useState(false);
+  const [runbook, setRunbook] = useState<DemoRunbook | null>(null);
+  const [buildingRunbook, setBuildingRunbook] = useState(false);
   const report = useMemo(
     () =>
       createDemoReadinessReport({
         scenarioValidation,
-        scenarioCount,
+        scenarioCount: scenarios.length,
         screenshotRefs,
         apiPreflight
       }),
-    [apiPreflight, scenarioCount, scenarioValidation, screenshotRefs]
+    [apiPreflight, scenarioValidation, scenarios.length, screenshotRefs]
   );
 
   const checkApi = async () => {
@@ -37,6 +40,21 @@ export function DemoReadinessPanel({ scenarioValidation, scenarioCount, screensh
       setApiPreflight(await checkDemoApiPreflight({ apiBaseUrl }));
     } finally {
       setChecking(false);
+    }
+  };
+
+  const downloadRunbook = async () => {
+    setBuildingRunbook(true);
+
+    try {
+      const nextRunbook = await createDemoRunbook({
+        readinessReport: report,
+        scenarios
+      });
+      setRunbook(nextRunbook);
+      downloadDemoRunbookJson("lexproof-demo-runbook.json", nextRunbook);
+    } finally {
+      setBuildingRunbook(false);
     }
   };
 
@@ -93,6 +111,26 @@ export function DemoReadinessPanel({ scenarioValidation, scenarioCount, screensh
         </button>
       </div>
 
+      <div className="demo-readiness-runbook" aria-label="Demo Runbook Export">
+        <div>
+          <strong>Demo Runbook JSON</strong>
+          <span>
+            {runbook
+              ? `${shortHash(runbook.runbookHash)} · ${runbook.scenarioCount} scenarios · ${runbook.apiPreflightStatus}`
+              : "Clean-clone commands, scenario paths, screenshots, API preflight, limitations, and Not legal advice boundary."}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="secondary"
+          disabled={buildingRunbook || scenarios.length === 0}
+          onClick={() => void downloadRunbook()}
+        >
+          <Download size={16} aria-hidden="true" />
+          {buildingRunbook ? "Building Demo Runbook" : "Download Demo Runbook JSON"}
+        </button>
+      </div>
+
       {apiPreflight.status === "ready" ? (
         <div className="demo-api-result ready">
           <MonitorCheck size={15} aria-hidden="true" />
@@ -144,4 +182,8 @@ function iconForCheckStatus(status: DemoReadinessCheckStatus) {
   }
 
   return TriangleAlert;
+}
+
+function shortHash(hash: string): string {
+  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
 }

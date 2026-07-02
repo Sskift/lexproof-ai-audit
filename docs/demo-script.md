@@ -24,7 +24,9 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 
 - Confirm **Scenario library**, **Clean clone commands**, **Private credentials not required**, and **Screenshot set** are ready.
 - Enter `http://127.0.0.1:8787` in **Demo API base URL**, click **Check Demo API**, and confirm **Phase 2 API preflight ready**.
+- Click **Download Demo Runbook JSON** and show the stable runbook hash, scenario count, API preflight status, screenshot references, limitations, and Not legal advice boundary.
 - Screenshot: `docs/assets/screenshots/judge-demo-readiness.png`.
+- Screenshot: `docs/assets/screenshots/demo-runbook-json.png`.
 - This check is readiness metadata only. Not legal advice.
 
 0. **Start from a seeded scenario**

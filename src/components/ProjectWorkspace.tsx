@@ -83,7 +83,7 @@ export function ProjectWorkspace({
 
         <DemoReadinessPanel
           scenarioValidation={demoScenarioValidation}
-          scenarioCount={demoScenarios.length}
+          scenarios={demoScenarios}
           screenshotRefs={demoScreenshotRefs}
         />
 

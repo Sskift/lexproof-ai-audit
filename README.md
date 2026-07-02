@@ -86,6 +86,7 @@ Key evidence:
 - Counsel Handoff Checklist in Counsel Pack, with a stable checklist hash, export safety status, evidence manifest/source pack/submission pack readiness, review status, saved version state, server export-record state, and downloadable metadata-only JSON. Not legal advice.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, export safety summary, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
+- Demo Runbook JSON from Judge Demo Readiness with clean-clone commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash for hackathon judges. Not legal advice.
 - Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Source Freshness Board hash/status, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
@@ -99,9 +100,11 @@ The Demo Scenario Library turns seeded synthetic profiles into runnable judging 
 
 ![Demo Scenario Library marketing claims path](docs/assets/screenshots/demo-scenario-library-marketing-claims.png)
 
-Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, validated synthetic scenarios, no private credentials, current screenshot set, and a `/api/health` preflight for the Phase 2 API. Not legal advice.
+Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, validated synthetic scenarios, no private credentials, current screenshot set, a `/api/health` preflight for the Phase 2 API, and a downloadable Demo Runbook JSON with a stable runbook hash. Not legal advice.
 
 ![Judge Demo Readiness](docs/assets/screenshots/judge-demo-readiness.png)
+
+![Demo Runbook JSON](docs/assets/screenshots/demo-runbook-json.png)
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 

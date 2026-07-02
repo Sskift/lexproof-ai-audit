@@ -65,6 +65,7 @@ type EvidenceLedgerProps = {
   onApplyEvidenceTemplate: (templateId: string) => void;
   onUpdateEvidence: (index: number, updates: Partial<EvidenceItem>) => void;
   onRemoveEvidence: (index: number) => void;
+  onVaultControlCoverageChange?: (coverage: EvidenceVaultControlCoverage) => void;
 };
 
 const statuses = evidenceStatuses;
@@ -99,7 +100,8 @@ export function EvidenceLedger({
   onAddEvidence,
   onApplyEvidenceTemplate,
   onUpdateEvidence,
-  onRemoveEvidence
+  onRemoveEvidence,
+  onVaultControlCoverageChange
 }: EvidenceLedgerProps) {
   const [draft, setDraft] = useState<EvidenceItem>(blankEvidence);
   const [fileImportState, setFileImportState] = useState("");
@@ -130,6 +132,9 @@ export function EvidenceLedger({
       }),
     [evidenceItems, projectId]
   );
+  useEffect(() => {
+    onVaultControlCoverageChange?.(vaultControlCoverage);
+  }, [onVaultControlCoverageChange, vaultControlCoverage]);
   useEffect(() => {
     let isActive = true;
     setRetentionRemediationQueue(null);

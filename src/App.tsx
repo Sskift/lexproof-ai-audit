@@ -95,6 +95,7 @@ import { createDemoReadinessReport, type DemoApiPreflight } from "./lib/demoRead
 import { createDemoRunbook, type DemoRunbook } from "./lib/demoRunbook";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
+import type { EvidenceVaultControlCoverage } from "./lib/evidenceVaultControlCoverage";
 import {
   createEvidenceRecertificationQueue,
   type EvidenceRecertificationQueue
@@ -337,6 +338,7 @@ export default function App() {
   const [showValidation, setShowValidation] = useState(false);
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
+  const [evidenceVaultControlCoverage, setEvidenceVaultControlCoverage] = useState<EvidenceVaultControlCoverage | null>(null);
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
@@ -912,7 +914,8 @@ export default function App() {
         humanReviewTimeline,
         evidenceRecertificationQueue ?? undefined,
         localCounselRoutingPlan ?? undefined,
-        sourceFreshnessBoard ?? undefined
+        sourceFreshnessBoard ?? undefined,
+        evidenceVaultControlCoverage ?? undefined
       );
     },
     [
@@ -921,6 +924,7 @@ export default function App() {
       currentCounselQuestions,
       currentCounselReviews,
       dataBoundaryReport,
+      evidenceVaultControlCoverage,
       evidenceRecertificationQueue,
       humanReviewTimeline,
       localCounselRoutingPlan,
@@ -939,6 +943,10 @@ export default function App() {
   useEffect(() => {
     setSelectedCounselPackTemplateId(recommendedCounselPackTemplate.id);
   }, [project.id, recommendedCounselPackTemplate.id]);
+
+  useEffect(() => {
+    setEvidenceVaultControlCoverage(null);
+  }, [project.id]);
 
   useEffect(() => {
     setSourceApprovalSyncResult(null);
@@ -2148,6 +2156,7 @@ export default function App() {
               onApplyEvidenceTemplate={applyEvidenceTemplate}
               onUpdateEvidence={updateEvidence}
               onRemoveEvidence={removeEvidence}
+              onVaultControlCoverageChange={setEvidenceVaultControlCoverage}
             />
           ) : null}
           {activeTab === "counsel" ? (

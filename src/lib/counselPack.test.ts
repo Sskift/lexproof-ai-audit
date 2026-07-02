@@ -19,6 +19,7 @@ import { createSourceFreshnessBoard } from "./sourceFreshnessBoard";
 import { createDataBoundaryReport } from "./dataBoundary";
 import { createEvidenceRecertificationQueue } from "./evidenceRecertification";
 import { createLocalCounselRoutingPlan } from "./localCounselRouting";
+import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 
 const project: ProjectProfile = {
   id: "project-counsel",
@@ -386,6 +387,66 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("control-uae-vara-marketing-approval");
     expect(markdown).toContain("Recertify source-linked evidence before counsel/export reliance.");
     expect(markdown).not.toContain("raw working notes");
+  });
+
+  it("includes Evidence Vault control coverage readiness in Markdown handoff without legal conclusions", async () => {
+    const audit = analyzeAuditProfile(project);
+    const manifest = await createEvidenceManifest(project, audit, project.evidenceItems);
+    const coverage: EvidenceVaultControlCoverage = {
+      coverageVersion: "lexproof-evidence-vault-control-coverage-v1",
+      controlCount: 2,
+      recordCount: 3,
+      manifestItemCount: 2,
+      controls: [
+        {
+          controlId: "control-eu-mica-title-ii-white-paper",
+          evidenceRecordCount: 1,
+          manifestItemCount: 1,
+          readiness: "needs-review",
+          nextAction: "Move linked vault evidence through Human Review before export reliance.",
+          statuses: ["requested"],
+          filenames: ["lineage-digest-vault-memo.metadata.json"]
+        },
+        {
+          controlId: "control-uae-vara-marketing-approval",
+          evidenceRecordCount: 2,
+          manifestItemCount: 1,
+          readiness: "needs-manifest-link",
+          nextAction: "Regenerate the Evidence Vault manifest so this control has hash lineage.",
+          statuses: ["received", "verified"],
+          filenames: ["claims-inventory.metadata.json", "approval-log.metadata.json"]
+        }
+      ],
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault control coverage is audit preparation metadata only."
+    };
+
+    const markdown = buildMarkdownCounselPack(
+      project,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      undefined,
+      undefined,
+      undefined,
+      coverage
+    );
+
+    expect(markdown).toContain("## Evidence Vault Control Coverage");
+    expect(markdown).toContain("Not legal advice. Evidence Vault control coverage is audit preparation metadata only.");
+    expect(markdown).toContain("- Controls: 2");
+    expect(markdown).toContain("control-eu-mica-title-ii-white-paper: needs-review");
+    expect(markdown).toContain("Move linked vault evidence through Human Review before export reliance.");
+    expect(markdown).toContain("control-uae-vara-marketing-approval: needs-manifest-link");
+    expect(markdown).toContain("Regenerate the Evidence Vault manifest so this control has hash lineage.");
+    expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
   });
 
   it("includes a data boundary report and does not leak blocked export materials", async () => {

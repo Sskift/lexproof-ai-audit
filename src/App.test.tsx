@@ -2400,6 +2400,13 @@ describe("App", () => {
       expect(coverage.getAllByText(/Needs review/i).length).toBeGreaterThan(0);
       expect(coverage.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(coverage.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+      expect(await screen.findByText(/## Evidence Vault Control Coverage/i)).toBeInTheDocument();
+      expect(screen.getByText(/control-eu-ai-act-ai-literacy-governance: needs-review/i)).toBeInTheDocument();
+      expect(screen.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
+      expect(screen.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }

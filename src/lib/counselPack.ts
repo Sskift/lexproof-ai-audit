@@ -5,6 +5,7 @@ import type { CounselPackTemplate } from "./counselPackTemplates";
 import { redactDataBoundaryText, summarizeDataBoundaryForExport, type DataBoundaryReport } from "./dataBoundary";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceManifest } from "./evidenceManifest";
+import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { HumanReviewTimelineEntry } from "./humanReviewWorkflow";
 import type { LocalCounselRoutingPlan } from "./localCounselRouting";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
@@ -35,7 +36,8 @@ export function buildMarkdownCounselPack(
   humanReviewTimeline: HumanReviewTimelineEntry[] = [],
   evidenceRecertificationQueue?: EvidenceRecertificationQueue,
   localCounselRoutingPlan?: LocalCounselRoutingPlan,
-  sourceFreshnessBoard?: SourceFreshnessBoard
+  sourceFreshnessBoard?: SourceFreshnessBoard,
+  evidenceVaultControlCoverage?: EvidenceVaultControlCoverage
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -59,6 +61,10 @@ export function buildMarkdownCounselPack(
       ? formatRegulatorySourceApprovalQueueSection(regulatorySourceApprovalQueue)
       : "";
   const humanReviewSection = humanReviewTimeline.length > 0 ? formatHumanReviewTimelineSection(humanReviewTimeline) : "";
+  const evidenceVaultControlCoverageSection =
+    evidenceVaultControlCoverage && evidenceVaultControlCoverage.controlCount > 0
+      ? formatEvidenceVaultControlCoverageSection(evidenceVaultControlCoverage)
+      : "";
   const recertificationSection =
     evidenceRecertificationQueue && evidenceRecertificationQueue.summary.totalActionCount > 0
       ? formatEvidenceRecertificationQueueSection(evidenceRecertificationQueue)
@@ -105,6 +111,7 @@ export function buildMarkdownCounselPack(
     ...(localCounselRoutingSection ? ["## Local Counsel Routing Plan", localCounselRoutingSection, ""] : []),
     ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
     ...(humanReviewSection ? ["## Human Review Timeline", humanReviewSection, ""] : []),
+    ...(evidenceVaultControlCoverageSection ? ["## Evidence Vault Control Coverage", evidenceVaultControlCoverageSection, ""] : []),
     ...(recertificationSection ? ["## Evidence Recertification Queue", recertificationSection, ""] : []),
     ...(modelIntakeSection ? ["## Model Intake Summary", modelIntakeSection, ""] : []),
     "## Remediation Queue",
@@ -118,6 +125,30 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatEvidenceVaultControlCoverageSection(coverage: EvidenceVaultControlCoverage): string {
+  const controls = coverage.controls
+    .map(
+      (control) =>
+        `- ${safe(control.controlId)}: ${control.readiness}; ${control.evidenceRecordCount} vault records; ${
+          control.manifestItemCount
+        } manifest items; statuses: ${safe(control.statuses.join(", ") || "not synced")}; evidence: ${safe(
+          control.filenames.join(", ") || "no filenames"
+        )}; next action: ${safe(control.nextAction)}`
+    )
+    .join("\n");
+
+  return [
+    coverage.notLegalAdviceBoundary,
+    `- Coverage version: ${coverage.coverageVersion}`,
+    `- Controls: ${coverage.controlCount}`,
+    `- Vault records: ${coverage.recordCount}`,
+    `- Manifest items: ${coverage.manifestItemCount}`,
+    "",
+    "### Control Readiness",
+    controls || "- No Evidence Vault control coverage records are available yet."
   ].join("\n");
 }
 

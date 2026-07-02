@@ -371,7 +371,7 @@ Build:
 - Export diff view between pack versions.
 - Source Review Ledger export in Markdown so reviewed source counts, next review dates, reviewer notes, refresh actions, and open Source Update Approval Queue gates survive the counsel handoff without becoming legal conclusions. The first source approval gate handoff is implemented in `src/lib/counselPack.ts` and the Counsel Pack preview: open source approval queues appear in Markdown only as audit-prep workflow metadata.
 - Sources-level Export Safety Inventory in `src/lib/exportSafetyInventory.ts` and `ExportSafetyInventoryPanel` consolidates Evidence Manifest, source pack, Counsel Pack, source-review, Source Freshness Board, Demo Runbook, local-counsel, GRC, integration dossier, and Submission Pack artifact readiness into one redacted hashed JSON handoff with Not legal advice wording.
-- Sources-level Judge Handoff Bundle in `src/lib/judgeHandoffBundle.ts` and `JudgeHandoffBundlePanel` consolidates Submission Pack, Demo Runbook, and Export Safety Inventory hashes/statuses into one downloadable metadata-only judge packet with recovery actions and a stable bundle hash.
+- Sources-level Judge Handoff Bundle in `src/lib/judgeHandoffBundle.ts` and `JudgeHandoffBundlePanel` consolidates Submission Pack, Demo Runbook, and Export Safety Inventory hashes/statuses into one downloadable metadata-only judge packet with clickable recovery actions and a stable bundle hash.
 
 Acceptance:
 
@@ -500,7 +500,7 @@ Implemented first slice:
 - Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The seeded set now includes RWA launch, DAO review, public-source review, AI legal workflow review, Brazil VASP source review, Singapore DPT custody review, and marketing claims review paths. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
 - Submission Pack artifact in `src/lib/submissionPack.ts` and `SubmissionPackPanel`: generates a metadata-only judge packet with stable pack hash, manifest/source-pack/Demo Runbook hashes, export safety summary, demo readiness, required assets, hackathon mapping, known limitations, and JSON download.
 - Demo Runbook artifact in `src/lib/demoRunbook.ts`, `DemoReadinessPanel`, and `SubmissionPackPanel`: generates a metadata-only clean-clone runbook with scenario paths, screenshots, API preflight status, limitations, Not legal advice boundary, stable runbook hash, JSON download for hackathon judges from Project Workspace or Sources, and Sources-level handoff tracking through Submission Pack and Export Safety Inventory.
-- Judge Handoff Bundle artifact in `src/lib/judgeHandoffBundle.ts` and `JudgeHandoffBundlePanel`: generates a metadata-only Sources packet with child artifact hashes/statuses for Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON, plus recovery actions, stable bundle hash, JSON download, and Not legal advice boundary.
+- Judge Handoff Bundle artifact in `src/lib/judgeHandoffBundle.ts` and `JudgeHandoffBundlePanel`: generates a metadata-only Sources packet with child artifact hashes/statuses for Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON, plus clickable recovery actions, stable bundle hash, JSON download, and Not legal advice boundary.
 
 Build:
 

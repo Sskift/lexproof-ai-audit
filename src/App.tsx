@@ -2136,6 +2136,7 @@ export default function App() {
               demoRunbook={demoRunbook}
               exportSafetyInventory={exportSafetyInventory}
               judgeHandoffBundle={judgeHandoffBundle}
+              onNavigate={setActiveTab}
               submissionPack={submissionPack}
             />
           ) : null}
@@ -2208,12 +2209,14 @@ function SourcesPanel({
   demoRunbook,
   exportSafetyInventory,
   judgeHandoffBundle,
+  onNavigate,
   submissionPack
 }: {
   audit: ReturnType<typeof analyzeAuditProfile>;
   demoRunbook: DemoRunbook | null;
   exportSafetyInventory: ExportSafetyInventory | null;
   judgeHandoffBundle: JudgeHandoffBundle | null;
+  onNavigate: (target: WorkspaceActionTarget) => void;
   submissionPack: SubmissionPack | null;
 }) {
   return (
@@ -2232,7 +2235,7 @@ function SourcesPanel({
         <Github size={20} aria-hidden="true" />
         <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
       </div>
-      <JudgeHandoffBundlePanel bundle={judgeHandoffBundle} />
+      <JudgeHandoffBundlePanel bundle={judgeHandoffBundle} onNavigate={onNavigate} />
       <ExportSafetyInventoryPanel inventory={exportSafetyInventory} />
       <SubmissionPackPanel pack={submissionPack} demoRunbook={demoRunbook} />
     </section>

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { DemoRunbook } from "./demoRunbook";
 import type { ExportSafetyInventory } from "./exportSafetyInventory";
-import { createJudgeHandoffBundle, exportJudgeHandoffBundleJson } from "./judgeHandoffBundle";
+import {
+  createJudgeHandoffBundle,
+  createJudgeHandoffReadinessGate,
+  exportJudgeHandoffBundleJson
+} from "./judgeHandoffBundle";
 import type { SubmissionPack } from "./submissionPack";
 
 describe("createJudgeHandoffBundle", () => {
@@ -82,6 +86,76 @@ describe("createJudgeHandoffBundle", () => {
     });
 
     expect(changed.bundleHash).not.toBe(base.bundleHash);
+  });
+
+  it("creates actionable readiness gate entries for blocked judge handoff artifacts", async () => {
+    const bundle = await createJudgeHandoffBundle({
+      projectName: "YieldPassport",
+      submissionPack: submissionPack(),
+      demoRunbook: demoRunbook(),
+      exportSafetyInventory: exportSafetyInventory(),
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+
+    const gate = createJudgeHandoffReadinessGate(bundle);
+
+    expect(gate).toEqual(
+      expect.objectContaining({
+        status: "needs-action",
+        readyForJudgeHandoff: false,
+        notLegalAdviceBoundary: "Not legal advice. Judge handoff readiness is audit preparation workflow metadata only."
+      })
+    );
+    expect(gate.summary).toContain("2 judge handoff artifact");
+    expect(gate.primaryAction).toEqual(
+      expect.objectContaining({
+        id: "submission-pack",
+        targetSurface: "counsel-pack",
+        buttonLabel: "Open Counsel Pack"
+      })
+    );
+    expect(gate.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "demo-runbook",
+          targetSurface: "judge-demo-readiness",
+          buttonLabel: "Open Judge Demo Readiness"
+        })
+      ])
+    );
+    expect(JSON.stringify(gate)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+  });
+
+  it("marks the readiness gate ready when all judge handoff artifacts are export-safe", async () => {
+    const basePack = submissionPack();
+    const bundle = await createJudgeHandoffBundle({
+      projectName: "YieldPassport",
+      submissionPack: submissionPack({
+        counselPackVersionCount: 1,
+        serverExportRecordCount: 1,
+        demoReadinessStatus: "ready",
+        exportSafetySummary: {
+          ...basePack.exportSafetySummary,
+          status: "ready",
+          exportHandoffAllowed: true,
+          counselPackVersionReady: true,
+          serverExportRecordReady: true,
+          demoRunbookReady: true,
+          nextActions: []
+        }
+      }),
+      demoRunbook: demoRunbook({ status: "ready", apiPreflightStatus: "ready", nextActions: [] }),
+      exportSafetyInventory: exportSafetyInventory(),
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+
+    const gate = createJudgeHandoffReadinessGate(bundle);
+
+    expect(gate.status).toBe("ready");
+    expect(gate.readyForJudgeHandoff).toBe(true);
+    expect(gate.actions).toEqual([]);
+    expect(gate.primaryAction).toBeNull();
+    expect(gate.summary).toContain("ready for metadata-only judge handoff");
   });
 });
 

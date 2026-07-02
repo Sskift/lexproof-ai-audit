@@ -42,7 +42,7 @@ The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with
 
 ### Submission Pack Artifact
 
-The Sources tab generates a metadata-only Judge Handoff Bundle that consolidates Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON into one evaluator packet with child artifact hashes, status, recovery actions, a stable bundle hash, and the Not legal advice boundary. The Submission Pack carries the pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, demo readiness status, required DoraHacks assets, feature-to-theme mapping, known limitations, and the Not legal advice boundary. These artifacts do not store raw KYC, credentials, raw evidence bytes, legal conclusions, or real chain-write claims.
+The Sources tab generates a metadata-only Judge Handoff Bundle that consolidates Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON into one evaluator packet with child artifact hashes, status, clickable recovery actions, a stable bundle hash, and the Not legal advice boundary. The Submission Pack carries the pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, demo readiness status, required DoraHacks assets, feature-to-theme mapping, known limitations, and the Not legal advice boundary. These artifacts do not store raw KYC, credentials, raw evidence bytes, legal conclusions, or real chain-write claims.
 
 ![Judge Handoff Bundle](assets/screenshots/judge-handoff-bundle.png)
 

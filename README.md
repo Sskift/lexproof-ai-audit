@@ -359,7 +359,7 @@ Sources also includes an Export Safety Inventory that consolidates the handoff s
 
 ![Export Safety Inventory Source Freshness Board](docs/assets/screenshots/export-safety-source-freshness-board.jpg)
 
-The Judge Handoff Bundle gives evaluators one Sources-level JSON packet that lists the Submission Pack, Demo Runbook, and Export Safety Inventory artifact hashes/statuses, recovery queue, stable bundle hash, and Not legal advice boundary.
+The Judge Handoff Bundle gives evaluators one Sources-level JSON packet that lists the Submission Pack, Demo Runbook, and Export Safety Inventory artifact hashes/statuses, clickable recovery actions to Counsel Pack, Judge Demo Readiness, or Export Safety Inventory, a stable bundle hash, and the Not legal advice boundary.
 
 ![Judge Handoff Bundle](docs/assets/screenshots/judge-handoff-bundle.png)
 

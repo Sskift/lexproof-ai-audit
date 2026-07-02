@@ -1,19 +1,26 @@
-import { CheckCircle2, Download, FileJson, TriangleAlert } from "lucide-react";
+import { ArrowRight, CheckCircle2, Download, FileJson, TriangleAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
+  createJudgeHandoffReadinessGate,
   downloadJudgeHandoffBundleJson,
   type JudgeHandoffBundle,
-  type JudgeHandoffBundleArtifactStatus
+  type JudgeHandoffBundleArtifactStatus,
+  type JudgeHandoffRecoveryAction,
+  type JudgeHandoffRecoverySurface
 } from "../lib/judgeHandoffBundle";
+import type { WorkspaceActionTarget } from "../lib/workspaceActionQueue";
 
 type JudgeHandoffBundlePanelProps = {
   bundle: JudgeHandoffBundle | null;
+  onNavigate: (target: WorkspaceActionTarget) => void;
 };
 
-export function JudgeHandoffBundlePanel({ bundle }: JudgeHandoffBundlePanelProps) {
+export function JudgeHandoffBundlePanel({ bundle, onNavigate }: JudgeHandoffBundlePanelProps) {
+  const readinessGate = createJudgeHandoffReadinessGate(bundle);
+
   return (
     <section
-      className={`judge-handoff-bundle ${bundle?.exportHandoffAllowed ? "ready" : "needs-action"}`}
+      className={`judge-handoff-bundle ${readinessGate.status}`}
       role="region"
       aria-label="Judge Handoff Bundle"
     >
@@ -30,6 +37,21 @@ export function JudgeHandoffBundlePanel({ bundle }: JudgeHandoffBundlePanelProps
 
       {bundle ? (
         <>
+          <div className={`judge-handoff-readiness ${readinessGate.status}`}>
+            <div>
+              <strong>{readinessGate.readyForJudgeHandoff ? "Judge handoff ready" : "Judge handoff needs recovery"}</strong>
+              <span>{readinessGate.summary}</span>
+              <small>{readinessGate.notLegalAdviceBoundary}</small>
+            </div>
+            {readinessGate.actions.length > 0 ? (
+              <div className="judge-handoff-recovery-actions" aria-label="Judge handoff recovery actions">
+                {readinessGate.actions.map((action) => (
+                  <JudgeHandoffRecoveryButton key={action.id} action={action} onNavigate={onNavigate} />
+                ))}
+              </div>
+            ) : null}
+          </div>
+
           <div className="judge-handoff-summary">
             <JudgeHandoffFact label="Bundle hash" value={bundle.bundleHash} />
             <JudgeHandoffFact label="Export handoff" value={bundle.exportHandoffAllowed ? "allowed" : "blocked"} />
@@ -91,6 +113,25 @@ export function JudgeHandoffBundlePanel({ bundle }: JudgeHandoffBundlePanelProps
   );
 }
 
+function JudgeHandoffRecoveryButton({
+  action,
+  onNavigate
+}: {
+  action: JudgeHandoffRecoveryAction;
+  onNavigate: (target: WorkspaceActionTarget) => void;
+}) {
+  return (
+    <div className={`judge-handoff-recovery-action ${action.status}`}>
+      <button type="button" className="secondary" onClick={() => onNavigate(recoverySurfaceToTab(action.targetSurface))}>
+        <ArrowRight size={16} aria-hidden="true" />
+        {action.buttonLabel}
+      </button>
+      <span>{action.reason}</span>
+      <small>{action.notLegalAdviceBoundary}</small>
+    </div>
+  );
+}
+
 function JudgeHandoffFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="judge-handoff-fact">
@@ -98,6 +139,18 @@ function JudgeHandoffFact({ label, value }: { label: string; value: string }) {
       <code>{value}</code>
     </div>
   );
+}
+
+function recoverySurfaceToTab(surface: JudgeHandoffRecoverySurface): WorkspaceActionTarget {
+  if (surface === "counsel-pack") {
+    return "counsel";
+  }
+
+  if (surface === "judge-demo-readiness") {
+    return "wizard";
+  }
+
+  return "sources";
 }
 
 function statusLabel(status: JudgeHandoffBundleArtifactStatus): string {

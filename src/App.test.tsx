@@ -3124,6 +3124,29 @@ describe("App", () => {
     }
   });
 
+  it("routes Judge Handoff Bundle recovery actions to the matching workbench surface", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+    let bundlePanel = await screen.findByRole("region", { name: /Judge Handoff Bundle/i });
+    await waitFor(() => {
+      expect(
+        within(bundlePanel).getByText(/Not legal advice. Judge handoff readiness is audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(await within(bundlePanel).findByRole("button", { name: /Open Counsel Pack/i }));
+    expect(await screen.findByRole("heading", { name: /^Counsel Pack$/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+    bundlePanel = await screen.findByRole("region", { name: /Judge Handoff Bundle/i });
+
+    fireEvent.click(await within(bundlePanel).findByRole("button", { name: /Open Judge Demo Readiness/i }));
+    expect(await screen.findByRole("heading", { name: /Audit Wizard/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /Judge Demo Readiness/i })).toBeInTheDocument();
+  });
+
   it("downloads an Export Safety Inventory that blocks unsafe handoff without leaking secrets", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

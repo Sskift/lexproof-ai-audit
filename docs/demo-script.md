@@ -157,6 +157,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 8. **Download submission pack**
    - Open **Sources**.
    - Show **Judge Handoff Bundle** with one bundle hash plus Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON artifact hashes/statuses.
+   - If the bundle is not ready, click **Open Counsel Pack** or **Open Judge Demo Readiness** from the recovery actions to show the handoff blocker routes to a real workspace surface. Not legal advice.
    - Click **Download Judge Handoff Bundle JSON** to show a single metadata-only packet for evaluator handoff. Not legal advice.
    - Show **Export Safety Inventory** with inventory hash, boundary status, export handoff allowed/blocked state, artifact statuses, Demo Runbook JSON hash/status, Source Freshness Board hash/status when available, and the Not legal advice boundary.
    - Click **Download Export Inventory JSON** to show the metadata-only redacted handoff inventory.

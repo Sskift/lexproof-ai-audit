@@ -31,6 +31,32 @@ export type JudgeHandoffBundle = {
   notLegalAdviceBoundary: "Not legal advice. Judge handoff bundles are audit preparation metadata only.";
 };
 
+export type JudgeHandoffReadinessStatus = "ready" | "needs-action" | "blocked";
+
+export type JudgeHandoffRecoverySurface = "counsel-pack" | "judge-demo-readiness" | "sources-export-safety";
+
+export type JudgeHandoffRecoveryAction = {
+  actionVersion: "lexproof-judge-handoff-recovery-v1";
+  id: JudgeHandoffBundleArtifact["id"];
+  label: string;
+  status: JudgeHandoffBundleArtifactStatus;
+  targetSurface: JudgeHandoffRecoverySurface;
+  buttonLabel: string;
+  reason: string;
+  recoveryAction: string;
+  notLegalAdviceBoundary: "Not legal advice. Judge handoff recovery actions are audit preparation workflow metadata only.";
+};
+
+export type JudgeHandoffReadinessGate = {
+  gateVersion: "lexproof-judge-handoff-readiness-v1";
+  status: JudgeHandoffReadinessStatus;
+  readyForJudgeHandoff: boolean;
+  summary: string;
+  primaryAction: JudgeHandoffRecoveryAction | null;
+  actions: JudgeHandoffRecoveryAction[];
+  notLegalAdviceBoundary: "Not legal advice. Judge handoff readiness is audit preparation workflow metadata only.";
+};
+
 export type CreateJudgeHandoffBundleInput = {
   projectName: string;
   submissionPack: SubmissionPack | null;
@@ -40,6 +66,9 @@ export type CreateJudgeHandoffBundleInput = {
 };
 
 const NOT_LEGAL_ADVICE = "Not legal advice. Judge handoff bundles are audit preparation metadata only." as const;
+const READINESS_BOUNDARY = "Not legal advice. Judge handoff readiness is audit preparation workflow metadata only." as const;
+const RECOVERY_BOUNDARY =
+  "Not legal advice. Judge handoff recovery actions are audit preparation workflow metadata only." as const;
 
 export async function createJudgeHandoffBundle({
   projectName,
@@ -101,6 +130,36 @@ export function downloadJudgeHandoffBundleJson(filename: string, bundle: JudgeHa
   URL.revokeObjectURL(url);
 }
 
+export function createJudgeHandoffReadinessGate(bundle: JudgeHandoffBundle | null): JudgeHandoffReadinessGate {
+  if (!bundle) {
+    return {
+      gateVersion: "lexproof-judge-handoff-readiness-v1",
+      status: "needs-action",
+      readyForJudgeHandoff: false,
+      summary: "Judge Handoff Bundle is still calculating from Sources artifacts.",
+      primaryAction: null,
+      actions: [],
+      notLegalAdviceBoundary: READINESS_BOUNDARY
+    };
+  }
+
+  const actions = bundle.artifacts
+    .filter((artifact) => artifact.status !== "ready")
+    .map(createRecoveryAction)
+    .sort(compareRecoveryActions);
+  const status = bundle.exportHandoffAllowed ? "ready" : actions.some((action) => action.status === "blocked") ? "blocked" : "needs-action";
+
+  return {
+    gateVersion: "lexproof-judge-handoff-readiness-v1",
+    status,
+    readyForJudgeHandoff: bundle.exportHandoffAllowed,
+    summary: createReadinessSummary({ bundle, actionCount: actions.length, status }),
+    primaryAction: actions[0] ?? null,
+    actions,
+    notLegalAdviceBoundary: READINESS_BOUNDARY
+  };
+}
+
 function createSubmissionPackArtifact(pack: SubmissionPack | null): JudgeHandoffBundleArtifact {
   const artifactHash = sanitizeHash(pack?.packHash ?? "");
   return {
@@ -151,6 +210,80 @@ function createExportSafetyInventoryArtifact(inventory: ExportSafetyInventory | 
     notLegalAdviceBoundary:
       inventory?.notLegalAdviceBoundary ?? "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only."
   };
+}
+
+function createRecoveryAction(artifact: JudgeHandoffBundleArtifact): JudgeHandoffRecoveryAction {
+  const target = recoveryTargetForArtifact(artifact);
+
+  return {
+    actionVersion: "lexproof-judge-handoff-recovery-v1",
+    id: artifact.id,
+    label: artifact.label,
+    status: artifact.status,
+    targetSurface: target.targetSurface,
+    buttonLabel: target.buttonLabel,
+    reason: target.reason,
+    recoveryAction: artifact.recoveryAction,
+    notLegalAdviceBoundary: RECOVERY_BOUNDARY
+  };
+}
+
+function recoveryTargetForArtifact(artifact: JudgeHandoffBundleArtifact): Pick<
+  JudgeHandoffRecoveryAction,
+  "targetSurface" | "buttonLabel" | "reason"
+> {
+  if (artifact.id === "submission-pack") {
+    return {
+      targetSurface: "counsel-pack",
+      buttonLabel: "Open Counsel Pack",
+      reason: "Resolve saved version, server export, and export-safety blockers before judge handoff."
+    };
+  }
+
+  if (artifact.id === "demo-runbook") {
+    return {
+      targetSurface: "judge-demo-readiness",
+      buttonLabel: "Open Judge Demo Readiness",
+      reason: "Complete demo API preflight and runbook readiness before judge handoff."
+    };
+  }
+
+  return {
+    targetSurface: "sources-export-safety",
+    buttonLabel: "Review Export Safety Inventory",
+    reason: "Inspect export blockers and data-boundary findings before external sharing."
+  };
+}
+
+function createReadinessSummary({
+  bundle,
+  actionCount,
+  status
+}: {
+  bundle: JudgeHandoffBundle;
+  actionCount: number;
+  status: JudgeHandoffReadinessStatus;
+}): string {
+  if (bundle.exportHandoffAllowed) {
+    return "Judge Handoff Bundle is ready for metadata-only judge handoff.";
+  }
+
+  const plural = actionCount === 1 ? "artifact needs" : "artifacts need";
+  const severity = status === "blocked" ? "blocked" : "needs action";
+
+  return `${actionCount} judge handoff ${plural} recovery before export handoff is allowed (${severity}).`;
+}
+
+function compareRecoveryActions(left: JudgeHandoffRecoveryAction, right: JudgeHandoffRecoveryAction): number {
+  const priority = {
+    blocked: 0,
+    missing: 1,
+    "needs-action": 2,
+    "needs-review": 3,
+    ready: 4
+  } satisfies Record<JudgeHandoffBundleArtifactStatus, number>;
+
+  return priority[left.status] - priority[right.status];
 }
 
 function createNextActions({

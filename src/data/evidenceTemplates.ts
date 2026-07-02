@@ -33,9 +33,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Custody and signer control runbook",
         kind: "Runbook",
         content:
-          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, and responsible owner.",
+          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, and proof of reserves evidence.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-br-bcb-virtual-asset-service-framework",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
         status: "requested",
         owner: "Compliance"
       },
@@ -73,9 +73,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:
-          "Requested: summarize OFAC sanctions screening, AML/CFT handoff, transaction review handoff, customer protection, data minimization, wallet screening, geolocation controls, blocked property escalation, reporting, recordkeeping, and reviewer owner without raw KYC or wallet secrets.",
+          "Requested: summarize OFAC sanctions screening, AML/CFT handoff, transaction review handoff, customer protection, data minimization, wallet screening, geolocation controls, blocked property escalation, reporting, recordkeeping, VARA books and records, audit reporting, risk management owner, and reviewer owner without raw KYC or wallet secrets.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-ofac-virtual-currency-sanctions-compliance; regulatory control: control-br-bcb-virtual-asset-service-framework",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-ofac-virtual-currency-sanctions-compliance; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
         status: "requested",
         owner: "Compliance"
       },

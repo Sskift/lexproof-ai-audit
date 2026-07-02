@@ -903,6 +903,48 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks UAE VARA compliance and risk controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `uae-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const uaeProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-uae-rwa-covered",
+      jurisdictions: ["United Arab Emirates"],
+      assetModel: "Dubai tokenized private credit note with yield and virtual asset issuance assumptions",
+      userType: "UAE retail and qualified investor review audience",
+      custodyModel: "UAE platform wallet operations with client virtual asset treatment and proof of reserves review",
+      dataSensitivity: "KYC metadata and wallet transaction history excluded from default exports",
+      aiUsage: "AI drafts UAE VARA evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor for UAE counsel packet",
+      operatingStage: "Planned public launch before UAE local counsel reliance",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(uaeProject);
+    const graph = createRegulatoryGraph(uaeProject, audit, uaeProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-compliance-risk-management")).toMatchObject({
+      jurisdiction: "United Arab Emirates",
+      regulator: "Dubai Virtual Assets Regulatory Authority",
+      citation: "VARA Compliance and Risk Management Rulebook",
+      sourceUrl: "https://rulebooks.vara.ae/rulebook/compliance-and-risk-management-rulebook",
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "UAE virtual-assets / financial regulatory counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-compliance-risk-management")?.matchedEvidenceLabels).toEqual([
+      "Custody and signer control runbook",
+      "Wallet sanctions screening and escalation controls"
+    ]);
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "uae-vara-compliance-risk-management" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches US and UK DAO governance source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(daoGovernanceProject);
     const graph = createRegulatoryGraph(daoGovernanceProject, audit, daoGovernanceProject.evidenceItems);

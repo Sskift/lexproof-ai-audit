@@ -100,6 +100,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "UK FCA cryptoasset AML registration and Travel Rule register",
+        kind: "Register",
+        content:
+          "Requested: summarize UK cryptoasset business, UK FCA MLR registration, UK cryptoasset exchange provider, UK custodian wallet provider, UK business plan, UK ownership control structure, UK MLRO, UK business wide risk assessment, UK customer risk assessment, UK AML framework, UK cryptoasset Travel Rule, UK originator beneficiary information, UK suspicious activity reporting, UK sanctions screening, UK blockchain analytics, UK transaction monitoring, UK CDD EDD, UK Travel Rule data flow, UK third-party tool configuration, UK record retrieval, reviewer owner, and no raw KYC, wallet secrets, credentials, customer records, or private cryptographic material.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-uk-fca-cryptoasset-aml-registration-travel-rule",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Japan crypto-asset custody and leakage response register",
         kind: "Register",
         content:

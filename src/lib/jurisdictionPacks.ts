@@ -116,7 +116,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
   {
     jurisdiction: "United Kingdom",
     aliases: ["united kingdom", "uk", "great britain"],
-    summary: "Prepare financial-promotion, retail access, custody resilience, and launch approval controls.",
+    summary:
+      "Prepare financial-promotion, retail access, custody resilience, MLR registration, AML/CTF/CPF, Travel Rule, and launch approval controls.",
     recommendedRole: "UK financial promotion / crypto counsel",
     controls: [
       {
@@ -134,6 +135,44 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody"],
         evidenceKeywords: ["custody boundaries", "signer", "operational resilience", "escalation", "wallet control"]
+      },
+      {
+        id: "uk-fca-mlr-registration-activity-scope-control",
+        title: "FCA MLR registration and cryptoasset activity-scope control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "uk cryptoasset business",
+          "uk fca mlr registration",
+          "uk cryptoasset exchange provider",
+          "uk custodian wallet provider",
+          "uk business plan",
+          "uk ownership control structure",
+          "uk mlro",
+          "uk business wide risk assessment",
+          "uk customer risk assessment",
+          "uk aml framework"
+        ]
+      },
+      {
+        id: "uk-cryptoasset-aml-travel-rule-control",
+        title: "UK cryptoasset AML, SAR, sanctions, and Travel Rule control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "uk cryptoasset travel rule",
+          "uk originator beneficiary information",
+          "uk suspicious activity reporting",
+          "uk sanctions screening",
+          "uk blockchain analytics",
+          "uk transaction monitoring",
+          "uk cdd edd",
+          "uk travel rule data flow",
+          "uk third-party tool configuration",
+          "uk record retrieval"
+        ]
       }
     ]
   },

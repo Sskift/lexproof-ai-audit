@@ -305,6 +305,39 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Thames Cryptoasset AML Review",
+    entityType: "Cryptoasset exchange and custody operations team",
+    jurisdictions: ["United Kingdom"],
+    assetModel: "Cryptoasset exchange, transfer, and hosted custody service with UK retail access assumptions",
+    userType: "UK retail users, compliance reviewers, and local counsel",
+    custodyModel:
+      "Platform safeguards customer cryptoassets through hosted wallet controls, transfer approvals, custody boundary, and incident escalation placeholders",
+    dataSensitivity:
+      "CDD status summaries, wallet-risk metadata, transaction-monitoring summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts audit-prep evidence summaries for human review and UK financial-crime counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only FCA/MLR handoff",
+    operatingStage: "Planned UK cryptoasset AML and Travel Rule review before local counsel signoff",
+    evidenceItems: [
+      {
+        label: "UK regulator source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date; control evidence remains requested."
+      },
+      {
+        label: "UK operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service scope, custody boundary, reviewer owner, and counsel handoff timing; regulatory-control evidence remains requested."
+      },
+      {
+        label: "UK evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic requested-control placeholders and evidence owners without identity files, wallet secrets, or customer records."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

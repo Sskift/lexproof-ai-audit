@@ -94,6 +94,21 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining(["Crypto-asset disclosure provenance control", "Data minimization and model-call control"])
     );
 
+    const ukPack = packs.find((pack) => pack.jurisdiction === "United Kingdom");
+    expect(ukPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "UK financial promotion / crypto counsel"
+      }
+    });
+    expect(ukPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "Financial promotion and approval control",
+        "Custody operational resilience control",
+        "FCA MLR registration and cryptoasset activity-scope control",
+        "UK cryptoasset AML, SAR, sanctions, and Travel Rule control"
+      ])
+    );
+
     const singaporePack = packs.find((pack) => pack.jurisdiction === "Singapore");
     expect(singaporePack).toMatchObject({
       localCounselRoute: {

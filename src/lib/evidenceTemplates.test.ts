@@ -100,6 +100,7 @@ describe("evidence templates", () => {
         "EU TFR Travel Rule transfer information register",
         "Investor eligibility review",
         "Singapore DPT CDD and model handoff register",
+        "UK FCA cryptoasset AML registration and Travel Rule register",
         "Japan crypto-asset custody and leakage response register",
         "Canada CTP PRU custody and investor-protection register",
         "Australia digital asset financial services and VASP AML register",
@@ -117,6 +118,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-eu-tfr-crypto-asset-transfer-information");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-psn02-dpt-aml-cft");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
+    expect(serializedSources).toContain("regulatory control: control-uk-fca-cryptoasset-aml-registration-travel-rule");
     expect(serializedSources).toContain("regulatory control: control-jp-fsa-crypto-asset-custody-user-protection");
     expect(serializedSources).toContain("regulatory control: control-ca-csa-ctp-pru-custody-investor-protection");
     expect(serializedSources).toContain("regulatory control: control-au-asic-austrac-digital-asset-financial-services");

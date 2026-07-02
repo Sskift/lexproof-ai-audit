@@ -222,6 +222,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "uk-cryptoasset-aml-source-path",
+    projectName: "Thames Cryptoasset AML Review",
+    title: "UK cryptoasset AML review",
+    summary:
+      "UK FCA/MLRs cryptoasset business review with activity scope, MLR registration, AML/CTF/CPF framework, MLRO, BWRA/CRA, SAR, sanctions, transaction monitoring, Travel Rule, and record-retrieval evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect UK FCA/MLR source graph",
+      "Review cryptoasset activity-scope and registration evidence gaps",
+      "Check AML/CTF/CPF, SAR, sanctions, transaction monitoring, and Travel Rule evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["United Kingdom", "FCA", "MLRs", "Travel Rule"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

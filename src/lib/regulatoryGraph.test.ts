@@ -64,6 +64,7 @@ describe("createRegulatoryGraph", () => {
         "eu-dora-ict-operational-resilience",
         "eu-tfr-crypto-asset-transfer-information",
         "uk-fca-crypto-financial-promotions",
+        "uk-fca-cryptoasset-aml-registration-travel-rule",
         "sg-mas-psn02-dpt-aml-cft",
         "ch-finma-ico-token-classification",
         "uae-vara-va-regulations-activity-scope",
@@ -137,6 +138,87 @@ describe("createRegulatoryGraph", () => {
         })
       ])
     );
+  });
+
+  it("matches UK FCA cryptoasset AML registration and Travel Rule source controls without legal conclusions", () => {
+    const ukProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-uk-cryptoasset-aml",
+      projectName: "Thames Cryptoasset AML Review",
+      jurisdictions: ["United Kingdom"],
+      entityType: "Cryptoasset exchange and custody operations team",
+      assetModel: "Cryptoasset exchange, transfer, and hosted custody service with UK retail access assumptions",
+      userType: "UK retail users, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform safeguards customer cryptoassets through hosted wallet controls, transfer approvals, custody boundary, and incident escalation placeholders",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction-monitoring summaries",
+      aiUsage: "AI drafts UK cryptoasset AML evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned UK cryptoasset AML and Travel Rule review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(ukProject);
+    const graph = createRegulatoryGraph(ukProject, audit, ukProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["uk-fca-cryptoasset-aml-registration-travel-rule"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-fca-cryptoasset-aml-registration-travel-rule")).toMatchObject({
+      jurisdiction: "United Kingdom",
+      regulator: "Financial Conduct Authority",
+      sourceUrl: "https://www.fca.org.uk/firms/financial-crime/money-laundering-terrorist-financing/cryptoassets-aml-ctf-regime",
+      citation:
+        "FCA Cryptoassets: AML/CTF regime; Cryptoassets: What we expect to see in your application for registration; FCA Travel Rule expectations, 17 August 2023",
+      topic: "aml-cft",
+      coverageStatus: "missing",
+      localCounselRole: "UK cryptoasset AML / financial crime counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "UK FCA cryptoasset MLR registration and activity-scope evidence",
+        "UK cryptoasset AML controls, SAR, sanctions, and Travel Rule evidence"
+      ])
+    );
+    const ukSummary = graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "United Kingdom");
+    expect(ukSummary).toMatchObject({
+      readiness: "evidence-gaps"
+    });
+    expect(ukSummary?.matchedClauseCount).toBeGreaterThanOrEqual(1);
+    expect(ukSummary?.missingEvidenceCount).toBeGreaterThanOrEqual(2);
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks UK FCA cryptoasset AML and Travel Rule controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `uk-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const ukProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-uk-cryptoasset-aml-covered",
+      jurisdictions: ["UK"],
+      assetModel: "Cryptoasset exchange, transfer, and hosted custody service with UK retail access assumptions",
+      userType: "UK retail users, compliance reviewers, and local counsel",
+      custodyModel: "Platform safeguards customer cryptoassets through hosted wallet controls and transfer approvals",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction-monitoring summaries",
+      aiUsage: "AI drafts UK cryptoasset AML evidence summaries for human review",
+      operatingStage: "Planned UK cryptoasset AML and Travel Rule review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(ukProject);
+    const graph = createRegulatoryGraph(ukProject, audit, ukProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-fca-cryptoasset-aml-registration-travel-rule")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["UK FCA cryptoasset AML registration and Travel Rule register"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "uk-fca-cryptoasset-aml-registration-travel-rule" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("creates a prioritized evidence gap queue for unmatched source controls", () => {

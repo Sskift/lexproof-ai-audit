@@ -834,6 +834,86 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "uk-fca-cryptoasset-aml-registration-travel-rule",
+    jurisdiction: "United Kingdom",
+    regulator: "Financial Conduct Authority",
+    sourceName: "FCA cryptoassets AML/CTF regime, MLR registration expectations, and Travel Rule expectations",
+    sourceUrl: "https://www.fca.org.uk/firms/financial-crime/money-laundering-terrorist-financing/cryptoassets-aml-ctf-regime",
+    citation:
+      "FCA Cryptoassets: AML/CTF regime; Cryptoassets: What we expect to see in your application for registration; FCA Travel Rule expectations, 17 August 2023",
+    topic: "aml-cft",
+    summary:
+      "Prepare UK cryptoasset exchange provider or custodian wallet provider activity-scope, FCA MLR registration, business plan, AML/CTF/CPF framework, MLRO, BWRA/CRA, CDD/EDD, sanctions, transaction monitoring, SAR, Travel Rule originator/beneficiary data, outsourcing, record-retention, and no-raw-KYC evidence for UK financial-crime counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "united kingdom",
+      "uk",
+      "fca",
+      "cryptoasset",
+      "crypto asset",
+      "mlr",
+      "money laundering regulations",
+      "cryptoasset exchange provider",
+      "custodian wallet provider",
+      "mlro",
+      "business-wide risk assessment",
+      "travel rule",
+      "originator",
+      "beneficiary",
+      "suspicious activity report"
+    ],
+    evidenceRequests: [
+      {
+        id: "uk-fca-cryptoasset-mlr-registration-activity-scope",
+        title: "UK FCA cryptoasset MLR registration and activity-scope evidence",
+        reason:
+          "UK cryptoasset review needs exchange-provider, custodian-wallet-provider, UK business, MLR registration, business-plan, management-structure, ownership/control, MLRO, AML framework, BWRA, CRA, outsourcing, and customer-journey evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "uk cryptoasset business",
+          "uk fca mlr registration",
+          "uk cryptoasset exchange provider",
+          "uk custodian wallet provider",
+          "uk business plan",
+          "uk ownership control structure",
+          "uk mlro",
+          "uk business wide risk assessment",
+          "uk customer risk assessment",
+          "uk aml framework"
+        ]
+      },
+      {
+        id: "uk-fca-cryptoasset-aml-sar-travel-rule",
+        title: "UK cryptoasset AML controls, SAR, sanctions, and Travel Rule evidence",
+        reason:
+          "Counsel and compliance review need UK CDD/EDD, PEP/sanctions screening, blockchain analytics and on-chain/off-chain transaction monitoring, SAR escalation, staff training, third-party tool configuration, Travel Rule originator/beneficiary data flow, missing-information handling, record retrieval, and raw-KYC exclusion evidence.",
+        priority: "P1",
+        keywords: [
+          "uk cryptoasset travel rule",
+          "uk originator beneficiary information",
+          "uk suspicious activity reporting",
+          "uk sanctions screening",
+          "uk blockchain analytics",
+          "uk transaction monitoring",
+          "uk cdd edd",
+          "uk travel rule data flow",
+          "uk third-party tool configuration",
+          "uk record retrieval"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which UK cryptoasset exchange-provider, custodian-wallet-provider, MLR registration, business-plan, ownership/control, MLRO, BWRA/CRA, outsourcing, and customer-journey assumptions should UK financial-crime counsel review?",
+      "What metadata-only evidence shows UK CDD/EDD, PEP/sanctions screening, blockchain analytics, transaction monitoring, SAR escalation, staff training, Travel Rule originator/beneficiary data flow, missing-information handling, and record retrieval without raw KYC, wallet secrets, credentials, or customer records?"
+    ],
+    localCounselRole: "UK cryptoasset AML / financial crime counsel",
+    effectiveAsOf: "2023-09-01",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against FCA Cryptoassets AML/CTF regime, FCA cryptoasset registration expectations, FCA Travel Rule expectations, and FCA Financial Crime Guide references for MLR registration, activity scope, AML/CTF/CPF framework, MLRO, risk assessments, CDD/EDD, sanctions, transaction monitoring, SAR, Travel Rule data, and evidence-routing metadata; route interpretation to UK financial-crime counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uk-law-commission-dao-scoping-paper",
     jurisdiction: "United Kingdom",
     regulator: "Law Commission of England and Wales",

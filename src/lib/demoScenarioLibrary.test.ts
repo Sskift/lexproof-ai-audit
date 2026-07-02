@@ -297,6 +297,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(indiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded UK cryptoasset AML path for FCA source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const ukScenario = findDemoScenarioById(demoScenarios, "uk-cryptoasset-aml-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(ukScenario).toEqual(
+      expect.objectContaining({
+        title: "UK cryptoasset AML review",
+        projectName: "Thames Cryptoasset AML Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["United Kingdom", "FCA", "MLRs", "Travel Rule"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(ukScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect UK FCA/MLR source graph",
+        "Review cryptoasset activity-scope and registration evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(ukScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

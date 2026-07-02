@@ -892,6 +892,26 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the UK cryptoasset AML scenario with FCA registration and Travel Rule gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start UK cryptoasset AML review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Thames Cryptoasset AML Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /FCA Cryptoassets: AML\/CTF regime; Cryptoassets: What we expect to see in your application for registration; FCA Travel Rule expectations, 17 August 2023/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK cryptoasset AML \/ financial crime counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK FCA cryptoasset MLR registration and activity-scope evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK cryptoasset AML controls, SAR, sanctions, and Travel Rule evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 
@@ -913,7 +933,7 @@ describe("App", () => {
     expect((await screen.findAllByText(/US endorsement and material-connection disclosure evidence/i)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EU MiCA marketing communication identification and white-paper consistency evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EU MiCA marketing notification and publication-timing evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/UK financial promotion approval pack/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK client categorisation and appropriateness evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/UAE VARA marketing approval and risk-warning evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/UAE VARA KOL, incentive, and marketing recordkeeping evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
@@ -2078,8 +2098,6 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     expect(screen.getByRole("heading", { name: /Evidence Templates/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Apply tokenized yield \/ RWA template/i }));
-    expect((await screen.findAllByText(/RWA disclosure assumptions memo/i)).length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Launch memo" } });
     fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });

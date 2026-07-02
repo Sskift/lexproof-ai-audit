@@ -276,6 +276,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "germany-micar-custody-source-path",
+    projectName: "RhineVault MiCAR Custody Review",
+    title: "Germany MiCAR custody review",
+    summary:
+      "Germany BaFin/MiCAR crypto-asset custody review with CASP authorisation or Article 60 notification assumptions, Article 75 custody policy, client-position, segregation, return-process, and counsel handoff evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Germany BaFin/MiCAR custody source graph",
+      "Review CASP authorisation and Article 60/62 evidence gaps",
+      "Check Article 75 custody safeguarding and client-position evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Germany", "BaFin", "MiCAR", "Crypto custody"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

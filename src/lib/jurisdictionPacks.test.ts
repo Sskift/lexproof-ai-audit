@@ -19,6 +19,7 @@ const project: ProjectProfile = {
     "South Korea",
     "India",
     "Switzerland",
+    "Germany",
     "United Arab Emirates",
     "Brazil"
   ],
@@ -59,6 +60,7 @@ describe("createJurisdictionPacks", () => {
         "South Korea",
         "India",
         "Switzerland",
+        "Germany",
         "United Arab Emirates",
         "Brazil"
       ])
@@ -206,6 +208,19 @@ describe("createJurisdictionPacks", () => {
         "Stablecoin issuer and bank-guarantee perimeter control",
         "Stablecoin AML, sanctions, and transfer-risk control",
         "Foundation, custody, and banking perimeter control"
+      ])
+    );
+
+    const germanyPack = packs.find((pack) => pack.jurisdiction === "Germany");
+    expect(germanyPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Germany BaFin / MiCAR crypto custody counsel"
+      }
+    });
+    expect(germanyPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "BaFin MiCAR CASP authorisation and notification control",
+        "MiCAR custody safeguarding and client-position control"
       ])
     );
 

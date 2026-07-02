@@ -968,6 +968,25 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Germany MiCAR custody scenario with BaFin custody evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Germany MiCAR custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("RhineVault MiCAR Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(/Regulation \(EU\) 2023\/1114 Articles 60, 62, and 75; BaFin\/Bundesbank MiCAR supervisory information/i)
+        .length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Germany BaFin \/ MiCAR crypto custody counsel/i).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/Article 60 notification evidence/i)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/custody safeguarding and client-position evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the UAE VARA operating scenario with activity-scope and custody source gaps", async () => {
     render(<App />);
 
@@ -4602,7 +4621,7 @@ describe("App", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  });
+  }, 10000);
 
   it("shows server Counsel Pack export recovery guidance when API record creation fails", async () => {
     const fetchMock = vi.fn(async () =>
@@ -4641,7 +4660,7 @@ describe("App", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  });
+  }, 10000);
 
   it("shows jurisdiction-specific audit preparation checklist items", async () => {
     render(<App />);

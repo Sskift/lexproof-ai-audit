@@ -1847,6 +1847,80 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "de-bafin-micar-casp-custody-authorisation",
+    jurisdiction: "Germany",
+    regulator: "BaFin / Deutsche Bundesbank",
+    sourceName: "MiCAR services and activities in connection with crypto-assets",
+    sourceUrl: "https://www.bafin.de/EN/Aufsicht/MiCAR/MiCAR_artikel_en.html",
+    citation: "Regulation (EU) 2023/1114 Articles 60, 62, and 75; BaFin/Bundesbank MiCAR supervisory information",
+    topic: "custody",
+    summary:
+      "Prepare Germany crypto-asset service scope, BaFin authorisation or Article 60 notification assumptions, custody safeguarding, client-position, segregation, return, AML/data, and local-counsel handoff evidence for Germany custody review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "germany",
+      "german",
+      "deutschland",
+      "bafin",
+      "micar",
+      "casp",
+      "crypto custody",
+      "crypto-asset service",
+      "crypto asset service",
+      "hosted wallet",
+      "client crypto assets",
+      "private cryptographic keys"
+    ],
+    evidenceRequests: [
+      {
+        id: "de-micar-casp-authorisation-notification-intake",
+        title: "Germany MiCAR CASP authorisation and Article 60 notification evidence",
+        reason:
+          "Germany crypto-asset service review needs service scope, BaFin route, CASP authorisation or Article 60 notification assumptions, home Member State, German client access, and reviewer-owner evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "germany micar",
+          "bafin",
+          "casp authorisation",
+          "article 60",
+          "article 62",
+          "notification",
+          "home member state",
+          "german client access",
+          "germany service scope"
+        ]
+      },
+      {
+        id: "de-micar-custody-safeguarding-client-position",
+        title: "Germany MiCAR custody safeguarding and client-position evidence",
+        reason:
+          "Custody review needs Article 75 custody policy, client-position register, statement cadence, segregation, return process, means-of-access handling, private-key exclusion, and no-raw-customer-record evidence.",
+        priority: "P1",
+        keywords: [
+          "article 75",
+          "custody policy",
+          "client register",
+          "position statement",
+          "segregation",
+          "return crypto assets",
+          "means of access",
+          "private cryptographic keys",
+          "client crypto assets"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Germany crypto-asset service scope, BaFin authorisation, Article 60 notification, or Article 62 application assumptions need local counsel review?",
+      "What evidence shows custody policy, client-position records, segregation, return process, means-of-access handling, and private-key exclusion without storing raw customer records?"
+    ],
+    localCounselRole: "Germany BaFin / MiCAR crypto custody counsel",
+    effectiveAsOf: "2024-12-30",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against BaFin/Bundesbank MiCAR supervisory information and BaFin crypto custody guidance for Germany service-scope, authorisation/notification, Article 75 custody, client-position, segregation, return, means-of-access, and evidence-routing prompts; route interpretation to Germany local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "br-bcb-virtual-asset-service-framework",
     jurisdiction: "Brazil",
     regulator: "Banco Central do Brasil",

@@ -46,6 +46,7 @@ type PackTemplate = {
     | "South Korea"
     | "India"
     | "Switzerland"
+    | "Germany"
     | "United Arab Emirates"
     | "Brazil";
   aliases: string[];
@@ -515,6 +516,51 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "evidence-anchor"],
         evidenceKeywords: ["foundation", "custody", "wallet control", "banking", "manifest", "anchor", "governance"]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Germany",
+    aliases: ["germany", "de", "deutschland", "german"],
+    summary:
+      "Prepare BaFin/MiCAR crypto-asset service scope, authorisation or Article 60 notification, custody safeguarding, AML/data, client-position, and local counsel handoff controls.",
+    recommendedRole: "Germany BaFin / MiCAR crypto custody counsel",
+    controls: [
+      {
+        id: "de-bafin-micar-casp-authorisation-control",
+        title: "BaFin MiCAR CASP authorisation and notification control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "germany micar",
+          "bafin",
+          "casp authorisation",
+          "article 60",
+          "article 62",
+          "notification",
+          "home member state",
+          "german client access",
+          "germany service scope"
+        ]
+      },
+      {
+        id: "de-bafin-custody-safeguarding-control",
+        title: "MiCAR custody safeguarding and client-position control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "article 75",
+          "custody policy",
+          "client register",
+          "position statement",
+          "segregation",
+          "return crypto assets",
+          "means of access",
+          "private cryptographic keys",
+          "client crypto assets"
+        ]
       }
     ]
   },

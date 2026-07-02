@@ -268,6 +268,9 @@ function jurisdictionAliases(jurisdiction: string): string[] {
     in: ["india", "in", "indian", "bharat"],
     bharat: ["india", "in", "indian", "bharat"],
     switzerland: ["switzerland", "swiss", "ch"],
+    germany: ["germany", "de", "deutschland", "german"],
+    de: ["germany", "de", "deutschland", "german"],
+    deutschland: ["germany", "de", "deutschland", "german"],
     "united arab emirates": ["united arab emirates", "uae", "dubai", "abu dhabi"],
     brazil: ["brazil", "br", "brasil"]
   };

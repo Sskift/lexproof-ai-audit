@@ -345,6 +345,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(ukScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Germany MiCAR custody path for BaFin source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const germanyScenario = findDemoScenarioById(demoScenarios, "germany-micar-custody-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(germanyScenario).toEqual(
+      expect.objectContaining({
+        title: "Germany MiCAR custody review",
+        projectName: "RhineVault MiCAR Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Germany", "BaFin", "MiCAR", "Crypto custody"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(germanyScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Germany BaFin/MiCAR custody source graph",
+        "Review CASP authorisation and Article 60/62 evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(germanyScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded UAE VARA operating path for activity-scope and custody demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const uaeScenario = findDemoScenarioById(demoScenarios, "uae-vara-operating-source-path");

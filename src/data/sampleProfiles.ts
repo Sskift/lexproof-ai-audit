@@ -400,6 +400,40 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "RhineVault MiCAR Custody Review",
+    entityType: "Crypto-asset service provider custody operations team",
+    jurisdictions: ["Germany"],
+    assetModel:
+      "Crypto-asset custody and transfer service with German client access, MiCAR CASP authorisation assumptions, and hosted wallet operations",
+    userType: "German retail users, institutional treasury users, compliance reviewers, and local counsel",
+    custodyModel:
+      "Platform safeguards client crypto assets through hosted wallets, client-position records, segregation controls, withdrawal approvals, return-process placeholders, and means-of-access controls",
+    dataSensitivity:
+      "CDD status summaries, wallet-risk metadata, client-position summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts Germany MiCAR custody evidence summaries for human review and BaFin counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only Germany MiCAR counsel handoff",
+    operatingStage: "Planned Germany MiCAR CASP custody and Article 75 review before local counsel signoff",
+    evidenceItems: [
+      {
+        label: "Germany regulator source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date; control evidence remains requested."
+      },
+      {
+        label: "Germany custody operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service scope, German client access assumptions, custody boundary, reviewer owner, and counsel handoff timing; regulatory-control evidence remains requested."
+      },
+      {
+        label: "Germany MiCAR evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic requested-control placeholders and evidence owners without identity files, wallet secrets, customer records, or private cryptographic material."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

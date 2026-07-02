@@ -221,6 +221,83 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches Germany BaFin MiCAR CASP custody source controls without legal conclusions", () => {
+    const deProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-germany-micar-custody",
+      projectName: "RhineVault MiCAR Custody Review",
+      jurisdictions: ["Germany"],
+      entityType: "Crypto-asset service provider custody operations team",
+      assetModel: "Crypto-asset custody and transfer service with German client access and MiCAR CASP authorisation assumptions",
+      userType: "German retail users, institutional treasury users, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform safeguards client crypto assets through hosted wallets, client-position records, segregation controls, withdrawal approvals, return-process placeholders, and means-of-access controls",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, client-position summaries, and customer records excluded",
+      aiUsage: "AI drafts Germany MiCAR custody evidence summaries for human review and BaFin counsel routing",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Germany MiCAR CASP custody and Article 75 review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(deProject);
+    const graph = createRegulatoryGraph(deProject, audit, deProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["de-bafin-micar-casp-custody-authorisation"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "de-bafin-micar-casp-custody-authorisation")).toMatchObject({
+      jurisdiction: "Germany",
+      regulator: "BaFin / Deutsche Bundesbank",
+      citation: "Regulation (EU) 2023/1114 Articles 60, 62, and 75; BaFin/Bundesbank MiCAR supervisory information",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "Germany BaFin / MiCAR crypto custody counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Germany MiCAR CASP authorisation and Article 60 notification evidence",
+        "Germany MiCAR custody safeguarding and client-position evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Germany")).toMatchObject({
+      readiness: "evidence-gaps",
+      localCounselRole: "Germany BaFin / MiCAR crypto custody counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Germany BaFin MiCAR CASP custody controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `de-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const deProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-germany-micar-covered",
+      jurisdictions: ["DE"],
+      assetModel: "Crypto-asset custody and transfer service with Germany MiCAR CASP authorisation assumptions",
+      userType: "German retail users, compliance reviewers, and local counsel",
+      custodyModel: "Platform safeguards client crypto assets through hosted wallets, client-position records, and segregation controls",
+      dataSensitivity: "CDD status summaries and wallet-risk metadata",
+      aiUsage: "AI drafts Germany MiCAR custody evidence summaries for human review",
+      operatingStage: "Planned Germany MiCAR CASP custody review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(deProject);
+    const graph = createRegulatoryGraph(deProject, audit, deProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "de-bafin-micar-casp-custody-authorisation")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Germany BaFin MiCAR CASP custody and Article 60/62 register"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "de-bafin-micar-casp-custody-authorisation" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("creates a prioritized evidence gap queue for unmatched source controls", () => {
     const audit = analyzeAuditProfile(baseProject);
     const graph = createRegulatoryGraph(baseProject, audit, baseProject.evidenceItems);

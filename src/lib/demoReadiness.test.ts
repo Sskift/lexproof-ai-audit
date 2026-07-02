@@ -7,7 +7,9 @@ import {
   checkDemoApiPreflight,
   createDemoScreenshotInventory,
   createDemoReadinessReport,
-  demoReadinessCommands
+  createDemoSmokeChecklist,
+  demoReadinessCommands,
+  exportDemoSmokeChecklistJson
 } from "./demoReadiness";
 
 const validScenarioValidation: DemoScenarioValidationResult = {
@@ -61,6 +63,30 @@ describe("demo readiness", () => {
     expect(JSON.stringify(report).toLowerCase()).not.toContain("legal opinion");
     expect(JSON.stringify(report).toLowerCase()).not.toContain("final legal decision");
     expect(JSON.stringify(report).toLowerCase()).not.toContain("sk-live");
+
+    const checklist = createDemoSmokeChecklist(report);
+    expect(checklist).toMatchObject({
+      checklistVersion: "lexproof-demo-smoke-checklist-v1",
+      status: "needs-api",
+      commandCount: demoReadinessCommands.length,
+      notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
+    });
+    expect(checklist.steps.map((step) => [step.id, step.status])).toEqual([
+      ["install-dependencies", "ready"],
+      ["run-verify", "ready"],
+      ["build-server", "ready"],
+      ["start-api", "ready"],
+      ["start-frontend", "ready"],
+      ["phase-2-api-preflight", "not-checked"],
+      ["screenshot-set", "ready"]
+    ]);
+    expect(checklist.nextActions).toEqual(["Run the Phase 2 API and click Check Demo API before judging."]);
+    expect(JSON.stringify(checklist)).toContain("npm run verify");
+    expect(JSON.stringify(checklist)).not.toMatch(/\bsk-live\b|private key|raw KYC|legal opinion|final legal decision/i);
+    const checklistJson = exportDemoSmokeChecklistJson(checklist);
+    expect(checklistJson).toContain("lexproof-demo-smoke-checklist-v1");
+    expect(checklistJson).toContain("Not legal advice");
+    expect(checklistJson.endsWith("\n")).toBe(true);
   });
 
   it("blocks readiness when scenario validation fails even if the API is healthy", () => {
@@ -142,6 +168,13 @@ describe("demo readiness", () => {
     );
     expect(JSON.stringify(report)).not.toContain("sk-live");
     expect(report.screenshotRefs).toEqual(["docs/assets/screenshots/demo-01-model-connect.png"]);
+
+    const checklist = createDemoSmokeChecklist(report);
+    expect(checklist.status).toBe("blocked");
+    expect(checklist.steps.find((step) => step.id === "screenshot-set")).toMatchObject({
+      status: "blocked",
+      recoveryAction: "Fix missing, duplicate, or unsafe screenshot references under docs/assets/screenshots before judging."
+    });
   });
 
   it("keeps all registered demo screenshot refs pointed at tracked local assets", () => {

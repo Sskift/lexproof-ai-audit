@@ -502,6 +502,100 @@ textarea {
   min-height: 36px;
 }
 
+.demo-smoke-checklist {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #c9d9e4;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.demo-smoke-checklist h4 {
+  margin: 0;
+  color: #172431;
+  font-size: 0.9rem;
+}
+
+.demo-smoke-step-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.demo-smoke-step {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.demo-smoke-step.ready {
+  border-color: #b8d8c8;
+}
+
+.demo-smoke-step.not-checked {
+  border-color: #e9bd87;
+}
+
+.demo-smoke-step.failed,
+.demo-smoke-step.blocked {
+  border-color: #e2a7a1;
+}
+
+.demo-smoke-step header {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.demo-smoke-step header svg {
+  color: #2362a5;
+}
+
+.demo-smoke-step header strong {
+  color: #172431;
+  line-height: 1.25;
+}
+
+.demo-smoke-step header span {
+  border-radius: 999px;
+  padding: 3px 6px;
+  background: #edf6f6;
+  color: #0c6b6b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.demo-smoke-step code,
+.demo-smoke-step p,
+.demo-smoke-step small,
+.demo-smoke-actions span {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.demo-smoke-step code {
+  display: block;
+  color: #102a43;
+  font-size: 0.75rem;
+}
+
+.demo-smoke-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .demo-readiness-api {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -7876,6 +7970,7 @@ textarea {
   .retention-grid,
   .retention-remediation-grid,
   .recertification-grid,
+  .demo-smoke-step-grid,
   .vault-sync-grid,
   .vault-error-facts,
   .submission-pack-summary,

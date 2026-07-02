@@ -64,6 +64,31 @@ export type DemoReadinessReport = {
   notLegalAdviceBoundary: "Not legal advice. Demo readiness checks are audit preparation readiness metadata only.";
 };
 
+export type DemoSmokeChecklistStep = {
+  id:
+    | "install-dependencies"
+    | "run-verify"
+    | "build-server"
+    | "start-api"
+    | "start-frontend"
+    | "phase-2-api-preflight"
+    | "screenshot-set";
+  label: string;
+  command?: string;
+  status: DemoReadinessCheckStatus;
+  detail: string;
+  recoveryAction: string;
+};
+
+export type DemoSmokeChecklist = {
+  checklistVersion: "lexproof-demo-smoke-checklist-v1";
+  status: DemoReadinessStatus;
+  commandCount: number;
+  steps: DemoSmokeChecklistStep[];
+  nextActions: string[];
+  notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only.";
+};
+
 export type DemoReadinessInput = {
   scenarioValidation: DemoScenarioValidationResult;
   scenarioCount: number;
@@ -88,6 +113,7 @@ type HealthResponseShape = {
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Demo readiness checks are audit preparation readiness metadata only." as const;
 const SCREENSHOT_INVENTORY_BOUNDARY = "Not legal advice. Demo screenshot inventory is audit preparation readiness metadata only." as const;
+const SMOKE_CHECKLIST_BOUNDARY = "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only." as const;
 const API_PREFLIGHT_RECOVERY = "Start the Phase 2 API, confirm /api/health is reachable, and retry the demo preflight.";
 const SCREENSHOT_RECOVERY = "Fix missing, duplicate, or unsafe screenshot references under docs/assets/screenshots before judging.";
 const capabilityOrder = ["modelGateway", "evidenceVault", "humanReview", "exports", "auditLog"];
@@ -134,6 +160,55 @@ export function createDemoReadinessReport(input: DemoReadinessInput): DemoReadin
     nextActions: createNextActions(checks),
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE_BOUNDARY
   };
+}
+
+export function createDemoSmokeChecklist(report: DemoReadinessReport): DemoSmokeChecklist {
+  const apiPreflightCheck = findReadinessCheck(report, "phase-2-api-preflight");
+  const screenshotCheck = findReadinessCheck(report, "screenshot-set");
+  const steps: DemoSmokeChecklistStep[] = [
+    createCommandStep("install-dependencies", "Install dependencies", report.cleanCloneCommands[0], "Install packages from a clean clone."),
+    createCommandStep("run-verify", "Run verification", report.cleanCloneCommands[1], "Run the full repository verification gate."),
+    createCommandStep("build-server", "Build Phase 2 API", report.cleanCloneCommands[2], "Build the server bundle before starting the API."),
+    createCommandStep("start-api", "Start Phase 2 API", report.cleanCloneCommands[3], "Start the local metadata-only API with a disposable SQLite file."),
+    createCommandStep("start-frontend", "Start workbench", report.cleanCloneCommands[4], "Start the local Vite workbench for the judge path."),
+    {
+      id: "phase-2-api-preflight",
+      label: apiPreflightCheck.label,
+      status: apiPreflightCheck.status,
+      detail: apiPreflightCheck.detail,
+      recoveryAction: apiPreflightCheck.recoveryAction
+    },
+    {
+      id: "screenshot-set",
+      label: screenshotCheck.label,
+      status: screenshotCheck.status,
+      detail: screenshotCheck.detail,
+      recoveryAction: screenshotCheck.recoveryAction
+    }
+  ];
+
+  return {
+    checklistVersion: "lexproof-demo-smoke-checklist-v1",
+    status: createReadinessStatus(steps),
+    commandCount: report.cleanCloneCommands.length,
+    steps,
+    nextActions: createNextActions(steps),
+    notLegalAdviceBoundary: SMOKE_CHECKLIST_BOUNDARY
+  };
+}
+
+export function exportDemoSmokeChecklistJson(checklist: DemoSmokeChecklist): string {
+  return `${JSON.stringify(checklist, null, 2)}\n`;
+}
+
+export function downloadDemoSmokeChecklistJson(filename: string, checklist: DemoSmokeChecklist): void {
+  const blob = new Blob([exportDemoSmokeChecklistJson(checklist)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export function createDemoScreenshotInventory(
@@ -302,7 +377,7 @@ function createApiPreflightCheck(apiPreflight: DemoApiPreflight): DemoReadinessC
   };
 }
 
-function createReadinessStatus(checks: DemoReadinessCheck[]): DemoReadinessStatus {
+function createReadinessStatus(checks: Array<{ status: DemoReadinessCheckStatus }>): DemoReadinessStatus {
   if (checks.some((check) => check.status === "blocked")) {
     return "blocked";
   }
@@ -314,7 +389,7 @@ function createReadinessStatus(checks: DemoReadinessCheck[]): DemoReadinessStatu
   return "ready";
 }
 
-function createNextActions(checks: DemoReadinessCheck[]): string[] {
+function createNextActions(checks: Array<DemoReadinessCheck | DemoSmokeChecklistStep>): string[] {
   const actions = checks
     .filter((check) => check.status !== "ready")
     .map((check) => check.recoveryAction)
@@ -322,6 +397,34 @@ function createNextActions(checks: DemoReadinessCheck[]): string[] {
     .map(sanitize);
 
   return actions.length > 0 ? unique(actions) : ["Judge demo readiness checks are ready for the clean-clone path."];
+}
+
+function createCommandStep(
+  id: DemoSmokeChecklistStep["id"],
+  label: string,
+  command: string | undefined,
+  detail: string
+): DemoSmokeChecklistStep {
+  return {
+    id,
+    label,
+    command: sanitize(command ?? ""),
+    status: command ? "ready" : "blocked",
+    detail: command ? sanitize(detail) : "Required clean-clone command is missing from Demo Readiness.",
+    recoveryAction: command ? "Run this command in order during judge setup." : "Restore the clean-clone command before judging."
+  };
+}
+
+function findReadinessCheck(report: DemoReadinessReport, id: DemoReadinessCheck["id"]): DemoReadinessCheck {
+  return (
+    report.checks.find((check) => check.id === id) ?? {
+      id,
+      label: id,
+      status: "blocked",
+      detail: "Required demo readiness check is missing.",
+      recoveryAction: "Restore the missing demo readiness check before judging."
+    }
+  );
 }
 
 function createFailedPreflight(message: string, checkedAt: string): DemoApiPreflight {

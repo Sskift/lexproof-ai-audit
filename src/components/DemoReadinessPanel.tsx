@@ -4,6 +4,8 @@ import type { DemoScenario, DemoScenarioValidationResult } from "../lib/demoScen
 import {
   checkDemoApiPreflight,
   createDemoReadinessReport,
+  createDemoSmokeChecklist,
+  downloadDemoSmokeChecklistJson,
   type DemoApiPreflight,
   type DemoReadinessCheckStatus,
   type DemoReadinessStatus
@@ -39,6 +41,7 @@ export function DemoReadinessPanel({
       }),
     [apiPreflight, scenarioValidation, scenarios.length, screenshotRefs]
   );
+  const smokeChecklist = useMemo(() => createDemoSmokeChecklist(report), [report]);
 
   const checkApi = async () => {
     setChecking(true);
@@ -99,6 +102,46 @@ export function DemoReadinessPanel({
         <TerminalSquare size={15} aria-hidden="true" />
         <span>{report.cleanCloneCommands.join(" -> ")}</span>
       </div>
+
+      <section className="demo-smoke-checklist" aria-label="Demo Smoke Checklist">
+        <div className="split-title compact-title">
+          <div>
+            <MonitorCheck size={16} aria-hidden="true" />
+            <h4>Demo Smoke Checklist</h4>
+          </div>
+          <span className={`workflow-status ${smokeChecklist.status}`}>{readinessStatusLabel(smokeChecklist.status)}</span>
+        </div>
+        <p className="section-note">{smokeChecklist.notLegalAdviceBoundary}</p>
+        <div className="demo-smoke-step-grid">
+          {smokeChecklist.steps.map((step) => {
+            const Icon = iconForCheckStatus(step.status);
+
+            return (
+              <article key={step.id} className={`demo-smoke-step ${step.status}`}>
+                <header>
+                  <Icon size={14} aria-hidden="true" />
+                  <strong>{step.label}</strong>
+                  <span>{checkStatusLabel(step.status)}</span>
+                </header>
+                {step.command ? <code>{step.command}</code> : null}
+                <p>{step.detail}</p>
+                <small>{step.recoveryAction}</small>
+              </article>
+            );
+          })}
+        </div>
+        <div className="demo-smoke-actions">
+          <span>{smokeChecklist.nextActions.join(" ")}</span>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => downloadDemoSmokeChecklistJson("lexproof-demo-smoke-checklist.json", smokeChecklist)}
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Demo Smoke Checklist JSON
+          </button>
+        </div>
+      </section>
 
       <div className="demo-readiness-api">
         <div>

@@ -1103,6 +1103,11 @@ describe("App", () => {
       expect(readiness.getByText(/Phase 2 API preflight not checked/i)).toBeInTheDocument();
       expect(readiness.getByText(/Private credentials not required ready/i)).toBeInTheDocument();
       expect(readiness.getAllByText(/npm run verify/i).length).toBeGreaterThan(0);
+      const smokeChecklist = within(readiness.getByRole("region", { name: /Demo Smoke Checklist/i }));
+      expect(smokeChecklist.getByRole("heading", { name: /Demo Smoke Checklist/i })).toBeInTheDocument();
+      expect(smokeChecklist.getByText(/Run verification/i)).toBeInTheDocument();
+      expect(smokeChecklist.getByText(/Phase 2 API preflight/i)).toBeInTheDocument();
+      expect(smokeChecklist.getByText(/Not legal advice. Demo smoke checklists are audit preparation readiness metadata only./i)).toBeInTheDocument();
 
       fireEvent.change(readiness.getByLabelText(/Demo API base URL/i), { target: { value: "http://127.0.0.1:8787" } });
       fireEvent.click(readiness.getByRole("button", { name: /Check Demo API/i }));
@@ -1112,14 +1117,33 @@ describe("App", () => {
       expect(readiness.getByText(/modelGateway: mock-run-ready/i)).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
 
+      await act(async () => {
+        fireEvent.click(smokeChecklist.getByRole("button", { name: /Download Demo Smoke Checklist JSON/i }));
+      });
+
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      const smokePayload = await readAppBlobText(capturedBlobs[0]);
+      const parsedSmoke = JSON.parse(smokePayload);
+      expect(parsedSmoke).toEqual(
+        expect.objectContaining({
+          checklistVersion: "lexproof-demo-smoke-checklist-v1",
+          status: "ready",
+          commandCount: 5,
+          notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
+        })
+      );
+      expect(smokePayload).toContain("npm run verify");
+      expect(smokePayload).toContain("phase-2-api-preflight");
+      expect(smokePayload).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+
       await waitFor(() => expect(readiness.getByRole("button", { name: /Download Demo Runbook JSON/i })).toBeEnabled());
       await act(async () => {
         fireEvent.click(readiness.getByRole("button", { name: /Download Demo Runbook JSON/i }));
       });
 
-      await waitFor(() => expect(capturedBlobs.length).toBe(1));
-      expect(click).toHaveBeenCalledTimes(1);
-      const payload = await readAppBlobText(capturedBlobs[0]);
+      await waitFor(() => expect(capturedBlobs.length).toBe(2));
+      expect(click).toHaveBeenCalledTimes(2);
+      const payload = await readAppBlobText(capturedBlobs[1]);
       const parsed = JSON.parse(payload);
       expect(parsed).toEqual(
         expect.objectContaining({

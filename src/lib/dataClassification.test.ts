@@ -76,6 +76,23 @@ describe("classifyDataBoundaryText", () => {
     expect(JSON.stringify(findings)).not.toContain(walletAddress);
     expect(JSON.stringify(findings)).not.toContain("0x2222222222222222222222222222222222222222");
   });
+
+  it("blocks wallet recovery phrases without leaking the phrase or seed words", () => {
+    const phrase = "abandon ability able about above absent absorb abstract absurd abuse access accident";
+    const findings = classifyDataBoundaryText(`Wallet recovery phrase: ${phrase}. Route this as metadata only.`);
+    const privateKeyFinding = findings.find((finding) => finding.dataClass === "private-key-material");
+    const serialized = JSON.stringify(findings).toLowerCase();
+
+    expect(privateKeyFinding).toMatchObject({
+      dataClass: "private-key-material",
+      severity: "block",
+      matchCount: 1
+    });
+    expect(privateKeyFinding?.redactedSnippet).toContain("[redacted-private-key]");
+    expect(serialized).not.toContain("recovery phrase");
+    expect(serialized).not.toContain("abandon ability");
+    expect(serialized).not.toContain("access accident");
+  });
 });
 
 describe("redactClassifiedText", () => {
@@ -110,5 +127,22 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-private-key]");
     expect(redacted).not.toContain(walletAddress);
     expect(redacted).not.toContain(privateKey);
+  });
+
+  it("redacts seed phrase, mnemonic, recovery phrase, and wallet secret text", () => {
+    const redacted = redactClassifiedText(
+      "seed phrase abandon ability able about; mnemonic alpha beta gamma delta; recovery phrase echo foxtrot golf; wallet secret hotel india juliet."
+    );
+    const lower = redacted.toLowerCase();
+
+    expect(redacted.match(/\[redacted-private-key\]/g)?.length).toBe(4);
+    expect(lower).not.toContain("seed phrase");
+    expect(lower).not.toContain("mnemonic");
+    expect(lower).not.toContain("recovery phrase");
+    expect(lower).not.toContain("wallet secret");
+    expect(lower).not.toContain("abandon ability");
+    expect(lower).not.toContain("alpha beta");
+    expect(lower).not.toContain("echo foxtrot");
+    expect(lower).not.toContain("hotel india");
   });
 });

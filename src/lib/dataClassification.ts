@@ -30,6 +30,12 @@ const phonePattern = /\+\d[\d\s().-]{7,}\d|\b(?:phone|tel|mobile)\s*[:#-]?\s*\d[
 const ssnPattern = /\b(?:ssn|social security number)?\s*[:#-]?\s*\d{3}-\d{2}-\d{4}\b/;
 const passportIdPattern = /\bpassport(?:\s+(?:number|no\.?|id))?\s+(?:[A-Z]{1,3}\d{5,9}|\d{6,12})\b/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
+const walletSecretLabelPattern = String.raw`(?:seed phrase|mnemonic|recovery phrase|wallet secret(?: phrase)?)`;
+const walletSecretPhrasePattern =
+  new RegExp(
+    String.raw`\b${walletSecretLabelPattern}\b(?:\s*[:=]?\s*(?!(?:material|reference|references|policy|handling|text|warning|control|controls)\b)(?:[a-z]+(?:\s+[a-z]+){2,23}))?`,
+    "gi"
+  );
 const directPersonalIdentifierPattern = new RegExp(
   `${emailPattern.source}|${phonePattern.source}|${ssnPattern.source}|${passportIdPattern.source}`,
   "gi"
@@ -45,7 +51,7 @@ const classificationRules: ClassificationRule[] = [
   {
     dataClass: "private-key-material",
     severity: "block",
-    pattern: /\b(seed phrase|mnemonic|private key)\b/gi,
+    pattern: new RegExp(`${walletSecretPhrasePattern.source}|\\bprivate key\\b`, "gi"),
     message: "Secret phrase or private-key references must be removed before export handoff."
   },
   {
@@ -128,6 +134,7 @@ export function classifyDataBoundaryText(value: string): ClassifiedDataFinding[]
 
 export function redactClassifiedText(value: string): string {
   return value
+    .replace(walletSecretPhrasePattern, "[redacted-private-key]")
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
     .replace(/\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)(\s*[:=]\s*)[\w.\-]{8,}/gi, "$1$2[redacted-secret]")
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")

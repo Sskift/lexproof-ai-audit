@@ -1545,7 +1545,60 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("marks Swiss FINMA token classification controls covered when RWA template evidence is verified", () => {
+  it("matches Swiss FINMA token classification and stablecoin guidance controls without legal conclusions", () => {
+    const swissProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-swiss-stablecoin",
+      projectName: "Helvetia Stablecoin Review",
+      jurisdictions: ["Switzerland"],
+      assetModel:
+        "Swiss CHF-referenced stablecoin pilot with holder redemption claim, reserve assets, bank guarantee assumptions, payment token, utility token, and asset token classification questions",
+      userType: "Swiss qualified users, treasury partners, and issuer counsel reviewers",
+      custodyModel: "Issuer coordinates wallet mint, burn, transfer, and reserve-reconciliation approvals through segregated operations",
+      dataSensitivity: "Holder identification metadata, sanctions-screening status, and transfer-risk summaries excluded from default exports",
+      aiUsage: "AI drafts Swiss stablecoin evidence summaries for human review",
+      blockchainUse: "Simulated manifest anchor for Swiss counsel packet",
+      operatingStage: "Planned stablecoin issuer and guarantee review before Swiss counsel reliance",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(swissProject);
+    const graph = createRegulatoryGraph(swissProject, audit, swissProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["ch-finma-ico-token-classification", "ch-finma-stablecoin-guidance-06-2024"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ch-finma-stablecoin-guidance-06-2024")).toMatchObject({
+      jurisdiction: "Switzerland",
+      regulator: "FINMA",
+      sourceName: "FINMA Guidance 06/2024 on stablecoins",
+      sourceUrl: "https://www.finma.ch/en/news/2024/07/20240726-m-am-06-24-stablecoins/",
+      citation: "FINMA Guidance 06/2024, Stablecoins, 26 July 2024",
+      topic: "asset-classification",
+      coverageStatus: "missing",
+      coveredEvidenceCount: 0,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "Swiss stablecoin / financial services counsel",
+      effectiveAsOf: "2024-07-26",
+      lastReviewedAt: "2026-07-03"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Swiss token classification memo",
+        "Swiss offering, prospectus, and governance evidence",
+        "Swiss stablecoin issuer and bank-guarantee perimeter evidence",
+        "Swiss stablecoin AML, sanctions, and transfer-risk evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Switzerland")).toMatchObject({
+      matchedClauseCount: 2,
+      missingEvidenceCount: 4,
+      readiness: "evidence-gaps",
+      localCounselRole: "Swiss DLT / financial services counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Swiss FINMA token classification and stablecoin controls covered when RWA template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `swiss-rwa-template-${index + 1}`,
@@ -1555,7 +1608,8 @@ describe("createRegulatoryGraph", () => {
       ...baseProject,
       id: "project-swiss-rwa-covered",
       jurisdictions: ["Switzerland"],
-      assetModel: "Swiss tokenized private credit note with yield, asset-token economics, and fundraising assumptions",
+      assetModel:
+        "Swiss tokenized private credit note with yield, asset-token economics, fundraising assumptions, CHF stablecoin reserve assets, holder redemption claim, and bank guarantee assumptions",
       userType: "Swiss qualified investors and investor communications reviewers",
       custodyModel: "Foundation-governed wallet custody with signer approval evidence",
       dataSensitivity: "KYC metadata and wallet transaction history excluded from default exports",
@@ -1583,8 +1637,27 @@ describe("createRegulatoryGraph", () => {
         "Swiss offering, prospectus, and governance evidence"
       ])
     );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ch-finma-stablecoin-guidance-06-2024")).toMatchObject({
+      jurisdiction: "Switzerland",
+      regulator: "FINMA",
+      citation: "FINMA Guidance 06/2024, Stablecoins, 26 July 2024",
+      sourceUrl: "https://www.finma.ch/en/news/2024/07/20240726-m-am-06-24-stablecoins/",
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "Swiss stablecoin / financial services counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ch-finma-stablecoin-guidance-06-2024")?.matchedEvidenceLabels).toEqual(
+      expect.arrayContaining([
+        "Swiss stablecoin issuer and bank guarantee perimeter memo",
+        "Swiss stablecoin AML and sanctions transfer-risk register"
+      ])
+    );
     expect(graph.evidenceGaps).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ clauseId: "ch-finma-ico-token-classification" })])
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "ch-finma-ico-token-classification" }),
+        expect.objectContaining({ clauseId: "ch-finma-stablecoin-guidance-06-2024" })
+      ])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });

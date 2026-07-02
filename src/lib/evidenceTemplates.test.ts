@@ -127,6 +127,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");
+    expect(serializedSources).toContain("regulatory control: control-ch-finma-stablecoin-guidance-06-2024");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-compliance-risk-management");
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
     expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");
@@ -134,6 +135,12 @@ describe("evidence templates", () => {
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
+    expect(items.map((item) => item.label)).toEqual(
+      expect.arrayContaining([
+        "Swiss stablecoin issuer and bank guarantee perimeter memo",
+        "Swiss stablecoin AML and sanctions transfer-risk register"
+      ])
+    );
   });
 
   it("recommends AI workflow evidence with US, EU, and UK regulatory control links", () => {

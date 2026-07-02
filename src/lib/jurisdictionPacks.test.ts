@@ -201,7 +201,12 @@ describe("createJurisdictionPacks", () => {
       }
     });
     expect(switzerlandPack?.controls.map((control) => control.title)).toEqual(
-      expect.arrayContaining(["Token classification and prospectus-intake control", "Foundation, custody, and banking perimeter control"])
+      expect.arrayContaining([
+        "Token classification and prospectus-intake control",
+        "Stablecoin issuer and bank-guarantee perimeter control",
+        "Stablecoin AML, sanctions, and transfer-risk control",
+        "Foundation, custody, and banking perimeter control"
+      ])
     );
 
     const uaePack = packs.find((pack) => pack.jurisdiction === "United Arab Emirates");

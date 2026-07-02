@@ -1621,6 +1621,75 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "ch-finma-stablecoin-guidance-06-2024",
+    jurisdiction: "Switzerland",
+    regulator: "FINMA",
+    sourceName: "FINMA Guidance 06/2024 on stablecoins",
+    sourceUrl: "https://www.finma.ch/en/news/2024/07/20240726-m-am-06-24-stablecoins/",
+    citation: "FINMA Guidance 06/2024, Stablecoins, 26 July 2024",
+    topic: "asset-classification",
+    summary:
+      "Prepare stablecoin redemption-claim, bank-guarantee, banking-law, collective-investment, AML, sanctions, and transfer-risk evidence for Swiss counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "stablecoin",
+      "stable coin",
+      "fiat peg",
+      "redemption claim",
+      "bank guarantee",
+      "default guarantee",
+      "deposit",
+      "collective investment scheme",
+      "anonymous transfer"
+    ],
+    evidenceRequests: [
+      {
+        id: "ch-stablecoin-issuer-guarantee-perimeter",
+        title: "Swiss stablecoin issuer and bank-guarantee perimeter evidence",
+        reason:
+          "Swiss stablecoin review needs issuer, holder redemption claim, stabilisation mechanism, underlying assets, bank-guarantee, banking-law, and collective-investment perimeter assumptions before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "stablecoin issuer",
+          "redemption claim",
+          "stabilisation mechanism",
+          "underlying assets",
+          "bank guarantee",
+          "default guarantee",
+          "banking law",
+          "collective investment scheme"
+        ]
+      },
+      {
+        id: "ch-stablecoin-aml-sanctions-transfer-risk",
+        title: "Swiss stablecoin AML, sanctions, and transfer-risk evidence",
+        reason:
+          "FINMA stablecoin review should preserve metadata-only evidence for money-laundering, terrorist-financing, sanctions-circumvention, holder identification, transfer-risk, and monitoring controls without raw customer records.",
+        priority: "P1",
+        keywords: [
+          "stablecoin aml",
+          "money laundering",
+          "terrorist financing",
+          "sanctions circumvention",
+          "holder identification",
+          "transfer risk",
+          "anonymous transfer",
+          "transaction monitoring"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which stablecoin redemption-claim, reserve, guarantee, banking-law, or collective-investment assumptions need Swiss counsel review?",
+      "What AML, sanctions, holder-identification, transfer-risk, and monitoring evidence can be shared as metadata-only audit preparation?"
+    ],
+    localCounselRole: "Swiss stablecoin / financial services counsel",
+    effectiveAsOf: "2024-07-26",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against FINMA Guidance 06/2024 on stablecoins for issuer, redemption-claim, default-guarantee, banking-law, collective-investment, AML, sanctions, and transfer-risk evidence routing; route interpretation to Swiss local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uae-vara-va-regulations-activity-scope",
     jurisdiction: "United Arab Emirates",
     regulator: "Dubai Virtual Assets Regulatory Authority",

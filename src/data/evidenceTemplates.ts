@@ -90,6 +90,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Counsel"
       },
       {
+        label: "Swiss stablecoin issuer and bank guarantee perimeter memo",
+        kind: "Memo",
+        content:
+          "Requested: summarize Swiss stablecoin issuer, holder redemption claim, stabilisation mechanism, underlying assets, bank guarantee, default guarantee, banking law perimeter, collective investment scheme perimeter, reserve owner, guarantee provider, and Swiss counsel review owner.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ch-finma-stablecoin-guidance-06-2024",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "Swiss stablecoin AML and sanctions transfer-risk register",
+        kind: "Register",
+        content:
+          "Requested: summarize Swiss stablecoin AML, money laundering, terrorist financing, sanctions circumvention, holder identification, anonymous transfer prevention, transfer risk, transaction monitoring, blocked-transfer escalation, reviewer owner, and no raw customer records, credentials, or wallet secrets.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ch-finma-stablecoin-guidance-06-2024",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Singapore DPT CDD and model handoff register",
         kind: "Register",
         content:

@@ -912,6 +912,24 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Swiss FINMA stablecoin scenario with token and stablecoin evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Swiss FINMA stablecoin review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Helvetia Stablecoin Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/FINMA ICO Guidelines, 16 February 2018/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/FINMA Guidance 06\/2024, Stablecoins, 26 July 2024/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Swiss stablecoin \/ financial services counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Swiss token classification memo/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Swiss stablecoin issuer and bank-guarantee perimeter evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Swiss stablecoin AML, sanctions, and transfer-risk evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

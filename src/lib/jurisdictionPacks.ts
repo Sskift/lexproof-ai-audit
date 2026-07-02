@@ -463,7 +463,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
     jurisdiction: "Switzerland",
     aliases: ["switzerland", "swiss", "ch"],
     summary:
-      "Prepare token classification, offering/prospectus intake, foundation governance, custody, and banking perimeter evidence for Swiss counsel.",
+      "Prepare token classification, offering/prospectus intake, stablecoin issuer, bank-guarantee, AML/sanctions, foundation governance, custody, and banking perimeter evidence for Swiss counsel.",
     recommendedRole: "Swiss DLT / financial services counsel",
     controls: [
       {
@@ -473,6 +473,40 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
         evidenceKeywords: ["token classification", "prospectus", "offering memo", "eligibility", "disclosure", "token terms"]
+      },
+      {
+        id: "ch-stablecoin-issuer-guarantee-perimeter-control",
+        title: "Stablecoin issuer and bank-guarantee perimeter control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        evidenceKeywords: [
+          "stablecoin issuer",
+          "redemption claim",
+          "stabilisation mechanism",
+          "underlying assets",
+          "bank guarantee",
+          "default guarantee",
+          "banking law",
+          "collective investment scheme"
+        ]
+      },
+      {
+        id: "ch-stablecoin-aml-sanctions-transfer-risk-control",
+        title: "Stablecoin AML, sanctions, and transfer-risk control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["retail", "custody", "sensitive-data"],
+        evidenceKeywords: [
+          "stablecoin aml",
+          "money laundering",
+          "terrorist financing",
+          "sanctions circumvention",
+          "holder identification",
+          "transfer risk",
+          "anonymous transfer",
+          "transaction monitoring"
+        ]
       },
       {
         id: "ch-foundation-custody-control",

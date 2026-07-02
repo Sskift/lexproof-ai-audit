@@ -98,6 +98,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "swiss-stablecoin-source-path",
+    projectName: "Helvetia Stablecoin Review",
+    title: "Swiss FINMA stablecoin review",
+    summary:
+      "Switzerland FINMA ICO token-classification and Guidance 06/2024 stablecoin review with redemption-claim, bank-guarantee, AML, sanctions, transfer-risk, and counsel handoff evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Swiss FINMA source graph",
+      "Review token classification and prospectus evidence gaps",
+      "Check stablecoin issuer, bank-guarantee, AML, sanctions, and transfer-risk evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Switzerland", "FINMA", "Stablecoin", "Token classification"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "singapore-dpt-custody-source-path",
     projectName: "HarborKey DPT Custody Review",
     title: "Singapore DPT custody review",

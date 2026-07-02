@@ -86,6 +86,35 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Helvetia Stablecoin Review",
+    entityType: "Stablecoin issuer",
+    jurisdictions: ["Switzerland"],
+    assetModel: "Swiss CHF-referenced stablecoin pilot with holder redemption claim, reserve assets, and bank guarantee assumptions",
+    userType: "Swiss qualified users, treasury partners, and issuer counsel reviewers",
+    custodyModel: "Issuer coordinates wallet mint, burn, transfer, and reserve-reconciliation approvals through segregated operations",
+    dataSensitivity: "Holder identification metadata, sanctions-screening status, and transfer-risk summaries excluded from default exports",
+    aiUsage: "AI drafts Swiss stablecoin evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated manifest anchor for metadata-only stablecoin counsel handoff",
+    operatingStage: "Planned stablecoin issuer and guarantee review before Swiss counsel reliance",
+    evidenceItems: [
+      {
+        label: "FINMA source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Stablecoin operations scope note",
+        kind: "Markdown",
+        content: "Synthetic issuer scope, review owner, and counsel handoff timing; control evidence still requested."
+      },
+      {
+        label: "Swiss evidence backlog",
+        kind: "Checklist",
+        content: "Synthetic questions for Swiss counsel routing and pending evidence owners."
+      }
+    ]
+  },
+  {
     projectName: "HarborKey DPT Custody Review",
     entityType: "Digital payment token service provider",
     jurisdictions: ["Singapore"],

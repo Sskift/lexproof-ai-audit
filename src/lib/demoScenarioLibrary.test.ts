@@ -129,6 +129,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(brazilScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Swiss FINMA stablecoin path for token and stablecoin source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const swissScenario = findDemoScenarioById(demoScenarios, "swiss-stablecoin-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(swissScenario).toEqual(
+      expect.objectContaining({
+        title: "Swiss FINMA stablecoin review",
+        projectName: "Helvetia Stablecoin Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Switzerland", "FINMA", "Stablecoin", "Token classification"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(swissScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Swiss FINMA source graph",
+        "Review token classification and prospectus evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(swissScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Singapore DPT custody path for customer-asset safeguard demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const singaporeScenario = findDemoScenarioById(demoScenarios, "singapore-dpt-custody-source-path");

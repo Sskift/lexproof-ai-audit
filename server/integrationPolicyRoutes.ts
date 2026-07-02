@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { createApiErrorResponse } from "./apiError.js";
 import {
   createChainAnchorPolicyReport,
   type ChainAnchorPolicyContext,
@@ -40,33 +41,100 @@ type GrcDestinationPolicyRequestBody = {
   policy?: unknown;
 };
 
+type IntegrationPolicyRequestPayload = {
+  context: Record<string, unknown>;
+  policy: Record<string, unknown>;
+};
+
+const INTEGRATION_POLICY_RECOVERY_ACTION =
+  "Send metadata-only integration context and policy JSON objects without raw documents, credentials, raw KYC, personal data, private keys, wallet secrets, legal conclusions, or external write commands." as const;
+
 export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
-  server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request) =>
-    createObjectStoragePolicyReport({
-      context: toObjectStoragePolicyContext(request.body?.context),
-      policy: toObjectStoragePolicyDraft(request.body?.policy)
-    })
+  server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request, reply) =>
+    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+      createObjectStoragePolicyReport({
+        context: toObjectStoragePolicyContext(payload.context),
+        policy: toObjectStoragePolicyDraft(payload.policy)
+      })
+    )
   );
 
-  server.post<{ Body: DocumentParserPolicyRequestBody }>("/api/integrations/document-parser/policy", async (request) =>
-    createDocumentParserPolicyReport({
-      context: toDocumentParserPolicyContext(request.body?.context),
-      policy: toDocumentParserPolicyDraft(request.body?.policy)
-    })
+  server.post<{ Body: DocumentParserPolicyRequestBody }>("/api/integrations/document-parser/policy", async (request, reply) =>
+    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+      createDocumentParserPolicyReport({
+        context: toDocumentParserPolicyContext(payload.context),
+        policy: toDocumentParserPolicyDraft(payload.policy)
+      })
+    )
   );
 
-  server.post<{ Body: ChainAnchorPolicyRequestBody }>("/api/integrations/chain-anchor/policy", async (request) =>
-    createChainAnchorPolicyReport({
-      context: toChainAnchorPolicyContext(request.body?.context),
-      policy: toChainAnchorPolicyDraft(request.body?.policy)
-    })
+  server.post<{ Body: ChainAnchorPolicyRequestBody }>("/api/integrations/chain-anchor/policy", async (request, reply) =>
+    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+      createChainAnchorPolicyReport({
+        context: toChainAnchorPolicyContext(payload.context),
+        policy: toChainAnchorPolicyDraft(payload.policy)
+      })
+    )
   );
 
-  server.post<{ Body: GrcDestinationPolicyRequestBody }>("/api/integrations/grc-destination/policy", async (request) =>
-    createGrcDestinationPolicyReport({
-      context: toGrcDestinationPolicyContext(request.body?.context),
-      policy: toGrcDestinationPolicyDraft(request.body?.policy)
-    })
+  server.post<{ Body: GrcDestinationPolicyRequestBody }>("/api/integrations/grc-destination/policy", async (request, reply) =>
+    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+      createGrcDestinationPolicyReport({
+        context: toGrcDestinationPolicyContext(payload.context),
+        policy: toGrcDestinationPolicyDraft(payload.policy)
+      })
+    )
+  );
+}
+
+function evaluateIntegrationPolicy<T>(
+  body: unknown,
+  reply: { status: (statusCode: number) => { send: (payload: unknown) => unknown } },
+  createReport: (payload: IntegrationPolicyRequestPayload) => T
+): T | unknown {
+  try {
+    return createReport(createIntegrationPolicyRequestPayload(body));
+  } catch (error) {
+    return reply.status(400).send(
+      createApiErrorResponse({
+        error: safeIntegrationPolicyError(error),
+        code: "INTEGRATION_POLICY_INVALID_PAYLOAD",
+        fallbackMessage: "Integration policy payload must include metadata-only context and policy JSON objects.",
+        recoveryAction: INTEGRATION_POLICY_RECOVERY_ACTION
+      })
+    );
+  }
+}
+
+function createIntegrationPolicyRequestPayload(value: unknown): IntegrationPolicyRequestPayload {
+  const body = isRecord(value) ? value : {};
+
+  return {
+    context: jsonObjectField(body.context, "Integration policy context must be a JSON object."),
+    policy: jsonObjectField(body.policy, "Integration policy draft must be a JSON object.")
+  };
+}
+
+function jsonObjectField(value: unknown, message: string): Record<string, unknown> {
+  if (!isRecord(value)) {
+    throw new Error(message);
+  }
+
+  return value;
+}
+
+function safeIntegrationPolicyError(error: unknown): Error {
+  if (error instanceof Error && isKnownIntegrationPolicyError(error.message)) {
+    return error;
+  }
+
+  return new Error("Integration policy payload could not be evaluated safely.");
+}
+
+function isKnownIntegrationPolicyError(message: string): boolean {
+  return (
+    message === "Integration policy context must be a JSON object." ||
+    message === "Integration policy draft must be a JSON object."
   );
 }
 

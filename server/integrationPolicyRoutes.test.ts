@@ -56,4 +56,58 @@ describe("integration policy route module", () => {
 
     await server.close();
   });
+
+  it("returns typed recovery errors for malformed integration policy payloads without echoing unsafe material", async () => {
+    const server = Fastify({ logger: false });
+    await registerIntegrationPolicyRoutes(server);
+    const cases = [
+      {
+        url: "/api/integrations/object-storage/policy",
+        payload: { context: "raw KYC passport data sk-live-abcdef1234567890abcdef1234567890", policy: {} },
+        expectedError: "Integration policy context must be a JSON object."
+      },
+      {
+        url: "/api/integrations/document-parser/policy",
+        payload: { context: {}, policy: ["private key 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"] },
+        expectedError: "Integration policy draft must be a JSON object."
+      },
+      {
+        url: "/api/integrations/chain-anchor/policy",
+        payload: { context: "seed phrase abandon abandon abandon", policy: {} },
+        expectedError: "Integration policy context must be a JSON object."
+      },
+      {
+        url: "/api/integrations/grc-destination/policy",
+        payload: { context: {}, policy: "create an external legal decision ticket" },
+        expectedError: "Integration policy draft must be a JSON object."
+      }
+    ];
+
+    for (const testCase of cases) {
+      const response = await server.inject({
+        method: "POST",
+        url: testCase.url,
+        payload: testCase.payload
+      });
+      const json = JSON.stringify(response.json());
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          code: "INTEGRATION_POLICY_INVALID_PAYLOAD",
+          error: testCase.expectedError,
+          recoveryAction:
+            "Send metadata-only integration context and policy JSON objects without raw documents, credentials, raw KYC, personal data, private keys, wallet secrets, legal conclusions, or external write commands.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        })
+      );
+      expect(json).not.toContain("sk-live-abcdef");
+      expect(json).not.toContain("passport data");
+      expect(json).not.toContain("0xabcdef");
+      expect(json).not.toContain("seed phrase");
+      expect(json).not.toContain("external legal decision");
+    }
+
+    await server.close();
+  });
 });

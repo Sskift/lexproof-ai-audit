@@ -799,6 +799,8 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
 
     expect(screen.getAllByText(/SEC Release No\. 81207, The DAO Report, July 25, 2017/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/CFTC Release No\. 8590-22; CFTC v\. Ooki DAO default judgment, June 8, 2023/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/CFTC bZeroX \/ Ooki DAO enforcement action and default judgment/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Law Commission DAO scoping paper, 11 July 2024/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });

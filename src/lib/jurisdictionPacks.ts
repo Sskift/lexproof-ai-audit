@@ -73,6 +73,26 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["disclosure approval", "offering memo", "eligibility review", "go-live signoff", "token terms"]
       },
       {
+        id: "us-cftc-dao-derivatives-platform-control",
+        title: "DAO derivatives-platform and FCM/BSA control",
+        owner: "Counsel",
+        priority: "P0",
+        relatedFlagIds: ["retail", "sensitive-data"],
+        evidenceKeywords: [
+          "cftc dao derivatives",
+          "leveraged retail commodity",
+          "margined retail commodity",
+          "defi trading",
+          "trading platform",
+          "fcm",
+          "commodity interest",
+          "bsa cip",
+          "customer identification program",
+          "control transfer",
+          "successor dao"
+        ]
+      },
+      {
         id: "us-custody-control",
         title: "Custody and wallet authority control",
         owner: "Compliance",

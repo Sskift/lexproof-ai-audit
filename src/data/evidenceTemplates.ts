@@ -232,9 +232,10 @@ export const evidenceTemplates: EvidenceTemplate[] = [
       {
         label: "Governance proposal record",
         kind: "Markdown",
-        content: "Requested: summarize proposal scope, quorum, voting window, affected contracts, and review assumptions.",
+        content:
+          "Requested: summarize proposal scope, quorum, voting window, affected contracts, protocol purpose, trading-interface exclusions, and review assumptions.",
         source:
-          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Product"
       },
@@ -243,7 +244,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         kind: "Policy",
         content: "Requested: document signer roles, quorum, emergency authority, replacement process, and approval evidence.",
         source:
-          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Engineering"
       },
@@ -252,9 +253,19 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         kind: "JSON",
         content: "Requested: summarize proposal hash, vote result, execution status, block reference, and verification owner.",
         source:
-          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Engineering"
+      },
+      {
+        label: "DAO derivatives platform boundary and BSA/CIP review register",
+        kind: "Register",
+        content:
+          "Requested: summarize CFTC DAO derivatives review assumptions, leveraged retail commodity transaction exclusions, margined retail commodity transaction exclusions, DeFi trading platform boundary, FCM activity assumptions, commodity interest handling, US user access, BSA CIP and customer identification program boundary, control transfer, successor DAO governance member participation, website domain operation, proposal execution, compliance owner, and no raw customer records, credentials, KYC files, wallet secrets, or personal data.",
+        source:
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform",
+        status: "requested",
+        owner: "Compliance"
       },
       {
         label: "Contributor agreement summary",

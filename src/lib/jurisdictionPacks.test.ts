@@ -87,6 +87,11 @@ describe("createJurisdictionPacks", () => {
           id: "us-custody-control",
           title: "Custody and wallet authority control",
           status: "needs-evidence"
+        }),
+        expect.objectContaining({
+          id: "us-cftc-dao-derivatives-platform-control",
+          title: "DAO derivatives-platform and FCM/BSA control",
+          status: "needs-evidence"
         })
       ])
     );

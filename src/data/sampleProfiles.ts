@@ -22,7 +22,8 @@ export const sampleProfiles: AuditProfile[] = [
     projectName: "ClauseGuard DAO",
     entityType: "DAO tooling company",
     jurisdictions: ["United States", "United Kingdom"],
-    assetModel: "Governance workflow with optional token-gated access",
+    assetModel:
+      "Governance workflow with optional token-gated access and a proposed DeFi trading module with leveraged or margined access assumptions held for counsel review",
     userType: "Protocol contributors and foundation counsel",
     custodyModel: "Non-custodial multisig review workflow",
     dataSensitivity: "Private contributor agreements and governance votes",
@@ -30,9 +31,15 @@ export const sampleProfiles: AuditProfile[] = [
     blockchainUse: "Hash of approved proposal versions and execution receipts",
     operatingStage: "Private beta with foundation partners",
     evidenceItems: [
-      { label: "DAO proposal", kind: "Markdown", content: "Protocol upgrade, quorum, signers, voting window" },
+      { label: "DAO proposal", kind: "Markdown", content: "Protocol upgrade, quorum, signers, voting window, and derivatives-module review boundary" },
       { label: "Contributor agreement", kind: "Contract", content: "IP assignment, confidentiality, compensation terms" },
-      { label: "Governance receipt", kind: "JSON", content: "Proposal hash, vote result, execution state" }
+      { label: "Governance receipt", kind: "JSON", content: "Proposal hash, vote result, execution state" },
+      {
+        label: "DAO derivatives module boundary note",
+        kind: "Memo",
+        content:
+          "Synthetic module-scope note with no live trading, no customer records, no wallet secrets, and CFTC/FCM/BSA questions still routed to counsel."
+      }
     ]
   },
   {

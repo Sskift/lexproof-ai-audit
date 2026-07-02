@@ -130,6 +130,78 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-cftc-ooki-dao-defi-derivatives-platform",
+    jurisdiction: "United States",
+    regulator: "Commodity Futures Trading Commission",
+    sourceName: "CFTC bZeroX / Ooki DAO enforcement action and default judgment",
+    sourceUrl: "https://www.cftc.gov/PressRoom/PressReleases/8590-22",
+    citation: "CFTC Release No. 8590-22; CFTC v. Ooki DAO default judgment, June 8, 2023",
+    topic: "governance",
+    summary:
+      "Prepare DAO protocol, leveraged or margined retail commodity transaction, trading-interface, FCM activity, BSA/CIP, control-transfer, and governance-participant evidence for US commodities and derivatives counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "leveraged retail commodity",
+      "margined retail commodity",
+      "leveraged",
+      "margined",
+      "perpetual",
+      "defi trading",
+      "trading platform",
+      "fcm",
+      "commodity interest",
+      "customer identification program",
+      "ooki",
+      "bzerox"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-cftc-dao-derivatives-platform-scope",
+        title: "US CFTC DAO derivatives-platform scope evidence",
+        reason:
+          "DAO review needs protocol purpose, leveraged or margined retail commodity transaction assumptions, trading-interface scope, FCM activity, commodity-interest handling, and US user access evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "cftc dao derivatives",
+          "leveraged retail commodity",
+          "margined retail commodity",
+          "defi trading",
+          "trading platform",
+          "fcm",
+          "commodity interest",
+          "us user access"
+        ]
+      },
+      {
+        id: "us-cftc-dao-bsa-control-transfer-governance",
+        title: "US CFTC DAO BSA/CIP and governance-control evidence",
+        reason:
+          "Counsel needs BSA/CIP assumptions, protocol control-transfer history, governance-member participation, website/domain operation, proposal execution, and compliance-owner evidence without raw customer records.",
+        priority: "P1",
+        keywords: [
+          "bsa cip",
+          "customer identification program",
+          "control transfer",
+          "successor dao",
+          "governance member",
+          "website domain",
+          "proposal execution",
+          "no raw customer records"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which protocol, trading-interface, leverage, margin, commodity-interest, FCM, or US user-access assumptions should US commodities and derivatives counsel review?",
+      "What evidence shows BSA/CIP boundaries, protocol control transfer, governance participation, and execution authority without storing raw customer records or implying legal approval?"
+    ],
+    localCounselRole: "US commodities / DAO derivatives counsel",
+    effectiveAsOf: "2023-06-08",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against CFTC Release No. 8590-22 and CFTC v. Ooki DAO default-judgment materials for DAO protocol, leveraged or margined retail commodity transaction, FCM, BSA/CIP, control-transfer, and governance-participant evidence routing; route interpretation to US commodities and derivatives counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-sec-reg-d-accredited-investor-verification",
     jurisdiction: "United States",
     regulator: "U.S. Securities and Exchange Commission",

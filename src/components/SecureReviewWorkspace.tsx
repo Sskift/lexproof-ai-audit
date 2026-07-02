@@ -15,6 +15,9 @@ import type { ModelConnectReceipt } from "../lib/modelConnect";
 import type { ProjectProfile } from "../lib/projectModel";
 import { runSecureReviewJourney, type SecureReviewJourneyResult } from "../lib/secureReviewJourney";
 
+const SECURE_JOURNEY_ERROR_BOUNDARY =
+  "Not legal advice. Secure review journey errors are audit preparation workflow metadata only.";
+
 type SecureReviewWorkspaceProps = {
   project: ProjectProfile;
   audit: AuditResult;
@@ -26,6 +29,16 @@ type SecureReviewWorkspaceProps = {
   humanReviewOwner: string;
   manifestHash?: string;
   onNavigate: (target: "wizard" | "ai" | "model" | "review" | "evidence" | "counsel") => void;
+};
+
+type SecureJourneyErrorState = {
+  message: string;
+  code?: string;
+  runId?: string;
+  retryState?: string;
+  recoveryAction?: string;
+  remediationSteps: string[];
+  notLegalAdviceBoundary: string;
 };
 
 export function SecureReviewWorkspace({
@@ -42,7 +55,7 @@ export function SecureReviewWorkspace({
 }: SecureReviewWorkspaceProps) {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [journeyStatus, setJourneyStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
-  const [journeyError, setJourneyError] = useState("");
+  const [journeyError, setJourneyError] = useState<SecureJourneyErrorState | null>(null);
   const [journeyResult, setJourneyResult] = useState<SecureReviewJourneyResult | null>(null);
   const modelReady = modelConnectReceipt?.status === "ready";
   const manifestReady = Boolean(manifestHash);
@@ -50,7 +63,7 @@ export function SecureReviewWorkspace({
 
   const runJourney = async () => {
     setJourneyStatus("running");
-    setJourneyError("");
+    setJourneyError(null);
     setJourneyResult(null);
 
     try {
@@ -66,7 +79,7 @@ export function SecureReviewWorkspace({
       setJourneyStatus("complete");
     } catch (error) {
       setJourneyStatus("error");
-      setJourneyError(error instanceof Error ? error.message : "Secure review journey failed.");
+      setJourneyError(toSecureJourneyErrorState(error));
     }
   };
 
@@ -157,7 +170,7 @@ export function SecureReviewWorkspace({
           </button>
         </div>
         {journeyError ? (
-          <SecureJourneyError message={journeyError} onNavigate={onNavigate} />
+          <SecureJourneyError error={journeyError} onNavigate={onNavigate} />
         ) : null}
         {journeyResult ? <SecureJourneyResult result={journeyResult} /> : null}
       </section>
@@ -300,21 +313,34 @@ function ModelGatewayEvaluationPanel({ evaluation }: { evaluation: ModelGatewayE
 }
 
 function SecureJourneyError({
-  message,
+  error,
   onNavigate
 }: {
-  message: string;
+  error: SecureJourneyErrorState;
   onNavigate: SecureReviewWorkspaceProps["onNavigate"];
 }) {
-  const recovery = recoveryForJourneyError(message);
+  const recovery = recoveryForJourneyError(error.message);
 
   return (
     <div className="secure-journey-error" role="alert">
       <strong>{recovery.title}</strong>
       <p>{recovery.detail}</p>
-      <small>{message}</small>
+      <div className="secure-journey-error-facts">
+        {error.code ? <JourneyFact label="Error code" value={error.code} /> : null}
+        {error.runId ? <JourneyFact label="Run ID" value={error.runId} /> : null}
+        {error.retryState ? <JourneyFact label="Retry state" value={error.retryState} /> : null}
+      </div>
+      <small>{error.message}</small>
+      {error.recoveryAction ? <small>Recovery: {error.recoveryAction}</small> : null}
+      {error.remediationSteps.length > 0 ? (
+        <ul className="secure-journey-remediation">
+          {error.remediationSteps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
+      ) : null}
       <div className="inline-actions">
-        <span>Not legal advice. Fixing this step only prepares workflow records for human review.</span>
+        <span>{error.notLegalAdviceBoundary}</span>
         <button type="button" className="secondary" onClick={() => onNavigate(recovery.target)}>
           {recovery.actionLabel}
         </button>
@@ -383,6 +409,43 @@ function JourneyFact({ label, value }: { label: string; value: string }) {
       </code>
     </div>
   );
+}
+
+function toSecureJourneyErrorState(error: unknown): SecureJourneyErrorState {
+  if (!(error instanceof Error)) {
+    return {
+      message: "Secure review journey failed.",
+      remediationSteps: [],
+      notLegalAdviceBoundary: SECURE_JOURNEY_ERROR_BOUNDARY
+    };
+  }
+
+  const details = error as Error & {
+    code?: unknown;
+    runId?: unknown;
+    retryState?: unknown;
+    recoveryAction?: unknown;
+    remediationSteps?: unknown;
+    notLegalAdviceBoundary?: unknown;
+  };
+  const remediationSteps = Array.isArray(details.remediationSteps)
+    ? details.remediationSteps.filter((step): step is string => typeof step === "string" && step.trim().length > 0)
+    : [];
+
+  return {
+    message: error.message || "Secure review journey failed.",
+    ...(typeof details.code === "string" && details.code.trim() ? { code: details.code.trim() } : {}),
+    ...(typeof details.runId === "string" && details.runId.trim() ? { runId: details.runId.trim() } : {}),
+    ...(typeof details.retryState === "string" && details.retryState.trim() ? { retryState: details.retryState.trim() } : {}),
+    ...(typeof details.recoveryAction === "string" && details.recoveryAction.trim()
+      ? { recoveryAction: details.recoveryAction.trim() }
+      : {}),
+    remediationSteps,
+    notLegalAdviceBoundary:
+      typeof details.notLegalAdviceBoundary === "string" && details.notLegalAdviceBoundary.startsWith("Not legal advice.")
+        ? details.notLegalAdviceBoundary
+        : SECURE_JOURNEY_ERROR_BOUNDARY
+  };
 }
 
 function shortHash(value: string): string {

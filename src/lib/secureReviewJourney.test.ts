@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
-import { runSecureReviewJourney } from "./secureReviewJourney";
+import { runSecureReviewJourney, SecureReviewJourneyClientError } from "./secureReviewJourney";
 import type { ModelConnectReceipt } from "./modelConnect";
 import type { ProjectProfile } from "./projectModel";
 
@@ -269,6 +269,7 @@ describe("secure review journey", () => {
         return jsonResponse({
           error:
             "Model Gateway boundary failed with raw KYC passport data and api key=sk-live-abcdef1234567890abcdef1234567890.",
+          code: "MODEL_GATEWAY_BOUNDARY_FAILED",
           errors: [
             "Model Gateway request must pass the Redaction Gate before provider calls.",
             "Private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef must be removed."
@@ -283,17 +284,26 @@ describe("secure review journey", () => {
       throw new Error(`Unexpected request ${path}`);
     });
 
-    await expect(
-      runSecureReviewJourney({
-        project,
-        audit: analyzeAuditProfile(project),
-        evidenceItems: project.evidenceItems,
-        modelConnectReceipt,
-        apiBaseUrl: "https://api.lexproof.test",
-        humanReviewOwner: "Compliance",
-        fetcher
-      })
-    ).rejects.toThrow(/model-gateway-run-blocked.*Pass the Redaction Gate/i);
+    const blockedJourney = runSecureReviewJourney({
+      project,
+      audit: analyzeAuditProfile(project),
+      evidenceItems: project.evidenceItems,
+      modelConnectReceipt,
+      apiBaseUrl: "https://api.lexproof.test",
+      humanReviewOwner: "Compliance",
+      fetcher
+    });
+
+    await expect(blockedJourney).rejects.toBeInstanceOf(SecureReviewJourneyClientError);
+    await expect(blockedJourney).rejects.toMatchObject({
+      name: "SecureReviewJourneyClientError",
+      message: expect.stringMatching(/Model Gateway request must pass the Redaction Gate/i),
+      code: "MODEL_GATEWAY_BOUNDARY_FAILED",
+      runId: "model-gateway-run-blocked",
+      retryState: "blocked-until-remediated",
+      remediationSteps: ["Pass the Redaction Gate before [redacted-legal-conclusion]."],
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
 
     await expect(
       runSecureReviewJourney({

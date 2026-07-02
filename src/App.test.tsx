@@ -2816,6 +2816,7 @@ describe("App", () => {
         return appJsonResponse(
           {
             error: "Model Gateway boundary failed.",
+            code: "MODEL_GATEWAY_BOUNDARY_FAILED",
             errors: ["Model Gateway request must pass the Redaction Gate before provider calls."],
             runId: "model-gateway-run-blocked-ui",
             retryState: "blocked-until-remediated",
@@ -2861,9 +2862,11 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
 
       expect(await screen.findByText(/Secure Review Journey cannot run until Model Gateway remediation is complete/i)).toBeInTheDocument();
-      expect(screen.getByText(/model-gateway-run-blocked-ui/i)).toBeInTheDocument();
-      expect(screen.getByText(/Pass the Redaction Gate before creating a server Model Gateway run/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/MODEL_GATEWAY_BOUNDARY_FAILED/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/model-gateway-run-blocked-ui/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/blocked-until-remediated/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Pass the Redaction Gate before creating a server Model Gateway run/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Not legal advice. This API creates audit preparation workflow records only./i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }

@@ -36,10 +36,45 @@ type SecureReviewFetch = (input: RequestInfo | URL, init?: RequestInit) => Promi
 type ErrorResponse = {
   error?: string;
   errors?: string[];
+  code?: string;
+  recoveryAction?: string;
+  notLegalAdviceBoundary?: string;
   runId?: string;
   retryState?: string;
   remediationSteps?: string[];
 };
+
+export type SecureReviewJourneyClientErrorDetails = {
+  message: string;
+  code?: string;
+  runId?: string;
+  retryState?: string;
+  recoveryAction?: string;
+  remediationSteps?: string[];
+  notLegalAdviceBoundary?: string;
+};
+
+export class SecureReviewJourneyClientError extends Error {
+  code?: string;
+  runId?: string;
+  retryState?: string;
+  recoveryAction?: string;
+  remediationSteps: string[];
+  notLegalAdviceBoundary: string;
+
+  constructor(details: SecureReviewJourneyClientErrorDetails) {
+    super(details.message);
+    this.name = "SecureReviewJourneyClientError";
+    this.code = details.code;
+    this.runId = details.runId;
+    this.retryState = details.retryState;
+    this.recoveryAction = details.recoveryAction;
+    this.remediationSteps = details.remediationSteps ?? [];
+    this.notLegalAdviceBoundary =
+      details.notLegalAdviceBoundary ??
+      "Not legal advice. Secure review journey errors are audit preparation workflow metadata only.";
+  }
+}
 
 export async function runSecureReviewJourney(input: RunSecureReviewJourneyInput): Promise<SecureReviewJourneyResult> {
   assertJourneyCanRun(input);
@@ -238,15 +273,26 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
       ...errorPayload,
       error: errorPayload.errors?.join(" ") || errorPayload.error
     });
+    const remediationSteps = (errorPayload.remediationSteps ?? []).map(safeRemediationStep).filter(Boolean);
+    const runId = safeText(errorPayload.runId);
+    const retryState = safeText(errorPayload.retryState);
     const details = [
       safeErrorPayload.error || fallbackMessage,
-      errorPayload.runId ? `Run ${errorPayload.runId}.` : "",
-      errorPayload.retryState ? `Retry state: ${errorPayload.retryState}.` : "",
-      ...(errorPayload.remediationSteps ?? []).map(safeRemediationStep)
+      runId ? `Run ${runId}.` : "",
+      retryState ? `Retry state: ${retryState}.` : "",
+      ...remediationSteps
     ]
       .filter(Boolean)
       .join(" ");
-    throw new Error(details);
+    throw new SecureReviewJourneyClientError({
+      message: details,
+      code: safeErrorPayload.code,
+      runId,
+      retryState,
+      recoveryAction: safeErrorPayload.recoveryAction ?? remediationSteps[0],
+      remediationSteps,
+      notLegalAdviceBoundary: safeErrorPayload.notLegalAdviceBoundary
+    });
   }
 
   return payload as T;
@@ -254,6 +300,10 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
 
 function safeRemediationStep(step: string): string {
   return asSafeApiErrorResponse({ recoveryAction: step }).recoveryAction ?? "";
+}
+
+function safeText(value: unknown): string | undefined {
+  return asSafeApiErrorResponse({ error: value }).error;
 }
 
 function resolveFetcher(fetcher: SecureReviewFetch | undefined): SecureReviewFetch {

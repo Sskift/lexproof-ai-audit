@@ -2409,6 +2409,28 @@ textarea {
   color: #53616f;
 }
 
+.secure-journey-error-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.secure-journey-error-facts code {
+  display: block;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.secure-journey-remediation {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #445361;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
 .security-review-panel {
   display: grid;
   gap: 12px;

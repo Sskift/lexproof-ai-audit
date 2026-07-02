@@ -3832,6 +3832,9 @@ describe("App", () => {
   });
 
   it("registers a model connection profile and AI event intake record with a hash", async () => {
+    const unsafeApiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const unsafeBearerToken = "abcdef1234567890";
+    const unsafePrivateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /Model Intake/i }));
@@ -3851,16 +3854,28 @@ describe("App", () => {
 
     fireEvent.change(screen.getByLabelText(/AI event type/i), { target: { value: "Evidence review" } });
     fireEvent.change(screen.getByLabelText(/Event input summary/i), {
-      target: { value: "Review token terms and custody policy summary" }
+      target: { value: `Review raw KYC packet using ${unsafeApiKey}.` }
     });
     fireEvent.change(screen.getByLabelText(/Event output summary/i), {
-      target: { value: "Drafted missing evidence question for wallet authority" }
+      target: {
+        value: `final legal decision: legally compliant after passport data review and private key ${unsafePrivateKey}.`
+      }
     });
-    fireEvent.change(screen.getByLabelText(/Model action/i), { target: { value: "Generated draft audit-prep questions" } });
+    fireEvent.change(screen.getByLabelText(/Model action/i), {
+      target: { value: `Generated legal opinion with bearer token ${unsafeBearerToken}.` }
+    });
     fireEvent.change(screen.getByLabelText(/Event human reviewer/i), { target: { value: "Compliance" } });
     fireEvent.click(screen.getByRole("button", { name: /Add AI event/i }));
 
     expect(await screen.findByText(/Evidence review/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/\[redacted-legal-conclusion\]/i)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\[redacted-private-key\]/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\[redacted-secret\]/i).length).toBeGreaterThan(0);
+    const eventCardText = screen.getByText(/\[redacted-legal-conclusion\]:/i).closest(".run-card")?.textContent ?? "";
+    expect(eventCardText).not.toContain(unsafeApiKey);
+    expect(eventCardText).not.toContain(unsafeBearerToken);
+    expect(eventCardText).not.toContain(unsafePrivateKey);
+    expect(eventCardText).not.toMatch(/raw KYC packet|passport data|legal opinion|final legal decision|legally compliant/i);
     expect(screen.getAllByText(/needs-review/i).length).toBeGreaterThan(0);
     expect(await screen.findByText(/Resolve AI event review items before external reliance/i)).toBeInTheDocument();
     expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();

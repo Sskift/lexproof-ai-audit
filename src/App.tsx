@@ -181,6 +181,7 @@ import {
   applyAIEventReviewUpdate,
   buildModelIntakeSummary,
   createAIReviewEventFromRun,
+  sanitizeAIEventRecord,
   type AIEventRecord,
   type ModelConnectionProfile,
   type ModelIntakeSummary
@@ -1850,7 +1851,7 @@ export default function App() {
   };
 
   const addAIEvent = (event: AIEventRecord) => {
-    setAIEvents((current) => [event, ...current].slice(0, 80));
+    setAIEvents((current) => [sanitizeAIEventRecord(event), ...current].slice(0, 80));
   };
 
   const updateAIEvent = (id: string, updates: Partial<Pick<AIEventRecord, "humanReviewer" | "reviewStatus">>) => {
@@ -2482,7 +2483,11 @@ function loadStoredAIEvents(): AIEventRecord[] {
 
   try {
     const parsed = JSON.parse(raw) as AIEventRecord[];
-    return Array.isArray(parsed) ? parsed.filter((event) => typeof event.id === "string" && typeof event.projectId === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter((event) => typeof event.id === "string" && typeof event.projectId === "string")
+          .map(sanitizeAIEventRecord)
+      : [];
   } catch {
     return [];
   }

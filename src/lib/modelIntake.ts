@@ -1,4 +1,5 @@
 import type { AIReviewResult } from "./aiReview";
+import { redactClassifiedText } from "./dataClassification";
 import type { ModelReviewRun } from "./modelReviewLedger";
 
 export type ModelEndpointType = "mock" | "openai-compatible" | "enterprise-proxy";
@@ -52,6 +53,9 @@ export type ModelIntakeSummary = {
   notLegalAdviceBoundary: "Not legal advice. Model intake records are audit preparation materials for human review.";
 };
 
+const LEGAL_CONCLUSION_PATTERN =
+  /\b(final legal decision|legal opinion|legal approval|legally compliant|legally non-compliant|compliance decision)\b/gi;
+
 export function validateModelConnectionProfile(profile: Partial<ModelConnectionProfile>): ModelConnectionValidation {
   const errors: string[] = [];
 
@@ -86,7 +90,7 @@ export function validateModelConnectionProfile(profile: Partial<ModelConnectionP
 }
 
 export async function hashAIEventRecord(event: AIEventRecord): Promise<string> {
-  return sha256Hex(stableStringify(event));
+  return sha256Hex(stableStringify(sanitizeAIEventRecord(event)));
 }
 
 export function applyAIEventReviewUpdate(
@@ -94,12 +98,12 @@ export function applyAIEventReviewUpdate(
   updates: Partial<Pick<AIEventRecord, "humanReviewer" | "reviewStatus">>,
   updatedAt = new Date().toISOString()
 ): AIEventRecord {
-  return {
+  return sanitizeAIEventRecord({
     ...event,
     ...updates,
-    humanReviewer: updates.humanReviewer?.trim() ?? event.humanReviewer,
+    humanReviewer: updates.humanReviewer ?? event.humanReviewer,
     updatedAt
-  };
+  });
 }
 
 export function createAIReviewEventFromRun(
@@ -107,7 +111,7 @@ export function createAIReviewEventFromRun(
   result: AIReviewResult,
   humanReviewer: string
 ): AIEventRecord {
-  return {
+  return sanitizeAIEventRecord({
     id: `ai-event-${run.runId}`,
     projectId: run.projectId,
     eventType: "AI Review run",
@@ -129,7 +133,7 @@ export function createAIReviewEventFromRun(
     sourceRunId: run.runId,
     createdAt: run.generatedAt,
     updatedAt: run.generatedAt
-  };
+  });
 }
 
 export async function buildModelIntakeSummary(
@@ -140,19 +144,20 @@ export async function buildModelIntakeSummary(
   const blockers = validation.errors.filter((error) =>
     error === "Models cannot be registered as final legal decision-makers." || error === "Raw KYC or personal data must not be routed into model intake."
   );
-  const unresolvedEventCount = events.filter((event) => event.reviewStatus === "needs-review").length;
+  const sanitizedEvents = events.map(sanitizeAIEventRecord);
+  const unresolvedEventCount = sanitizedEvents.filter((event) => event.reviewStatus === "needs-review").length;
   const readiness: ModelIntakeReadiness =
     blockers.length > 0 ? "blocked" : !validation.valid || unresolvedEventCount > 0 ? "needs-review" : "ready";
 
   return {
     modelIntakeVersion: "lexproof-model-intake-v1",
     readiness,
-    eventCount: events.length,
+    eventCount: sanitizedEvents.length,
     unresolvedEventCount,
     blockers,
     handoffChecklist: createHandoffChecklist(validation, unresolvedEventCount),
     eventHashes: await Promise.all(
-      events.map(async (event) => ({
+      sanitizedEvents.map(async (event) => ({
         eventId: event.id,
         hash: await hashAIEventRecord(event)
       }))
@@ -166,7 +171,16 @@ export function exportModelIntakeJson(
   events: AIEventRecord[],
   summary: ModelIntakeSummary
 ): string {
-  return `${JSON.stringify({ modelIntakeVersion: "lexproof-model-intake-v1", profile, events, summary }, null, 2)}\n`;
+  return `${JSON.stringify(
+    {
+      modelIntakeVersion: "lexproof-model-intake-v1",
+      profile: sanitizeModelConnectionProfile(profile),
+      events: events.map(sanitizeAIEventRecord),
+      summary: sanitizeModelIntakeSummary(summary)
+    },
+    null,
+    2
+  )}\n`;
 }
 
 export function downloadModelIntakeJson(
@@ -203,6 +217,74 @@ function createHandoffChecklist(validation: ModelConnectionValidation, unresolve
   }
 
   return checklist;
+}
+
+function sanitizeModelConnectionProfile(profile: ModelConnectionProfile): ModelConnectionProfile {
+  return {
+    providerName: sanitizeText(profile.providerName),
+    modelName: sanitizeText(profile.modelName),
+    endpointType: profile.endpointType,
+    useCase: sanitizeText(profile.useCase),
+    decisionRole: profile.decisionRole,
+    dataClasses: profile.dataClasses.map(sanitizeText).filter(Boolean),
+    humanReviewOwner: sanitizeText(profile.humanReviewOwner)
+  };
+}
+
+export function sanitizeAIEventRecord(event: AIEventRecord): AIEventRecord {
+  return {
+    id: sanitizeText(event.id),
+    projectId: sanitizeText(event.projectId),
+    eventType: sanitizeText(event.eventType),
+    inputSummary: sanitizeText(event.inputSummary),
+    outputSummary: sanitizeText(event.outputSummary),
+    modelAction: sanitizeText(event.modelAction),
+    humanReviewer: sanitizeText(event.humanReviewer),
+    reviewStatus: event.reviewStatus,
+    ...(event.sourceRunId ? { sourceRunId: sanitizeText(event.sourceRunId) } : {}),
+    createdAt: sanitizeText(event.createdAt),
+    ...(event.updatedAt ? { updatedAt: sanitizeText(event.updatedAt) } : {})
+  };
+}
+
+function sanitizeModelIntakeSummary(summary: ModelIntakeSummary): ModelIntakeSummary {
+  return {
+    ...summary,
+    blockers: summary.blockers.map(sanitizeText).filter(Boolean),
+    handoffChecklist: summary.handoffChecklist.map(sanitizeText).filter(Boolean),
+    eventHashes: summary.eventHashes.map((item) => ({
+      eventId: sanitizeText(item.eventId),
+      hash: sanitizeHash(item.hash)
+    })),
+    notLegalAdviceBoundary: "Not legal advice. Model intake records are audit preparation materials for human review."
+  };
+}
+
+function sanitizeHash(value: string): string {
+  const hash = value.trim();
+  return /^[a-f0-9]{64}$/.test(hash) ? hash : sanitizeText(hash);
+}
+
+function sanitizeText(value: string): string {
+  const { text, protectedHashes } = protectSha256Hashes(value.replace(/\s+/g, " ").trim());
+  const redacted = redactClassifiedText(text)
+    .replace(/\b(bearer token)(\s+)[\w.\-]{8,}/gi, "$1$2[redacted-secret]")
+    .replace(/\b(seed phrase|mnemonic|private key)\b/gi, "[redacted-private-key]")
+    .replace(/\b(passport data|passport document|passport file)\b/gi, "[redacted-personal-data]")
+    .replace(LEGAL_CONCLUSION_PATTERN, "[redacted-legal-conclusion]")
+    .trim();
+
+  return protectedHashes.reduce((current, hash, index) => current.replace(`LEXPROOF_SHA256_TOKEN_${index}`, hash), redacted);
+}
+
+function protectSha256Hashes(value: string): { text: string; protectedHashes: string[] } {
+  const protectedHashes: string[] = [];
+  const text = value.replace(/\b(SHA-256\s+)([a-f0-9]{64})\b/gi, (match) => {
+    protectedHashes.push(match);
+    return `LEXPROOF_SHA256_TOKEN_${protectedHashes.length - 1}`;
+  });
+
+  return { text, protectedHashes };
 }
 
 function hasText(value: unknown): value is string {

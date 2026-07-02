@@ -35,6 +35,9 @@ const event: AIEventRecord = {
   createdAt: "2026-06-29T00:00:00.000Z"
 };
 
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+
 describe("validateModelConnectionProfile", () => {
   it("rejects missing connection fields and final legal-decision roles", () => {
     expect(
@@ -114,6 +117,38 @@ describe("buildModelIntakeSummary", () => {
     });
     expect(summary.notLegalAdviceBoundary).toContain("Not legal advice");
     expect(exportModelIntakeJson(profile, [event], summary)).toContain("\"modelIntakeVersion\": \"lexproof-model-intake-v1\"");
+  });
+
+  it("redacts unsafe model intake profile and event text before JSON export", async () => {
+    const unsafeProfile: ModelConnectionProfile = {
+      ...profile,
+      providerName: `Gateway ${apiKey}`,
+      modelName: `model ${privateKey}`,
+      useCase: "Create a final legal decision from passport data.",
+      dataClasses: ["policy metadata", "raw KYC packet"],
+      humanReviewOwner: "Reviewer api_key=abcdef1234567890"
+    };
+    const unsafeEvent: AIEventRecord = {
+      ...event,
+      id: `event-${apiKey}`,
+      inputSummary: `Review raw KYC packet using ${apiKey}.`,
+      outputSummary: `final legal decision: legally compliant after passport data review and private key ${privateKey}.`,
+      modelAction: "Generated legal opinion with bearer token abcdef1234567890."
+    };
+    const summary = await buildModelIntakeSummary(unsafeProfile, [unsafeEvent]);
+    const json = exportModelIntakeJson(unsafeProfile, [unsafeEvent], summary);
+
+    expect(json).toContain("[redacted-api-key]");
+    expect(json).toContain("[redacted-private-key]");
+    expect(json).toContain("[redacted-raw-kyc]");
+    expect(json).toContain("[redacted-personal-data]");
+    expect(json).toContain("[redacted-legal-conclusion]");
+    expect(json).toContain("[redacted-secret]");
+    expect(json).toContain("Not legal advice");
+    expect(json).not.toContain(apiKey);
+    expect(json).not.toContain(privateKey);
+    expect(json).not.toContain("bearer token abcdef1234567890");
+    expect(json).not.toMatch(/raw KYC packet|passport data|final legal decision|legal opinion|legally compliant/i);
   });
 });
 

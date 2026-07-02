@@ -62,6 +62,28 @@ describe("validateModelConnectionProfile", () => {
       ]
     });
   });
+
+  it("blocks credential and wallet-secret material in model intake profile metadata", async () => {
+    const walletRecoveryPhrase = "abandon ability able about above absent absorb abstract absurd abuse access accident";
+    const unsafeProfile: ModelConnectionProfile = {
+      ...profile,
+      providerName: `OpenAI-compatible gateway ${apiKey}`,
+      modelName: `model ${privateKey}`,
+      useCase: `Summarize evidence with recovery phrase ${walletRecoveryPhrase}`,
+      dataClasses: ["policy metadata"],
+      humanReviewOwner: "Compliance"
+    };
+
+    expect(validateModelConnectionProfile(unsafeProfile)).toEqual({
+      valid: false,
+      errors: ["Model intake profile metadata must not include credentials, private keys, wallet secrets, raw KYC, or personal data."]
+    });
+
+    await expect(buildModelIntakeSummary(unsafeProfile, [])).resolves.toMatchObject({
+      readiness: "blocked",
+      blockers: ["Model intake profile metadata must not include credentials, private keys, wallet secrets, raw KYC, or personal data."]
+    });
+  });
 });
 
 describe("hashAIEventRecord", () => {

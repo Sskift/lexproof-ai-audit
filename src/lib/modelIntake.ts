@@ -1,5 +1,5 @@
 import type { AIReviewResult } from "./aiReview";
-import { redactClassifiedText } from "./dataClassification";
+import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassification";
 import type { ModelReviewRun } from "./modelReviewLedger";
 
 export type ModelEndpointType = "mock" | "openai-compatible" | "enterprise-proxy";
@@ -55,6 +55,8 @@ export type ModelIntakeSummary = {
 
 const LEGAL_CONCLUSION_PATTERN =
   /\b(final legal decision|legal opinion|legal approval|legally compliant|legally non-compliant|compliance decision)\b/gi;
+const MODEL_INTAKE_PROFILE_METADATA_ERROR =
+  "Model intake profile metadata must not include credentials, private keys, wallet secrets, raw KYC, or personal data.";
 
 export function validateModelConnectionProfile(profile: Partial<ModelConnectionProfile>): ModelConnectionValidation {
   const errors: string[] = [];
@@ -81,6 +83,10 @@ export function validateModelConnectionProfile(profile: Partial<ModelConnectionP
 
   if ((profile.dataClasses ?? []).some((dataClass) => /\b(raw\s+kyc|passport|ssn|social security|personal data)\b/i.test(dataClass))) {
     errors.push("Raw KYC or personal data must not be routed into model intake.");
+  }
+
+  if (containsBlockedProfileMetadata(profile)) {
+    errors.push(MODEL_INTAKE_PROFILE_METADATA_ERROR);
   }
 
   return {
@@ -142,7 +148,9 @@ export async function buildModelIntakeSummary(
 ): Promise<ModelIntakeSummary> {
   const validation = validateModelConnectionProfile(profile);
   const blockers = validation.errors.filter((error) =>
-    error === "Models cannot be registered as final legal decision-makers." || error === "Raw KYC or personal data must not be routed into model intake."
+    error === "Models cannot be registered as final legal decision-makers." ||
+    error === "Raw KYC or personal data must not be routed into model intake." ||
+    error === MODEL_INTAKE_PROFILE_METADATA_ERROR
   );
   const sanitizedEvents = events.map(sanitizeAIEventRecord);
   const unresolvedEventCount = sanitizedEvents.filter((event) => event.reviewStatus === "needs-review").length;
@@ -289,6 +297,13 @@ function protectSha256Hashes(value: string): { text: string; protectedHashes: st
 
 function hasText(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function containsBlockedProfileMetadata(profile: Partial<ModelConnectionProfile>): boolean {
+  const metadata = [profile.providerName, profile.modelName, profile.useCase, profile.humanReviewOwner]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+  return classifyDataBoundaryText(metadata).some((finding) => finding.severity === "block");
 }
 
 async function sha256Hex(payload: string): Promise<string> {

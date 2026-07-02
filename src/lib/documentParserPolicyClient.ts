@@ -4,19 +4,13 @@ import type {
   DocumentParserPolicyDraft,
   DocumentParserPolicyReport
 } from "./documentParserPolicy";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type FetchDocumentParserPolicyReportInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
   context: DocumentParserPolicyContext;
   policy: DocumentParserPolicyDraft;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 type DocumentParserPolicyStatus = "ready" | "needs-policy" | "blocked" | "disabled";
@@ -63,7 +57,7 @@ export async function fetchDocumentParserPolicyReport({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new DocumentParserPolicyClientError(errorPayload.error ?? "Document parser policy evaluation failed.", {
       code: errorPayload.code ?? "DOCUMENT_PARSER_POLICY_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry document parser policy evaluation.",
@@ -171,10 +165,6 @@ function invalidResponseError(message: string): DocumentParserPolicyClientError 
     recoveryAction: "Verify the Phase 2 API is returning the metadata-only document parser policy contract.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

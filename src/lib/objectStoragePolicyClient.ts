@@ -5,19 +5,13 @@ import type {
   ObjectStoragePolicyReport
 } from "./objectStoragePolicy";
 import type { IntegrationAdapterStatus } from "./integrationReadiness";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type FetchObjectStoragePolicyReportInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
   context: ObjectStoragePolicyContext;
   policy: ObjectStoragePolicyDraft;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Object storage policy is audit preparation metadata only.";
@@ -62,7 +56,7 @@ export async function fetchObjectStoragePolicyReport({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new ObjectStoragePolicyClientError(errorPayload.error ?? "Object storage policy evaluation failed.", {
       code: errorPayload.code ?? "OBJECT_STORAGE_POLICY_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry object storage policy evaluation.",
@@ -168,10 +162,6 @@ function invalidResponseError(message: string): ObjectStoragePolicyClientError {
     recoveryAction: "Verify the Phase 2 API is returning the metadata-only object storage policy contract.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

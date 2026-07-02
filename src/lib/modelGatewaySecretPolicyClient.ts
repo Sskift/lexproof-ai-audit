@@ -4,18 +4,12 @@ import type {
   ModelGatewaySecretPolicyReport
 } from "./modelGatewaySecretPolicy";
 import type { ModelGatewayProviderPolicyStatus } from "./modelGatewayProviderPolicy";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type FetchModelGatewaySecretPolicyReportInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
   policy: ModelGatewaySecretPolicyDraft;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Model Gateway secret policy is audit preparation metadata only.";
@@ -56,7 +50,7 @@ export async function fetchModelGatewaySecretPolicyReport({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new ModelGatewaySecretPolicyClientError(errorPayload.error ?? "Secret policy evaluation failed.", {
       code: errorPayload.code ?? "MODEL_GATEWAY_SECRET_POLICY_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry secret policy evaluation.",
@@ -151,10 +145,6 @@ function invalidResponseError(message: string): ModelGatewaySecretPolicyClientEr
     recoveryAction: "Verify the Phase 2 API is returning the metadata-only secret policy contract.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

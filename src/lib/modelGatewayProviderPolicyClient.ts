@@ -6,18 +6,12 @@ import type {
   ModelGatewayProviderPolicyStatus
 } from "./modelGatewayProviderPolicy";
 import type { ModelConnectReceipt } from "./modelConnect";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type FetchModelGatewayProviderPolicyInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
   modelConnectReceipt?: ModelConnectReceipt | null;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Model Gateway provider policy is audit preparation metadata only.";
@@ -55,7 +49,7 @@ export async function fetchModelGatewayProviderPolicy({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new ModelGatewayProviderPolicyClientError(errorPayload.error ?? "Provider policy refresh failed.", {
       code: errorPayload.code ?? "MODEL_GATEWAY_POLICY_REFRESH_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry provider policy refresh.",
@@ -171,10 +165,6 @@ function invalidResponseError(message: string): ModelGatewayProviderPolicyClient
     recoveryAction: "Verify the Phase 2 API is returning the metadata-only provider policy contract.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

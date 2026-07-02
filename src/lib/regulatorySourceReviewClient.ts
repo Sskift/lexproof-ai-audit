@@ -1,5 +1,6 @@
 import type { RegulatorySourceReview, RegulatorySourceReviewAction, RegulatorySourceReviewItem } from "./regulatorySourceReview";
 import type { RegulatorySourceReviewRecord, RegulatorySourceReviewSyncResult } from "./phase2Types";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type SyncRegulatorySourceReviewLedgerInput = {
   apiBaseUrl?: string;
@@ -7,13 +8,6 @@ export type SyncRegulatorySourceReviewLedgerInput = {
   sourceReview: RegulatorySourceReview;
   createdBy: string;
   fetcher?: typeof fetch;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 const SOURCE_REVIEW_BOUNDARY = "Not legal advice. Source review metadata is audit preparation lineage only." as const;
@@ -62,7 +56,7 @@ export async function syncRegulatorySourceReviewLedger({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new RegulatorySourceReviewClientError(errorPayload.error ?? "Source review sync failed.", {
       code: errorPayload.code ?? "SOURCE_REVIEW_SYNC_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry source review sync.",
@@ -184,10 +178,6 @@ function invalidResponseError(message: string): RegulatorySourceReviewClientErro
     recoveryAction: "Verify the Phase 2 API is returning metadata-only source review records.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

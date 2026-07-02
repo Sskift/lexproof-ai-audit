@@ -128,4 +128,75 @@ describe("object storage policy client", () => {
       recoveryAction: "Verify the Phase 2 API is returning the metadata-only object storage policy contract."
     });
   });
+
+  it("redacts unsafe API error payload text before surfacing policy failure guidance", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      json: async () => ({
+        error:
+          "Object storage policy failed with raw KYC passport data and api key=sk-live-abcdef1234567890abcdef1234567890.",
+        code: "INTEGRATION_POLICY_INVALID_PAYLOAD",
+        recoveryAction:
+          "Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef before final legal decision.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchObjectStoragePolicyReport({
+        fetcher,
+        context: {
+          workspaceId: "workspace-storage",
+          evidenceCount: 1,
+          retentionStatus: "ready",
+          vaultSyncAllowed: true,
+          blockerCount: 0,
+          manifestHash: "d".repeat(64)
+        },
+        policy: {
+          policyOwner: "Storage owner",
+          retentionDays: 365,
+          deletionSlaDays: 30,
+          encryptionAtRestApproved: true,
+          bucketAllowlistApproved: true,
+          accessLoggingApproved: true,
+          lifecyclePolicyApproved: true,
+          noSensitiveMaterialConfirmed: true,
+          humanReviewRequired: true,
+          notes: ""
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "INTEGRATION_POLICY_INVALID_PAYLOAD",
+      message: expect.stringContaining("[redacted-raw-kyc]"),
+      recoveryAction: expect.stringContaining("[redacted-private-key]"),
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    await expect(
+      fetchObjectStoragePolicyReport({
+        fetcher,
+        context: {
+          workspaceId: "workspace-storage",
+          evidenceCount: 1,
+          retentionStatus: "ready",
+          vaultSyncAllowed: true,
+          blockerCount: 0,
+          manifestHash: "d".repeat(64)
+        },
+        policy: {
+          policyOwner: "Storage owner",
+          retentionDays: 365,
+          deletionSlaDays: 30,
+          encryptionAtRestApproved: true,
+          bucketAllowlistApproved: true,
+          accessLoggingApproved: true,
+          lifecyclePolicyApproved: true,
+          noSensitiveMaterialConfirmed: true,
+          humanReviewRequired: true,
+          notes: ""
+        }
+      })
+    ).rejects.not.toThrow(/passport data|sk-live-abcdef|0x1234567890abcdef|final legal decision/i);
+  });
 });

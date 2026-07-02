@@ -4,19 +4,13 @@ import type {
   GrcDestinationPolicyDraft,
   GrcDestinationPolicyReport
 } from "./grcDestinationPolicy";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type FetchGrcDestinationPolicyReportInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
   context: GrcDestinationPolicyContext;
   policy: GrcDestinationPolicyDraft;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 type GrcDestinationPolicyStatus = "ready" | "needs-policy" | "blocked" | "disabled";
@@ -63,7 +57,7 @@ export async function fetchGrcDestinationPolicyReport({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new GrcDestinationPolicyClientError(errorPayload.error ?? "GRC destination policy evaluation failed.", {
       code: errorPayload.code ?? "GRC_DESTINATION_POLICY_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry GRC destination policy evaluation.",
@@ -174,10 +168,6 @@ function invalidResponseError(message: string): GrcDestinationPolicyClientError 
     recoveryAction: "Verify the Phase 2 API is returning the metadata-only GRC destination policy contract.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

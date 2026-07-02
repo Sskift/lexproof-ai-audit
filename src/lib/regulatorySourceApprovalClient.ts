@@ -1,5 +1,6 @@
 import type { RegulatorySourceApprovalItem, RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceApprovalRecord, RegulatorySourceApprovalSyncResult } from "./phase2Types";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type SyncRegulatorySourceApprovalQueueInput = {
   apiBaseUrl?: string;
@@ -7,13 +8,6 @@ export type SyncRegulatorySourceApprovalQueueInput = {
   queue: RegulatorySourceApprovalQueue;
   createdBy: string;
   fetcher?: typeof fetch;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 const QUEUE_BOUNDARY = "Not legal advice. Source update approvals are audit preparation workflow metadata only." as const;
@@ -64,7 +58,7 @@ export async function syncRegulatorySourceApprovalQueue({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new RegulatorySourceApprovalClientError(errorPayload.error ?? "Source approval sync failed.", {
       code: errorPayload.code ?? "SOURCE_APPROVAL_SYNC_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry source approval sync.",
@@ -183,10 +177,6 @@ function invalidResponseError(message: string): RegulatorySourceApprovalClientEr
     recoveryAction: "Verify the Phase 2 API is returning metadata-only source approval records.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -4,19 +4,13 @@ import type {
   ChainAnchorPolicyDraft,
   ChainAnchorPolicyReport
 } from "./chainAnchorPolicy";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type FetchChainAnchorPolicyReportInput = {
   apiBaseUrl?: string;
   fetcher?: typeof fetch;
   context: ChainAnchorPolicyContext;
   policy: ChainAnchorPolicyDraft;
-};
-
-type ErrorResponse = {
-  error?: string;
-  code?: string;
-  recoveryAction?: string;
-  notLegalAdviceBoundary?: string;
 };
 
 type ChainAnchorPolicyStatus = "ready" | "needs-policy" | "blocked" | "disabled";
@@ -63,7 +57,7 @@ export async function fetchChainAnchorPolicyReport({
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorPayload = asErrorResponse(payload);
+    const errorPayload = asSafeApiErrorResponse(payload);
     throw new ChainAnchorPolicyClientError(errorPayload.error ?? "Chain anchor policy evaluation failed.", {
       code: errorPayload.code ?? "CHAIN_ANCHOR_POLICY_FAILED",
       recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry chain anchor policy evaluation.",
@@ -177,10 +171,6 @@ function invalidResponseError(message: string): ChainAnchorPolicyClientError {
     recoveryAction: "Verify the Phase 2 API is returning the metadata-only chain anchor policy contract.",
     notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
   });
-}
-
-function asErrorResponse(value: unknown): ErrorResponse {
-  return isRecord(value) ? (value as ErrorResponse) : {};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

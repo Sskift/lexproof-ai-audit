@@ -60,6 +60,10 @@ type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
   enablementDossier: IntegrationEnablementDossier | null;
   integrationPolicyEvaluationRecords: IntegrationPolicyEvaluationRecord[];
+  integrationPolicyEvaluationApiBaseUrl: string;
+  integrationPolicyEvaluationSyncStatus: "idle" | "syncing" | "synced" | "error";
+  integrationPolicyEvaluationSyncError: string;
+  integrationPolicyEvaluationSyncRecoveryAction: string;
   providerPolicyReport: ModelGatewayProviderPolicyReport;
   providerPolicySource: "local" | "server";
   providerPolicyApiBaseUrl: string;
@@ -120,6 +124,8 @@ type IntegrationReadinessPanelProps = {
   onGrcDestinationPolicyApiBaseUrlChange: (value: string) => void;
   onGrcDestinationPolicyDraftChange: (updates: Partial<GrcDestinationPolicyDraft>) => void;
   onEvaluateGrcDestinationPolicy: () => Promise<void> | void;
+  onIntegrationPolicyEvaluationApiBaseUrlChange: (value: string) => void;
+  onRefreshIntegrationPolicyEvaluations: () => Promise<void> | void;
   onNavigate: (target: IntegrationReadinessTarget) => void;
 };
 
@@ -137,6 +143,10 @@ export function IntegrationReadinessPanel({
   registry,
   enablementDossier,
   integrationPolicyEvaluationRecords,
+  integrationPolicyEvaluationApiBaseUrl,
+  integrationPolicyEvaluationSyncStatus,
+  integrationPolicyEvaluationSyncError,
+  integrationPolicyEvaluationSyncRecoveryAction,
   providerPolicyReport,
   providerPolicySource,
   providerPolicyApiBaseUrl,
@@ -197,6 +207,8 @@ export function IntegrationReadinessPanel({
   onGrcDestinationPolicyApiBaseUrlChange,
   onGrcDestinationPolicyDraftChange,
   onEvaluateGrcDestinationPolicy,
+  onIntegrationPolicyEvaluationApiBaseUrlChange,
+  onRefreshIntegrationPolicyEvaluations,
   onNavigate
 }: IntegrationReadinessPanelProps) {
   return (
@@ -221,7 +233,15 @@ export function IntegrationReadinessPanel({
         ))}
       </div>
       <IntegrationEnablementDossierPanel dossier={enablementDossier} />
-      <IntegrationPolicyEvaluationReceiptsPanel records={integrationPolicyEvaluationRecords} />
+      <IntegrationPolicyEvaluationReceiptsPanel
+        records={integrationPolicyEvaluationRecords}
+        apiBaseUrl={integrationPolicyEvaluationApiBaseUrl}
+        syncStatus={integrationPolicyEvaluationSyncStatus}
+        syncError={integrationPolicyEvaluationSyncError}
+        syncRecoveryAction={integrationPolicyEvaluationSyncRecoveryAction}
+        onApiBaseUrlChange={onIntegrationPolicyEvaluationApiBaseUrlChange}
+        onRefresh={onRefreshIntegrationPolicyEvaluations}
+      />
       <ObjectStoragePolicyPanel
         draft={storagePolicyDraft}
         context={storagePolicyContext}
@@ -363,11 +383,27 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
   );
 }
 
-function IntegrationPolicyEvaluationReceiptsPanel({ records }: { records: IntegrationPolicyEvaluationRecord[] }) {
+function IntegrationPolicyEvaluationReceiptsPanel({
+  records,
+  apiBaseUrl,
+  syncStatus,
+  syncError,
+  syncRecoveryAction,
+  onApiBaseUrlChange,
+  onRefresh
+}: {
+  records: IntegrationPolicyEvaluationRecord[];
+  apiBaseUrl: string;
+  syncStatus: "idle" | "syncing" | "synced" | "error";
+  syncError: string;
+  syncRecoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onRefresh: () => Promise<void> | void;
+}) {
   const latestRecords = records.slice(0, 4);
 
   return (
-    <section className="integration-policy-receipts" aria-label="Integration Policy Evaluation Receipts">
+    <section className={`integration-policy-receipts ${syncStatus}`} aria-label="Integration Policy Evaluation Receipts">
       <div className="split-title compact-title">
         <div>
           <ReceiptText size={17} aria-hidden="true" />
@@ -378,6 +414,34 @@ function IntegrationPolicyEvaluationReceiptsPanel({ records }: { records: Integr
       <p className="section-note">
         Not legal advice. Integration policy evaluation records are audit preparation metadata only.
       </p>
+      <div className={`provider-policy-sync ${syncStatus}`}>
+        <label>
+          <span>Policy Receipts API base URL</span>
+          <input
+            type="url"
+            value={apiBaseUrl}
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+            placeholder="http://127.0.0.1:8787"
+            aria-label="Policy Receipts API base URL"
+          />
+        </label>
+        <button type="button" className="secondary" onClick={onRefresh} disabled={syncStatus === "syncing"}>
+          <RefreshCcw size={16} aria-hidden="true" />
+          {syncStatus === "syncing" ? "Refreshing Policy Receipts" : "Refresh Policy Receipts"}
+        </button>
+        <small>
+          Pulls persisted workspace receipts from the Phase 2 API. No policy payloads, credentials, raw evidence, raw KYC,
+          personal data, or external write commands are fetched.
+        </small>
+        {syncStatus === "synced" ? <span className="save-state">Policy receipts synced</span> : null}
+        {syncError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{syncError}</strong>
+            {syncRecoveryAction ? <span>{syncRecoveryAction}</span> : null}
+            <small>Not legal advice. Receipt refresh is audit preparation workflow metadata only.</small>
+          </div>
+        ) : null}
+      </div>
       {latestRecords.length ? (
         <div className="integration-policy-receipt-list">
           {latestRecords.map((record) => (

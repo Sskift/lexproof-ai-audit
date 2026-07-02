@@ -1699,6 +1699,7 @@ describe("App", () => {
       });
       expect(body.context).toEqual(
         expect.objectContaining({
+          workspaceId: "sample-yieldpassport",
           evidenceCount: expect.any(Number),
           retentionStatus: expect.any(String),
           vaultSyncAllowed: expect.any(Boolean),
@@ -1739,7 +1740,7 @@ describe("App", () => {
           evaluationRecord: {
             recordVersion: "lexproof-integration-policy-evaluation-record-v1",
             id: "integration-policy-evaluation-1111111111111111",
-            workspaceId: "yield-passport",
+            workspaceId: body.context.workspaceId,
             policyId: "object-storage",
             reportVersion: "lexproof-object-storage-policy-v1",
             overallStatus: "ready",
@@ -1798,6 +1799,59 @@ describe("App", () => {
     expect(receipts.getByText(/Not legal advice. Integration policy evaluation records are audit preparation metadata only./i)).toBeInTheDocument();
     expect(storagePolicy.getAllByText(/External object storage remains disabled/i).length).toBeGreaterThan(0);
     expect(storagePolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes persisted integration policy evaluation receipts from the Phase 2 API", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe(
+        "https://api.lexproof.test/api/workspaces/sample-yieldpassport/integration-policy-evaluations"
+      );
+      expect(init).toEqual({ method: "GET" });
+      return appJsonResponse(
+        [
+          {
+            recordVersion: "lexproof-integration-policy-evaluation-record-v1",
+            id: "integration-policy-evaluation-persisted-ui",
+            workspaceId: "sample-yieldpassport",
+            policyId: "document-parser",
+            reportVersion: "lexproof-document-parser-policy-v1",
+            overallStatus: "needs-policy",
+            approvedControlCount: 7,
+            requiredControlCount: 9,
+            externalCapabilityAllowed: false,
+            externalCapabilityStatus: "needs-policy",
+            reportHash: "a".repeat(64),
+            contextHash: "b".repeat(64),
+            policyHash: "c".repeat(64),
+            evaluatorId: "Integration policy evaluator",
+            source: "server",
+            createdAt: "2026-07-01T00:00:00.000Z",
+            nextActions: ["Approve parser retention and access logging before adapter enablement review."],
+            notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+          }
+        ],
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registry = within(registryHeading.closest("section") as HTMLElement);
+    const receipts = within(registry.getByRole("region", { name: /Integration Policy Evaluation Receipts/i }));
+
+    fireEvent.change(receipts.getByLabelText(/Policy Receipts API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.click(receipts.getByRole("button", { name: /Refresh Policy Receipts/i }));
+
+    expect(await receipts.findByText(/Policy receipts synced/i)).toBeInTheDocument();
+    expect(receipts.getByText(/1 recorded/i)).toBeInTheDocument();
+    expect(receipts.getByText(/Document Parser Policy/i)).toBeInTheDocument();
+    expect(receipts.getByText(/7\/9 controls ready; external capability is disabled/i)).toBeInTheDocument();
+    expect(receipts.getByText(/Not legal advice. Integration policy evaluation records are audit preparation metadata only./i)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

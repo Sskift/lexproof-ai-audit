@@ -128,6 +128,10 @@ import {
   isIntegrationPolicyEvaluationRecord,
   type IntegrationPolicyEvaluationRecord
 } from "./lib/integrationPolicyEvaluation";
+import {
+  fetchIntegrationPolicyEvaluationRecords,
+  IntegrationPolicyEvaluationClientError
+} from "./lib/integrationPolicyEvaluationClient";
 import { createJudgeHandoffBundle, type JudgeHandoffBundle } from "./lib/judgeHandoffBundle";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
@@ -416,6 +420,11 @@ export default function App() {
   const [grcDestinationPolicySyncStatus, setGrcDestinationPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [grcDestinationPolicySyncError, setGrcDestinationPolicySyncError] = useState("");
   const [grcDestinationPolicySyncRecoveryAction, setGrcDestinationPolicySyncRecoveryAction] = useState("");
+  const [integrationPolicyEvaluationApiBaseUrl, setIntegrationPolicyEvaluationApiBaseUrl] = useState("");
+  const [integrationPolicyEvaluationSyncStatus, setIntegrationPolicyEvaluationSyncStatus] =
+    useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [integrationPolicyEvaluationSyncError, setIntegrationPolicyEvaluationSyncError] = useState("");
+  const [integrationPolicyEvaluationSyncRecoveryAction, setIntegrationPolicyEvaluationSyncRecoveryAction] = useState("");
   const [sourceApprovalApiBaseUrl, setSourceApprovalApiBaseUrl] = useState("");
   const [sourceApprovalSyncResult, setSourceApprovalSyncResult] = useState<RegulatorySourceApprovalSyncResult | null>(null);
   const [sourceApprovalSyncStatus, setSourceApprovalSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
@@ -774,6 +783,10 @@ export default function App() {
     [grcDestinationPolicyContext, grcDestinationPolicyDraft]
   );
   const activeGrcDestinationPolicyReport = serverGrcDestinationPolicyReport ?? grcDestinationPolicyReport;
+  const activeIntegrationPolicyEvaluationRecords = useMemo(
+    () => integrationPolicyEvaluationRecords.filter((record) => record.workspaceId === project.id),
+    [integrationPolicyEvaluationRecords, project.id]
+  );
   useEffect(() => {
     let cancelled = false;
 
@@ -1717,6 +1730,32 @@ export default function App() {
     ].slice(0, 24));
   };
 
+  const refreshIntegrationPolicyEvaluationRecords = async () => {
+    setIntegrationPolicyEvaluationSyncStatus("syncing");
+    setIntegrationPolicyEvaluationSyncError("");
+    setIntegrationPolicyEvaluationSyncRecoveryAction("");
+
+    try {
+      const records = await fetchIntegrationPolicyEvaluationRecords({
+        apiBaseUrl: integrationPolicyEvaluationApiBaseUrl,
+        workspaceId: project.id
+      });
+      setIntegrationPolicyEvaluationRecords((current) => {
+        return [...records, ...current.filter((record) => record.workspaceId !== project.id)].slice(0, 120);
+      });
+      setIntegrationPolicyEvaluationSyncStatus("synced");
+    } catch (error) {
+      setIntegrationPolicyEvaluationSyncStatus("error");
+      if (error instanceof IntegrationPolicyEvaluationClientError) {
+        setIntegrationPolicyEvaluationSyncError(error.message);
+        setIntegrationPolicyEvaluationSyncRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setIntegrationPolicyEvaluationSyncError(error instanceof Error ? error.message : "Policy evaluation receipt refresh failed.");
+      setIntegrationPolicyEvaluationSyncRecoveryAction("Start the Phase 2 API and retry policy evaluation receipt refresh.");
+    }
+  };
+
   const refreshProviderPolicyReport = async () => {
     setProviderPolicySyncStatus("syncing");
     setProviderPolicySyncError("");
@@ -2087,7 +2126,11 @@ export default function App() {
           <IntegrationReadinessPanel
             registry={integrationReadinessRegistry}
             enablementDossier={integrationEnablementDossier}
-            integrationPolicyEvaluationRecords={integrationPolicyEvaluationRecords}
+            integrationPolicyEvaluationRecords={activeIntegrationPolicyEvaluationRecords}
+            integrationPolicyEvaluationApiBaseUrl={integrationPolicyEvaluationApiBaseUrl}
+            integrationPolicyEvaluationSyncStatus={integrationPolicyEvaluationSyncStatus}
+            integrationPolicyEvaluationSyncError={integrationPolicyEvaluationSyncError}
+            integrationPolicyEvaluationSyncRecoveryAction={integrationPolicyEvaluationSyncRecoveryAction}
             providerPolicyReport={activeModelGatewayProviderPolicyReport}
             providerPolicySource={serverProviderPolicyReport ? "server" : "local"}
             providerPolicyApiBaseUrl={providerPolicyApiBaseUrl}
@@ -2148,6 +2191,8 @@ export default function App() {
             onGrcDestinationPolicyApiBaseUrlChange={setGrcDestinationPolicyApiBaseUrl}
             onGrcDestinationPolicyDraftChange={updateGrcDestinationPolicyDraft}
             onEvaluateGrcDestinationPolicy={evaluateGrcDestinationPolicyReport}
+            onIntegrationPolicyEvaluationApiBaseUrlChange={setIntegrationPolicyEvaluationApiBaseUrl}
+            onRefreshIntegrationPolicyEvaluations={refreshIntegrationPolicyEvaluationRecords}
             onNavigate={setActiveTab}
           />
 

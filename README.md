@@ -270,9 +270,9 @@ Integration Enablement Dossier consolidates the registry plus model provider, se
 
 ![Integration Enablement Dossier](docs/assets/screenshots/integration-enablement-dossier.png)
 
-Policy Evaluation Receipts show the latest server-side integration policy evaluations for the workspace, including policy ID, control readiness, report hash, context hash, and disabled external capability state. They are audit preparation metadata only and do not store credentials, raw evidence, raw KYC, personal data, or external write commands. Not legal advice.
+Policy Evaluation Receipts show the latest server-side integration policy evaluations for the workspace, including policy ID, control readiness, report hash, context hash, and disabled external capability state. The workbench can refresh persisted receipts from `GET /api/workspaces/:workspaceId/integration-policy-evaluations` after a reload or handoff. They are audit preparation metadata only and do not store credentials, raw evidence, raw KYC, personal data, or external write commands. Not legal advice.
 
-![Integration Policy Evaluation Receipts](docs/assets/screenshots/integration-policy-evaluation-receipts.png)
+![Integration Policy Evaluation Receipts](docs/assets/screenshots/integration-policy-receipts-refresh.png)
 
 Model Gateway Provider Policy makes disabled external model adapters and required controls visible before any server-side provider proxy is enabled. The workbench can refresh the metadata-only policy from `GET /api/model-gateway/provider-policy`, after Model Connect validation use `POST /api/model-gateway/provider-policy` with only provider, mode, status, and blocker metadata, and evaluate `POST /api/model-gateway/secret-policy` from a metadata-only secret policy draft. It never sends session API keys, endpoint hosts, model names, provider labels, raw evidence, or provider credentials to policy routes. The panel shows server sync and failure recovery states, exports metadata-only JSON, and keeps external providers disabled until secret policy, provider allowlist, egress logging, Redaction Gate, human-review controls, and a separate adapter enablement review are approved. Not legal advice.
 

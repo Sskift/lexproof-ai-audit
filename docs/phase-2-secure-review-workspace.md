@@ -186,6 +186,7 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - returns `externalDocumentParsingAllowed: false` even when all required controls evaluate ready
 - `GET /api/workspaces/:workspaceId/integration-policy-evaluations`
   - lists metadata-only policy evaluation receipts persisted for object storage, document parser, chain anchor, and GRC destination checks
+  - is wired to the Integration Readiness workbench receipt panel so users can refresh durable workspace receipts after a page reload or reviewer handoff
   - returns report/context/policy hashes, status, control counts, evaluator metadata, next actions, and the Not legal advice boundary
   - does not return raw policy text, raw evidence, raw documents, raw KYC, personal data, credentials, wallet secrets, webhook secrets, or external write commands
 - `POST /api/workspaces/:workspaceId/model-runs`

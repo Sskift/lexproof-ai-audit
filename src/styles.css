@@ -3068,6 +3068,16 @@ textarea {
   background: #ffffff;
 }
 
+.integration-policy-receipts.synced {
+  border-color: #b8d8c8;
+  background: #f8fffb;
+}
+
+.integration-policy-receipts.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
 .integration-policy-receipt-list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

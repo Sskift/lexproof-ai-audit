@@ -14,6 +14,7 @@ const project: ProjectProfile = {
     "Singapore",
     "Hong Kong",
     "Japan",
+    "Canada",
     "Switzerland",
     "United Arab Emirates",
     "Brazil"
@@ -50,6 +51,7 @@ describe("createJurisdictionPacks", () => {
         "Singapore",
         "Hong Kong",
         "Japan",
+        "Canada",
         "Switzerland",
         "United Arab Emirates",
         "Brazil"
@@ -116,6 +118,19 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         "FSA registration and user-asset protection control",
         "Cold-wallet, reconciliation, and leakage-response control"
+      ])
+    );
+
+    const canadaPack = packs.find((pack) => pack.jurisdiction === "Canada");
+    expect(canadaPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Canada crypto asset trading platform counsel"
+      }
+    });
+    expect(canadaPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "CSA registration and PRU investor-protection control",
+        "Client-asset custody, segregation, and custodian assurance control"
       ])
     );
 

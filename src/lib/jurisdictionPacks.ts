@@ -41,6 +41,7 @@ type PackTemplate = {
     | "Singapore"
     | "Hong Kong"
     | "Japan"
+    | "Canada"
     | "Switzerland"
     | "United Arab Emirates"
     | "Brazil";
@@ -236,6 +237,48 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "leakage response",
           "separate management audit",
           "custody and signer control"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Canada",
+    aliases: ["canada", "ca", "canadian"],
+    summary:
+      "Prepare crypto asset trading platform registration, enhanced PRU, client-asset custody and segregation, acceptable third-party custodian, no re-hypothecation, no leverage, VRCA consent, investor-protection, and local counsel handoff controls for Canada.",
+    recommendedRole: "Canada crypto asset trading platform counsel",
+    controls: [
+      {
+        id: "ca-csa-registration-pru-control",
+        title: "CSA registration and PRU investor-protection control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "canada csa pru",
+          "pre-registration undertaking",
+          "registration application",
+          "canadian client",
+          "no leverage",
+          "value-referenced crypto asset",
+          "prior written consent"
+        ]
+      },
+      {
+        id: "ca-client-asset-custody-segregation-control",
+        title: "Client-asset custody, segregation, and custodian assurance control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "acceptable third-party custodian",
+          "third-party custodians to hold not less than 80%",
+          "hold assets in trust",
+          "separate and apart",
+          "designated trust account",
+          "pledge re-hypothecate",
+          "soc 2",
+          "insurance risk mitigation"
         ]
       }
     ]

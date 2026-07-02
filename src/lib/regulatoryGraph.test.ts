@@ -617,6 +617,84 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
+  it("matches Canada CSA CTP PRU custody controls without legal conclusions", () => {
+    const canadaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-canada-ctp-custody",
+      projectName: "MapleVault CTP Custody Review",
+      jurisdictions: ["Canada"],
+      entityType: "Crypto asset trading platform operations team",
+      assetModel: "Crypto asset trading platform with crypto contracts, custody, Canadian client access, and VRCA review assumptions",
+      userType: "Canadian retail and permitted clients",
+      custodyModel:
+        "Platform holds Canadian client crypto assets through segregated custody, acceptable third-party custodian controls, no re-hypothecation, no leverage, and VRCA consent gates",
+      aiUsage: "AI drafts CTP custody evidence summaries for human review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(canadaProject);
+    const graph = createRegulatoryGraph(canadaProject, audit, canadaProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["ca-csa-ctp-pru-custody-investor-protection"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ca-csa-ctp-pru-custody-investor-protection")).toMatchObject({
+      jurisdiction: "Canada",
+      regulator: "Canadian Securities Administrators",
+      sourceUrl: "https://fcaa.gov.sk.ca/public/plugins/pdfs/6064/21_332_csa_staff_notice_february_22_2023_.pdf",
+      citation:
+        "CSA Staff Notice 21-332 Crypto Asset Trading Platforms: Pre-Registration Undertakings; Joint CSA/IIROC Staff Notice 21-329",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "Canada crypto asset trading platform counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Canada CTP registration, PRU, and investor-protection evidence",
+        "Canada client-asset custody, segregation, and custodian evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Canada")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Canada crypto asset trading platform counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Canada CSA CTP custody controls covered when RWA custody template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `canada-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const canadaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-canada-ctp-custody-covered",
+      projectName: "MapleVault CTP Custody Review",
+      jurisdictions: ["Canada"],
+      entityType: "Crypto asset trading platform operations team",
+      assetModel: "Crypto asset trading platform with crypto contracts, custody, Canadian client access, and VRCA review assumptions",
+      userType: "Canadian retail and permitted clients",
+      custodyModel:
+        "Platform holds Canadian client crypto assets through segregated custody, acceptable third-party custodian controls, no re-hypothecation, no leverage, and VRCA consent gates",
+      aiUsage: "AI drafts CTP custody evidence summaries for human review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(canadaProject);
+    const graph = createRegulatoryGraph(canadaProject, audit, canadaProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ca-csa-ctp-pru-custody-investor-protection")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Canada CTP PRU custody and investor-protection register"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "ca-csa-ctp-pru-custody-investor-protection" })])
+    );
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

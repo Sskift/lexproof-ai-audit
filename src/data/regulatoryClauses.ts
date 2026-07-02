@@ -1176,6 +1176,83 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "ca-csa-ctp-pru-custody-investor-protection",
+    jurisdiction: "Canada",
+    regulator: "Canadian Securities Administrators",
+    sourceName:
+      "CSA Staff Notice 21-332 Crypto Asset Trading Platforms: Pre-Registration Undertakings and Joint CSA/IIROC Staff Notice 21-329",
+    sourceUrl: "https://fcaa.gov.sk.ca/public/plugins/pdfs/6064/21_332_csa_staff_notice_february_22_2023_.pdf",
+    citation:
+      "CSA Staff Notice 21-332 Crypto Asset Trading Platforms: Pre-Registration Undertakings; Joint CSA/IIROC Staff Notice 21-329",
+    topic: "custody",
+    summary:
+      "Prepare Canada crypto asset trading platform registration, PRU, client-asset custody, segregation, third-party custodian, no re-hypothecation, no leverage, VRCA consent, and investor-protection evidence for Canada counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch"],
+    triggerKeywords: [
+      "canada",
+      "canadian",
+      "crypto asset trading platform",
+      "ctp",
+      "pre-registration undertaking",
+      "pru",
+      "value-referenced crypto asset",
+      "vrca",
+      "stablecoin",
+      "third-party custodian",
+      "re-hypothecate"
+    ],
+    evidenceRequests: [
+      {
+        id: "ca-csa-registration-pru-investor-protection",
+        title: "Canada CTP registration, PRU, and investor-protection evidence",
+        reason:
+          "Canada crypto asset trading platform review needs registration-status, enhanced PRU, Canadian-client access, no leverage, VRCA/proprietary-token consent, CCO, financial reporting, and investor-protection evidence before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "canada csa pru",
+          "pre-registration undertaking",
+          "registration application",
+          "canadian client",
+          "no leverage",
+          "value-referenced crypto asset",
+          "vrca",
+          "prior written consent",
+          "chief compliance officer",
+          "financial information filing"
+        ]
+      },
+      {
+        id: "ca-csa-client-asset-custody-segregation",
+        title: "Canada client-asset custody, segregation, and custodian evidence",
+        reason:
+          "Counsel and compliance review need client-asset segregation, trust/account designation, acceptable third-party custodian, 80 percent custodian allocation, no pledge or re-hypothecation, SOC 2/audited-financial-statement, insurance or alternative risk-mitigation, and CSA custodian-information access evidence without raw client records.",
+        priority: "P1",
+        keywords: [
+          "acceptable third-party custodian",
+          "third-party custodians to hold not less than 80%",
+          "hold assets in trust",
+          "separate and apart",
+          "designated trust account",
+          "pledge re-hypothecate",
+          "soc 2",
+          "audited financial statements",
+          "insurance risk mitigation",
+          "custodian information access"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Canada CTP registration, enhanced PRU, Canadian-client access, leverage, VRCA, and proprietary-token assumptions should Canada counsel review?",
+      "What metadata-only evidence shows Canadian client assets are segregated, held in trust or with an acceptable third-party custodian, not pledged or re-hypothecated, and supported by custodian assurance or insurance/risk-mitigation controls?"
+    ],
+    localCounselRole: "Canada crypto asset trading platform counsel",
+    effectiveAsOf: "2023-02-22",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against CSA Staff Notice 21-332 and Joint CSA/IIROC Staff Notice 21-329 for registration/PRU routing, custody and segregation, acceptable third-party custodian, no pledge or re-hypothecation, no leverage, VRCA consent, insurance/risk mitigation, and evidence-routing metadata; route interpretation to Canada local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

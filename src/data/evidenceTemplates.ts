@@ -33,9 +33,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Custody and signer control runbook",
         kind: "Runbook",
         content:
-          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, Japan crypto-asset exchange custody scope, cold-wallet/offline management, and proof of reserves evidence.",
+          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, Japan crypto-asset exchange custody scope, Canada CTP PRU custody scope, cold-wallet/offline management, and proof of reserves evidence.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection; regulatory control: control-ca-csa-ctp-pru-custody-investor-protection; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
         status: "requested",
         owner: "Compliance"
       },
@@ -106,6 +106,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: summarize Japan crypto asset exchange service scope, FSA registration assumptions, user asset protection, information to users, segregated wallet handling, cold wallet and offline environment controls, daily reconciliation, leakage response, separate management audit, reviewer owner, and wallet-secret exclusion.",
         source:
           "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Canada CTP PRU custody and investor-protection register",
+        kind: "Register",
+        content:
+          "Requested: summarize Canada CSA PRU, pre-registration undertaking, registration application, Canadian client access, no leverage, value-referenced crypto asset and VRCA prior written consent, proprietary-token restriction, chief compliance officer, financial information filing, acceptable third-party custodian, third-party custodians to hold not less than 80%, hold assets in trust, separate and apart, designated trust account, pledge re-hypothecate restriction, SOC 2, audited financial statements, insurance risk mitigation, custodian information access, reviewer owner, and raw-client-record exclusion.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ca-csa-ctp-pru-custody-investor-protection",
         status: "requested",
         owner: "Compliance"
       },

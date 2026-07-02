@@ -38,6 +38,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Singapore source path: click **Start Singapore DPT custody review** to load `HarborKey DPT Custody Review` and start in Jurisdiction Checklist for MAS PS-G03 customer-asset safeguard controls, custody evidence gaps, and counsel export.
    - Optional Hong Kong source path: click **Start Hong Kong VATP custody review** to load `HarborBridge VATP Custody Review` and start in Jurisdiction Checklist for SFC VATP client-asset custody controls, wallet governance evidence gaps, and counsel export.
    - Optional Japan source path: click **Start Japan crypto custody review** to load `SakuraKey Crypto Custody Review` and start in Jurisdiction Checklist for FSA crypto-asset exchange custody controls, user-asset protection evidence gaps, cold-wallet/offline management, reconciliation, leakage-response review routing, and counsel export.
+   - Optional Canada source path: click **Start Canada CTP custody review** to load `MapleVault CTP Custody Review` and start in Jurisdiction Checklist for CSA CTP PRU custody controls, registration and PRU evidence gaps, client-asset custody and segregation, acceptable third-party custodian assurance, no re-hypothecation, no leverage, VRCA consent, and counsel export.
    - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / EU MiCA / UK FCA / UAE VARA 2024 promotion, marketing-communication, risk-warning, KOL/incentive, and recordkeeping source gaps.
    - On the marketing path, show the first-screen **Workspace Action Queue** item **Recertify stale evidence** for the stale source-linked `Claims inventory` record, then click it to route into Evidence Ledger. Not legal advice.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
@@ -47,6 +48,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
    - Singapore path screenshot: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Japan path screenshot: `docs/assets/screenshots/japan-crypto-custody-source-graph.png`.
+   - Canada path screenshot: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Marketing path screenshot: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
    - UAE VARA 2024 marketing source screenshot: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - EU MiCA marketing source screenshot: `docs/assets/screenshots/eu-mica-marketing-source-graph.png`.
@@ -82,6 +84,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Singapore path screenshot after **Start Singapore DPT custody review**: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Optional Hong Kong path screenshot after **Start Hong Kong VATP custody review**: `docs/assets/screenshots/hong-kong-vatp-source-graph.png`.
    - Optional Japan path screenshot after **Start Japan crypto custody review**: `docs/assets/screenshots/japan-crypto-custody-source-graph.png`.
+   - Optional Canada path screenshot after **Start Canada CTP custody review**: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
    - Optional VARA 2024 marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - Optional EU MiCA marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/eu-mica-marketing-source-graph.png`.

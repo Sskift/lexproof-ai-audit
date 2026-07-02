@@ -814,6 +814,25 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Canada CTP custody scenario with CSA PRU custody evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Canada CTP custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("MapleVault CTP Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /CSA Staff Notice 21-332 Crypto Asset Trading Platforms: Pre-Registration Undertakings; Joint CSA\/IIROC Staff Notice 21-329/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Canada crypto asset trading platform counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Canada CTP registration, PRU, and investor-protection evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

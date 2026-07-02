@@ -201,6 +201,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(japanScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Canada CTP custody path for CSA PRU source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const canadaScenario = findDemoScenarioById(demoScenarios, "canada-ctp-custody-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(canadaScenario).toEqual(
+      expect.objectContaining({
+        title: "Canada CTP custody review",
+        projectName: "MapleVault CTP Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Canada", "CSA", "CTP custody"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(canadaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Canada CSA CTP controls",
+        "Review PRU and investor-protection evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(canadaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

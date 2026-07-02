@@ -175,6 +175,37 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "MapleVault CTP Custody Review",
+    entityType: "Crypto asset trading platform operations team",
+    jurisdictions: ["Canada"],
+    assetModel: "Crypto asset trading platform with crypto contracts, custody, Canadian client access, and value-referenced crypto asset review assumptions",
+    userType: "Canadian retail and permitted clients, platform operations reviewers, and local counsel",
+    custodyModel:
+      "Platform holds Canadian client crypto assets through segregated custody, acceptable third-party custodian controls, no re-hypothecation, no leverage, VRCA consent gates, and insurance or alternative risk-mitigation evidence",
+    dataSensitivity:
+      "KYC metadata, Canadian client balances, wallet transaction history, custodian account records, and secret material excluded from demo evidence",
+    aiUsage: "AI drafts CTP custody evidence summaries for human review and Canada counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only custody handoff",
+    operatingStage: "Planned CTP custody and PRU investor-protection review before Canada counsel signoff",
+    evidenceItems: [
+      {
+        label: "CSA source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Canada CTP operations scope note",
+        kind: "Markdown",
+        content: "Synthetic service scope, Canadian-client access, PRU owner, custodian boundary, and counsel handoff timing."
+      },
+      {
+        label: "Custodian assurance checklist",
+        kind: "Checklist",
+        content: "Synthetic acceptable third-party custodian, SOC 2, audited financial statement, no re-hypothecation, insurance, and risk-mitigation placeholders without raw client records."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

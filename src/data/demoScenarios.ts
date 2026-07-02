@@ -150,6 +150,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "canada-ctp-custody-source-path",
+    projectName: "MapleVault CTP Custody Review",
+    title: "Canada CTP custody review",
+    summary:
+      "Canada CSA crypto asset trading platform PRU, client-asset custody and segregation, acceptable third-party custodian, no re-hypothecation, no leverage, VRCA consent, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Canada CSA CTP controls",
+      "Review PRU and investor-protection evidence gaps",
+      "Check custody segregation, custodian assurance, and no re-hypothecation evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Canada", "CSA", "CTP custody"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

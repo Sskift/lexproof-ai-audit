@@ -179,10 +179,12 @@ export function createOpenAICompatibleModelProvider(settings: ModelSettings, fet
         });
       }
 
-      const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+      const data = await readOpenAICompatibleSuccessPayload(response);
+      const content = extractOpenAICompatibleMessageContent(data);
+      assertAuditPrepJsonContent(content);
       return {
         providerLabel: settings.model,
-        content: data.choices?.[0]?.message?.content ?? "{}"
+        content
       };
     }
   };
@@ -190,4 +192,62 @@ export function createOpenAICompatibleModelProvider(settings: ModelSettings, fet
 
 async function readModelProviderErrorPayload(response: Response): Promise<unknown> {
   return response.json().catch(() => ({}));
+}
+
+async function readOpenAICompatibleSuccessPayload(response: Response): Promise<Record<string, unknown>> {
+  try {
+    const payload = (await response.json()) as unknown;
+    if (isRecord(payload)) {
+      return payload;
+    }
+  } catch {
+    // Fall through to the typed client error below so raw parser messages are never exposed.
+  }
+
+  throw new ModelProviderClientError("Model provider response was not valid OpenAI-compatible JSON.", {
+    code: "MODEL_PROVIDER_INVALID_RESPONSE",
+    recoveryAction:
+      "Confirm the provider returns an OpenAI-compatible chat completions JSON body with choices[0].message.content.",
+    notLegalAdviceBoundary: DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY
+  });
+}
+
+function extractOpenAICompatibleMessageContent(payload: Record<string, unknown>): string {
+  const choices = payload.choices;
+  const firstChoice = Array.isArray(choices) ? choices[0] : undefined;
+  const message = isRecord(firstChoice) ? firstChoice.message : undefined;
+  const content = isRecord(message) ? message.content : undefined;
+
+  if (typeof content === "string" && content.trim()) {
+    return content;
+  }
+
+  throw new ModelProviderClientError("Model provider response was missing audit-prep content.", {
+    code: "MODEL_PROVIDER_INVALID_RESPONSE",
+    recoveryAction:
+      "Confirm the provider returns choices[0].message.content as a JSON object string with extractedFacts, missingEvidence, draftQuestions, and suggestedRemediation arrays.",
+    notLegalAdviceBoundary: DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY
+  });
+}
+
+function assertAuditPrepJsonContent(content: string): void {
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    if (isRecord(parsed)) {
+      return;
+    }
+  } catch {
+    // Fall through to the typed client error below so unsafe model text is never echoed.
+  }
+
+  throw new ModelProviderClientError("Model provider response content was not valid audit-prep JSON.", {
+    code: "MODEL_PROVIDER_INVALID_OUTPUT",
+    recoveryAction:
+      "Return JSON only with extractedFacts, missingEvidence, draftQuestions, and suggestedRemediation arrays; do not return legal conclusions.",
+    notLegalAdviceBoundary: DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -87,6 +87,92 @@ describe("buildOpenAICompatibleRequest", () => {
 });
 
 describe("createOpenAICompatibleModelProvider", () => {
+  it("turns malformed provider success bodies into a safe recoverable client error", async () => {
+    const fetcher = async () =>
+      new Response("not-json with sk-live-abcdefghijklmnopqrstuvwxyz123456 and final legal decision", {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+
+    let thrown: unknown;
+    try {
+      await createOpenAICompatibleModelProvider(
+        {
+          provider: "openai-compatible",
+          baseUrl: "https://models.example.com/v1",
+          model: "legal-review-model",
+          apiKey: "sk-session-only"
+        },
+        fetcher as typeof fetch
+      ).completeReview(payload);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ModelProviderClientError);
+    const error = thrown as ModelProviderClientError;
+    expect(error).toMatchObject({
+      name: "ModelProviderClientError",
+      code: "MODEL_PROVIDER_INVALID_RESPONSE",
+      message: "Model provider response was not valid OpenAI-compatible JSON.",
+      notLegalAdviceBoundary: "Not legal advice. Model provider errors are audit preparation workflow metadata only."
+    });
+    expect(error.recoveryAction).toContain("choices[0].message.content");
+    expect(JSON.stringify(error)).not.toMatch(/sk-live|final legal decision/i);
+  });
+
+  it("rejects non-JSON model content instead of recording an empty successful AI review", async () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const fetcher = async () =>
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: `final legal decision: legally compliant. api_key=${apiKey}. private key ${privateKey}.`
+              }
+            }
+          ]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+
+    let thrown: unknown;
+    try {
+      await createOpenAICompatibleModelProvider(
+        {
+          provider: "openai-compatible",
+          baseUrl: "https://models.example.com/v1",
+          model: "legal-review-model",
+          apiKey: "sk-session-only"
+        },
+        fetcher as typeof fetch
+      ).completeReview(payload);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ModelProviderClientError);
+    const error = thrown as ModelProviderClientError;
+    expect(error).toMatchObject({
+      name: "ModelProviderClientError",
+      code: "MODEL_PROVIDER_INVALID_OUTPUT",
+      message: "Model provider response content was not valid audit-prep JSON.",
+      notLegalAdviceBoundary: "Not legal advice. Model provider errors are audit preparation workflow metadata only."
+    });
+    expect(error.recoveryAction).toContain("Return JSON only");
+    const serialized = JSON.stringify({
+      message: error.message,
+      code: error.code,
+      recoveryAction: error.recoveryAction,
+      notLegalAdviceBoundary: error.notLegalAdviceBoundary
+    });
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/legally compliant|final legal decision/i);
+  });
+
   it("turns provider network failures into a safe recoverable client error", async () => {
     const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
     const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";

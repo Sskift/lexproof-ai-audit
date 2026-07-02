@@ -112,4 +112,37 @@ describe("counsel pack export client", () => {
       })
     ).rejects.toThrow("Artifact hash must be a SHA-256 hex digest.");
   });
+
+  it("redacts unsafe server export error payloads before surfacing them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      json: async () => ({
+        error:
+          "Server export blocked raw KYC passport data, api key=sk-live-abcdef1234567890abcdef1234567890, and private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef.",
+        code: "COUNSEL_PACK_EXPORT_BOUNDARY_FAILED",
+        recoveryAction: "Remove seed phrase material before final legal decision.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      createServerCounselPackExportRecord({
+        workspaceId: "workspace-export",
+        versionRecord,
+        createdBy: "Compliance",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("[redacted-raw-kyc]")
+    });
+
+    await expect(
+      createServerCounselPackExportRecord({
+        workspaceId: "workspace-export",
+        versionRecord,
+        createdBy: "Compliance",
+        fetcher
+      })
+    ).rejects.not.toThrow(/passport data|sk-live-abcdef|0x1234567890abcdef|seed phrase|final legal decision/i);
+  });
 });

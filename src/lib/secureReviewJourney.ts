@@ -1,5 +1,6 @@
 import type { AuditResult } from "./auditEngine";
 import { createRedactionReport } from "./aiReview";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 import {
   syncEvidenceLedgerToVault,
   type EvidenceVaultSyncResult,
@@ -233,11 +234,15 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
 
   if (!response.ok) {
     const errorPayload = payload as ErrorResponse;
+    const safeErrorPayload = asSafeApiErrorResponse({
+      ...errorPayload,
+      error: errorPayload.errors?.join(" ") || errorPayload.error
+    });
     const details = [
-      errorPayload.errors?.join(" ") || errorPayload.error || fallbackMessage,
+      safeErrorPayload.error || fallbackMessage,
       errorPayload.runId ? `Run ${errorPayload.runId}.` : "",
       errorPayload.retryState ? `Retry state: ${errorPayload.retryState}.` : "",
-      ...(errorPayload.remediationSteps ?? [])
+      ...(errorPayload.remediationSteps ?? []).map(safeRemediationStep)
     ]
       .filter(Boolean)
       .join(" ");
@@ -245,6 +250,10 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
   }
 
   return payload as T;
+}
+
+function safeRemediationStep(step: string): string {
+  return asSafeApiErrorResponse({ recoveryAction: step }).recoveryAction ?? "";
 }
 
 function resolveFetcher(fetcher: SecureReviewFetch | undefined): SecureReviewFetch {

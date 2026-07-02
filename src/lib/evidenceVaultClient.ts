@@ -1,5 +1,6 @@
 import { hashEvidenceItem } from "./evidenceManifest";
 import type { EvidenceItem } from "./projectModel";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type EvidenceVaultRecordResponse = {
   recordVersion: "lexproof-evidence-vault-record-v1";
@@ -319,14 +320,18 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
 
   if (!response.ok) {
     const errorPayload = payload as ErrorResponse;
-    const message = [errorPayload.errors?.join(" "), errorPayload.error].filter(Boolean).join(" ") || fallbackMessage;
+    const safeErrorPayload = asSafeApiErrorResponse({
+      ...errorPayload,
+      error: [errorPayload.errors?.join(" "), errorPayload.error].filter(Boolean).join(" ")
+    });
+    const message = safeErrorPayload.error || fallbackMessage;
     throw new EvidenceVaultClientError({
       message,
-      code: errorPayload.code,
-      recoveryAction: errorPayload.recoveryAction,
+      code: safeErrorPayload.code,
+      recoveryAction: safeErrorPayload.recoveryAction,
       duplicateEvidenceId: errorPayload.duplicateEvidenceId,
       duplicateStatus: errorPayload.duplicateStatus,
-      notLegalAdviceBoundary: errorPayload.notLegalAdviceBoundary
+      notLegalAdviceBoundary: safeErrorPayload.notLegalAdviceBoundary
     });
   }
 

@@ -267,11 +267,15 @@ describe("secure review journey", () => {
 
       if (path.endsWith("/model-runs") && init?.method === "POST") {
         return jsonResponse({
-          error: "Model Gateway boundary failed.",
-          errors: ["Model Gateway request must pass the Redaction Gate before provider calls."],
+          error:
+            "Model Gateway boundary failed with raw KYC passport data and api key=sk-live-abcdef1234567890abcdef1234567890.",
+          errors: [
+            "Model Gateway request must pass the Redaction Gate before provider calls.",
+            "Private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef must be removed."
+          ],
           runId: "model-gateway-run-blocked",
           retryState: "blocked-until-remediated",
-          remediationSteps: ["Pass the Redaction Gate before creating a server Model Gateway run."],
+          remediationSteps: ["Pass the Redaction Gate before final legal decision."],
           notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
         }, 400);
       }
@@ -290,6 +294,18 @@ describe("secure review journey", () => {
         fetcher
       })
     ).rejects.toThrow(/model-gateway-run-blocked.*Pass the Redaction Gate/i);
+
+    await expect(
+      runSecureReviewJourney({
+        project,
+        audit: analyzeAuditProfile(project),
+        evidenceItems: project.evidenceItems,
+        modelConnectReceipt,
+        apiBaseUrl: "https://api.lexproof.test",
+        humanReviewOwner: "Compliance",
+        fetcher
+      })
+    ).rejects.not.toThrow(/passport data|sk-live-abcdef|0x1234567890abcdef|final legal decision/i);
   });
 });
 

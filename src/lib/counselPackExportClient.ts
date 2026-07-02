@@ -1,5 +1,6 @@
 import type { CounselPackExportRecord } from "./phase2Types";
 import type { CounselPackVersionRecord } from "./counselPackVersions";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 
 export type CreateServerCounselPackExportInput = {
   workspaceId: string;
@@ -11,6 +12,9 @@ export type CreateServerCounselPackExportInput = {
 
 type ErrorResponse = {
   error?: string;
+  code?: string;
+  recoveryAction?: string;
+  notLegalAdviceBoundary?: string;
 };
 
 export async function createServerCounselPackExportRecord({
@@ -52,7 +56,8 @@ export async function createServerCounselPackExportRecord({
   const payload = (await response.json().catch(() => ({}))) as CounselPackExportRecord | ErrorResponse;
 
   if (!response.ok) {
-    throw new Error((payload as ErrorResponse).error || "Server Counsel Pack export record creation failed.");
+    const safeError = asSafeApiErrorResponse(payload);
+    throw new Error(safeError.error || "Server Counsel Pack export record creation failed.");
   }
 
   return payload as CounselPackExportRecord;

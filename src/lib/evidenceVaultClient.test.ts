@@ -235,6 +235,50 @@ describe("evidence vault client", () => {
     }
   });
 
+  it("redacts unsafe Evidence Vault API error payload text before surfacing recovery details", async () => {
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(url);
+      if (path.endsWith("/evidence") && init?.method === "POST") {
+        return jsonResponse(
+          {
+            error:
+              "Duplicate upload included raw KYC passport data and api key=sk-live-abcdef1234567890abcdef1234567890.",
+            errors: ["Private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef must be removed."],
+            code: "EVIDENCE_UPLOAD_BOUNDARY_FAILED",
+            recoveryAction: "Remove seed phrase material before final legal decision.",
+            notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+          },
+          400
+        );
+      }
+
+      throw new Error(`Unexpected request ${path}`);
+    });
+
+    await expect(
+      syncEvidenceLedgerToVault({
+        workspaceId: "workspace-vault",
+        evidenceItems: [evidenceItem],
+        apiBaseUrl: "https://api.lexproof.test",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("[redacted-raw-kyc]"),
+      code: "EVIDENCE_UPLOAD_BOUNDARY_FAILED",
+      recoveryAction: expect.stringContaining("[redacted-private-key]"),
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    await expect(
+      syncEvidenceLedgerToVault({
+        workspaceId: "workspace-vault",
+        evidenceItems: [evidenceItem],
+        apiBaseUrl: "https://api.lexproof.test",
+        fetcher
+      })
+    ).rejects.not.toThrow(/passport data|sk-live-abcdef|0x1234567890abcdef|seed phrase|final legal decision/i);
+  });
+
   it("uploads a metadata-only replacement for a rejected vault record", async () => {
     const uploadedForms: FormData[] = [];
     const superseded: EvidenceVaultRecordResponse = {

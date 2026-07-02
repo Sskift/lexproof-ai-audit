@@ -878,6 +878,8 @@ describe("App", () => {
         expect(within(submissionPack).getByText(/External model providers remain disabled/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Manifest hash/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Regulatory Source Pack hash/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/Demo Runbook hash/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText("Demo Runbook JSON", { exact: true })).toBeInTheDocument();
       });
 
       const downloadButton = await within(submissionPack).findByRole("button", { name: /Download Submission Pack JSON/i });
@@ -904,6 +906,7 @@ describe("App", () => {
             exportHandoffAllowed: false,
             manifestReady: true,
             regulatorySourcePackReady: true,
+            demoRunbookReady: false,
             notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
           }),
           notLegalAdviceBoundary:
@@ -911,7 +914,19 @@ describe("App", () => {
         })
       );
       expect(parsed.exportSafetySummary.nextActions).toEqual(
-        expect.arrayContaining(["Save a Counsel Pack version to lock Markdown and source-pack hashes."])
+        expect.arrayContaining([
+          "Save a Counsel Pack version to lock Markdown and source-pack hashes.",
+          "Complete Demo API preflight and download the Demo Runbook JSON before judge handoff."
+        ])
+      );
+      expect(parsed.demoRunbookHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.requiredAssets).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            label: "Demo Runbook JSON",
+            status: "needs-action"
+          })
+        ])
       );
       expect(parsed.knownLimitations.map((item: { id: string }) => item.id)).toEqual(
         expect.arrayContaining(["not-legal-advice", "local-first-storage", "simulated-anchor"])
@@ -3088,6 +3103,7 @@ describe("App", () => {
       const inventoryRegion = await screen.findByRole("region", { name: /Export Safety Inventory/i });
       const inventory = within(inventoryRegion);
       await waitFor(() => expect(inventory.getByText(/Source Freshness Board JSON/i)).toBeInTheDocument());
+      await waitFor(() => expect(inventory.getByText(/Demo Runbook JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
       expect(
         inventory.getByText(/Not legal advice. Export Safety Inventory is audit preparation handoff metadata only./i)
@@ -3103,6 +3119,7 @@ describe("App", () => {
       const payload = await readAppBlobText(payloadBlob);
       const parsed = JSON.parse(payload);
       const sourceFreshnessArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "source-freshness-board");
+      const demoRunbookArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-runbook");
 
       expect(sourceFreshnessArtifact).toEqual(
         expect.objectContaining({
@@ -3120,6 +3137,19 @@ describe("App", () => {
       expect(sourceFreshnessArtifact.warnings).toEqual(
         expect.arrayContaining(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."])
       );
+      expect(demoRunbookArtifact).toEqual(
+        expect.objectContaining({
+          label: "Demo Runbook JSON",
+          category: "submission",
+          exportMode: "metadata-only-json",
+          required: true,
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Demo runbooks are audit preparation demo metadata only."
+        })
+      );
+      expect(demoRunbookArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
       expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:export-safety-source-freshness");
       expect(click).toHaveBeenCalledTimes(1);

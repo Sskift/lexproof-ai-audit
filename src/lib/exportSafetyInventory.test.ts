@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createDataBoundaryReport } from "./dataBoundary";
 import {
   createExportSafetyInventory,
+  createDemoRunbookExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   exportSafetyInventoryJson,
   type ExportSafetyArtifactInput
@@ -159,6 +160,46 @@ describe("createExportSafetyInventory", () => {
     );
     expect(artifact?.warnings).toEqual(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."]);
     expect(inventory.exportHandoffAllowed).toBe(true);
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("adds Demo Runbook as a metadata-only required submission artifact with runbook hash", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-demo-runbook",
+      projectName: "Demo Runbook Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [
+        ...safeArtifacts(),
+        createDemoRunbookExportArtifact({
+          runbookHash: "e".repeat(64),
+          status: "ready",
+          apiPreflightStatus: "ready",
+          scenarioCount: 8,
+          screenshotCount: 24,
+          notLegalAdviceBoundary: "Not legal advice. Demo runbooks are audit preparation demo metadata only."
+        })
+      ],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "demo-runbook");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Demo Runbook JSON",
+        category: "submission",
+        exportMode: "metadata-only-json",
+        status: "ready",
+        required: true,
+        available: true,
+        artifactHash: "e".repeat(64),
+        metadataOnly: true,
+        rawContentIncluded: false,
+        notLegalAdviceBoundary: "Not legal advice. Demo runbooks are audit preparation demo metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([]);
+    expect(exportSafetyInventoryJson(inventory)).toContain("Demo Runbook JSON");
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
 });

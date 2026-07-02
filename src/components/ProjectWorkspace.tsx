@@ -1,6 +1,7 @@
 import { CirclePlus, Gavel, Layers3, Save } from "lucide-react";
 import type { AuditProfile, SubmissionFit } from "../lib/auditEngine";
 import type { DemoScenario, DemoScenarioValidationResult } from "../lib/demoScenarioLibrary";
+import type { DemoApiPreflight } from "../lib/demoReadiness";
 import type { ProjectProfile, ProjectValidationResult } from "../lib/projectModel";
 import { DemoReadinessPanel } from "./DemoReadinessPanel";
 import { DemoScenarioLibrary } from "./DemoScenarioLibrary";
@@ -11,6 +12,7 @@ type ProjectWorkspaceProps = {
   demoScenarios: DemoScenario[];
   demoScenarioValidation: DemoScenarioValidationResult;
   demoScreenshotRefs: string[];
+  demoApiPreflight: DemoApiPreflight;
   fit: SubmissionFit;
   validation: ProjectValidationResult;
   showValidation: boolean;
@@ -18,6 +20,7 @@ type ProjectWorkspaceProps = {
   onProjectChange: (project: ProjectProfile) => void;
   onLoadSample: (projectName: string) => void;
   onLoadDemoScenario: (scenarioId: string) => void;
+  onDemoApiPreflightChange: (preflight: DemoApiPreflight) => void;
   onNewProject: () => void;
   onSave: () => void;
 };
@@ -28,6 +31,7 @@ export function ProjectWorkspace({
   demoScenarios,
   demoScenarioValidation,
   demoScreenshotRefs,
+  demoApiPreflight,
   fit,
   validation,
   showValidation,
@@ -35,6 +39,7 @@ export function ProjectWorkspace({
   onProjectChange,
   onLoadSample,
   onLoadDemoScenario,
+  onDemoApiPreflightChange,
   onNewProject,
   onSave
 }: ProjectWorkspaceProps) {
@@ -85,6 +90,8 @@ export function ProjectWorkspace({
           scenarioValidation={demoScenarioValidation}
           scenarios={demoScenarios}
           screenshotRefs={demoScreenshotRefs}
+          apiPreflight={demoApiPreflight}
+          onApiPreflightChange={onDemoApiPreflightChange}
         />
 
         <div className="field-stack">

@@ -90,7 +90,8 @@ import {
   fetchDocumentParserPolicyReport
 } from "./lib/documentParserPolicyClient";
 import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoScenarioLibrary";
-import { createDemoReadinessReport } from "./lib/demoReadiness";
+import { createDemoReadinessReport, type DemoApiPreflight } from "./lib/demoReadiness";
+import { createDemoRunbook, type DemoRunbook } from "./lib/demoRunbook";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import {
@@ -98,6 +99,7 @@ import {
   type EvidenceRecertificationQueue
 } from "./lib/evidenceRecertification";
 import {
+  createDemoRunbookExportArtifact,
   createExportSafetyInventory,
   createSourceFreshnessBoardExportArtifact,
   type ExportSafetyArtifactInput,
@@ -226,7 +228,7 @@ import {
   type RiskEvidenceRequirement
 } from "./lib/riskEvidence";
 import { createSecurityReviewChecklist } from "./lib/securityReviewChecklist";
-import { createSubmissionPack, type SubmissionPack } from "./lib/submissionPack";
+import { createSubmissionPack, type SubmissionDemoRunbookSummary, type SubmissionPack } from "./lib/submissionPack";
 import { createWorkspaceActionQueue, type WorkspaceActionTarget } from "./lib/workspaceActionQueue";
 import { createWorkspaceJourney } from "./lib/workspaceJourney";
 
@@ -338,6 +340,8 @@ export default function App() {
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
+  const [demoApiPreflight, setDemoApiPreflight] = useState<DemoApiPreflight>({ status: "not-checked" });
+  const [demoRunbook, setDemoRunbook] = useState<DemoRunbook | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
@@ -479,10 +483,41 @@ export default function App() {
         scenarioValidation: demoScenarioValidation,
         scenarioCount: demoScenarioValidation.valid ? demoScenarios.length : 0,
         screenshotRefs: demoReadinessScreenshotRefs,
-        apiPreflight: { status: "not-checked" }
+        apiPreflight: demoApiPreflight
       }),
-    [demoScenarioValidation]
+    [demoApiPreflight, demoScenarioValidation]
   );
+  useEffect(() => {
+    let live = true;
+    setDemoRunbook(null);
+
+    createDemoRunbook({
+      readinessReport: demoReadinessReport,
+      scenarios: demoScenarioValidation.valid ? demoScenarios : []
+    }).then((nextRunbook) => {
+      if (live) {
+        setDemoRunbook(nextRunbook);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [demoReadinessReport, demoScenarioValidation.valid]);
+  const demoRunbookSummary = useMemo<SubmissionDemoRunbookSummary | null>(() => {
+    if (!demoRunbook) {
+      return null;
+    }
+
+    return {
+      runbookHash: demoRunbook.runbookHash,
+      status: demoRunbook.status,
+      apiPreflightStatus: demoRunbook.apiPreflightStatus,
+      scenarioCount: demoRunbook.scenarioCount,
+      screenshotCount: demoRunbook.screenshotRefs.length,
+      notLegalAdviceBoundary: demoRunbook.notLegalAdviceBoundary
+    };
+  }, [demoRunbook]);
   const evidenceTemplates = useMemo(() => listEvidenceTemplates(), []);
   const recommendedEvidenceTemplateIds = useMemo(
     () => recommendEvidenceTemplates(project).map((template) => template.id),
@@ -967,6 +1002,7 @@ export default function App() {
       manifest,
       regulatorySourcePack,
       demoReadinessReport,
+      demoRunbookSummary,
       dataBoundaryReport,
       counselPackVersionCount: currentCounselPackVersions.length,
       serverExportRecordCount: currentCounselPackServerExports.length,
@@ -986,6 +1022,7 @@ export default function App() {
     currentCounselPackVersions.length,
     dataBoundaryReport,
     demoReadinessReport,
+    demoRunbookSummary,
     fit,
     manifest,
     project,
@@ -1105,6 +1142,7 @@ export default function App() {
           integrationEnablementDossier?.notLegalAdviceBoundary ??
           "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
       },
+      createDemoRunbookExportArtifact(demoRunbookSummary),
       {
         id: "submission-pack",
         label: "Submission Pack JSON",
@@ -1123,6 +1161,7 @@ export default function App() {
     ];
   }, [
     currentCounselPackVersions,
+    demoRunbookSummary,
     grcTicketExport,
     integrationEnablementDossier,
     localCounselRoutingPlan,
@@ -1838,6 +1877,7 @@ export default function App() {
           demoScenarios={demoScenarioValidation.valid ? demoScenarios : []}
           demoScenarioValidation={demoScenarioValidation}
           demoScreenshotRefs={demoReadinessScreenshotRefs}
+          demoApiPreflight={demoApiPreflight}
           fit={fit}
           validation={validation}
           showValidation={showValidation}
@@ -1845,6 +1885,7 @@ export default function App() {
           onProjectChange={updateProject}
           onLoadSample={loadSample}
           onLoadDemoScenario={loadDemoScenario}
+          onDemoApiPreflightChange={setDemoApiPreflight}
           onNewProject={newProject}
           onSave={saveWorkspace}
         />

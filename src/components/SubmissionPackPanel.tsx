@@ -32,6 +32,7 @@ export function SubmissionPackPanel({ pack }: SubmissionPackPanelProps) {
             <SubmissionFact label="Pack hash" value={pack.packHash} />
             <SubmissionFact label="Manifest hash" value={pack.manifestHash || "missing"} />
             <SubmissionFact label="Regulatory Source Pack hash" value={pack.regulatorySourcePackHash || "missing"} />
+            <SubmissionFact label="Demo Runbook hash" value={pack.demoRunbookHash || "missing"} />
             <SubmissionFact label="Demo readiness" value={pack.demoReadinessStatus} />
             <SubmissionFact label="Export safety" value={formatExportSafetyStatus(pack.exportSafetySummary.status)} />
           </div>

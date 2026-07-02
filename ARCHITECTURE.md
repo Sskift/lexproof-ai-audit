@@ -204,8 +204,8 @@ demoScenarios, sampleProfiles, or blank project
   -> buildPrintableCounselPackHtml(title, markdown)
   -> createCounselPackVersionRecord(project, audit, manifest, markdown, reviews, previousVersions)
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
-  -> createSubmissionPack(project, audit, manifest, source pack, demo readiness) for judge-facing metadata artifact
-  -> createExportSafetyInventory(project, data boundary report, handoff artifacts) for Sources-level export readiness
+  -> createSubmissionPack(project, audit, manifest, source pack, demo readiness, demo runbook summary) for judge-facing metadata artifact
+  -> createExportSafetyInventory(project, data boundary report, handoff artifacts including Demo Runbook JSON) for Sources-level export readiness
   -> createCounselHandoffChecklist(export safety inventory, manifest/source/submission hashes, review/version/server export metadata)
   -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
@@ -672,10 +672,11 @@ Blocked findings disable Counsel Pack Markdown download, browser Print / Save PD
 
 Owns Sources-level export handoff readiness:
 
-- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Source Freshness Board, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, and Submission Pack.
+- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Source Freshness Board, Demo Runbook, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, and Submission Pack.
 - `createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard)` converts the Source Freshness Board into a metadata-only export artifact with board hash, review warning status, and the Not legal advice boundary for the Sources-level safety inventory.
+- `createDemoRunbookExportArtifact(summary)` converts the generated Demo Runbook summary into a required metadata-only submission artifact with runbook hash, preflight status, recovery action, and the Not legal advice boundary.
 - The inventory returns a stable SHA-256 inventory hash, artifact statuses, blocker counts, recovery actions, and `exportHandoffAllowed`.
-- `exportExportSafetyInventoryJson(inventory)` and `downloadExportSafetyInventoryJson(filename, inventory)` export redacted metadata only.
+- `exportSafetyInventoryJson(inventory)` and `downloadExportSafetyInventoryJson(filename, inventory)` export redacted metadata only.
 
 The inventory is a safety checklist for audit-prep handoff. It does not make legal conclusions, upload raw evidence, store secrets, perform KYC, or enable external adapters.
 
@@ -683,8 +684,8 @@ The inventory is a safety checklist for audit-prep handoff. It does not make leg
 
 Owns the judge-facing submission artifact:
 
-- `createSubmissionPack(input)` generates metadata-only Submission Pack JSON with project risk posture, manifest/source-pack hashes, demo readiness, model-connect status, export safety summary, required assets, hackathon mapping, known limitations, and a stable pack hash.
-- The export safety summary uses the current data-boundary report plus manifest, Regulatory Source Pack, Counsel Pack version, and server export-record readiness. It returns handoff status, blocker/warning counts, next actions, and the Not legal advice boundary without storing raw evidence or legal conclusions.
+- `createSubmissionPack(input)` generates metadata-only Submission Pack JSON with project risk posture, manifest/source-pack hashes, Demo Runbook hash, demo readiness, model-connect status, export safety summary, required assets, hackathon mapping, known limitations, and a stable pack hash.
+- The export safety summary uses the current data-boundary report plus manifest, Regulatory Source Pack, Demo Runbook, Counsel Pack version, and server export-record readiness. It returns handoff status, blocker/warning counts, next actions, and the Not legal advice boundary without storing raw evidence or legal conclusions.
 
 ### `src/lib/securityReviewChecklist.ts`
 

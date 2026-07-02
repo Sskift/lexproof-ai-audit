@@ -1,5 +1,6 @@
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
+import type { DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type ExportSafetyArtifactCategory =
@@ -79,6 +80,15 @@ export type CreateExportSafetyInventoryInput = {
   dataBoundaryReport: DataBoundaryReport;
   artifacts: ExportSafetyArtifactInput[];
   generatedAt?: string;
+};
+
+export type ExportSafetyDemoRunbookSummary = {
+  runbookHash?: string;
+  status?: DemoReadinessStatus;
+  apiPreflightStatus?: DemoReadinessCheckStatus;
+  scenarioCount?: number;
+  screenshotCount?: number;
+  notLegalAdviceBoundary?: string;
 };
 
 const NOT_LEGAL_ADVICE = "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only." as const;
@@ -181,6 +191,38 @@ export function createSourceFreshnessBoardExportArtifact(
     notLegalAdviceBoundary:
       sourceFreshnessBoard?.notLegalAdviceBoundary ??
       "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+  };
+}
+
+export function createDemoRunbookExportArtifact(
+  summary: ExportSafetyDemoRunbookSummary | null | undefined
+): ExportSafetyArtifactInput {
+  const hasRunbook = Boolean(summary?.runbookHash);
+  const warnings =
+    hasRunbook && (summary?.status !== "ready" || summary?.apiPreflightStatus !== "ready")
+      ? [
+          `Demo Runbook status is ${summary?.status ?? "missing"} with API preflight ${
+            summary?.apiPreflightStatus ?? "missing"
+          }; complete readiness before judge handoff.`
+        ]
+      : [];
+
+  return {
+    id: "demo-runbook",
+    label: "Demo Runbook JSON",
+    category: "submission",
+    exportMode: "metadata-only-json",
+    required: true,
+    available: hasRunbook,
+    artifactHash: summary?.runbookHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: hasRunbook
+      ? "Keep the Demo Runbook aligned with README, demo script, and current screenshots."
+      : "Open Judge Demo Readiness, complete API preflight, and download Demo Runbook JSON.",
+    notLegalAdviceBoundary:
+      summary?.notLegalAdviceBoundary ?? "Not legal advice. Demo runbooks are audit preparation demo metadata only."
   };
 }
 

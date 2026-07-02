@@ -14,11 +14,18 @@ type DemoReadinessPanelProps = {
   scenarioValidation: DemoScenarioValidationResult;
   scenarios: DemoScenario[];
   screenshotRefs: string[];
+  apiPreflight: DemoApiPreflight;
+  onApiPreflightChange: (preflight: DemoApiPreflight) => void;
 };
 
-export function DemoReadinessPanel({ scenarioValidation, scenarios, screenshotRefs }: DemoReadinessPanelProps) {
+export function DemoReadinessPanel({
+  scenarioValidation,
+  scenarios,
+  screenshotRefs,
+  apiPreflight,
+  onApiPreflightChange
+}: DemoReadinessPanelProps) {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
-  const [apiPreflight, setApiPreflight] = useState<DemoApiPreflight>({ status: "not-checked" });
   const [checking, setChecking] = useState(false);
   const [runbook, setRunbook] = useState<DemoRunbook | null>(null);
   const [buildingRunbook, setBuildingRunbook] = useState(false);
@@ -37,7 +44,7 @@ export function DemoReadinessPanel({ scenarioValidation, scenarios, screenshotRe
     setChecking(true);
 
     try {
-      setApiPreflight(await checkDemoApiPreflight({ apiBaseUrl }));
+      onApiPreflightChange(await checkDemoApiPreflight({ apiBaseUrl }));
     } finally {
       setChecking(false);
     }

@@ -88,6 +88,15 @@ const demoReadinessReport: DemoReadinessReport = {
   notLegalAdviceBoundary: "Not legal advice. Demo readiness checks are audit preparation readiness metadata only."
 };
 
+const demoRunbookSummary = {
+  runbookHash: "e".repeat(64),
+  status: "needs-api" as const,
+  apiPreflightStatus: "not-checked" as const,
+  scenarioCount: 8,
+  screenshotCount: 3,
+  notLegalAdviceBoundary: "Not legal advice. Demo runbooks are audit preparation demo metadata only."
+};
+
 const dataBoundaryReport = createDataBoundaryReport({
   project,
   evidenceItems: project.evidenceItems,
@@ -106,6 +115,7 @@ describe("createSubmissionPack", () => {
       manifest,
       regulatorySourcePack,
       demoReadinessReport,
+      demoRunbookSummary,
       dataBoundaryReport,
       counselPackVersionCount: 2,
       serverExportRecordCount: 1,
@@ -118,7 +128,18 @@ describe("createSubmissionPack", () => {
     expect(pack.riskLevel).toBe("critical");
     expect(pack.manifestHash).toBe(manifest.bundleHash);
     expect(pack.regulatorySourcePackHash).toBe(regulatorySourcePack.packHash);
+    expect(pack.demoRunbookHash).toBe(demoRunbookSummary.runbookHash);
+    expect(pack.exportSafetySummary.demoRunbookReady).toBe(false);
     expect(pack.requiredAssets.map((asset) => asset.label)).toEqual(expect.arrayContaining(["Public GitHub repository", "Demo video"]));
+    expect(pack.requiredAssets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Demo Runbook JSON",
+          status: "needs-action",
+          evidence: expect.stringContaining("not-checked")
+        })
+      ])
+    );
     expect(pack.requiredAssets.some((asset) => asset.status === "needs-action")).toBe(true);
     expect(pack.featureMappings.map((mapping) => mapping.criterion)).toEqual(
       expect.arrayContaining(["Legal/compliance workflow", "AI governance", "Web3 evidence provenance"])
@@ -139,6 +160,7 @@ describe("createSubmissionPack", () => {
       manifest,
       regulatorySourcePack,
       demoReadinessReport,
+      demoRunbookSummary,
       dataBoundaryReport,
       counselPackVersionCount: 1,
       serverExportRecordCount: 0,
@@ -191,13 +213,15 @@ describe("createSubmissionPack", () => {
         regulatorySourcePackReady: true,
         counselPackVersionReady: false,
         serverExportRecordReady: false,
+        demoRunbookReady: false,
         notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
       })
     );
     expect(pack.exportSafetySummary.nextActions).toEqual(
       expect.arrayContaining([
         "Save a Counsel Pack version to lock Markdown and source-pack hashes.",
-        "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running."
+        "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running.",
+        "Complete Demo API preflight and download the Demo Runbook JSON before judge handoff."
       ])
     );
     expect(exportSubmissionPackJson(pack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|private key 0x/i);
@@ -225,6 +249,7 @@ describe("createSubmissionPack", () => {
       manifest: null,
       regulatorySourcePack: null,
       demoReadinessReport,
+      demoRunbookSummary,
       dataBoundaryReport: createDataBoundaryReport({
         project: unsafeProject,
         evidenceItems: unsafeProject.evidenceItems,

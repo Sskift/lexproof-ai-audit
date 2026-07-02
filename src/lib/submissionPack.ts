@@ -1,7 +1,7 @@
 import type { AuditResult, SubmissionFit } from "./auditEngine";
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactClassifiedText } from "./dataClassification";
-import type { DemoReadinessReport } from "./demoReadiness";
+import type { DemoReadinessCheckStatus, DemoReadinessReport } from "./demoReadiness";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
 import type { RegulatorySourcePack } from "./regulatorySourcePack";
@@ -40,8 +40,18 @@ export type SubmissionExportSafetySummary = {
   regulatorySourcePackReady: boolean;
   counselPackVersionReady: boolean;
   serverExportRecordReady: boolean;
+  demoRunbookReady: boolean;
   nextActions: string[];
   notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only.";
+};
+
+export type SubmissionDemoRunbookSummary = {
+  runbookHash: string;
+  status: DemoReadinessReport["status"];
+  apiPreflightStatus: DemoReadinessCheckStatus;
+  scenarioCount: number;
+  screenshotCount: number;
+  notLegalAdviceBoundary: string;
 };
 
 export type SubmissionPack = {
@@ -58,6 +68,7 @@ export type SubmissionPack = {
   evidenceItemCount: number;
   manifestHash: string;
   regulatorySourcePackHash: string;
+  demoRunbookHash: string;
   sourceCount: number;
   evidenceGapCount: number;
   counselPackVersionCount: number;
@@ -78,6 +89,7 @@ export type CreateSubmissionPackInput = {
   manifest: EvidenceManifest | null;
   regulatorySourcePack: RegulatorySourcePack | null;
   demoReadinessReport: DemoReadinessReport;
+  demoRunbookSummary?: SubmissionDemoRunbookSummary | null;
   dataBoundaryReport: DataBoundaryReport;
   counselPackVersionCount: number;
   serverExportRecordCount: number;
@@ -92,6 +104,7 @@ export async function createSubmissionPack(input: CreateSubmissionPackInput): Pr
   const projectName = sanitize(input.project.projectName || "Untitled project");
   const manifestHash = sanitizeHash(input.manifest?.bundleHash ?? "");
   const regulatorySourcePackHash = sanitizeHash(input.regulatorySourcePack?.packHash ?? "");
+  const demoRunbookHash = sanitizeHash(input.demoRunbookSummary?.runbookHash ?? "");
   const exportSafetySummary = createExportSafetySummary(input);
   const requiredAssets = createRequiredAssets(input);
   const featureMappings = createFeatureMappings(input);
@@ -111,6 +124,7 @@ export async function createSubmissionPack(input: CreateSubmissionPackInput): Pr
     evidenceItemCount: input.manifest?.itemCount ?? input.project.evidenceItems.length,
     manifestHash,
     regulatorySourcePackHash,
+    demoRunbookHash,
     sourceCount: input.regulatorySourcePack?.sourceCount ?? input.audit.sourcePack.length,
     evidenceGapCount: input.regulatorySourcePack?.evidenceGapCount ?? 0,
     counselPackVersionCount: input.counselPackVersionCount,
@@ -135,7 +149,8 @@ export function exportSubmissionPackJson(pack: SubmissionPack): string {
 }
 
 function createRequiredAssets(input: CreateSubmissionPackInput): SubmissionPackAsset[] {
-  return input.fit.requiredAssets.map((asset) => {
+  return [
+    ...input.fit.requiredAssets.map((asset) => {
     const normalized = asset.toLowerCase();
 
     if (normalized.includes("github")) {
@@ -176,7 +191,9 @@ function createRequiredAssets(input: CreateSubmissionPackInput): SubmissionPackA
     }
 
     return createAsset(asset, "needs-action", "Asset is tracked in the submission checklist.", "Confirm this asset before final DoraHacks submission.");
-  });
+    }),
+    createDemoRunbookAsset(input)
+  ];
 }
 
 function createAsset(label: string, status: SubmissionPackStatus, evidence: string, recoveryAction: string): SubmissionPackAsset {
@@ -193,16 +210,19 @@ function createExportSafetySummary(input: CreateSubmissionPackInput): Submission
   const regulatorySourcePackReady = Boolean(input.regulatorySourcePack?.packHash);
   const counselPackVersionReady = input.counselPackVersionCount > 0;
   const serverExportRecordReady = input.serverExportRecordCount > 0;
+  const demoRunbookReady = isDemoRunbookReady(input.demoRunbookSummary);
   const missingActions = [
     !manifestReady ? "Generate an Evidence Manifest before judge or counsel handoff." : "",
     !regulatorySourcePackReady ? "Open Counsel Pack or Sources after Regulatory Source Pack calculation completes." : "",
     !counselPackVersionReady ? "Save a Counsel Pack version to lock Markdown and source-pack hashes." : "",
-    !serverExportRecordReady ? "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running." : ""
+    !serverExportRecordReady ? "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running." : "",
+    !demoRunbookReady ? "Complete Demo API preflight and download the Demo Runbook JSON before judge handoff." : ""
   ];
   const boundaryActions =
     input.dataBoundaryReport.status === "clean" ? [] : input.dataBoundaryReport.remediation.map(sanitize);
   const nextActions = unique([...missingActions, ...boundaryActions].map(sanitize).filter(Boolean));
-  const missingRequiredArtifact = !manifestReady || !regulatorySourcePackReady || !counselPackVersionReady || !serverExportRecordReady;
+  const missingRequiredArtifact =
+    !manifestReady || !regulatorySourcePackReady || !counselPackVersionReady || !serverExportRecordReady || !demoRunbookReady;
   const status = createExportSafetyStatus(input.dataBoundaryReport, missingRequiredArtifact);
 
   return {
@@ -215,9 +235,37 @@ function createExportSafetySummary(input: CreateSubmissionPackInput): Submission
     regulatorySourcePackReady,
     counselPackVersionReady,
     serverExportRecordReady,
+    demoRunbookReady,
     nextActions: nextActions.length > 0 ? nextActions : ["Submission export safety is ready for metadata-only judge handoff."],
     notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
   };
+}
+
+function createDemoRunbookAsset(input: CreateSubmissionPackInput): SubmissionPackAsset {
+  const summary = input.demoRunbookSummary;
+
+  if (!summary?.runbookHash) {
+    return createAsset(
+      "Demo Runbook JSON",
+      "needs-action",
+      "Demo Runbook JSON has not been generated for the current judge path.",
+      "Open Judge Demo Readiness, complete API preflight, and download Demo Runbook JSON before judging."
+    );
+  }
+
+  const status = isDemoRunbookReady(summary) ? "ready" : "needs-action";
+  return createAsset(
+    "Demo Runbook JSON",
+    status,
+    `Runbook ${shortHash(summary.runbookHash)} covers ${summary.scenarioCount} scenarios, ${summary.screenshotCount} screenshots, API preflight ${summary.apiPreflightStatus}.`,
+    status === "ready"
+      ? "Keep the runbook aligned with README, demo script, and current screenshots."
+      : "Complete Demo API preflight and download the Demo Runbook JSON before judge handoff."
+  );
+}
+
+function isDemoRunbookReady(summary: SubmissionDemoRunbookSummary | null | undefined): boolean {
+  return Boolean(summary?.runbookHash) && summary?.status === "ready" && summary?.apiPreflightStatus === "ready";
 }
 
 function createExportSafetyStatus(
@@ -335,7 +383,7 @@ function createJudgeRunbook(input: CreateSubmissionPackInput): string[] {
     "Validate Model Connect with the mock local reviewer and inspect Redaction Gate status.",
     "Review or add metadata-only evidence, then confirm the Evidence Manifest bundle hash.",
     "Open Risk Audit, Human Review, Secure Review Journey, Counsel Pack, and Sources.",
-    "Download Counsel Pack Markdown, Regulatory Source Pack JSON, Evidence Manifest JSON, and this Submission Pack JSON."
+    "Download Counsel Pack Markdown, Regulatory Source Pack JSON, Evidence Manifest JSON, Demo Runbook JSON, and this Submission Pack JSON."
   ].map(sanitize);
 }
 

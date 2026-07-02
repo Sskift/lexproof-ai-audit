@@ -5941,6 +5941,181 @@ textarea {
   margin-top: 5px;
 }
 
+.counsel-handoff-checklist {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.counsel-handoff-checklist.ready {
+  border-color: #a9d5c4;
+  background: #f3fbf7;
+}
+
+.counsel-handoff-checklist.needs-review,
+.counsel-handoff-checklist.needs-action {
+  border-color: #e7c673;
+  background: #fffbeb;
+}
+
+.counsel-handoff-checklist.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.handoff-checklist-header,
+.handoff-checklist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.handoff-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.handoff-status.ready {
+  background: #dff4eb;
+  color: #0c5f55;
+}
+
+.handoff-status.needs-review,
+.handoff-status.needs-action {
+  background: #fff0bd;
+  color: #7a4e00;
+}
+
+.handoff-status.blocked {
+  background: #fee4df;
+  color: #9f241a;
+}
+
+.handoff-checklist-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.handoff-checklist-summary > div,
+.handoff-checklist-item {
+  min-width: 0;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.handoff-checklist-summary > div {
+  padding: 10px;
+}
+
+.handoff-checklist-summary .wide {
+  grid-column: span 2;
+}
+
+.handoff-checklist-summary span {
+  display: block;
+  margin-bottom: 5px;
+  color: #41505e;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.handoff-checklist-summary code {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #102a43;
+  font-size: 0.82rem;
+}
+
+.handoff-checklist-actions {
+  padding: 10px 12px;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.handoff-checklist-actions strong {
+  color: #172431;
+}
+
+.handoff-checklist-actions span {
+  color: #657382;
+  font-size: 0.84rem;
+}
+
+.handoff-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.handoff-checklist-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-left-width: 4px;
+}
+
+.handoff-checklist-item.ready {
+  border-left-color: #1f9d70;
+}
+
+.handoff-checklist-item.needs-review,
+.handoff-checklist-item.needs-action {
+  border-left-color: #d6a500;
+}
+
+.handoff-checklist-item.blocked {
+  border-left-color: #d64535;
+}
+
+.handoff-checklist-item header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.handoff-checklist-item strong {
+  color: #172431;
+}
+
+.handoff-checklist-item header span {
+  border-radius: 999px;
+  background: #eef2f5;
+  color: #41505e;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.handoff-checklist-item p {
+  margin: 0;
+  color: #445361;
+  line-height: 1.4;
+}
+
+.handoff-checklist-item small {
+  color: #657382;
+  line-height: 1.35;
+}
+
 .counsel-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -6736,6 +6911,8 @@ textarea {
   .export-template-header,
   .export-template-grid,
   .data-boundary-metrics,
+  .handoff-checklist-summary,
+  .handoff-checklist-grid,
   .event-review-controls,
   .workflow-mode,
   .workflow-steps,
@@ -6847,6 +7024,10 @@ textarea {
   }
 
   .data-boundary-metrics .wide {
+    grid-column: span 1;
+  }
+
+  .handoff-checklist-summary .wide {
     grid-column: span 1;
   }
 

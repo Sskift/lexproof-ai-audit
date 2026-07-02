@@ -3067,6 +3067,79 @@ describe("App", () => {
     }
   });
 
+  it("shows and downloads a Counsel Handoff Checklist from the Counsel Pack", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn(() => "blob:counsel-handoff-checklist");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      await act(async () => {
+        render(<App />);
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      });
+
+      const checklistRegion = await screen.findByRole("region", { name: /Counsel Handoff Checklist/i });
+      let checklist = within(checklistRegion);
+      expect(
+        checklist.getByText(/Not legal advice. Counsel handoff checklists are audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+      await waitFor(() =>
+        expect(
+          within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i })).getByRole("button", {
+            name: /Download Handoff Checklist JSON/i
+          })
+        ).toBeInTheDocument()
+      );
+      checklist = within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i }));
+      expect(checklist.getAllByText(/Handoff blocked|Handoff needs action|Handoff needs review/i).length).toBeGreaterThan(0);
+      expect(checklist.getAllByText(/Counsel Pack Version/i).length).toBeGreaterThan(0);
+      expect(checklist.getAllByText(/Export Safety Inventory/i).length).toBeGreaterThan(0);
+      expect(checklist.getAllByText(/Evidence Manifest/i).length).toBeGreaterThan(0);
+
+      await act(async () => {
+        fireEvent.click(checklist.getByRole("button", { name: /Download Handoff Checklist JSON/i }));
+      });
+
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Counsel Handoff Checklist did not create a blob.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          checklistVersion: "lexproof-counsel-handoff-checklist-v1",
+          handoffAllowed: false,
+          notLegalAdviceBoundary: "Not legal advice. Counsel handoff checklists are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.checklistHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.items.length).toBeGreaterThanOrEqual(6);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-handoff-checklist");
+      expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("requests missing risk evidence into the Evidence Ledger as an in-progress item", async () => {
     render(<App />);
 

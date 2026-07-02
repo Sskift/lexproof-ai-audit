@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Anchor, CheckCircle2, Download, FileText, History, Printer, Save, ServerCog, ShieldAlert } from "lucide-react";
+import { Anchor, CheckCircle2, ClipboardCheck, Download, FileText, History, Printer, Save, ServerCog, ShieldAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   createSimulatedAnchorReceipt,
@@ -8,6 +8,12 @@ import {
 } from "../lib/anchorReceipt";
 import { CounselQuestionsPanel } from "./CounselQuestionsPanel";
 import { downloadMarkdownFile, printCounselPackPdf } from "../lib/counselPack";
+import {
+  downloadCounselHandoffChecklistJson,
+  type CounselHandoffChecklist,
+  type CounselHandoffChecklistItemStatus,
+  type CounselHandoffChecklistStatus
+} from "../lib/counselHandoffChecklist";
 import {
   downloadCounselPackVersionJson,
   type CounselPackVersionRecord
@@ -36,6 +42,7 @@ type CounselPackPanelProps = {
   selectedExportTemplate: CounselPackTemplate;
   recommendedExportTemplateId: CounselPackTemplateId;
   dataBoundaryReport: DataBoundaryReport;
+  handoffChecklist: CounselHandoffChecklist | null;
   counselPackVersions: CounselPackVersionRecord[];
   serverExportRecords: CounselPackExportRecord[];
   onSelectExportTemplate: (id: CounselPackTemplateId) => void;
@@ -59,6 +66,7 @@ export function CounselPackPanel({
   selectedExportTemplate,
   recommendedExportTemplateId,
   dataBoundaryReport,
+  handoffChecklist,
   counselPackVersions,
   serverExportRecords,
   onSelectExportTemplate,
@@ -144,6 +152,8 @@ export function CounselPackPanel({
       />
 
       <ExportSafetyGatePanel report={dataBoundaryReport} />
+
+      <CounselHandoffChecklistPanel projectName={projectName} checklist={handoffChecklist} />
 
       <CounselQuestionsPanel
         questions={counselQuestions}
@@ -260,6 +270,77 @@ export function CounselPackPanel({
   );
 }
 
+function CounselHandoffChecklistPanel({
+  projectName,
+  checklist
+}: {
+  projectName: string;
+  checklist: CounselHandoffChecklist | null;
+}) {
+  const visibleItems = checklist?.items.slice(0, 7) ?? [];
+
+  return (
+    <section
+      className={`counsel-handoff-checklist ${checklist?.overallStatus ?? "needs-action"}`}
+      role="region"
+      aria-label="Counsel Handoff Checklist"
+    >
+      <div className="handoff-checklist-header">
+        <div className="panel-title compact-title">
+          <ClipboardCheck size={17} aria-hidden="true" />
+          <h3>Counsel Handoff Checklist</h3>
+        </div>
+        <span className={`handoff-status ${checklist?.overallStatus ?? "needs-action"}`}>
+          {checklist ? formatHandoffStatus(checklist.overallStatus) : "Handoff calculating"}
+        </span>
+      </div>
+      <p className="section-note">
+        {checklist?.notLegalAdviceBoundary ??
+          "Not legal advice. Counsel handoff checklists are audit preparation workflow metadata only."}
+      </p>
+
+      {!checklist ? <p className="empty-state">Counsel handoff checklist is calculating from current export metadata.</p> : null}
+
+      {checklist ? (
+        <>
+          <div className="handoff-checklist-summary">
+            <ChecklistFact label="Checklist hash" value={checklist.checklistHash} wide />
+            <ChecklistFact label="Handoff" value={checklist.handoffAllowed ? "allowed" : "blocked"} />
+            <ChecklistFact label="Ready" value={String(checklist.readyCount)} />
+            <ChecklistFact label="Needs review" value={String(checklist.needsReviewCount)} />
+            <ChecklistFact label="Needs action" value={String(checklist.needsActionCount)} />
+            <ChecklistFact label="Blocked" value={String(checklist.blockedCount)} />
+          </div>
+          <div className="handoff-checklist-actions">
+            <strong>{checklist.handoffAllowed ? "Handoff allowed" : formatHandoffStatus(checklist.overallStatus)}</strong>
+            <span>{checklist.itemCount} artifact and workflow checks</span>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => downloadCounselHandoffChecklistJson(`${slug(projectName)}-handoff-checklist.json`, checklist)}
+            >
+              <Download size={16} aria-hidden="true" />
+              Download Handoff Checklist JSON
+            </button>
+          </div>
+          <div className="handoff-checklist-grid">
+            {visibleItems.map((item) => (
+              <article key={item.id} className={`handoff-checklist-item ${item.status}`}>
+                <header>
+                  <strong>{item.label}</strong>
+                  <span>{formatItemStatus(item.status)}</span>
+                </header>
+                <p>{item.evidence}</p>
+                <small>{item.recoveryAction}</small>
+              </article>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
 function ExportTemplatePanel({
   templates,
   selectedTemplate,
@@ -365,6 +446,38 @@ function BoundaryFact({ label, value, wide = false }: { label: string; value: st
       <strong>{value}</strong>
     </div>
   );
+}
+
+function ChecklistFact({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return (
+    <div className={wide ? "wide" : ""}>
+      <span>{label}</span>
+      <code>{value}</code>
+    </div>
+  );
+}
+
+function formatHandoffStatus(status: CounselHandoffChecklistStatus): string {
+  if (status === "needs-action") {
+    return "Handoff needs action";
+  }
+  if (status === "needs-review") {
+    return "Handoff needs review";
+  }
+  if (status === "blocked") {
+    return "Handoff blocked";
+  }
+  return "Handoff ready";
+}
+
+function formatItemStatus(status: CounselHandoffChecklistItemStatus): string {
+  if (status === "needs-action") {
+    return "needs action";
+  }
+  if (status === "needs-review") {
+    return "needs review";
+  }
+  return status;
 }
 
 function TemplateList({ title, items }: { title: string; items: string[] }) {

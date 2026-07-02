@@ -1,0 +1,221 @@
+import { describe, expect, it } from "vitest";
+import type { CounselPackVersionRecord } from "./counselPackVersions";
+import type { CounselReviewItem } from "./counselReview";
+import {
+  createCounselHandoffChecklist,
+  exportCounselHandoffChecklistJson,
+  type CounselHandoffChecklistInput
+} from "./counselHandoffChecklist";
+import type { ExportSafetyInventory } from "./exportSafetyInventory";
+import type { CounselPackExportRecord } from "./phase2Types";
+
+describe("createCounselHandoffChecklist", () => {
+  it("creates a stable counsel handoff hash and blocks stale export versions with clear recovery", async () => {
+    const first = await createCounselHandoffChecklist({
+      ...baseInput(),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const second = await createCounselHandoffChecklist({
+      ...baseInput({ reverseReviews: true }),
+      generatedAt: "2026-07-02T02:00:00.000Z"
+    });
+
+    expect(first.checklistHash).toBe(second.checklistHash);
+    expect(first.checklistHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(first).toEqual(
+      expect.objectContaining({
+        checklistVersion: "lexproof-counsel-handoff-checklist-v1",
+        overallStatus: "needs-review",
+        handoffAllowed: false,
+        blockedCount: 0,
+        needsReviewCount: 3,
+        needsActionCount: 0,
+        notLegalAdviceBoundary: "Not legal advice. Counsel handoff checklists are audit preparation workflow metadata only."
+      })
+    );
+    expect(first.items.map((item) => item.id)).toEqual([
+      "counsel-pack-version",
+      "counsel-review-status",
+      "evidence-manifest",
+      "export-safety-inventory",
+      "regulatory-source-pack",
+      "server-export-record",
+      "submission-pack"
+    ]);
+    expect(first.nextActions).toEqual(
+      expect.arrayContaining([
+        "Counsel Pack Version: Save a fresh Counsel Pack version after the latest manifest and source pack hashes are available.",
+        "Counsel Review Status: Route ready and not-started review rows through counsel or compliance review before final handoff.",
+        "Server Export Record: Create a metadata-only server export record after the latest Counsel Pack version is saved."
+      ])
+    );
+  });
+
+  it("blocks handoff when export safety or review status is blocked without legal conclusion wording", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      exportSafetyInventory: {
+        ...readyInventory(),
+        overallStatus: "blocked",
+        exportHandoffAllowed: false,
+        inventoryHash: "9".repeat(64),
+        blockers: ["Unsafe evidence includes private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."]
+      },
+      counselReviews: [
+        {
+          ...reviewedItem(),
+          id: "review-blocked",
+          title: "Token custody controls",
+          status: "blocked",
+          notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow only.",
+          reviewerNote: "raw KYC packet and private key evidence must be removed before review."
+        }
+      ],
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const json = exportCounselHandoffChecklistJson(checklist);
+
+    expect(checklist.overallStatus).toBe("blocked");
+    expect(checklist.handoffAllowed).toBe(false);
+    expect(checklist.blockedCount).toBeGreaterThanOrEqual(2);
+    expect(checklist.nextActions).toEqual(
+      expect.arrayContaining([
+        "Export Safety Inventory: Resolve Export Safety Inventory blockers before counsel or judge handoff.",
+        "Counsel Review Status: Resolve blocked review items before export reliance."
+      ])
+    );
+    expect(json).toContain("[redacted-private-key]");
+    expect(json).not.toContain("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|legally approved|raw KYC packet/i);
+    expect(json).toContain("Not legal advice");
+  });
+});
+
+function baseInput(options: { reverseReviews?: boolean } = {}): CounselHandoffChecklistInput {
+  const reviews = [
+    reviewedItem(),
+    {
+      ...reviewedItem(),
+      id: "review-ready-for-counsel",
+      title: "Marketing claims review",
+      status: "ready-for-counsel" as const,
+      reviewerNote: "Ready for counsel queue; no legal conclusion recorded."
+    }
+  ];
+
+  return {
+    projectId: "handoff-project",
+    projectName: "Handoff Desk",
+    manifestHash: "a".repeat(64),
+    regulatorySourcePackHash: "b".repeat(64),
+    submissionPackHash: "c".repeat(64),
+    exportSafetyInventory: readyInventory(),
+    counselReviews: options.reverseReviews ? reviews.reverse() : reviews,
+    counselPackVersions: [
+      {
+        ...latestVersion(),
+        manifestHash: "old-manifest-hash",
+        regulatorySourcePack: { packHash: "old-source-pack-hash" } as CounselPackVersionRecord["regulatorySourcePack"]
+      }
+    ],
+    serverExportRecords: [serverExportRecord()]
+  };
+}
+
+function reviewedItem(): CounselReviewItem {
+  return {
+    id: "review-ready",
+    projectId: "handoff-project",
+    flagId: "flag-token-custody",
+    title: "Token custody controls",
+    severity: "critical",
+    owner: "Compliance",
+    priority: "P0",
+    status: "reviewed",
+    reviewer: "Compliance",
+    reviewerNote: "Reviewed for audit preparation; no legal approval recorded.",
+    evidenceSummary: "Evidence received",
+    updatedAt: "2026-07-02T00:00:00.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow only."
+  };
+}
+
+function readyInventory(): ExportSafetyInventory {
+  return {
+    inventoryVersion: "lexproof-export-safety-inventory-v1",
+    workspaceId: "handoff-project",
+    projectName: "Handoff Desk",
+    generatedAt: "2026-07-02T00:00:00.000Z",
+    inventoryHash: "d".repeat(64),
+    overallStatus: "ready",
+    exportHandoffAllowed: true,
+    artifactCount: 5,
+    readyCount: 5,
+    needsReviewCount: 0,
+    missingRequiredCount: 0,
+    blockedCount: 0,
+    boundaryStatus: "clean",
+    boundaryBlockerCount: 0,
+    boundaryWarningCount: 0,
+    detectedClasses: [],
+    artifacts: [],
+    blockers: [],
+    nextActions: ["Keep exports metadata-only and re-run inventory before external sharing."],
+    notLegalAdviceBoundary: "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only."
+  };
+}
+
+function latestVersion(): CounselPackVersionRecord {
+  return {
+    recordVersion: "lexproof-counsel-pack-version-v1",
+    id: "counsel-version-1",
+    projectId: "handoff-project",
+    projectName: "Handoff Desk",
+    version: 1,
+    title: "Handoff Desk Counsel Pack",
+    manifestHash: "a".repeat(64),
+    markdownHash: "e".repeat(64),
+    markdownSize: 2048,
+    riskLevel: "high",
+    reviewSummary: { total: 2, reviewed: 1, readyForCounsel: 1, needsEvidence: 0, blocked: 0, open: 1 },
+    reviewStatuses: [
+      {
+        flagId: "flag-token-custody",
+        title: "Token custody controls",
+        status: "reviewed",
+        reviewer: "Compliance",
+        evidenceSummary: "Evidence received"
+      }
+    ],
+    sourcePack: [],
+    regulatorySourcePack: { packHash: "b".repeat(64) } as CounselPackVersionRecord["regulatorySourcePack"],
+    exportedAt: "2026-07-02T00:00:00.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
+  };
+}
+
+function serverExportRecord(): CounselPackExportRecord {
+  return {
+    recordVersion: "lexproof-counsel-pack-export-record-v1",
+    id: "server-export-1",
+    workspaceId: "handoff-project",
+    exportType: "counsel-pack",
+    version: 1,
+    projectName: "Handoff Desk",
+    title: "Handoff Desk Counsel Pack",
+    artifactName: "handoff-desk-counsel-pack.md",
+    format: "markdown",
+    status: "ready",
+    manifestHash: "a".repeat(64),
+    artifactHash: "e".repeat(64),
+    artifactSize: 2048,
+    riskLevel: "high",
+    sourcePackHash: "b".repeat(64),
+    sourceReviewStatus: "current",
+    sourceCount: 3,
+    reviewSummary: { total: 2, reviewed: 1, readyForCounsel: 1, needsEvidence: 0, blocked: 0, open: 1 },
+    createdBy: "Compliance",
+    createdAt: "2026-07-02T00:00:00.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."
+  };
+}

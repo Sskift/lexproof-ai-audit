@@ -129,6 +129,7 @@ lexproof-ai-audit/
       dataBoundary.ts        # Export Safety Gate classification, redaction, and blocker report
       counselPackTemplates.ts # Counsel Pack template definitions and recommendation logic
       counselPackVersions.ts # Counsel Pack export version metadata, hashes, and diffs
+      counselHandoffChecklist.ts # Final Counsel Pack handoff readiness checklist and hash
       counselPackExportClient.ts # Browser client for Phase 2 Counsel Pack export records
       auditLogFilters.ts    # Server audit-log query normalization and filtering
       securityReviewChecklist.ts # Integration security readiness checklist
@@ -202,6 +203,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
   -> createSubmissionPack(project, audit, manifest, source pack, demo readiness) for judge-facing metadata artifact
   -> createExportSafetyInventory(project, data boundary report, handoff artifacts) for Sources-level export readiness
+  -> createCounselHandoffChecklist(export safety inventory, manifest/source/submission hashes, review/version/server export metadata)
   -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
 
@@ -740,6 +742,16 @@ Owns Counsel Pack export version metadata:
 - `exportCounselPackVersionJson(record)` and `downloadCounselPackVersionJson(filename, record)` export metadata-only JSON.
 
 Version records intentionally do not store raw Markdown content, credentials, raw KYC, personal data, or legal conclusions. They are audit preparation export metadata only.
+
+### `src/lib/counselHandoffChecklist.ts`
+
+Owns final Counsel Pack handoff readiness:
+
+- `createCounselHandoffChecklist(input)` combines Export Safety Inventory, Evidence Manifest hash, Regulatory Source Pack hash, Submission Pack hash, Counsel Review Status, latest local Counsel Pack Version, and latest server export record into one readiness checklist.
+- The checklist returns a stable SHA-256 checklist hash, per-item status, blocker/review/action counts, next actions, and the Not legal advice boundary.
+- `exportCounselHandoffChecklistJson(checklist)` and `downloadCounselHandoffChecklistJson(filename, checklist)` export redacted metadata-only JSON.
+
+The checklist is an audit-prep handoff artifact. It does not create legal approval, store raw Markdown/PDF content, upload evidence, store credentials, process KYC, or enable external adapters.
 
 ### `src/lib/counselPackExportClient.ts`
 

@@ -83,6 +83,7 @@ Key evidence:
 - Counsel Pack export templates for launch readiness, RWA/tokenized asset review, AI governance review, custody controls, and marketing claims, with template-specific review agendas and evidence focus in the Markdown packet.
 - Counsel Pack version history with manifest hash, Markdown hash, source snapshot, Regulatory Source Pack hash, source review status, review status summary, diff from the previous export, and metadata-only JSON download.
 - Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, Regulatory Source Pack hash, source review status, and audit-log entries without raw Markdown, KYC, personal data, or credentials. Blocked data-boundary findings disable Markdown/PDF, manifest JSON, simulated anchor, version save, and server export actions until remediated.
+- Counsel Handoff Checklist in Counsel Pack, with a stable checklist hash, export safety status, evidence manifest/source pack/submission pack readiness, review status, saved version state, server export-record state, and downloadable metadata-only JSON. Not legal advice.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, export safety summary, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
 - Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Source Freshness Board hash/status, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
@@ -336,6 +337,10 @@ Server export records let the demo create a Phase 2 API-backed Counsel Pack hand
 
 ![Counsel Pack server export record](docs/assets/screenshots/counsel-pack-server-export-record.png)
 
+The Counsel Handoff Checklist condenses Export Safety Inventory, Evidence Manifest, Regulatory Source Pack, Counsel Review Status, Counsel Pack Version, server export record, and Submission Pack readiness into one downloadable metadata-only handoff JSON with a stable checklist hash. Not legal advice.
+
+![Counsel Handoff Checklist](docs/assets/screenshots/counsel-handoff-checklist.png)
+
 Sources now includes a generated Submission Pack JSON artifact for judges. It summarizes demo readiness, export safety summary, required assets, feature-to-theme mapping, known limitations, manifest hash, Regulatory Source Pack hash, and the Not legal advice boundary.
 
 ![Submission Pack artifact](docs/assets/screenshots/submission-pack.png)
@@ -359,7 +364,7 @@ The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.
 5. Deterministic Risk Audit with source-linked issue cards.
 6. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
 7. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
-8. Counsel Pack template selection, Source Review Ledger API sync, Source Update Approval Queue preview, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
+8. Counsel Pack template selection, Source Review Ledger API sync, Source Update Approval Queue preview, Counsel Handoff Checklist JSON, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
 9. Sources tab Export Safety Inventory and Submission Pack JSON exports with inventory/pack hashes, export safety summary, known limitations, demo readiness, and hackathon mapping.
 
 Screenshots for the exact demo path:

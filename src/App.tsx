@@ -46,6 +46,10 @@ import {
   type CounselPackVersionRecord
 } from "./lib/counselPackVersions";
 import {
+  createCounselHandoffChecklist,
+  type CounselHandoffChecklist
+} from "./lib/counselHandoffChecklist";
+import {
   createDefaultCounselReviewItems,
   mergeCounselReviewQueues,
   type CounselReviewItem
@@ -330,6 +334,7 @@ export default function App() {
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
   const [exportSafetyInventory, setExportSafetyInventory] = useState<ExportSafetyInventory | null>(null);
+  const [counselHandoffChecklist, setCounselHandoffChecklist] = useState<CounselHandoffChecklist | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
@@ -1146,6 +1151,40 @@ export default function App() {
       live = false;
     };
   }, [dataBoundaryReport, exportSafetyArtifacts, project.id, project.projectName]);
+
+  useEffect(() => {
+    let live = true;
+
+    createCounselHandoffChecklist({
+      projectId: project.id,
+      projectName: project.projectName,
+      manifestHash: manifest?.bundleHash,
+      regulatorySourcePackHash: regulatorySourcePack?.packHash,
+      submissionPackHash: submissionPack?.packHash,
+      exportSafetyInventory,
+      counselReviews: currentCounselReviews,
+      counselPackVersions: currentCounselPackVersions,
+      serverExportRecords: currentCounselPackServerExports
+    }).then((nextChecklist) => {
+      if (live) {
+        setCounselHandoffChecklist(nextChecklist);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [
+    currentCounselPackServerExports,
+    currentCounselPackVersions,
+    currentCounselReviews,
+    exportSafetyInventory,
+    manifest?.bundleHash,
+    project.id,
+    project.projectName,
+    regulatorySourcePack?.packHash,
+    submissionPack?.packHash
+  ]);
 
   useEffect(() => {
     let live = true;
@@ -2009,6 +2048,7 @@ export default function App() {
               selectedExportTemplate={selectedCounselPackTemplate}
               recommendedExportTemplateId={recommendedCounselPackTemplate.id}
               dataBoundaryReport={dataBoundaryReport}
+              handoffChecklist={counselHandoffChecklist}
               counselPackVersions={currentCounselPackVersions}
               serverExportRecords={currentCounselPackServerExports}
               onSelectExportTemplate={setSelectedCounselPackTemplateId}

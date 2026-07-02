@@ -177,6 +177,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(hongKongScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Japan crypto custody path for FSA source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const japanScenario = findDemoScenarioById(demoScenarios, "japan-crypto-custody-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(japanScenario).toEqual(
+      expect.objectContaining({
+        title: "Japan crypto custody review",
+        projectName: "SakuraKey Crypto Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Japan", "FSA", "Crypto custody"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(japanScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Japan FSA custody controls",
+        "Review user-asset protection evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(japanScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

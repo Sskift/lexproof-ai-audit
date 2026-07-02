@@ -13,6 +13,7 @@ const project: ProjectProfile = {
     "United Kingdom",
     "Singapore",
     "Hong Kong",
+    "Japan",
     "Switzerland",
     "United Arab Emirates",
     "Brazil"
@@ -48,6 +49,7 @@ describe("createJurisdictionPacks", () => {
         "United Kingdom",
         "Singapore",
         "Hong Kong",
+        "Japan",
         "Switzerland",
         "United Arab Emirates",
         "Brazil"
@@ -102,6 +104,19 @@ describe("createJurisdictionPacks", () => {
     });
     expect(hongKongPack?.controls.map((control) => control.title)).toEqual(
       expect.arrayContaining(["VATP client asset custody control", "Wallet governance and compensation arrangement control"])
+    );
+
+    const japanPack = packs.find((pack) => pack.jurisdiction === "Japan");
+    expect(japanPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Japan crypto-asset exchange / custody counsel"
+      }
+    });
+    expect(japanPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "FSA registration and user-asset protection control",
+        "Cold-wallet, reconciliation, and leakage-response control"
+      ])
     );
 
     const switzerlandPack = packs.find((pack) => pack.jurisdiction === "Switzerland");

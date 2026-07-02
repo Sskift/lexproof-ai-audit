@@ -33,9 +33,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Custody and signer control runbook",
         kind: "Runbook",
         content:
-          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, and proof of reserves evidence.",
+          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, Japan crypto-asset exchange custody scope, cold-wallet/offline management, and proof of reserves evidence.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
         status: "requested",
         owner: "Compliance"
       },
@@ -96,6 +96,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: summarize Singapore DPT CDD handoff, wallet history metadata boundary, MAS PSN02 review owner, and evidence-export exclusion notes.",
         source:
           "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-sg-mas-psn02-dpt-aml-cft",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Japan crypto-asset custody and leakage response register",
+        kind: "Register",
+        content:
+          "Requested: summarize Japan crypto asset exchange service scope, FSA registration assumptions, user asset protection, information to users, segregated wallet handling, cold wallet and offline environment controls, daily reconciliation, leakage response, separate management audit, reviewer owner, and wallet-secret exclusion.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection",
         status: "requested",
         owner: "Compliance"
       },

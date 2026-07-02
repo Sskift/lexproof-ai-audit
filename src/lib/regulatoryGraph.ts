@@ -258,6 +258,7 @@ function jurisdictionAliases(jurisdiction: string): string[] {
     "united kingdom": ["united kingdom", "uk", "great britain"],
     singapore: ["singapore", "sg"],
     "hong kong": ["hong kong", "hk", "hong kong sar"],
+    japan: ["japan", "jp"],
     switzerland: ["switzerland", "swiss", "ch"],
     "united arab emirates": ["united arab emirates", "uae", "dubai", "abu dhabi"],
     brazil: ["brazil", "br", "brasil"]

@@ -795,6 +795,25 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Japan crypto custody scenario with FSA custody evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Japan crypto custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("SakuraKey Crypto Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /FSA Guidelines for Supervision of Crypto-Asset Exchange Service Providers; FSA Regulating the crypto assets landscape in Japan, December 2022/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Japan crypto-asset exchange \/ custody counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Japan FSA registration and user-asset protection evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

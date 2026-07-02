@@ -132,6 +132,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "japan-crypto-custody-source-path",
+    projectName: "SakuraKey Crypto Custody Review",
+    title: "Japan crypto custody review",
+    summary:
+      "Japan FSA crypto-asset exchange custody, user-asset protection, cold-wallet/offline management, reconciliation, leakage-response, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Japan FSA custody controls",
+      "Review user-asset protection evidence gaps",
+      "Check cold-wallet reconciliation and leakage-response evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Japan", "FSA", "Crypto custody"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

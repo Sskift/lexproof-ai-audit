@@ -144,6 +144,37 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "SakuraKey Crypto Custody Review",
+    entityType: "Crypto-asset exchange custody operations team",
+    jurisdictions: ["Japan"],
+    assetModel: "Crypto-asset exchange custody and transfer service with customer asset safeguarding",
+    userType: "Japan retail and professional crypto-asset customers, operations reviewers, and local counsel",
+    custodyModel:
+      "Platform manages customer crypto assets with segregated wallets, cold-wallet and offline management, withdrawal approvals, daily reconciliation, and leakage-response controls",
+    dataSensitivity:
+      "KYC metadata, customer asset balances, wallet transaction history, and secret-key material excluded from demo evidence",
+    aiUsage: "AI drafts custody evidence summaries for human review and Japan counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only custody handoff",
+    operatingStage: "Planned custody workflow review before Japan counsel signoff",
+    evidenceItems: [
+      {
+        label: "FSA source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Japan custody operations scope note",
+        kind: "Markdown",
+        content: "Synthetic service scope, cold-wallet boundary, reconciliation owner, and counsel handoff timing."
+      },
+      {
+        label: "Leakage response checklist",
+        kind: "Checklist",
+        content: "Synthetic leakage-risk escalation, internal-control owner, and audit-readiness placeholders without wallet secrets."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

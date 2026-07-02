@@ -40,6 +40,7 @@ type PackTemplate = {
     | "United Kingdom"
     | "Singapore"
     | "Hong Kong"
+    | "Japan"
     | "Switzerland"
     | "United Arab Emirates"
     | "Brazil";
@@ -194,6 +195,46 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "monitoring",
           "incident response",
           "compensation arrangement",
+          "custody and signer control"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Japan",
+    aliases: ["japan", "jp"],
+    summary:
+      "Prepare crypto-asset exchange service scope, user-asset protection, segregated custody, cold-wallet/offline management, reconciliation, leakage-response, AML/data, and local counsel handoff controls for Japan.",
+    recommendedRole: "Japan crypto-asset exchange / custody counsel",
+    controls: [
+      {
+        id: "jp-fsa-registration-user-asset-control",
+        title: "FSA registration and user-asset protection control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "japan crypto asset exchange",
+          "fsa registration",
+          "user asset protection",
+          "information to users",
+          "contract details",
+          "custody and signer control"
+        ]
+      },
+      {
+        id: "jp-cold-wallet-leakage-response-control",
+        title: "Cold-wallet, reconciliation, and leakage-response control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "cold wallet",
+          "offline environment",
+          "segregated wallet",
+          "daily reconciliation",
+          "leakage response",
+          "separate management audit",
           "custody and signer control"
         ]
       }

@@ -1109,6 +1109,73 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "jp-fsa-crypto-asset-custody-user-protection",
+    jurisdiction: "Japan",
+    regulator: "Financial Services Agency Japan",
+    sourceName: "FSA Guidelines for Supervision of Crypto-Asset Exchange Service Providers and crypto asset regulatory framework overview",
+    sourceUrl: "https://www.fsa.go.jp/common/law/guide/kaisya/e016.pdf",
+    citation:
+      "FSA Guidelines for Supervision of Crypto-Asset Exchange Service Providers; FSA Regulating the crypto assets landscape in Japan, December 2022",
+    topic: "custody",
+    summary:
+      "Prepare crypto-asset exchange service scope, FSA registration, user-asset protection, segregated wallet, cold-wallet, reconciliation, leakage-response, and information-disclosure evidence for Japan counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch"],
+    triggerKeywords: [
+      "japan",
+      "crypto-asset exchange",
+      "crypto asset exchange",
+      "cold wallet",
+      "offline environment",
+      "user assets",
+      "segregated custody",
+      "leakage response"
+    ],
+    evidenceRequests: [
+      {
+        id: "jp-fsa-registration-user-asset-protection",
+        title: "Japan FSA registration and user-asset protection evidence",
+        reason:
+          "Japan crypto-asset custody review needs exchange-service scope, registration assumptions, user-asset protection, customer information, and reviewer-owner evidence before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "japan crypto asset exchange",
+          "crypto-asset exchange",
+          "fsa registration",
+          "user asset protection",
+          "customer asset",
+          "information to users",
+          "contract details"
+        ]
+      },
+      {
+        id: "jp-fsa-cold-wallet-reconciliation-leakage-response",
+        title: "Japan cold-wallet segregation, reconciliation, and leakage-response evidence",
+        reason:
+          "Counsel and compliance review need segregated wallet, offline/cold-wallet management, daily reconciliation, leakage-risk response, internal-control, and audit evidence without wallet secrets.",
+        priority: "P1",
+        keywords: [
+          "cold wallet",
+          "offline environment",
+          "segregated wallet",
+          "daily reconciliation",
+          "leakage response",
+          "secret key controls",
+          "separate management audit"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which crypto-asset exchange service, registration, user-asset protection, and information-disclosure assumptions should Japan counsel review?",
+      "What evidence shows segregated custody, offline/cold-wallet management, reconciliation, leakage response, and internal audit without exposing wallet secrets or raw customer records?"
+    ],
+    localCounselRole: "Japan crypto-asset exchange / custody counsel",
+    effectiveAsOf: "2020-05-01",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against FSA crypto-asset exchange supervision guidance and FSA 2022 regulatory framework overview for registration, user protection, segregation, cold-wallet/offline management, reconciliation, leakage-risk response, and evidence-routing metadata; route interpretation to Japan local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

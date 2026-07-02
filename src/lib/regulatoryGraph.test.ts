@@ -315,7 +315,7 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2,
-      matchedEvidenceLabels: ["US FinCEN CVC MSB and BSA transfer control register"]
+      matchedEvidenceLabels: expect.arrayContaining(["US FinCEN CVC MSB and BSA transfer control register"])
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "us-fincen-cvc-msb-bsa-travel-rule" })])
@@ -545,6 +545,75 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "eu-dora-ict-operational-resilience" }),
         expect.objectContaining({ clauseId: "eu-tfr-crypto-asset-transfer-information" })
       ])
+    );
+  });
+
+  it("matches Japan FSA crypto-asset custody source controls without legal conclusions", () => {
+    const japanProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-japan-crypto-custody",
+      jurisdictions: ["Japan"],
+      entityType: "Crypto-asset exchange custody operations team",
+      assetModel: "Crypto asset exchange custody and transfer service with customer asset safeguarding",
+      userType: "Japan retail and professional crypto-asset customers",
+      custodyModel:
+        "Platform manages customer crypto assets with segregated custody, cold wallet offline environment, daily reconciliation, and leakage response controls",
+      aiUsage: "Manual evidence summary only",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(japanProject);
+    const graph = createRegulatoryGraph(japanProject, audit, japanProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["jp-fsa-crypto-asset-custody-user-protection"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "jp-fsa-crypto-asset-custody-user-protection")).toMatchObject({
+      jurisdiction: "Japan",
+      regulator: "Financial Services Agency Japan",
+      sourceUrl: "https://www.fsa.go.jp/common/law/guide/kaisya/e016.pdf",
+      citation:
+        "FSA Guidelines for Supervision of Crypto-Asset Exchange Service Providers; FSA Regulating the crypto assets landscape in Japan, December 2022",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "Japan crypto-asset exchange / custody counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Japan FSA registration and user-asset protection evidence",
+        "Japan cold-wallet segregation, reconciliation, and leakage-response evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Japan FSA custody controls covered when RWA custody template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `japan-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const japanProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-japan-crypto-custody-covered",
+      jurisdictions: ["Japan"],
+      entityType: "Crypto-asset exchange custody operations team",
+      assetModel: "Crypto asset exchange custody and transfer service with customer asset safeguarding",
+      custodyModel:
+        "Platform manages customer crypto assets with segregated custody, cold wallet offline environment, daily reconciliation, and leakage response controls",
+      aiUsage: "Manual evidence summary only",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(japanProject);
+    const graph = createRegulatoryGraph(japanProject, audit, japanProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "jp-fsa-crypto-asset-custody-user-protection")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining(["Japan crypto-asset custody and leakage response register"])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "jp-fsa-crypto-asset-custody-user-protection" })])
     );
   });
 

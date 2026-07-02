@@ -3,6 +3,7 @@ import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassifica
 
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const bearerToken = "eyJhbGciOiJIUzI1NiJ9.auditPrepPayload.signature";
+const standaloneBearerToken = "eyJhbGciOiJSUzI1NiJ9.auditEvidencePayload.signature";
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
 const connectorPassword = "Sup3rSecret!2026";
 const refreshToken = "rt_abcdef1234567890abcdef";
@@ -62,6 +63,20 @@ describe("classifyDataBoundaryText", () => {
     expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
     expect(serialized).not.toContain(bearerToken);
     expect(serialized).not.toContain(awsAccessKey);
+  });
+
+  it("blocks standalone bearer credentials without exposing token values", () => {
+    const findings = classifyDataBoundaryText(`Temporary connector note copied Bearer ${standaloneBearerToken}.`);
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 1
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("Bearer [redacted-secret]");
+    expect(serialized).not.toContain(standaloneBearerToken);
   });
 
   it("blocks password and token fields without exposing connector credential values", () => {
@@ -188,6 +203,13 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-secret]");
     expect(redacted).not.toContain(bearerToken);
     expect(redacted).not.toContain(awsAccessKey);
+  });
+
+  it("redacts standalone bearer credentials from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`Copied Bearer ${standaloneBearerToken} into a connector note.`);
+
+    expect(redacted).toContain("Bearer [redacted-secret]");
+    expect(redacted).not.toContain(standaloneBearerToken);
   });
 
   it("redacts password and token field values from reusable boundary snippets", () => {

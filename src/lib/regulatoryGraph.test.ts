@@ -859,6 +859,50 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks Swiss FINMA token classification controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `swiss-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const swissProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-swiss-rwa-covered",
+      jurisdictions: ["Switzerland"],
+      assetModel: "Swiss tokenized private credit note with yield, asset-token economics, and fundraising assumptions",
+      userType: "Swiss qualified investors and investor communications reviewers",
+      custodyModel: "Foundation-governed wallet custody with signer approval evidence",
+      dataSensitivity: "KYC metadata and wallet transaction history excluded from default exports",
+      aiUsage: "AI drafts Swiss token classification evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor for Swiss counsel packet",
+      operatingStage: "Planned Swiss offering review before local counsel reliance",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(swissProject);
+    const graph = createRegulatoryGraph(swissProject, audit, swissProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ch-finma-ico-token-classification")).toMatchObject({
+      jurisdiction: "Switzerland",
+      regulator: "FINMA",
+      citation: "FINMA ICO Guidelines, 16 February 2018",
+      sourceUrl: "https://www.finma.ch/en/news/2018/02/20180216-mm-ico-wegleitung/",
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "Swiss DLT / financial services counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ch-finma-ico-token-classification")?.matchedEvidenceLabels).toEqual(
+      expect.arrayContaining([
+        "Swiss token classification memo",
+        "Swiss offering, prospectus, and governance evidence"
+      ])
+    );
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "ch-finma-ico-token-classification" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches US and UK DAO governance source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(daoGovernanceProject);
     const graph = createRegulatoryGraph(daoGovernanceProject, audit, daoGovernanceProject.evidenceItems);

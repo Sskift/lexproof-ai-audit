@@ -107,6 +107,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
+    expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
     expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");

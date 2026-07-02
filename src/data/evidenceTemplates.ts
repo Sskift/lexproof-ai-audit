@@ -50,6 +50,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "Swiss token classification memo",
+        kind: "Memo",
+        content:
+          "Requested: summarize Swiss token classification assumptions, payment token, utility token, asset token, hybrid token, fundraising mechanics, economic rights, transfer features, and Swiss counsel review owner.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ch-finma-ico-token-classification",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "Swiss offering, prospectus, and governance evidence",
+        kind: "Checklist",
+        content:
+          "Requested: summarize Swiss prospectus intake, foundation governance, FINMA classification handoff, Swiss counsel review owner, and local evidence-retention assumptions.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ch-finma-ico-token-classification",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:

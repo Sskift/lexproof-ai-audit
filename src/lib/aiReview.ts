@@ -1,4 +1,5 @@
 import type { AuditResult } from "./auditEngine";
+import { redactClassifiedText } from "./dataClassification";
 import type { ModelProvider } from "./modelProvider";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
 import { createMissingEvidenceChecklist } from "./riskEvidence";
@@ -65,6 +66,9 @@ export type AIReviewResult = {
   suggestedRemediation: string[];
   modelBoundary: "AI-assisted draft for audit preparation only. Not legal advice.";
 };
+
+const legalConclusionPattern =
+  /\b(final legal decision|legal opinion|legal approval|legally compliant|legally non-compliant|compliance decision)\b/gi;
 
 export function buildAIReviewPayload(project: ProjectProfile, audit: AuditResult, evidenceItems: EvidenceItem[]): AIReviewPayload {
   return {
@@ -143,10 +147,10 @@ export async function runAIReview(
 export function parseAIReviewJson(content: string): AIReviewResult {
   const data = parseJsonObject(content);
   return {
-    extractedFacts: toStringArray(data.extractedFacts),
-    missingEvidence: toStringArray(data.missingEvidence),
-    draftQuestions: toStringArray(data.draftQuestions),
-    suggestedRemediation: toStringArray(data.suggestedRemediation),
+    extractedFacts: toSafeModelOutputArray(data.extractedFacts),
+    missingEvidence: toSafeModelOutputArray(data.missingEvidence),
+    draftQuestions: toSafeModelOutputArray(data.draftQuestions),
+    suggestedRemediation: toSafeModelOutputArray(data.suggestedRemediation),
     modelBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
   };
 }
@@ -156,10 +160,9 @@ function createEvidencePreview(content: string): string {
 }
 
 export function redactSensitiveContent(content: string): string {
-  return content
-    .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
-    .replace(/\b(raw\s+kyc|passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]")
-    .replace(/\b(seed phrase|mnemonic|private key)\b/gi, "[redacted-secret]");
+  return redactClassifiedText(content)
+    .replace(/\b(passport data|passport document|passport file)\b/gi, "[redacted-personal-data]")
+    .replace(legalConclusionPattern, "[redacted-legal-conclusion]");
 }
 
 function createRedactionFindings(item: EvidenceItem): RedactionFinding[] {
@@ -216,8 +219,15 @@ function parseJsonObject(content: string): Record<string, unknown> {
   }
 }
 
-function toStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
+function toSafeModelOutputArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => redactSensitiveContent(item).replace(/\s+/g, " ").trim())
+    .filter((item) => item.length > 0);
 }
 
 function mergeUnique(values: string[]): string[] {

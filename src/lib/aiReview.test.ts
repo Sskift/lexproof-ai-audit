@@ -129,6 +129,32 @@ describe("parseAIReviewJson", () => {
       modelBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
     });
   });
+
+  it("redacts unsafe model output strings before they reach review surfaces", () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const result = parseAIReviewJson(
+      JSON.stringify({
+        extractedFacts: [`Provider saw api_key=${apiKey} and private key ${privateKey}.`],
+        missingEvidence: ["Raw KYC packet and passport data require upload."],
+        draftQuestions: ["Is this a final legal decision or legal opinion?"],
+        suggestedRemediation: ["Mark the launch legally compliant without human review."]
+      })
+    );
+
+    const serialized = JSON.stringify(result);
+
+    expect(result.extractedFacts[0]).toContain("[redacted-secret]");
+    expect(result.extractedFacts[0]).toContain("[redacted-private-key]");
+    expect(result.missingEvidence[0]).toContain("[redacted-raw-kyc]");
+    expect(result.missingEvidence[0]).toContain("[redacted-personal-data]");
+    expect(result.draftQuestions[0]).toContain("[redacted-legal-conclusion]");
+    expect(result.suggestedRemediation[0]).toContain("[redacted-legal-conclusion]");
+    expect(result.modelBoundary).toBe("AI-assisted draft for audit preparation only. Not legal advice.");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC|passport data|final legal decision|legal opinion|legally compliant/i);
+  });
 });
 
 describe("runAIReview", () => {

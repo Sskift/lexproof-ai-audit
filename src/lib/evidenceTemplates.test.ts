@@ -47,6 +47,21 @@ const marketingClaimsProject: ProjectProfile = {
   evidenceItems: []
 };
 
+const daoGovernanceProject: ProjectProfile = {
+  id: "template-dao-governance",
+  projectName: "ClauseGuard DAO",
+  entityType: "DAO foundation governance committee",
+  jurisdictions: ["United States", "United Kingdom"],
+  assetModel: "Governance token and multisig execution workflow for protocol upgrades",
+  userType: "DAO token holders, protocol contributors, and multisig signers",
+  custodyModel: "DAO treasury controlled by multisig signer quorum",
+  dataSensitivity: "Contributor agreement summaries only; personal records excluded",
+  aiUsage: "AI drafts source-linked governance evidence requests for human review",
+  blockchainUse: "Proposal hash, vote receipt, and simulated evidence manifest anchor",
+  operatingStage: "Planned governance proposal before counsel review",
+  evidenceItems: []
+};
+
 describe("evidence templates", () => {
   it("lists the hackathon-critical evidence template scenarios", () => {
     const templates = listEvidenceTemplates();
@@ -136,6 +151,30 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-uk-fca-crypto-financial-promotions");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-marketing-regulations-2024");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
+  });
+
+  it("recommends DAO governance evidence with US and UK regulatory control links", () => {
+    const recommended = recommendEvidenceTemplates(daoGovernanceProject);
+    const items = createEvidenceItemsFromTemplate("dao-governance-multisig");
+    const serializedSources = items.map((item) => item.source ?? "").join("\n");
+
+    expect(recommended[0]).toMatchObject({
+      id: "dao-governance-multisig",
+      title: "DAO Governance / Multisig Execution"
+    });
+    expect(items.map((item) => item.label)).toEqual(
+      expect.arrayContaining([
+        "Governance proposal record",
+        "Multisig signer authority matrix",
+        "Vote and execution receipt",
+        "Contributor agreement summary"
+      ])
+    );
+    expect(serializedSources).toContain("regulatory control: control-us-sec-dao-report-governance-token-review");
+    expect(serializedSources).toContain("regulatory control: control-uk-law-commission-dao-scoping-paper");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");

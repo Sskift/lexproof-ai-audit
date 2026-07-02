@@ -83,7 +83,8 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Governance proposal record",
         kind: "Markdown",
         content: "Requested: summarize proposal scope, quorum, voting window, affected contracts, and review assumptions.",
-        source: "LexProof template: DAO Governance / Multisig Execution",
+        source:
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Product"
       },
@@ -91,7 +92,8 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Multisig signer authority matrix",
         kind: "Policy",
         content: "Requested: document signer roles, quorum, emergency authority, replacement process, and approval evidence.",
-        source: "LexProof template: DAO Governance / Multisig Execution",
+        source:
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Engineering"
       },
@@ -99,7 +101,8 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Vote and execution receipt",
         kind: "JSON",
         content: "Requested: summarize proposal hash, vote result, execution status, block reference, and verification owner.",
-        source: "LexProof template: DAO Governance / Multisig Execution",
+        source:
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Engineering"
       },
@@ -107,7 +110,8 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Contributor agreement summary",
         kind: "Summary",
         content: "Requested: summarize assignment, confidentiality, compensation, and contributor review status without personal records.",
-        source: "LexProof template: DAO Governance / Multisig Execution",
+        source:
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Counsel"
       }

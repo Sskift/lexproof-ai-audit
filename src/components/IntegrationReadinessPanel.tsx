@@ -1,4 +1,15 @@
-import { Bot, ClipboardList, DatabaseZap, Download, FileText, Link2, PlugZap, RefreshCcw, ShieldCheck } from "lucide-react";
+import {
+  Bot,
+  ClipboardList,
+  DatabaseZap,
+  Download,
+  FileText,
+  Link2,
+  PlugZap,
+  ReceiptText,
+  RefreshCcw,
+  ShieldCheck
+} from "lucide-react";
 import type {
   IntegrationAdapterCategory,
   IntegrationAdapterId,
@@ -43,10 +54,12 @@ import {
   type ObjectStoragePolicyDraft,
   type ObjectStoragePolicyReport
 } from "../lib/objectStoragePolicy";
+import type { IntegrationPolicyEvaluationRecord } from "../lib/integrationPolicyEvaluation";
 
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
   enablementDossier: IntegrationEnablementDossier | null;
+  integrationPolicyEvaluationRecords: IntegrationPolicyEvaluationRecord[];
   providerPolicyReport: ModelGatewayProviderPolicyReport;
   providerPolicySource: "local" | "server";
   providerPolicyApiBaseUrl: string;
@@ -123,6 +136,7 @@ const categoryIcons: Record<IntegrationAdapterCategory, typeof PlugZap> = {
 export function IntegrationReadinessPanel({
   registry,
   enablementDossier,
+  integrationPolicyEvaluationRecords,
   providerPolicyReport,
   providerPolicySource,
   providerPolicyApiBaseUrl,
@@ -207,6 +221,7 @@ export function IntegrationReadinessPanel({
         ))}
       </div>
       <IntegrationEnablementDossierPanel dossier={enablementDossier} />
+      <IntegrationPolicyEvaluationReceiptsPanel records={integrationPolicyEvaluationRecords} />
       <ObjectStoragePolicyPanel
         draft={storagePolicyDraft}
         context={storagePolicyContext}
@@ -344,6 +359,47 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
           Download Enablement Dossier JSON
         </button>
       </div>
+    </section>
+  );
+}
+
+function IntegrationPolicyEvaluationReceiptsPanel({ records }: { records: IntegrationPolicyEvaluationRecord[] }) {
+  const latestRecords = records.slice(0, 4);
+
+  return (
+    <section className="integration-policy-receipts" aria-label="Integration Policy Evaluation Receipts">
+      <div className="split-title compact-title">
+        <div>
+          <ReceiptText size={17} aria-hidden="true" />
+          <h4>Policy Evaluation Receipts</h4>
+        </div>
+        <span className="workflow-status disabled">{latestRecords.length ? `${latestRecords.length} recorded` : "no receipts"}</span>
+      </div>
+      <p className="section-note">
+        Not legal advice. Integration policy evaluation records are audit preparation metadata only.
+      </p>
+      {latestRecords.length ? (
+        <div className="integration-policy-receipt-list">
+          {latestRecords.map((record) => (
+            <article key={record.id} className={`provider-control ${record.overallStatus}`}>
+              <header>
+                <span>{policyStatusLabel(record.overallStatus)}</span>
+                <strong>{policyLabel(record.policyId)}</strong>
+              </header>
+              <p>
+                {record.approvedControlCount}/{record.requiredControlCount} controls ready; external capability is disabled.
+              </p>
+              <small>
+                report {record.reportHash.slice(0, 12)}... · context {record.contextHash.slice(0, 12)}...
+              </small>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-ledger">
+          Evaluate a server integration policy to create a workspace receipt. No credentials, raw evidence, raw KYC, or personal data are stored.
+        </div>
+      )}
     </section>
   );
 }
@@ -1461,6 +1517,22 @@ function policyStatusLabel(status: ModelGatewayProviderPolicyStatus): string {
   }
 
   return status;
+}
+
+function policyLabel(policyId: IntegrationPolicyEvaluationRecord["policyId"]): string {
+  if (policyId === "object-storage") {
+    return "Object Storage Policy";
+  }
+
+  if (policyId === "document-parser") {
+    return "Document Parser Policy";
+  }
+
+  if (policyId === "chain-anchor") {
+    return "Chain Anchor Policy";
+  }
+
+  return "GRC Destination Policy";
 }
 
 function targetForAdapter(adapterId: IntegrationAdapterId): IntegrationReadinessTarget {

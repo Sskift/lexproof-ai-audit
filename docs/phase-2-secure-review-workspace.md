@@ -93,15 +93,16 @@ Week 2 design-spike artifacts:
 
 - `docs/phase-2-backend-design-spike.md` records the backend stack decision, API route table, persistence-model scope, security boundaries, and health endpoint decision.
 - `src/lib/phase2ApiContracts.ts` keeps the API route contracts, Model Gateway boundary validator, Evidence Upload boundary validator, and Prisma schema draft executable and testable.
-- `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Integration policy evaluation, Human Review, and Audit Log workflows.
+- `server/app.ts` adds Fastify routes for health, Workspace, Evidence Vault, mock Model Gateway, Integration policy evaluation receipts, Human Review, and Audit Log workflows.
 - `server/evidenceVaultService.ts` adds metadata-only evidence upload hashing for the first backend implementation step.
 - `server/modelGatewayService.ts` adds Model Gateway adapter readiness plus mock success/failure receipts behind redaction, allowed-data-class, credential, KYC, legal-decision, human-review, and provider-adapter boundaries.
 - `server/integrationPolicyRoutes.ts` adds Object Storage Policy Evaluation for metadata-only retention, manifest, storage-control, and human-review readiness without enabling external object storage.
 - `server/integrationPolicyRoutes.ts` adds Chain Anchor Policy Evaluation for metadata-only manifest, Counsel Pack version, wallet custody, signer-role, transaction logging, privacy, public-payload, consent, and human-review readiness without collecting wallet keys, signed transactions, raw evidence, or enabling real chain writes.
 - `server/integrationPolicyRoutes.ts` adds Document Parser Policy Evaluation for metadata-only parser purpose, retention, manifest, Export Safety, redaction, no-training-use, access logging, and human-review readiness without accepting raw document bytes, running OCR, or enabling external parsing.
 - `server/integrationPolicyRoutes.ts` adds GRC Destination Policy Evaluation for metadata-only remediation queue, destination scope, field mapping, authentication policy, export redaction, ticket ownership, retry/audit logging, and human-review readiness without accepting API keys, webhook secrets, raw ticket bodies, or creating external tickets.
+- `server/integrationPolicyRoutes.ts` persists workspace-scoped Integration Policy Evaluation Receipts and audit-log entries when metadata-only policy requests include a workspace ID. The receipts store report/context/policy hashes and never store raw policy payloads, credentials, raw evidence, raw KYC, personal data, or external write commands.
 - `server/humanReviewService.ts` adds human-review record creation and status updates.
-- `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, and Audit Log records.
+- `server/reviewWorkspaceRepository.ts` adds Prisma/SQLite persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Integration Policy Evaluation, and Audit Log records.
 
 ## Recommended Backend Architecture
 
@@ -183,6 +184,10 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - accepts only evidence count, retention status, vault-sync allowance, export blocker count, manifest hash, policy owner, document size cap, raw-document retention days, deletion SLA, parser purpose, redaction-before-parsing approval, no-training-use confirmation, access logging, sensitive-material confirmation, human-review enforcement, and notes
   - does not accept raw document bytes, raw document body, credentials, private keys, raw KYC, personal data, OCR execution, parser adapter enablement, or legal-advice output
   - returns `externalDocumentParsingAllowed: false` even when all required controls evaluate ready
+- `GET /api/workspaces/:workspaceId/integration-policy-evaluations`
+  - lists metadata-only policy evaluation receipts persisted for object storage, document parser, chain anchor, and GRC destination checks
+  - returns report/context/policy hashes, status, control counts, evaluator metadata, next actions, and the Not legal advice boundary
+  - does not return raw policy text, raw evidence, raw documents, raw KYC, personal data, credentials, wallet secrets, webhook secrets, or external write commands
 - `POST /api/workspaces/:workspaceId/model-runs`
   - validates Model Intake metadata
   - applies the Redaction Gate

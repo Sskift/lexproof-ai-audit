@@ -9,6 +9,7 @@ import type {
   RegulatorySourceReviewRecord,
   WorkspaceRecord
 } from "../src/lib/phase2Types.js";
+import type { IntegrationPolicyEvaluationRecord } from "../src/lib/integrationPolicyEvaluation.js";
 
 export type ReviewWorkspaceRepository = {
   saveWorkspaceRecord(record: WorkspaceRecord): Promise<void>;
@@ -27,6 +28,8 @@ export type ReviewWorkspaceRepository = {
   saveCounselPackExportRecord(record: CounselPackExportRecord): Promise<void>;
   listCounselPackExportRecords(workspaceId: string): Promise<CounselPackExportRecord[]>;
   findCounselPackExportRecord(workspaceId: string, exportId: string): Promise<CounselPackExportRecord | null>;
+  saveIntegrationPolicyEvaluationRecord(record: IntegrationPolicyEvaluationRecord): Promise<void>;
+  listIntegrationPolicyEvaluationRecords(workspaceId: string): Promise<IntegrationPolicyEvaluationRecord[]>;
   saveRegulatorySourceApprovalRecord(record: RegulatorySourceApprovalRecord): Promise<void>;
   listRegulatorySourceApprovalRecords(workspaceId: string): Promise<RegulatorySourceApprovalRecord[]>;
   saveRegulatorySourceReviewRecord(record: RegulatorySourceReviewRecord): Promise<void>;
@@ -46,6 +49,7 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
   const modelRuns = new Map<string, ModelGatewayRun[]>();
   const humanReviews = new Map<string, HumanReviewRecord[]>();
   const counselPackExports = new Map<string, CounselPackExportRecord[]>();
+  const integrationPolicyEvaluations = new Map<string, IntegrationPolicyEvaluationRecord[]>();
   const sourceApprovals = new Map<string, RegulatorySourceApprovalRecord[]>();
   const sourceReviews = new Map<string, RegulatorySourceReviewRecord[]>();
   const auditLogs = new Map<string, AuditLogRecord[]>();
@@ -113,6 +117,17 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
 
     async findCounselPackExportRecord(workspaceId, exportId) {
       return (counselPackExports.get(workspaceId) ?? []).find((record) => record.id === exportId) ?? null;
+    },
+
+    async saveIntegrationPolicyEvaluationRecord(record) {
+      integrationPolicyEvaluations.set(
+        record.workspaceId,
+        upsertById(integrationPolicyEvaluations.get(record.workspaceId) ?? [], record)
+      );
+    },
+
+    async listIntegrationPolicyEvaluationRecords(workspaceId) {
+      return integrationPolicyEvaluations.get(workspaceId) ?? [];
     },
 
     async saveRegulatorySourceApprovalRecord(record) {
@@ -278,6 +293,22 @@ export async function createPrismaReviewWorkspaceRepository(
         where: { workspaceId, id: exportId }
       });
       return record ? deserializeCounselPackExportRecord(record) : null;
+    },
+
+    async saveIntegrationPolicyEvaluationRecord(record) {
+      await prisma.integrationPolicyEvaluationRecord.upsert({
+        where: { id: record.id },
+        update: serializeIntegrationPolicyEvaluationRecord(record),
+        create: serializeIntegrationPolicyEvaluationRecord(record)
+      });
+    },
+
+    async listIntegrationPolicyEvaluationRecords(workspaceId) {
+      const records = await prisma.integrationPolicyEvaluationRecord.findMany({
+        where: { workspaceId },
+        orderBy: { createdAt: "desc" }
+      });
+      return records.map(deserializeIntegrationPolicyEvaluationRecord);
     },
 
     async saveRegulatorySourceApprovalRecord(record) {
@@ -476,6 +507,31 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
   );
   await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourcePackHash", "TEXT NOT NULL DEFAULT ''");
   await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourceReviewStatus", "TEXT NOT NULL DEFAULT 'metadata-missing'");
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "IntegrationPolicyEvaluationRecord" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "workspaceId" TEXT NOT NULL,
+      "policyId" TEXT NOT NULL,
+      "reportVersion" TEXT NOT NULL,
+      "overallStatus" TEXT NOT NULL,
+      "approvedControlCount" INTEGER NOT NULL,
+      "requiredControlCount" INTEGER NOT NULL,
+      "externalCapabilityAllowed" BOOLEAN NOT NULL,
+      "externalCapabilityStatus" TEXT NOT NULL,
+      "reportHash" TEXT NOT NULL,
+      "contextHash" TEXT NOT NULL,
+      "policyHash" TEXT NOT NULL,
+      "evaluatorId" TEXT NOT NULL,
+      "source" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL,
+      "nextActionsJson" TEXT NOT NULL,
+      "notLegalAdviceBoundary" TEXT NOT NULL
+    );
+  `);
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "IntegrationPolicyEvaluationRecord_workspaceId_idx" ON "IntegrationPolicyEvaluationRecord"("workspaceId");`
+  );
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "RegulatorySourceApprovalRecord" (
@@ -965,6 +1021,87 @@ function parseCounselPackExportSourceReviewStatus(value: string | null | undefin
     return value;
   }
   return "metadata-missing";
+}
+
+function serializeIntegrationPolicyEvaluationRecord(record: IntegrationPolicyEvaluationRecord) {
+  return {
+    id: record.id,
+    workspaceId: record.workspaceId,
+    policyId: record.policyId,
+    reportVersion: record.reportVersion,
+    overallStatus: record.overallStatus,
+    approvedControlCount: record.approvedControlCount,
+    requiredControlCount: record.requiredControlCount,
+    externalCapabilityAllowed: record.externalCapabilityAllowed,
+    externalCapabilityStatus: record.externalCapabilityStatus,
+    reportHash: record.reportHash,
+    contextHash: record.contextHash,
+    policyHash: record.policyHash,
+    evaluatorId: record.evaluatorId,
+    source: record.source,
+    createdAt: new Date(record.createdAt),
+    nextActionsJson: JSON.stringify(record.nextActions),
+    notLegalAdviceBoundary: record.notLegalAdviceBoundary
+  };
+}
+
+type PersistedIntegrationPolicyEvaluationRecord = {
+  id: string;
+  workspaceId: string;
+  policyId: string;
+  reportVersion: string;
+  overallStatus: string;
+  approvedControlCount: number;
+  requiredControlCount: number;
+  externalCapabilityAllowed: boolean;
+  externalCapabilityStatus: string;
+  reportHash: string;
+  contextHash: string;
+  policyHash: string;
+  evaluatorId: string;
+  source: string;
+  createdAt: Date;
+  nextActionsJson: string;
+  notLegalAdviceBoundary: string;
+};
+
+function deserializeIntegrationPolicyEvaluationRecord(
+  record: PersistedIntegrationPolicyEvaluationRecord
+): IntegrationPolicyEvaluationRecord {
+  return {
+    recordVersion: "lexproof-integration-policy-evaluation-record-v1",
+    id: record.id,
+    workspaceId: record.workspaceId,
+    policyId: parseIntegrationPolicyId(record.policyId),
+    reportVersion: record.reportVersion,
+    overallStatus: parseIntegrationPolicyStatus(record.overallStatus),
+    approvedControlCount: record.approvedControlCount,
+    requiredControlCount: record.requiredControlCount,
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: record.externalCapabilityStatus,
+    reportHash: record.reportHash,
+    contextHash: record.contextHash,
+    policyHash: record.policyHash,
+    evaluatorId: record.evaluatorId,
+    source: "server",
+    createdAt: record.createdAt.toISOString(),
+    nextActions: parseStringArray(record.nextActionsJson),
+    notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+  };
+}
+
+function parseIntegrationPolicyId(value: string): IntegrationPolicyEvaluationRecord["policyId"] {
+  if (value === "object-storage" || value === "document-parser" || value === "chain-anchor" || value === "grc-destination") {
+    return value;
+  }
+  return "object-storage";
+}
+
+function parseIntegrationPolicyStatus(value: string): IntegrationPolicyEvaluationRecord["overallStatus"] {
+  if (value === "ready" || value === "needs-policy" || value === "blocked") {
+    return value;
+  }
+  return "blocked";
 }
 
 function serializeRegulatorySourceApprovalRecord(record: RegulatorySourceApprovalRecord) {

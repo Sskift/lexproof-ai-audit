@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import { registerIntegrationPolicyRoutes } from "./integrationPolicyRoutes";
+import { createMemoryReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
 describe("integration policy route module", () => {
   it("evaluates object storage policy readiness without accepting raw evidence or enabling external storage", async () => {
@@ -107,6 +108,91 @@ describe("integration policy route module", () => {
       expect(json).not.toContain("seed phrase");
       expect(json).not.toContain("external legal decision");
     }
+
+    await server.close();
+  });
+
+  it("persists workspace policy evaluation receipts and audit log records without storing unsafe payload material", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerIntegrationPolicyRoutes(server, { repository });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/integrations/grc-destination/policy",
+      payload: {
+        actorId: "GRC owner",
+        context: {
+          workspaceId: "workspace-policy-receipts",
+          remediationItemCount: 4,
+          exportSafetyStatus: "clean",
+          exportBlockerCount: 0,
+          integrationAdapterStatus: "ready",
+          localTicketExportAvailable: true,
+          rawTicketBody: "raw ticket body should never be stored"
+        },
+        policy: {
+          policyOwner: "GRC owner",
+          destinationSystem: "jira",
+          destinationQueue: "LEGAL-AUDIT",
+          fieldMappingApproved: true,
+          authenticationPolicyApproved: true,
+          redactionPolicyApproved: true,
+          ticketOwnershipApproved: true,
+          retryAndAuditLoggingApproved: true,
+          noSensitiveMaterialConfirmed: true,
+          humanReviewRequired: true,
+          notes: "Ready for future destination adapter review.",
+          webhookSecret: "sk-live-abcdef1234567890abcdef1234567890"
+        }
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        reportVersion: "lexproof-grc-destination-policy-v1",
+        overallStatus: "ready",
+        externalGrcTicketCreationAllowed: false,
+        evaluationRecord: expect.objectContaining({
+          recordVersion: "lexproof-integration-policy-evaluation-record-v1",
+          workspaceId: "workspace-policy-receipts",
+          policyId: "grc-destination",
+          reportHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          contextHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          policyHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          externalCapabilityAllowed: false,
+          notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+        })
+      })
+    );
+    expect(response.body).not.toContain("raw ticket body should never be stored");
+    expect(response.body).not.toContain("webhookSecret");
+    expect(response.body).not.toContain("sk-live-abcdef");
+
+    const listResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-policy-receipts/integration-policy-evaluations"
+    });
+    expect(listResponse.statusCode).toBe(200);
+    expect(listResponse.json()).toEqual([
+      expect.objectContaining({
+        id: response.json().evaluationRecord.id,
+        policyId: "grc-destination",
+        overallStatus: "ready"
+      })
+    ]);
+    expect(listResponse.body).not.toContain("raw ticket body");
+    expect(listResponse.body).not.toContain("sk-live-abcdef");
+
+    expect(await repository.listAuditLogRecords("workspace-policy-receipts")).toEqual([
+      expect.objectContaining({
+        action: "integration-policy.evaluated",
+        targetType: "integration-policy",
+        targetId: response.json().evaluationRecord.id,
+        summary: "Evaluated grc-destination integration policy as audit preparation metadata."
+      })
+    ]);
 
     await server.close();
   });

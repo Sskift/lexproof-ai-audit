@@ -20,38 +20,56 @@ import {
   type ObjectStoragePolicyContext,
   type ObjectStoragePolicyDraft
 } from "../src/lib/objectStoragePolicy.js";
+import {
+  createIntegrationPolicyEvaluationRecord,
+  type IntegrationPolicyEvaluationReport,
+  type IntegrationPolicyEvaluationRecord,
+  type IntegrationPolicyId
+} from "../src/lib/integrationPolicyEvaluation.js";
+import { createAuditLogRecord } from "../src/lib/phase2Types.js";
+import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
+import { sha256Hex, stableStringify } from "./routeHash.js";
 
 type ObjectStoragePolicyRequestBody = {
   context?: unknown;
   policy?: unknown;
+  actorId?: unknown;
 };
 
 type DocumentParserPolicyRequestBody = {
   context?: unknown;
   policy?: unknown;
+  actorId?: unknown;
 };
 
 type ChainAnchorPolicyRequestBody = {
   context?: unknown;
   policy?: unknown;
+  actorId?: unknown;
 };
 
 type GrcDestinationPolicyRequestBody = {
   context?: unknown;
   policy?: unknown;
+  actorId?: unknown;
 };
 
 type IntegrationPolicyRequestPayload = {
   context: Record<string, unknown>;
   policy: Record<string, unknown>;
+  actorId: string;
+};
+
+type IntegrationPolicyRoutesOptions = {
+  repository?: ReviewWorkspaceRepository;
 };
 
 const INTEGRATION_POLICY_RECOVERY_ACTION =
   "Send metadata-only integration context and policy JSON objects without raw documents, credentials, raw KYC, personal data, private keys, wallet secrets, legal conclusions, or external write commands." as const;
 
-export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
+export function registerIntegrationPolicyRoutes(server: FastifyInstance, options: IntegrationPolicyRoutesOptions = {}): void {
   server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request, reply) =>
-    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+    evaluateIntegrationPolicy(request.body, reply, "object-storage", options.repository, (payload) =>
       createObjectStoragePolicyReport({
         context: toObjectStoragePolicyContext(payload.context),
         policy: toObjectStoragePolicyDraft(payload.policy)
@@ -60,7 +78,7 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
   );
 
   server.post<{ Body: DocumentParserPolicyRequestBody }>("/api/integrations/document-parser/policy", async (request, reply) =>
-    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+    evaluateIntegrationPolicy(request.body, reply, "document-parser", options.repository, (payload) =>
       createDocumentParserPolicyReport({
         context: toDocumentParserPolicyContext(payload.context),
         policy: toDocumentParserPolicyDraft(payload.policy)
@@ -69,7 +87,7 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
   );
 
   server.post<{ Body: ChainAnchorPolicyRequestBody }>("/api/integrations/chain-anchor/policy", async (request, reply) =>
-    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+    evaluateIntegrationPolicy(request.body, reply, "chain-anchor", options.repository, (payload) =>
       createChainAnchorPolicyReport({
         context: toChainAnchorPolicyContext(payload.context),
         policy: toChainAnchorPolicyDraft(payload.policy)
@@ -78,22 +96,39 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance): void {
   );
 
   server.post<{ Body: GrcDestinationPolicyRequestBody }>("/api/integrations/grc-destination/policy", async (request, reply) =>
-    evaluateIntegrationPolicy(request.body, reply, (payload) =>
+    evaluateIntegrationPolicy(request.body, reply, "grc-destination", options.repository, (payload) =>
       createGrcDestinationPolicyReport({
         context: toGrcDestinationPolicyContext(payload.context),
         policy: toGrcDestinationPolicyDraft(payload.policy)
       })
     )
   );
+
+  if (options.repository) {
+    server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/integration-policy-evaluations", async (request) =>
+      options.repository?.listIntegrationPolicyEvaluationRecords(request.params.workspaceId) ?? []
+    );
+  }
 }
 
-function evaluateIntegrationPolicy<T>(
+async function evaluateIntegrationPolicy<T extends IntegrationPolicyEvaluationReport>(
   body: unknown,
   reply: { status: (statusCode: number) => { send: (payload: unknown) => unknown } },
+  policyId: IntegrationPolicyId,
+  repository: ReviewWorkspaceRepository | undefined,
   createReport: (payload: IntegrationPolicyRequestPayload) => T
-): T | unknown {
+): Promise<(T & { evaluationRecord?: IntegrationPolicyEvaluationRecord }) | unknown> {
   try {
-    return createReport(createIntegrationPolicyRequestPayload(body));
+    const payload = createIntegrationPolicyRequestPayload(body);
+    const report = createReport(payload);
+    const evaluationRecord = await persistIntegrationPolicyEvaluationRecord({
+      repository,
+      policyId,
+      payload,
+      report
+    });
+
+    return evaluationRecord ? { ...report, evaluationRecord } : report;
   } catch (error) {
     return reply.status(400).send(
       createApiErrorResponse({
@@ -111,8 +146,52 @@ function createIntegrationPolicyRequestPayload(value: unknown): IntegrationPolic
 
   return {
     context: jsonObjectField(body.context, "Integration policy context must be a JSON object."),
-    policy: jsonObjectField(body.policy, "Integration policy draft must be a JSON object.")
+    policy: jsonObjectField(body.policy, "Integration policy draft must be a JSON object."),
+    actorId: stringField(body.actorId)
   };
+}
+
+async function persistIntegrationPolicyEvaluationRecord({
+  repository,
+  policyId,
+  payload,
+  report
+}: {
+  repository: ReviewWorkspaceRepository | undefined;
+  policyId: IntegrationPolicyId;
+  payload: IntegrationPolicyRequestPayload;
+  report: IntegrationPolicyEvaluationReport;
+}): Promise<IntegrationPolicyEvaluationRecord | null> {
+  const workspaceId = stringField(payload.context.workspaceId);
+  if (!repository || !workspaceId) {
+    return null;
+  }
+
+  const record = await createIntegrationPolicyEvaluationRecord({
+    workspaceId,
+    policyId,
+    report,
+    context: payload.context,
+    policy: payload.policy,
+    evaluatorId: payload.actorId || stringField(payload.policy.policyOwner) || "Integration policy evaluator"
+  });
+
+  await repository.saveIntegrationPolicyEvaluationRecord(record);
+  await repository.appendAuditLogRecord(
+    createAuditLogRecord({
+      workspaceId,
+      actorId: record.evaluatorId,
+      action: "integration-policy.evaluated",
+      targetType: "integration-policy",
+      targetId: record.id,
+      beforeHash: "",
+      afterHash: sha256Hex(stableStringify(record)),
+      summary: `Evaluated ${policyId} integration policy as audit preparation metadata.`,
+      createdAt: record.createdAt
+    })
+  );
+
+  return record;
 }
 
 function jsonObjectField(value: unknown, message: string): Record<string, unknown> {

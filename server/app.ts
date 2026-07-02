@@ -33,7 +33,7 @@ export function buildServer(options: BuildServerOptions = {}) {
   });
 
   registerSystemRoutes(server);
-  registerIntegrationPolicyRoutes(server);
+  registerIntegrationPolicyRoutes(server, { repository });
   registerModelGatewayRoutes(server, { repository });
   registerCounselPackExportRoutes(server, { repository });
   registerHumanReviewRoutes(server, { repository });

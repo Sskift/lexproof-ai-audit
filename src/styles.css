@@ -3059,6 +3059,21 @@ textarea {
   gap: 8px;
 }
 
+.integration-policy-receipts {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.integration-policy-receipt-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .model-gateway-provider-policy {
   display: grid;
   gap: 10px;
@@ -7717,6 +7732,7 @@ textarea {
   .evaluation-facts,
   .integration-adapter-grid,
   .integration-dossier-policy-list,
+  .integration-policy-receipt-list,
   .judge-handoff-readiness,
   .judge-handoff-recovery-actions,
   .judge-handoff-summary,

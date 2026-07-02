@@ -124,6 +124,10 @@ import {
   createIntegrationEnablementDossier,
   type IntegrationEnablementDossier
 } from "./lib/integrationEnablementDossier";
+import {
+  isIntegrationPolicyEvaluationRecord,
+  type IntegrationPolicyEvaluationRecord
+} from "./lib/integrationPolicyEvaluation";
 import { createJudgeHandoffBundle, type JudgeHandoffBundle } from "./lib/judgeHandoffBundle";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
@@ -347,6 +351,7 @@ export default function App() {
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
+  const [integrationPolicyEvaluationRecords, setIntegrationPolicyEvaluationRecords] = useState<IntegrationPolicyEvaluationRecord[]>([]);
   const [exportSafetyInventory, setExportSafetyInventory] = useState<ExportSafetyInventory | null>(null);
   const [judgeHandoffBundle, setJudgeHandoffBundle] = useState<JudgeHandoffBundle | null>(null);
   const [counselHandoffChecklist, setCounselHandoffChecklist] = useState<CounselHandoffChecklist | null>(null);
@@ -1695,6 +1700,23 @@ export default function App() {
     setCounselPackServerExports((current) => [record, ...current].slice(0, 120));
   };
 
+  const trackIntegrationPolicyEvaluationRecord = (report: unknown) => {
+    const candidate =
+      typeof report === "object" && report !== null && "evaluationRecord" in report
+        ? (report as { evaluationRecord?: unknown }).evaluationRecord
+        : null;
+    const evaluationRecord = isIntegrationPolicyEvaluationRecord(candidate) ? candidate : null;
+
+    if (!evaluationRecord) {
+      return;
+    }
+
+    setIntegrationPolicyEvaluationRecords((current) => [
+      evaluationRecord,
+      ...current.filter((record) => record.id !== evaluationRecord.id)
+    ].slice(0, 24));
+  };
+
   const refreshProviderPolicyReport = async () => {
     setProviderPolicySyncStatus("syncing");
     setProviderPolicySyncError("");
@@ -1763,6 +1785,7 @@ export default function App() {
         policy: storagePolicyDraft
       });
       setServerStoragePolicyReport(report);
+      trackIntegrationPolicyEvaluationRecord(report);
       setStoragePolicySyncStatus("synced");
     } catch (error) {
       setStoragePolicySyncStatus("error");
@@ -1796,6 +1819,7 @@ export default function App() {
         policy: parserPolicyDraft
       });
       setServerParserPolicyReport(report);
+      trackIntegrationPolicyEvaluationRecord(report);
       setParserPolicySyncStatus("synced");
     } catch (error) {
       setParserPolicySyncStatus("error");
@@ -1829,6 +1853,7 @@ export default function App() {
         policy: anchorPolicyDraft
       });
       setServerAnchorPolicyReport(report);
+      trackIntegrationPolicyEvaluationRecord(report);
       setAnchorPolicySyncStatus("synced");
     } catch (error) {
       setAnchorPolicySyncStatus("error");
@@ -1862,6 +1887,7 @@ export default function App() {
         policy: grcDestinationPolicyDraft
       });
       setServerGrcDestinationPolicyReport(report);
+      trackIntegrationPolicyEvaluationRecord(report);
       setGrcDestinationPolicySyncStatus("synced");
     } catch (error) {
       setGrcDestinationPolicySyncStatus("error");
@@ -2061,6 +2087,7 @@ export default function App() {
           <IntegrationReadinessPanel
             registry={integrationReadinessRegistry}
             enablementDossier={integrationEnablementDossier}
+            integrationPolicyEvaluationRecords={integrationPolicyEvaluationRecords}
             providerPolicyReport={activeModelGatewayProviderPolicyReport}
             providerPolicySource={serverProviderPolicyReport ? "server" : "local"}
             providerPolicyApiBaseUrl={providerPolicyApiBaseUrl}

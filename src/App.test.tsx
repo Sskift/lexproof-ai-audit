@@ -1735,7 +1735,27 @@ describe("App", () => {
             }
           ],
           nextActions: ["Keep external object storage disabled until a separate storage adapter enablement review."],
-          notLegalAdviceBoundary: "Not legal advice. Object storage policy is audit preparation metadata only."
+          notLegalAdviceBoundary: "Not legal advice. Object storage policy is audit preparation metadata only.",
+          evaluationRecord: {
+            recordVersion: "lexproof-integration-policy-evaluation-record-v1",
+            id: "integration-policy-evaluation-1111111111111111",
+            workspaceId: "yield-passport",
+            policyId: "object-storage",
+            reportVersion: "lexproof-object-storage-policy-v1",
+            overallStatus: "ready",
+            approvedControlCount: 10,
+            requiredControlCount: 10,
+            externalCapabilityAllowed: false,
+            externalCapabilityStatus: "policy-ready-not-enabled",
+            reportHash: "b".repeat(64),
+            contextHash: "c".repeat(64),
+            policyHash: "d".repeat(64),
+            evaluatorId: "Storage owner",
+            source: "server",
+            createdAt: "2026-07-03T00:00:00.000Z",
+            nextActions: ["Keep external object storage disabled until adapter enablement review."],
+            notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+          }
         },
         200
       );
@@ -1771,6 +1791,11 @@ describe("App", () => {
     fireEvent.click(storagePolicy.getByRole("button", { name: /Evaluate Server Storage Policy/i }));
 
     expect(await storagePolicy.findByText(/Storage policy report synced/i)).toBeInTheDocument();
+    const receipts = within(registry.getByRole("region", { name: /Integration Policy Evaluation Receipts/i }));
+    expect(receipts.getByText(/1 recorded/i)).toBeInTheDocument();
+    expect(receipts.getByText(/Object Storage Policy/i)).toBeInTheDocument();
+    expect(receipts.getByText(/10\/10 controls ready; external capability is disabled/i)).toBeInTheDocument();
+    expect(receipts.getByText(/Not legal advice. Integration policy evaluation records are audit preparation metadata only./i)).toBeInTheDocument();
     expect(storagePolicy.getAllByText(/External object storage remains disabled/i).length).toBeGreaterThan(0);
     expect(storagePolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);

@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createAuditLogRecord } from "../src/lib/phase2Types";
+import { createIntegrationPolicyEvaluationRecord } from "../src/lib/integrationPolicyEvaluation";
+import { createObjectStoragePolicyReport } from "../src/lib/objectStoragePolicy";
 import { createCounselPackExportRecord } from "./counselPackExportService";
 import { createEvidenceVaultRecordFromUpload } from "./evidenceVaultService";
 import { createHumanReviewRecord } from "./humanReviewService";
@@ -164,6 +166,50 @@ describe("Prisma review workspace repository", () => {
 
     await expect(secondRepository.listCounselPackExportRecords("workspace-1")).resolves.toEqual([exportRecord]);
     await expect(secondRepository.findCounselPackExportRecord("workspace-1", exportRecord.id)).resolves.toEqual(exportRecord);
+
+    await secondRepository.close();
+  });
+
+  it("persists integration policy evaluation records across repository instances", async () => {
+    const firstRepository = await createPrismaReviewWorkspaceRepository({ databaseUrl });
+    const report = createObjectStoragePolicyReport({
+      context: {
+        workspaceId: "workspace-1",
+        evidenceCount: 2,
+        retentionStatus: "ready",
+        vaultSyncAllowed: true,
+        blockerCount: 0,
+        manifestHash: "a".repeat(64)
+      },
+      policy: {
+        policyOwner: "Storage owner",
+        retentionDays: 365,
+        deletionSlaDays: 30,
+        encryptionAtRestApproved: true,
+        bucketAllowlistApproved: true,
+        accessLoggingApproved: true,
+        lifecyclePolicyApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Ready for future adapter review."
+      }
+    });
+    const record = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "workspace-1",
+      policyId: "object-storage",
+      report,
+      context: { workspaceId: "workspace-1", evidenceCount: 2, manifestHash: "a".repeat(64) },
+      policy: { policyOwner: "Storage owner", retentionDays: 365 },
+      evaluatorId: "Storage owner",
+      createdAt: "2026-07-03T08:30:00.000Z"
+    });
+
+    await firstRepository.saveIntegrationPolicyEvaluationRecord(record);
+    await firstRepository.close();
+
+    const secondRepository = await createPrismaReviewWorkspaceRepository({ databaseUrl });
+
+    await expect(secondRepository.listIntegrationPolicyEvaluationRecords("workspace-1")).resolves.toEqual([record]);
 
     await secondRepository.close();
   });

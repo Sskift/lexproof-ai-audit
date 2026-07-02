@@ -240,7 +240,15 @@ export type AuditLogRecord = {
   workspaceId: string;
   actorId: string;
   action: string;
-  targetType: "workspace" | "evidence" | "model-run" | "human-review" | "export" | "source-approval" | "source-review";
+  targetType:
+    | "workspace"
+    | "evidence"
+    | "model-run"
+    | "human-review"
+    | "export"
+    | "source-approval"
+    | "source-review"
+    | "integration-policy";
   targetId: string;
   beforeHash: string;
   afterHash: string;

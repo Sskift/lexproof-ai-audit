@@ -111,6 +111,28 @@ model CounselPackExportRecord {
   @@index([workspaceId])
 }
 
+model IntegrationPolicyEvaluationRecord {
+  id                        String   @id
+  workspaceId               String
+  policyId                  String
+  reportVersion             String
+  overallStatus             String
+  approvedControlCount      Int
+  requiredControlCount      Int
+  externalCapabilityAllowed Boolean
+  externalCapabilityStatus  String
+  reportHash                String
+  contextHash               String
+  policyHash                String
+  evaluatorId               String
+  source                    String
+  createdAt                 DateTime
+  nextActionsJson           String
+  notLegalAdviceBoundary    String
+
+  @@index([workspaceId])
+}
+
 model RegulatorySourceApprovalRecord {
   id                      String   @id
   workspaceId             String

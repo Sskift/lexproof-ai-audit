@@ -50,6 +50,28 @@ describe("validateProjectProfile", () => {
     ]);
   });
 
+  it("blocks unsafe project profile metadata while allowing metadata-only data boundary descriptions", () => {
+    expect(
+      validateProjectProfile({
+        ...validProject,
+        dataSensitivity: "KYC metadata only; personal data excluded from project facts."
+      })
+    ).toEqual({ valid: true, errors: [] });
+
+    const result = validateProjectProfile({
+      ...validProject,
+      projectName: "Review jane.reviewer@example.com",
+      custodyModel: "Wallet 0x1234567890abcdef1234567890abcdef12345678 with private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      dataSensitivity: "raw KYC packet with phone +1 415 555 0100",
+      aiUsage: "Route api_key=sk-live-abcdef1234567890abcdef1234567890 into model review."
+    });
+
+    expect(result).toEqual({
+      valid: false,
+      errors: ["Project profile metadata must not include credentials, private keys, raw KYC, direct personal identifiers, or wallet addresses."]
+    });
+  });
+
   it("recognizes review-stage evidence statuses used by the ledger and vault workflow", () => {
     expect(evidenceStatuses).toEqual(["draft", "requested", "received", "under-review", "verified", "rejected"]);
     expect(isEvidenceStatus("under-review")).toBe(true);

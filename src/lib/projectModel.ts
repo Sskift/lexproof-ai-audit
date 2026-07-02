@@ -1,3 +1,5 @@
+import { classifyDataBoundaryText, type ClassifiedDataFinding } from "./dataClassification";
+
 export const evidenceStatuses = ["draft", "requested", "received", "under-review", "verified", "rejected"] as const;
 
 export type EvidenceStatus = (typeof evidenceStatuses)[number];
@@ -40,6 +42,9 @@ export type ProjectValidationResult = {
   valid: boolean;
   errors: string[];
 };
+
+const unsafeProjectMetadataError =
+  "Project profile metadata must not include credentials, private keys, raw KYC, direct personal identifiers, or wallet addresses.";
 
 export function validateProjectProfile(profile: Partial<AuditInputProfile>): ProjectValidationResult {
   const errors: string[] = [];
@@ -84,6 +89,10 @@ export function validateProjectProfile(profile: Partial<AuditInputProfile>): Pro
     errors.push("Operating stage is required.");
   }
 
+  if (containsUnsafeProjectMetadata(profile)) {
+    errors.push(unsafeProjectMetadataError);
+  }
+
   return {
     valid: errors.length === 0,
     errors
@@ -96,4 +105,38 @@ export function isEvidenceStatus(value: unknown): value is EvidenceStatus {
 
 function hasText(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function containsUnsafeProjectMetadata(profile: Partial<AuditInputProfile>): boolean {
+  const metadata = [
+    profile.projectName,
+    profile.entityType,
+    ...(Array.isArray(profile.jurisdictions) ? profile.jurisdictions : []),
+    profile.assetModel,
+    profile.userType,
+    profile.custodyModel,
+    profile.dataSensitivity,
+    profile.aiUsage,
+    profile.blockchainUse,
+    profile.operatingStage
+  ]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+
+  return classifyDataBoundaryText(metadata).some(isUnsafeProjectMetadataFinding);
+}
+
+function isUnsafeProjectMetadataFinding(finding: ClassifiedDataFinding): boolean {
+  if (finding.severity === "block") {
+    return true;
+  }
+
+  if (finding.dataClass === "wallet-address") {
+    return true;
+  }
+
+  return (
+    finding.dataClass === "personal-data" &&
+    /\[redacted-(?:email|phone|ssn|passport-id|personal-data)\]/.test(finding.redactedSnippet)
+  );
 }

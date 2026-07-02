@@ -1088,6 +1088,8 @@ function VaultControlCoveragePanel({ coverage }: { coverage: EvidenceVaultContro
               <span>{control.evidenceRecordCount} records</span>
               <span>{control.manifestItemCount} manifest items</span>
             </div>
+            <small>Readiness: {formatControlCoverageReadiness(control.readiness)}</small>
+            <small>{control.nextAction}</small>
             <small>Status coverage: {control.statuses.join(", ") || "not synced"}</small>
             <small>Evidence files: {control.filenames.join(", ") || "no filenames"}</small>
           </article>
@@ -1096,6 +1098,22 @@ function VaultControlCoveragePanel({ coverage }: { coverage: EvidenceVaultContro
       <small>{coverage.notLegalAdviceBoundary}</small>
     </section>
   );
+}
+
+function formatControlCoverageReadiness(readiness: EvidenceVaultControlCoverage["controls"][number]["readiness"]): string {
+  if (readiness === "ready-for-handoff") {
+    return "Ready for handoff";
+  }
+
+  if (readiness === "needs-review") {
+    return "Needs review";
+  }
+
+  if (readiness === "needs-manifest-link") {
+    return "Needs manifest link";
+  }
+
+  return "Needs vault record";
 }
 
 function formatLineageStatus(status: EvidenceVaultLineageDigest["readinessStatus"]) {

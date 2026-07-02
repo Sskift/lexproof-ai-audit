@@ -10,10 +10,18 @@ export type EvidenceVaultControlCoverageInput = {
   } | null;
 };
 
+export type EvidenceVaultControlCoverageReadiness =
+  | "ready-for-handoff"
+  | "needs-review"
+  | "needs-manifest-link"
+  | "needs-vault-record";
+
 export type EvidenceVaultControlCoverageControl = {
   controlId: string;
   evidenceRecordCount: number;
   manifestItemCount: number;
+  readiness: EvidenceVaultControlCoverageReadiness;
+  nextAction: string;
   statuses: string[];
   filenames: string[];
 };
@@ -66,13 +74,19 @@ export function createEvidenceVaultControlCoverage(
     recordCount: input.records.length,
     manifestItemCount: manifestItems.length,
     controls: Array.from(controls.values())
-      .map((entry) => ({
-        controlId: entry.controlId,
-        evidenceRecordCount: entry.recordIds.size,
-        manifestItemCount: entry.manifestEvidenceIds.size,
-        statuses: [...entry.statuses].sort((left, right) => left.localeCompare(right)),
-        filenames: [...entry.filenames].sort((left, right) => left.localeCompare(right))
-      }))
+      .map((entry) => {
+        const readiness = createReadiness(entry.recordIds.size, entry.manifestEvidenceIds.size, entry.statuses);
+
+        return {
+          controlId: entry.controlId,
+          evidenceRecordCount: entry.recordIds.size,
+          manifestItemCount: entry.manifestEvidenceIds.size,
+          readiness,
+          nextAction: createNextAction(readiness),
+          statuses: [...entry.statuses].sort((left, right) => left.localeCompare(right)),
+          filenames: [...entry.filenames].sort((left, right) => left.localeCompare(right))
+        };
+      })
       .sort((left, right) => left.controlId.localeCompare(right.controlId)),
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE
   };
@@ -103,4 +117,34 @@ function normalizeControlIds(values: string[] | undefined): string[] {
         .filter(Boolean)
     )
   );
+}
+
+function createReadiness(
+  evidenceRecordCount: number,
+  manifestItemCount: number,
+  statuses: Set<string>
+): EvidenceVaultControlCoverageReadiness {
+  if (evidenceRecordCount === 0 || manifestItemCount > evidenceRecordCount) {
+    return "needs-vault-record";
+  }
+  if (manifestItemCount < evidenceRecordCount) {
+    return "needs-manifest-link";
+  }
+  if ([...statuses].some((status) => status !== "verified")) {
+    return "needs-review";
+  }
+  return "ready-for-handoff";
+}
+
+function createNextAction(readiness: EvidenceVaultControlCoverageReadiness): string {
+  if (readiness === "needs-vault-record") {
+    return "Sync the linked evidence record to Evidence Vault before relying on manifest metadata.";
+  }
+  if (readiness === "needs-manifest-link") {
+    return "Regenerate the Evidence Vault manifest so this control has hash lineage.";
+  }
+  if (readiness === "needs-review") {
+    return "Move linked vault evidence through Human Review before export reliance.";
+  }
+  return "Keep verified vault evidence linked in the Counsel Pack and source handoff.";
 }

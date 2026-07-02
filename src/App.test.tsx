@@ -2397,6 +2397,8 @@ describe("App", () => {
       expect(coverage.getByText(/2 controls linked across 4 vault records and 4 manifest items/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-eu-ai-act-ai-literacy-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-uk-ico-ai-data-protection-governance/i)).toBeInTheDocument();
+      expect(coverage.getAllByText(/Needs review/i).length).toBeGreaterThan(0);
+      expect(coverage.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(coverage.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();

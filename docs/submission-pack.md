@@ -42,7 +42,7 @@ The Counsel Pack exports a Markdown audit-prep packet, Model Intake summary with
 
 ### Submission Pack Artifact
 
-The Sources tab generates a metadata-only Judge Handoff Bundle that consolidates Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON into one evaluator packet with child artifact hashes, status, clickable recovery actions, a stable bundle hash, and the Not legal advice boundary. The Submission Pack carries the pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, demo readiness status, required DoraHacks assets, feature-to-theme mapping, known limitations, and the Not legal advice boundary. These artifacts do not store raw KYC, credentials, raw evidence bytes, legal conclusions, or real chain-write claims.
+The Sources tab generates a metadata-only Judge Handoff Bundle that consolidates Submission Pack JSON, Demo Runbook JSON, Export Safety Inventory JSON, and Counsel Handoff Checklist JSON into one evaluator packet with child artifact hashes, status, clickable recovery actions, a stable bundle hash, and the Not legal advice boundary. The Submission Pack carries the pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, demo readiness status, required DoraHacks assets, feature-to-theme mapping, known limitations, and the Not legal advice boundary. These artifacts do not store raw KYC, credentials, raw evidence bytes, legal conclusions, or real chain-write claims.
 
 ![Judge Handoff Bundle](assets/screenshots/judge-handoff-bundle.png)
 
@@ -62,7 +62,7 @@ The Evidence Ledger records local evidence creation, template application, edits
 4. Open **Risk Audit** and point to source-linked trigger facts.
 5. Open **Evidence Ledger**, apply the tokenized yield/RWA evidence template, show the Evidence Audit Trail JSON export, and show the manifest bundle hash.
 6. Open **Counsel Pack** and show the Model Intake Summary, AI event hashes, Markdown download, Manifest JSON, and simulated anchor receipt.
-7. Open **Sources** and download **Judge Handoff Bundle JSON**, then **Submission Pack JSON** plus **Demo Runbook JSON**, to show the judge-facing bundle hash, pack hash, Demo Runbook hash, known limitations, demo readiness, and clean-clone path.
+7. Open **Sources** and download **Judge Handoff Bundle JSON**, then **Submission Pack JSON** plus **Demo Runbook JSON**, to show the judge-facing bundle hash, child artifact hashes, pack hash, Demo Runbook hash, Counsel Handoff Checklist status, known limitations, demo readiness, and clean-clone path.
 
 ## Boundaries
 

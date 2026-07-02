@@ -2405,8 +2405,13 @@ describe("App", () => {
 
       expect(await screen.findByText(/## Evidence Vault Control Coverage/i)).toBeInTheDocument();
       expect(screen.getByText(/control-eu-ai-act-ai-literacy-governance: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
+      const checklist = within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i }));
+      expect(checklist.getByText(/Evidence Vault Control Coverage/i)).toBeInTheDocument();
+      expect(checklist.getByText(/0\/2 controls ready for handoff/i)).toBeInTheDocument();
+      expect(checklist.getByText(/needs review: 2/i)).toBeInTheDocument();
+      expect(checklist.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }

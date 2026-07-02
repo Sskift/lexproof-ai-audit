@@ -6,6 +6,7 @@ import {
   exportCounselHandoffChecklistJson,
   type CounselHandoffChecklistInput
 } from "./counselHandoffChecklist";
+import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { ExportSafetyInventory } from "./exportSafetyInventory";
 import type { CounselPackExportRecord } from "./phase2Types";
 
@@ -89,6 +90,52 @@ describe("createCounselHandoffChecklist", () => {
     expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|legally approved|raw KYC packet/i);
     expect(json).toContain("Not legal advice");
   });
+
+  it("adds Evidence Vault control coverage recovery to the handoff checklist without legal conclusions", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      evidenceVaultControlCoverage: evidenceVaultControlCoverage("needs-review"),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "evidence-vault-control-coverage");
+    const json = exportCounselHandoffChecklistJson(checklist);
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Evidence Vault Control Coverage",
+        status: "needs-review",
+        blockerCount: 0,
+        warningCount: 1,
+        recoveryAction: "Move linked vault evidence through Human Review before export reliance.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault control coverage is audit preparation metadata only."
+      })
+    );
+    expect(item?.evidence).toContain("1/2 controls ready for handoff");
+    expect(item?.evidence).toContain("needs review: 1");
+    expect(item?.evidence).toContain("control-eu-ai-act-ai-literacy-governance");
+    expect(checklist.nextActions).toContain(
+      "Evidence Vault Control Coverage: Move linked vault evidence through Human Review before export reliance."
+    );
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+  });
+
+  it("marks Evidence Vault control coverage ready when all linked controls are ready for handoff", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      evidenceVaultControlCoverage: evidenceVaultControlCoverage("ready-for-handoff"),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "evidence-vault-control-coverage");
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Evidence Vault Control Coverage",
+        status: "ready",
+        evidence: expect.stringContaining("2/2 controls ready for handoff"),
+        recoveryAction: "Keep verified vault evidence linked in the Counsel Pack and source handoff."
+      })
+    );
+  });
 });
 
 function baseInput(options: { reverseReviews?: boolean } = {}): CounselHandoffChecklistInput {
@@ -162,6 +209,39 @@ function readyInventory(): ExportSafetyInventory {
     blockers: [],
     nextActions: ["Keep exports metadata-only and re-run inventory before external sharing."],
     notLegalAdviceBoundary: "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only."
+  };
+}
+
+function evidenceVaultControlCoverage(status: "needs-review" | "ready-for-handoff"): EvidenceVaultControlCoverage {
+  return {
+    coverageVersion: "lexproof-evidence-vault-control-coverage-v1",
+    controlCount: 2,
+    recordCount: 4,
+    manifestItemCount: 4,
+    controls: [
+      {
+        controlId: "control-eu-ai-act-ai-literacy-governance",
+        evidenceRecordCount: 3,
+        manifestItemCount: 3,
+        readiness: status,
+        nextAction:
+          status === "ready-for-handoff"
+            ? "Keep verified vault evidence linked in the Counsel Pack and source handoff."
+            : "Move linked vault evidence through Human Review before export reliance.",
+        statuses: status === "ready-for-handoff" ? ["verified"] : ["requested", "verified"],
+        filenames: ["ai-system-use-policy.metadata.json", "human-review-approval-log.metadata.json"]
+      },
+      {
+        controlId: "control-uk-ico-ai-data-protection-governance",
+        evidenceRecordCount: 1,
+        manifestItemCount: 1,
+        readiness: "ready-for-handoff",
+        nextAction: "Keep verified vault evidence linked in the Counsel Pack and source handoff.",
+        statuses: ["verified"],
+        filenames: ["model-payload-redaction-checklist.metadata.json"]
+      }
+    ],
+    notLegalAdviceBoundary: "Not legal advice. Evidence Vault control coverage is audit preparation metadata only."
   };
 }
 

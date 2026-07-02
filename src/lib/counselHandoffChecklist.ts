@@ -1,6 +1,7 @@
 import type { CounselPackVersionRecord } from "./counselPackVersions";
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import { redactDataBoundaryText } from "./dataBoundary";
+import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { ExportSafetyInventory, ExportSafetyInventoryStatus } from "./exportSafetyInventory";
 import type { CounselPackExportRecord } from "./phase2Types";
 
@@ -47,6 +48,7 @@ export type CounselHandoffChecklistInput = {
   regulatorySourcePackHash?: string;
   submissionPackHash?: string;
   exportSafetyInventory: ExportSafetyInventory | null;
+  evidenceVaultControlCoverage?: EvidenceVaultControlCoverage | null;
   counselReviews: CounselReviewItem[];
   counselPackVersions: CounselPackVersionRecord[];
   serverExportRecords: CounselPackExportRecord[];
@@ -63,6 +65,7 @@ export async function createCounselHandoffChecklist({
   regulatorySourcePackHash,
   submissionPackHash,
   exportSafetyInventory,
+  evidenceVaultControlCoverage,
   counselReviews,
   counselPackVersions,
   serverExportRecords,
@@ -81,6 +84,7 @@ export async function createCounselHandoffChecklist({
       recoveryAction: "Add metadata-only evidence and wait for the Evidence Manifest bundle hash.",
       notLegalAdviceBoundary: "Not legal advice. Evidence manifests are audit preparation hash metadata only."
     }),
+    ...(evidenceVaultControlCoverage ? [createEvidenceVaultControlCoverageItem(evidenceVaultControlCoverage)] : []),
     createExportSafetyInventoryItem(exportSafetyInventory),
     createHashItem({
       id: "regulatory-source-pack",
@@ -229,6 +233,52 @@ function createCounselReviewStatusItem(counselReviews: CounselReviewItem[]): Cou
             ? "Route ready and not-started review rows through counsel or compliance review before final handoff."
             : "Keep review status metadata with the final handoff packet.",
     notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow metadata only."
+  });
+}
+
+function createEvidenceVaultControlCoverageItem(
+  coverage: EvidenceVaultControlCoverage
+): CounselHandoffChecklistItem {
+  const readinessCounts = coverage.controls.reduce(
+    (counts, control) => {
+      counts[control.readiness] += 1;
+      return counts;
+    },
+    {
+      "ready-for-handoff": 0,
+      "needs-review": 0,
+      "needs-manifest-link": 0,
+      "needs-vault-record": 0
+    } satisfies Record<EvidenceVaultControlCoverage["controls"][number]["readiness"], number>
+  );
+  const needsActionCount = readinessCounts["needs-manifest-link"] + readinessCounts["needs-vault-record"];
+  const needsReviewCount = readinessCounts["needs-review"];
+  const status: CounselHandoffChecklistItemStatus =
+    coverage.controlCount === 0 || needsActionCount > 0 ? "needs-action" : needsReviewCount > 0 ? "needs-review" : "ready";
+  const firstRecoveryControl =
+    coverage.controls.find((control) => control.readiness !== "ready-for-handoff") ?? coverage.controls[0];
+  const controlIds = coverage.controls
+    .filter((control) => control.readiness !== "ready-for-handoff")
+    .map((control) => control.controlId)
+    .slice(0, 3);
+
+  return createItem({
+    id: "evidence-vault-control-coverage",
+    label: "Evidence Vault Control Coverage",
+    status,
+    evidence: [
+      `${readinessCounts["ready-for-handoff"]}/${coverage.controlCount} controls ready for handoff.`,
+      `needs review: ${readinessCounts["needs-review"]}; needs manifest link: ${readinessCounts["needs-manifest-link"]}; needs vault record: ${readinessCounts["needs-vault-record"]}.`,
+      controlIds.length > 0 ? `Open controls: ${controlIds.join(", ")}.` : ""
+    ]
+      .filter(Boolean)
+      .join(" "),
+    warningCount: needsActionCount + needsReviewCount,
+    recoveryAction:
+      status === "ready"
+        ? "Keep verified vault evidence linked in the Counsel Pack and source handoff."
+        : firstRecoveryControl?.nextAction ?? "Sync Evidence Vault control coverage before final handoff.",
+    notLegalAdviceBoundary: coverage.notLegalAdviceBoundary
   });
 }
 

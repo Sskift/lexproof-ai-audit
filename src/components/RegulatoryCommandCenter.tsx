@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck, UserCheck } from "lucide-react";
 import { JurisdictionEvidenceMapPanel } from "./JurisdictionEvidenceMapPanel";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
@@ -24,6 +25,11 @@ import {
   type RegulatorySourceApprovalQueue,
   type RegulatorySourceApprovalStatus
 } from "../lib/regulatorySourceApproval";
+import {
+  createSourceEvidenceGapTriage,
+  downloadSourceEvidenceGapTriageJson,
+  type SourceEvidenceGapTriage
+} from "../lib/sourceEvidenceGapTriage";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { SourceFreshnessBoard } from "../lib/sourceFreshnessBoard";
 import type { ProjectProfile } from "../lib/projectModel";
@@ -102,6 +108,21 @@ export function RegulatoryCommandCenter({
   const topSourceReviewItems = sourceReview.items.slice(0, 4);
   const topCounselRoutes = localCounselRoutingPlan?.routes.slice(0, 4) ?? [];
   const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
+  const [sourceGapTriage, setSourceGapTriage] = useState<SourceEvidenceGapTriage | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSourceGapTriage(null);
+    createSourceEvidenceGapTriage({ graph, maxItems: 6 }).then((triage) => {
+      if (!cancelled) {
+        setSourceGapTriage(triage);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [graph]);
 
   return (
     <section className="panel regulatory-command-center" aria-label="Regulatory Command Center">
@@ -207,6 +228,66 @@ export function RegulatoryCommandCenter({
           ))}
         </div>
       </section>
+
+      {sourceGapTriage ? (
+        <section className={`source-gap-triage ${sourceGapTriage.status}`} aria-label="Source Evidence Gap Triage">
+          <div className="reg-source-review-header">
+            <div className="reg-section-title">
+              <AlertTriangle size={17} aria-hidden="true" />
+              <h3>Source Evidence Gap Triage</h3>
+            </div>
+            <div className="source-gap-triage-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => downloadSourceEvidenceGapTriageJson(`lexproof-${project.id}-source-gap-triage.json`, sourceGapTriage)}
+              >
+                <Download size={15} aria-hidden="true" />
+                Download Source Gap Triage JSON
+              </button>
+              <button type="button" className="secondary" onClick={() => onNavigate("evidence")}>
+                <ListChecks size={15} aria-hidden="true" />
+                Open Evidence
+              </button>
+            </div>
+          </div>
+          <div className="source-gap-triage-summary">
+            <Metric label="Open gaps" value={sourceGapTriage.totalGapCount} helper={`${sourceGapTriage.visibleGapCount} shown`} />
+            <Metric label="P0" value={sourceGapTriage.p0Count} helper="highest-priority requests" />
+            <Metric label="Jurisdictions" value={sourceGapTriage.jurisdictionCount} helper="source-linked" />
+            <Metric label="Triage hash" value={sourceGapTriage.triageHash.slice(0, 12)} helper="metadata-only" />
+          </div>
+          <p>{sourceGapTriage.notLegalAdviceBoundary}</p>
+          <strong className="source-gap-next-action">{sourceGapTriage.nextAction}</strong>
+          <div className="source-gap-triage-list">
+            {sourceGapTriage.items.length === 0 ? (
+              <p className="empty-state">No source evidence gaps are open in the current graph.</p>
+            ) : null}
+            {sourceGapTriage.items.map((item) => (
+              <article key={item.id} className={`source-gap-triage-item ${item.priority.toLowerCase()}`}>
+                <header>
+                  <span>{item.priority}</span>
+                  <strong>{item.title}</strong>
+                </header>
+                <p>{item.reason}</p>
+                <small>
+                  {item.jurisdiction} · {item.citation}
+                </small>
+                <small>{item.localCounselRole}</small>
+                <a href={item.sourceUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink size={14} aria-hidden="true" />
+                  {item.sourceName}
+                </a>
+                <div className="source-gap-draft">
+                  <span>Evidence draft</span>
+                  <strong>{item.evidenceLedgerDraft.label}</strong>
+                  <small>{item.evidenceLedgerDraft.content}</small>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="reg-command-metrics" aria-label="Regulatory readiness metrics">
         <Metric label="Jurisdictions" value={graph.jurisdictionSummaries.length} helper={project.jurisdictions.join(", ") || "not set"} />

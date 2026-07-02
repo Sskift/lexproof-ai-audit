@@ -45,6 +45,13 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Workspace Action Queue/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Workspace actions are audit preparation workflow prompts only./i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Resolve source evidence gaps/i })).toBeInTheDocument();
+    const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+    expect(
+      within(sourceGapTriage).getByText(/Not legal advice. Source evidence gap triage is audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
+    expect(within(sourceGapTriage).getByRole("button", { name: /Download Source Gap Triage JSON/i })).toBeEnabled();
+    expect(within(sourceGapTriage).getByRole("button", { name: /Open Evidence/i })).toBeEnabled();
+    expect(within(sourceGapTriage).getAllByText(/Evidence draft/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /Source Review Ledger/i })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("button", { name: /Download Source Review Packet JSON/i })).toBeEnabled());
     expect(
@@ -61,7 +68,7 @@ describe("App", () => {
     expect(screen.getAllByText(/Evidence Ledger/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Counsel Pack/i).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Evidence Ledger$/i }));
 
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
   });

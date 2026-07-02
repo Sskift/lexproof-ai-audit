@@ -1708,6 +1708,167 @@ textarea {
   justify-self: start;
 }
 
+.source-gap-triage {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #d8c9b6;
+  border-left: 4px solid #a6531c;
+  border-radius: 8px;
+  background: #fffaf2;
+  padding: 12px;
+}
+
+.source-gap-triage.ready-for-counsel {
+  border-color: #b8d8c8;
+  border-left-color: #34724e;
+  background: #f7fcf9;
+}
+
+.source-gap-triage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.source-gap-triage-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.source-gap-triage > p,
+.source-gap-next-action {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-gap-triage > p {
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.source-gap-next-action {
+  color: #172431;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.source-gap-triage-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.source-gap-triage-item {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.source-gap-triage-item.p0 {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.source-gap-triage-item.p1 {
+  border-color: #e9bd87;
+  background: #fffdf8;
+}
+
+.source-gap-triage-item header {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.source-gap-triage-item header span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #263d73;
+  color: #ffffff;
+  padding: 4px 7px;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.source-gap-triage-item.p0 header span {
+  background: #9f241a;
+}
+
+.source-gap-triage-item.p1 header span {
+  background: #a6531c;
+}
+
+.source-gap-triage-item strong,
+.source-gap-triage-item p,
+.source-gap-triage-item small,
+.source-gap-triage-item a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-gap-triage-item header strong {
+  color: #172431;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.source-gap-triage-item p,
+.source-gap-triage-item small {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.source-gap-triage-item a {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  color: #0b6575;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.source-gap-draft {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #e2e8ee;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 8px;
+}
+
+.source-gap-draft span,
+.source-gap-draft small {
+  color: #657382;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.source-gap-draft span {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.source-gap-draft strong {
+  color: #172431;
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
 .reg-source-review.review-due {
   border-color: #e9bd87;
   background: #fffaf2;
@@ -7520,6 +7681,8 @@ textarea {
   .source-freshness-lanes,
   .workspace-journey-list,
   .workspace-action-list,
+  .source-gap-triage-summary,
+  .source-gap-triage-list,
   .model-connect-receipt > div:first-child,
   .human-review-summary,
   .human-review-filters,

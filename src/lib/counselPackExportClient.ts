@@ -17,6 +17,27 @@ type ErrorResponse = {
   notLegalAdviceBoundary?: string;
 };
 
+export type CounselPackExportClientErrorDetails = {
+  message: string;
+  code?: string;
+  recoveryAction?: string;
+  notLegalAdviceBoundary?: string;
+};
+
+export class CounselPackExportClientError extends Error {
+  code?: string;
+  recoveryAction?: string;
+  notLegalAdviceBoundary?: string;
+
+  constructor(details: CounselPackExportClientErrorDetails) {
+    super(details.message);
+    this.name = "CounselPackExportClientError";
+    this.code = details.code;
+    this.recoveryAction = details.recoveryAction;
+    this.notLegalAdviceBoundary = details.notLegalAdviceBoundary;
+  }
+}
+
 export async function createServerCounselPackExportRecord({
   workspaceId,
   versionRecord,
@@ -57,7 +78,12 @@ export async function createServerCounselPackExportRecord({
 
   if (!response.ok) {
     const safeError = asSafeApiErrorResponse(payload);
-    throw new Error(safeError.error || "Server Counsel Pack export record creation failed.");
+    throw new CounselPackExportClientError({
+      message: safeError.error || "Server Counsel Pack export record creation failed.",
+      code: safeError.code,
+      recoveryAction: safeError.recoveryAction,
+      notLegalAdviceBoundary: safeError.notLegalAdviceBoundary
+    });
   }
 
   return payload as CounselPackExportRecord;

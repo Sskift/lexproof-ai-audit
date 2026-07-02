@@ -30,6 +30,9 @@ import {
   type RegulatorySourcePack
 } from "../lib/regulatorySourcePack";
 
+const SERVER_EXPORT_ERROR_BOUNDARY =
+  "Not legal advice. Counsel Pack export errors are audit preparation workflow metadata only.";
+
 type CounselPackPanelProps = {
   projectName: string;
   fit: SubmissionFit;
@@ -52,6 +55,13 @@ type CounselPackPanelProps = {
   onUpdateReview: (id: string, updates: Partial<CounselReviewItem>) => void;
   onSaveVersion: () => Promise<void> | void;
   onCreateServerExport: (apiBaseUrl: string) => Promise<void> | void;
+};
+
+type ServerExportErrorState = {
+  message: string;
+  code?: string;
+  recoveryAction?: string;
+  notLegalAdviceBoundary: string;
 };
 
 export function CounselPackPanel({
@@ -82,7 +92,7 @@ export function CounselPackPanel({
   const [versionError, setVersionError] = useState("");
   const [isSavingVersion, setIsSavingVersion] = useState(false);
   const [serverExportApiBaseUrl, setServerExportApiBaseUrl] = useState("");
-  const [serverExportError, setServerExportError] = useState("");
+  const [serverExportError, setServerExportError] = useState<ServerExportErrorState | null>(null);
   const [isCreatingServerExport, setIsCreatingServerExport] = useState(false);
   const exportBlocked = !dataBoundaryReport.exportAllowed;
   const exportBlockReason = "Resolve blocked data boundary findings before export handoff.";
@@ -116,12 +126,12 @@ export function CounselPackPanel({
   };
 
   const createServerExport = async () => {
-    setServerExportError("");
+    setServerExportError(null);
     setIsCreatingServerExport(true);
     try {
       await onCreateServerExport(serverExportApiBaseUrl);
     } catch (error) {
-      setServerExportError(error instanceof Error ? error.message : "Unable to create server Counsel Pack export record.");
+      setServerExportError(toServerExportErrorState(error));
     } finally {
       setIsCreatingServerExport(false);
     }
@@ -504,7 +514,7 @@ function ServerExportRecordsPanel({
   onCreate
 }: {
   apiBaseUrl: string;
-  error: string;
+  error: ServerExportErrorState | null;
   isCreating: boolean;
   records: CounselPackExportRecord[];
   canCreate: boolean;
@@ -537,7 +547,14 @@ function ServerExportRecordsPanel({
         </button>
       </div>
       {!canCreate ? <p className="empty-state">{disabledReason}</p> : null}
-      {error ? <p className="save-state">{error}</p> : null}
+      {error ? (
+        <div className="save-state server-export-error" role="status">
+          <p>{error.message}</p>
+          {error.code ? <code>{error.code}</code> : null}
+          {error.recoveryAction ? <small>{error.recoveryAction}</small> : null}
+          <small>{error.notLegalAdviceBoundary}</small>
+        </div>
+      ) : null}
       {records.length === 0 ? (
         <p className="empty-state">No server Counsel Pack export records have been created for this project yet.</p>
       ) : (
@@ -753,4 +770,31 @@ function slug(value: string): string {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "lexproof"
   );
+}
+
+function toServerExportErrorState(error: unknown): ServerExportErrorState {
+  if (!(error instanceof Error)) {
+    return {
+      message: "Unable to create server Counsel Pack export record.",
+      notLegalAdviceBoundary: SERVER_EXPORT_ERROR_BOUNDARY
+    };
+  }
+
+  const details = error as Error & {
+    code?: unknown;
+    recoveryAction?: unknown;
+    notLegalAdviceBoundary?: unknown;
+  };
+
+  return {
+    message: error.message || "Unable to create server Counsel Pack export record.",
+    ...(typeof details.code === "string" && details.code.trim() ? { code: details.code.trim() } : {}),
+    ...(typeof details.recoveryAction === "string" && details.recoveryAction.trim()
+      ? { recoveryAction: details.recoveryAction.trim() }
+      : {}),
+    notLegalAdviceBoundary:
+      typeof details.notLegalAdviceBoundary === "string" && details.notLegalAdviceBoundary.startsWith("Not legal advice.")
+        ? details.notLegalAdviceBoundary
+        : SERVER_EXPORT_ERROR_BOUNDARY
+  };
 }

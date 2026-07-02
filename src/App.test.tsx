@@ -4077,6 +4077,45 @@ describe("App", () => {
     }
   });
 
+  it("shows server Counsel Pack export recovery guidance when API record creation fails", async () => {
+    const fetchMock = vi.fn(async () =>
+      appJsonResponse(
+        {
+          error: "Artifact hash must be a SHA-256 hex digest.",
+          code: "COUNSEL_PACK_EXPORT_INVALID_HASH",
+          recoveryAction: "Save a fresh Counsel Pack version before creating a server export record.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        },
+        400
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      const saveButton = await screen.findByRole("button", { name: /Save Pack Version/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+      expect(await screen.findByText(/Version 1/i)).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Server export API base URL/i), {
+        target: { value: "https://api.lexproof.test" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Create Server Export Record/i }));
+
+      expect(await screen.findByText(/Artifact hash must be a SHA-256 hex digest./i)).toBeInTheDocument();
+      expect(screen.getByText(/COUNSEL_PACK_EXPORT_INVALID_HASH/i)).toBeInTheDocument();
+      expect(screen.getByText(/Save a fresh Counsel Pack version before creating a server export record./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Not legal advice. This API creates audit preparation workflow records only./i)
+      ).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("shows jurisdiction-specific audit preparation checklist items", async () => {
     render(<App />);
 

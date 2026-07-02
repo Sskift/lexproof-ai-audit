@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createServerCounselPackExportRecord } from "./counselPackExportClient";
+import { CounselPackExportClientError, createServerCounselPackExportRecord } from "./counselPackExportClient";
 import type { CounselPackVersionRecord } from "./counselPackVersions";
 
 const versionRecord: CounselPackVersionRecord = {
@@ -99,18 +99,27 @@ describe("counsel pack export client", () => {
       ok: false,
       json: async () => ({
         error: "Artifact hash must be a SHA-256 hex digest.",
+        code: "COUNSEL_PACK_EXPORT_INVALID_HASH",
+        recoveryAction: "Save a fresh Counsel Pack version before creating a server export record.",
         notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
       })
     })) as unknown as typeof fetch;
 
-    await expect(
-      createServerCounselPackExportRecord({
-        workspaceId: "workspace-export",
-        versionRecord,
-        createdBy: "Compliance",
-        fetcher
-      })
-    ).rejects.toThrow("Artifact hash must be a SHA-256 hex digest.");
+    const exportAttempt = createServerCounselPackExportRecord({
+      workspaceId: "workspace-export",
+      versionRecord,
+      createdBy: "Compliance",
+      fetcher
+    });
+
+    await expect(exportAttempt).rejects.toBeInstanceOf(CounselPackExportClientError);
+    await expect(exportAttempt).rejects.toMatchObject({
+      name: "CounselPackExportClientError",
+      message: "Artifact hash must be a SHA-256 hex digest.",
+      code: "COUNSEL_PACK_EXPORT_INVALID_HASH",
+      recoveryAction: "Save a fresh Counsel Pack version before creating a server export record.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
   });
 
   it("redacts unsafe server export error payloads before surfacing them", async () => {
@@ -125,14 +134,19 @@ describe("counsel pack export client", () => {
       })
     })) as unknown as typeof fetch;
 
-    await expect(
-      createServerCounselPackExportRecord({
-        workspaceId: "workspace-export",
-        versionRecord,
-        createdBy: "Compliance",
-        fetcher
-      })
-    ).rejects.toMatchObject({
+    const exportAttempt = createServerCounselPackExportRecord({
+      workspaceId: "workspace-export",
+      versionRecord,
+      createdBy: "Compliance",
+      fetcher
+    });
+
+    await expect(exportAttempt).rejects.toBeInstanceOf(CounselPackExportClientError);
+    await expect(exportAttempt).rejects.toMatchObject({
+      name: "CounselPackExportClientError",
+      code: "COUNSEL_PACK_EXPORT_BOUNDARY_FAILED",
+      recoveryAction: "Remove [redacted-private-key] material before [redacted-legal-conclusion].",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only.",
       message: expect.stringContaining("[redacted-raw-kyc]")
     });
 

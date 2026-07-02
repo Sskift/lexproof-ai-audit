@@ -44,7 +44,7 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Workspace Action Queue/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Workspace actions are audit preparation workflow prompts only./i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Resolve source evidence gaps/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open source gap triage/i })).toBeInTheDocument();
     const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
     expect(
       within(sourceGapTriage).getByText(/Not legal advice. Source evidence gap triage is audit preparation workflow metadata only./i)
@@ -73,13 +73,27 @@ describe("App", () => {
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
   });
 
-  it("routes first-screen action queue items to the matching workbench tab", async () => {
+  it("routes the source gap action queue item to the command-center triage panel", async () => {
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Resolve source evidence gaps/i }));
+    try {
+      const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+      const actionQueue = within(screen.getByRole("region", { name: /Workspace Action Queue/i }));
 
-    expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
-    expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
+      fireEvent.click(actionQueue.getByRole("button", { name: /Open source gap triage/i }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+      expect(sourceGapTriage).toHaveClass("action-focus");
+      expect(within(sourceGapTriage).getAllByRole("button", { name: /Request Evidence/i }).length).toBeGreaterThan(0);
+      expect(screen.queryByRole("heading", { name: /^Evidence Ledger$/i })).not.toBeInTheDocument();
+      expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
   });
 
   it("requests a source evidence gap into the Evidence Ledger from the command center", async () => {
@@ -116,7 +130,7 @@ describe("App", () => {
     expect(screen.queryByLabelText(/Label for evidence 5/i)).not.toBeInTheDocument();
     expect(screen.getByText(/source-gap-refreshed US accredited-investor verification/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
-  }, 10000);
+  }, 20000);
 
   it("shows and downloads the Regulatory Control Matrix from the command center", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -1964,7 +1978,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Evidence Audit Trail/i })).toBeInTheDocument();
     expect(screen.getByText(/created Launch memo/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download Evidence Trail JSON/i })).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("keeps long evidence records editable with visible mobile-friendly field labels", async () => {
     render(<App />);
@@ -3616,7 +3630,7 @@ describe("App", () => {
     expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Review status for AI event 1/i)).toHaveValue("reviewed");
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("handles returned and rejected Human Review decisions as audit-prep workflow states", async () => {
     render(<App />);

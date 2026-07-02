@@ -60,6 +60,14 @@ describe("createWorkspaceActionQueue", () => {
       })
     );
     expect(queue.items[1].summary).toContain("White paper disclosure evidence");
+    expect(queue.items[1]).toEqual(
+      expect.objectContaining({
+        id: "resolve-regulatory-evidence-gaps",
+        target: "evidence",
+        cta: "Open source gap triage",
+        focusTarget: "source-gap-triage"
+      })
+    );
     expect(queue.items.every((item) => item.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
   });
 

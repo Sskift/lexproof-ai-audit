@@ -109,7 +109,7 @@ Judge Demo Readiness keeps the clean-clone path visible on the first screen: req
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
-The Regulatory Command Center turns project facts into a first-screen Workspace Journey, Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, source update approval gates, evidence gaps, and local counsel handoff status without making legal conclusions. The Workspace Journey shows the audit-prep path from project facts through model/evidence intake, risk/source graph, human review, vault/manifest, and counsel export with a next-action button.
+The Regulatory Command Center turns project facts into a first-screen Workspace Journey, Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, source update approval gates, evidence gaps, and local counsel handoff status without making legal conclusions. The Workspace Journey shows the audit-prep path from project facts through model/evidence intake, risk/source graph, human review, vault/manifest, and counsel export with a next-action button. Source gap actions now focus the Source Evidence Gap Triage panel directly so users can request the missing metadata-only evidence without hunting through tabs.
 
 ![Regulatory Command Center](docs/assets/screenshots/regulatory-command-center.png)
 
@@ -156,6 +156,8 @@ The marketing claims scenario routes `SignalBridge Marketing Review` into US FTC
 ![Marketing Claims Counsel Pack template](docs/assets/screenshots/counsel-pack-marketing-claims-template.png)
 
 ![Workspace Action Queue](docs/assets/screenshots/workspace-action-queue.png)
+
+![Workspace action source gap focus](docs/assets/screenshots/workspace-action-source-gap-focus.png)
 
 ![Regulatory Control Matrix](docs/assets/screenshots/regulatory-control-matrix.png)
 

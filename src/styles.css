@@ -1725,6 +1725,16 @@ textarea {
   background: #f7fcf9;
 }
 
+.source-gap-triage.action-focus {
+  border-color: #2f6f8f;
+  border-left-color: #1d5f7b;
+  box-shadow: 0 0 0 3px rgba(47, 111, 143, 0.16);
+}
+
+.source-gap-triage:focus {
+  outline: none;
+}
+
 .source-gap-triage-actions {
   display: flex;
   flex-wrap: wrap;

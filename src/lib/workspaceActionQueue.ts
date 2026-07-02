@@ -17,6 +17,8 @@ export type WorkspaceActionTarget =
   | "counsel"
   | "sources";
 
+export type WorkspaceActionFocusTarget = "source-gap-triage";
+
 export type WorkspaceActionPriority = "P0" | "P1" | "P2" | "P3";
 
 export type WorkspaceActionItem = {
@@ -27,6 +29,7 @@ export type WorkspaceActionItem = {
   title: string;
   summary: string;
   cta: string;
+  focusTarget?: WorkspaceActionFocusTarget;
   notLegalAdviceBoundary: "Not legal advice. Workspace actions are audit preparation workflow prompts only.";
 };
 
@@ -129,7 +132,8 @@ function createRegulatoryEvidenceAction(graph: RegulatoryGraph): WorkspaceAction
     target: "evidence",
     title: "Resolve source evidence gaps",
     summary: `${graph.evidenceGaps.length} source-linked evidence gap${graph.evidenceGaps.length === 1 ? "" : "s"} open. First: ${firstGap.title} for ${firstGap.citation}.`,
-    cta: "Resolve source evidence gaps"
+    cta: "Open source gap triage",
+    focusTarget: "source-gap-triage"
   });
 }
 

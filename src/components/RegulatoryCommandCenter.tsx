@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Download, ExternalLink, FileSearch, Globe2, ListChecks, RefreshCcw, ShieldCheck, UserCheck } from "lucide-react";
 import { JurisdictionEvidenceMapPanel } from "./JurisdictionEvidenceMapPanel";
 import { RegulatoryControlMatrixPanel } from "./RegulatoryControlMatrixPanel";
@@ -36,7 +36,7 @@ import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../li
 import type { SourceFreshnessBoard } from "../lib/sourceFreshnessBoard";
 import type { ProjectProfile } from "../lib/projectModel";
 import type { RegulatorySourceApprovalSyncResult, RegulatorySourceReviewSyncResult } from "../lib/phase2Types";
-import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
+import type { WorkspaceActionItem, WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
 import type { WorkspaceCockpitBrief, WorkspaceCockpitBriefStatus } from "../lib/workspaceCockpitBrief";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
 
@@ -113,6 +113,8 @@ export function RegulatoryCommandCenter({
   const topCounselRoutes = localCounselRoutingPlan?.routes.slice(0, 4) ?? [];
   const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
   const [sourceGapTriage, setSourceGapTriage] = useState<SourceEvidenceGapTriage | null>(null);
+  const [focusedActionId, setFocusedActionId] = useState<string | null>(null);
+  const sourceGapTriageRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,6 +129,17 @@ export function RegulatoryCommandCenter({
       cancelled = true;
     };
   }, [graph]);
+
+  const handleActionQueueClick = (item: WorkspaceActionItem) => {
+    if (item.focusTarget === "source-gap-triage") {
+      setFocusedActionId(item.id);
+      sourceGapTriageRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      sourceGapTriageRef.current?.focus?.({ preventScroll: true });
+      return;
+    }
+
+    onNavigate(item.target);
+  };
 
   return (
     <section className="panel regulatory-command-center" aria-label="Regulatory Command Center">
@@ -224,7 +237,7 @@ export function RegulatoryCommandCenter({
                 <strong>{item.title}</strong>
               </header>
               <p>{item.summary}</p>
-              <button type="button" className="secondary" onClick={() => onNavigate(item.target)}>
+              <button type="button" className="secondary" onClick={() => handleActionQueueClick(item)}>
                 <ListChecks size={14} aria-hidden="true" />
                 {item.cta}
               </button>
@@ -234,7 +247,14 @@ export function RegulatoryCommandCenter({
       </section>
 
       {sourceGapTriage ? (
-        <section className={`source-gap-triage ${sourceGapTriage.status}`} aria-label="Source Evidence Gap Triage">
+        <section
+          ref={sourceGapTriageRef}
+          tabIndex={-1}
+          className={`source-gap-triage ${sourceGapTriage.status} ${
+            focusedActionId === "resolve-regulatory-evidence-gaps" ? "action-focus" : ""
+          }`}
+          aria-label="Source Evidence Gap Triage"
+        >
           <div className="reg-source-review-header">
             <div className="reg-section-title">
               <AlertTriangle size={17} aria-hidden="true" />

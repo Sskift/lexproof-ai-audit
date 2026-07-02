@@ -29,6 +29,7 @@ import type { SourceFreshnessBoard } from "../lib/sourceFreshnessBoard";
 import type { ProjectProfile } from "../lib/projectModel";
 import type { RegulatorySourceApprovalSyncResult, RegulatorySourceReviewSyncResult } from "../lib/phase2Types";
 import type { WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
+import type { WorkspaceCockpitBrief, WorkspaceCockpitBriefStatus } from "../lib/workspaceCockpitBrief";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
 
 type RegulatoryCommandCenterProps = {
@@ -53,6 +54,7 @@ type RegulatoryCommandCenterProps = {
   sourceFreshnessBoard: SourceFreshnessBoard | null;
   localCounselRoutingPlan: LocalCounselRoutingPlan | null;
   actionQueue: WorkspaceActionQueue;
+  cockpitBrief: WorkspaceCockpitBrief;
   journey: WorkspaceJourney;
   sourceReviewPacket: RegulatorySourceReviewPacket | null;
   manifestHash?: string;
@@ -85,6 +87,7 @@ export function RegulatoryCommandCenter({
   sourceFreshnessBoard,
   localCounselRoutingPlan,
   actionQueue,
+  cockpitBrief,
   journey,
   sourceReviewPacket,
   manifestHash,
@@ -121,6 +124,35 @@ export function RegulatoryCommandCenter({
         <ShieldCheck size={18} aria-hidden="true" />
         <span>{graph.notLegalAdviceBoundary}</span>
       </div>
+
+      <section className={`workspace-cockpit-brief ${cockpitBrief.status}`} aria-label="Workspace Cockpit Brief">
+        <div className="cockpit-brief-copy">
+          <span>{formatCockpitStatus(cockpitBrief.status)}</span>
+          <h3>{cockpitBrief.headline}</h3>
+          <p>{cockpitBrief.summary}</p>
+          <small>{cockpitBrief.notLegalAdviceBoundary}</small>
+        </div>
+        <div className="cockpit-brief-facts" aria-label="Workspace cockpit facts">
+          {cockpitBrief.facts.map((fact) => (
+            <div key={fact.label} className={`cockpit-brief-fact ${fact.status}`}>
+              <span>{fact.label}</span>
+              <strong>{fact.value}</strong>
+              <small>{fact.helper}</small>
+            </div>
+          ))}
+        </div>
+        {cockpitBrief.nextAction ? (
+          <button
+            type="button"
+            className="secondary"
+            title={cockpitBrief.nextAction.title}
+            onClick={() => onNavigate(cockpitBrief.nextAction!.target)}
+          >
+            <ListChecks size={14} aria-hidden="true" />
+            Open next action
+          </button>
+        ) : null}
+      </section>
 
       <section className="workspace-journey" aria-label="Workspace Journey">
         <div className="reg-section-title">
@@ -634,5 +666,13 @@ function formatJourneyStatus(status: WorkspaceJourneyStatus): string {
   if (status === "needs-review") {
     return "needs review";
   }
+  return status;
+}
+
+function formatCockpitStatus(status: WorkspaceCockpitBriefStatus): string {
+  if (status === "needs-action") {
+    return "needs action";
+  }
+
   return status;
 }

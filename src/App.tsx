@@ -234,6 +234,7 @@ import {
 import { createSecurityReviewChecklist } from "./lib/securityReviewChecklist";
 import { createSubmissionPack, type SubmissionDemoRunbookSummary, type SubmissionPack } from "./lib/submissionPack";
 import { createWorkspaceActionQueue, type WorkspaceActionTarget } from "./lib/workspaceActionQueue";
+import { createWorkspaceCockpitBrief } from "./lib/workspaceCockpitBrief";
 import { createWorkspaceJourney } from "./lib/workspaceJourney";
 
 type TabId = WorkspaceActionTarget;
@@ -842,6 +843,35 @@ export default function App() {
       regulatoryGraph.matchedClauses.length,
       regulatorySourceReview.status,
       validation
+    ]
+  );
+  const workspaceCockpitBrief = useMemo(
+    () =>
+      createWorkspaceCockpitBrief({
+        projectName: project.projectName,
+        riskLevel: audit.riskLevel,
+        riskScore: audit.score,
+        evidenceCount: project.evidenceItems.length,
+        humanReviewOpenCount: humanReviewQueue.summary.openCount,
+        humanReviewBlockedCount: humanReviewQueue.summary.blockedCount,
+        manifestHash: manifest?.bundleHash,
+        exportAllowed: dataBoundaryReport.exportAllowed,
+        counselPackVersionCount: currentCounselPackVersions.length,
+        journey: workspaceJourney,
+        actionQueue: workspaceActionQueue
+      }),
+    [
+      audit.riskLevel,
+      audit.score,
+      currentCounselPackVersions.length,
+      dataBoundaryReport.exportAllowed,
+      humanReviewQueue.summary.blockedCount,
+      humanReviewQueue.summary.openCount,
+      manifest?.bundleHash,
+      project.evidenceItems.length,
+      project.projectName,
+      workspaceActionQueue,
+      workspaceJourney
     ]
   );
   const grcTicketExport = useMemo(
@@ -1954,6 +1984,7 @@ export default function App() {
             sourceFreshnessBoard={sourceFreshnessBoard}
             localCounselRoutingPlan={localCounselRoutingPlan}
             actionQueue={workspaceActionQueue}
+            cockpitBrief={workspaceCockpitBrief}
             journey={workspaceJourney}
             sourceReviewPacket={regulatorySourceReviewPacket}
             manifestHash={manifest?.bundleHash}

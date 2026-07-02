@@ -27,6 +27,13 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: /LexProof AuditOS/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Regulatory Command Center/i })).toBeInTheDocument();
+    const cockpit = within(screen.getByRole("region", { name: /Workspace Cockpit Brief/i }));
+    expect(cockpit.getByRole("heading", { name: /Audit-prep cockpit/i })).toBeInTheDocument();
+    expect(
+      cockpit.getByText(/Not legal advice. Workspace cockpit status is audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
+    expect(cockpit.getAllByText(/Journey/i).length).toBeGreaterThan(0);
+    expect(cockpit.getByText(/Human review/i)).toBeInTheDocument();
     const journey = within(screen.getByRole("region", { name: /Workspace Journey/i }));
     expect(journey.getByRole("heading", { name: /Workspace Journey/i })).toBeInTheDocument();
     expect(

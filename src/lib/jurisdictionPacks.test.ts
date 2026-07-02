@@ -16,6 +16,7 @@ const project: ProjectProfile = {
     "Japan",
     "Canada",
     "Australia",
+    "South Korea",
     "Switzerland",
     "United Arab Emirates",
     "Brazil"
@@ -54,6 +55,7 @@ describe("createJurisdictionPacks", () => {
         "Japan",
         "Canada",
         "Australia",
+        "South Korea",
         "Switzerland",
         "United Arab Emirates",
         "Brazil"
@@ -146,6 +148,19 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         "ASIC digital-asset financial services and custody control",
         "AUSTRAC VASP AML/CTF, CDD, and recordkeeping control"
+      ])
+    );
+
+    const koreaPack = packs.find((pack) => pack.jurisdiction === "South Korea");
+    expect(koreaPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "South Korea virtual asset / AML counsel"
+      }
+    });
+    expect(koreaPack?.controls.map((control) => control.title)).toEqual(
+      expect.arrayContaining([
+        "FSC user-asset protection and custody control",
+        "KoFIU VASP reporting, AML/CFT, CDD, and STR control"
       ])
     );
 

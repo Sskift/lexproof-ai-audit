@@ -781,6 +781,99 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches South Korea FSC and KoFIU VASP source controls without legal conclusions", () => {
+    const koreaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-korea-vasp-user-protection",
+      projectName: "HanRiver VASP User Protection Review",
+      jurisdictions: ["South Korea"],
+      entityType: "Virtual asset service provider operations team",
+      assetModel: "Virtual asset exchange and wallet custody service with KRW real-name account review assumptions",
+      userType: "Korean retail users and compliance reviewers",
+      custodyModel:
+        "Platform holds user virtual assets with wallet segregation, cold wallet procedures, deposit custody handoff, and incident compensation placeholders",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction monitoring summaries",
+      aiUsage: "AI drafts South Korea VASP evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Korean VASP custody and AML review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(koreaProject);
+    const graph = createRegulatoryGraph(koreaProject, audit, koreaProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["kr-fsc-kofiu-vasp-user-protection-aml"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "kr-fsc-kofiu-vasp-user-protection-aml")).toMatchObject({
+      jurisdiction: "South Korea",
+      regulator: "Financial Services Commission / KoFIU",
+      sourceUrl: "https://www.fsc.go.kr/eng/pr010101/82683",
+      citation:
+        "FSC Virtual Asset User Protection Act implementation; Enforcement Decree; KoFIU VASP reporting and AML guidance",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "South Korea virtual asset / AML counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Korea VASP user-asset protection, custody, and disclosure evidence",
+        "Korea KoFIU VASP reporting, AML/CFT, CDD, and STR evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "South Korea")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "South Korea virtual asset / AML counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks South Korea FSC and KoFIU controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `korea-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const koreaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-korea-vasp-user-protection-covered",
+      projectName: "HanRiver VASP User Protection Review",
+      jurisdictions: ["Korea"],
+      entityType: "Virtual asset service provider operations team",
+      assetModel: "Virtual asset exchange and wallet custody service with KRW real-name account review assumptions",
+      userType: "Korean retail users and compliance reviewers",
+      custodyModel:
+        "Platform holds user virtual assets with wallet segregation, cold wallet procedures, deposit custody handoff, and incident compensation placeholders",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction monitoring summaries",
+      aiUsage: "AI drafts Korea VASP evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Korean VASP custody and AML review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(koreaProject);
+    const graph = createRegulatoryGraph(koreaProject, audit, koreaProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "kr-fsc-kofiu-vasp-user-protection-aml")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Custody and signer control runbook",
+        "Korea VASP user protection and AML reporting register"
+      ])
+    });
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "South Korea")).toMatchObject({
+      readiness: "ready-for-counsel",
+      coveredEvidenceCount: 2,
+      missingEvidenceCount: 0
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "kr-fsc-kofiu-vasp-user-protection-aml" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

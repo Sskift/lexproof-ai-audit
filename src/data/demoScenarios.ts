@@ -186,6 +186,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "korea-vasp-user-protection-source-path",
+    projectName: "HanRiver VASP User Protection Review",
+    title: "Korea VASP user protection review",
+    summary:
+      "South Korea FSC Virtual Asset User Protection Act and KoFIU VASP reporting / AML review with deposit custody, cold-wallet, disclosure, CDD/EDD, STR, and reporting evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Korea FSC/KoFIU source graph",
+      "Review user-asset protection and custody evidence gaps",
+      "Check VASP reporting, AML/CFT, CDD, and STR evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["South Korea", "FSC", "KoFIU", "VASP AML/CFT"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

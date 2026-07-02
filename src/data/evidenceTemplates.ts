@@ -33,9 +33,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Custody and signer control runbook",
         kind: "Runbook",
         content:
-          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, Japan crypto-asset exchange custody scope, Canada CTP PRU custody scope, Australia ASIC digital asset custody scope, cold-wallet/offline management, and proof of reserves evidence.",
+          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, Japan crypto-asset exchange custody scope, Canada CTP PRU custody scope, Australia ASIC digital asset custody scope, Korea VASP user protection scope, cold-wallet/offline management, and proof of reserves evidence.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection; regulatory control: control-ca-csa-ctp-pru-custody-investor-protection; regulatory control: control-au-asic-austrac-digital-asset-financial-services; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-jp-fsa-crypto-asset-custody-user-protection; regulatory control: control-ca-csa-ctp-pru-custody-investor-protection; regulatory control: control-au-asic-austrac-digital-asset-financial-services; regulatory control: control-kr-fsc-kofiu-vasp-user-protection-aml; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
         status: "requested",
         owner: "Compliance"
       },
@@ -126,6 +126,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: summarize Australia ASIC digital asset financial product assumptions, AFS licence handoff, dealing, market making, custodial depository service, client assets separate, crypto-asset custody specialist expertise, cold storage, signing single point of failure controls, compensation or insurance assumptions, independent audit, AUSTRAC virtual asset service provider scope, registration, AML/CTF program, customer due diligence, ongoing CDD, travel rule, suspicious matter report, threshold transaction report, annual compliance reporting, seven years recordkeeping, reviewer owner, and raw KYC, wallet-secret, and customer-record exclusions.",
         source:
           "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-au-asic-austrac-digital-asset-financial-services",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Korea VASP user protection and AML reporting register",
+        kind: "Register",
+        content:
+          "Requested: summarize Korea VASP user protection, user deposits at banks, separate from own funds, users virtual assets separate, 80 percent cold wallet, cold wallet, insurance reserve, hacking network malfunction response, abnormal trading monitoring, Korean language whitepaper, user asset protection, KoFIU, VASP reporting, compliance system, major shareholders, ISMS, real-name verified checking account, AML management, customer due diligence, enhanced due diligence, beneficial ownership, suspicious transaction report, travel rule, registration, reviewer owner, and no raw KYC, customer records, identity files, or wallet secrets.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-kr-fsc-kofiu-vasp-user-protection-aml",
         status: "requested",
         owner: "Compliance"
       },

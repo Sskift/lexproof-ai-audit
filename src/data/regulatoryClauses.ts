@@ -1336,6 +1336,90 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "kr-fsc-kofiu-vasp-user-protection-aml",
+    jurisdiction: "South Korea",
+    regulator: "Financial Services Commission / KoFIU",
+    sourceName:
+      "Virtual Asset User Protection Act implementation, Enforcement Decree, and KoFIU VASP reporting / AML guidance",
+    sourceUrl: "https://www.fsc.go.kr/eng/pr010101/82683",
+    citation:
+      "FSC Virtual Asset User Protection Act implementation; Enforcement Decree; KoFIU VASP reporting and AML guidance",
+    topic: "custody",
+    summary:
+      "Prepare South Korea VASP registration/reporting, user deposit and virtual-asset segregation, bank deposit custody, 80 percent cold-wallet, insurance/reserve, abnormal transaction monitoring/reporting, user disclosure, AML/CFT CDD/EDD/STR, compliance system, major shareholder, ISMS, and real-name account change-reporting evidence for local counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "south korea",
+      "korea",
+      "korean",
+      "fsc",
+      "kofiu",
+      "virtual asset user protection",
+      "virtual asset service provider",
+      "vasp",
+      "real-name verified account",
+      "cold wallet",
+      "specified financial transaction information",
+      "customer due diligence",
+      "suspicious transaction report",
+      "travel rule"
+    ],
+    evidenceRequests: [
+      {
+        id: "kr-fsc-user-asset-protection-custody",
+        title: "Korea VASP user-asset protection, custody, and disclosure evidence",
+        reason:
+          "South Korea VASP review needs user deposits at banks, user virtual assets kept separate, type/volume custody records, 80 percent cold-wallet handling, insurance/reserve, abnormal trading surveillance/reporting, and user disclosure evidence before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "korea vasp user protection",
+          "user deposits at banks",
+          "separate from own funds",
+          "users virtual assets separate",
+          "80 percent cold wallet",
+          "cold wallet",
+          "insurance reserve",
+          "hacking network malfunction",
+          "abnormal trading monitoring",
+          "korean language whitepaper",
+          "user asset protection"
+        ]
+      },
+      {
+        id: "kr-kofiu-vasp-reporting-aml-cdd",
+        title: "Korea KoFIU VASP reporting, AML/CFT, CDD, and STR evidence",
+        reason:
+          "Counsel and compliance review need KoFIU VASP reporting, compliance system, major shareholder, ISMS, executives/service-operation changes, real-name verified account, AML risk management, CDD/EDD, STR, and Travel Rule evidence without raw KYC or customer records.",
+        priority: "P1",
+        keywords: [
+          "kofiu",
+          "vasp reporting",
+          "compliance system",
+          "major shareholders",
+          "isms",
+          "real-name verified checking account",
+          "aml management",
+          "customer due diligence",
+          "enhanced due diligence",
+          "beneficial ownership",
+          "suspicious transaction report",
+          "travel rule",
+          "korea vasp registration"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which South Korea VASP registration/reporting, user-asset custody, deposit custody, cold-wallet, insurance/reserve, suspicious or abnormal trading monitoring, and disclosure assumptions should local counsel review?",
+      "What metadata-only evidence shows KoFIU reporting, AML/CFT, CDD/EDD, STR, Travel Rule, real-name account, ISMS, compliance system, shareholder, and operation change-reporting controls without raw KYC, customer records, wallet secrets, or identity files?"
+    ],
+    localCounselRole: "South Korea virtual asset / AML counsel",
+    effectiveAsOf: "2024-07-19",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against FSC Virtual Asset User Protection Act implementation and Enforcement Decree plus KoFIU VASP reporting, CDD, EDD, and STR guidance for custody, segregation, cold-wallet, insurance/reserve, abnormal transaction monitoring, disclosure, reporting, AML/CFT, and evidence-routing metadata; route interpretation to South Korea local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

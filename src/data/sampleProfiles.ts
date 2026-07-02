@@ -239,6 +239,39 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "HanRiver VASP User Protection Review",
+    entityType: "Virtual asset service provider operations team",
+    jurisdictions: ["South Korea"],
+    assetModel: "Virtual asset exchange and wallet custody service with KRW real-name account review assumptions",
+    userType: "Korean retail users, compliance reviewers, and local counsel",
+    custodyModel:
+      "Platform holds user virtual assets with wallet segregation, cold-wallet procedures, deposit-custody handoff, and incident compensation placeholders",
+    dataSensitivity:
+      "CDD status summaries, wallet-risk metadata, transaction monitoring summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts audit-prep evidence summaries for human review and South Korea counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only FSC/KoFIU handoff",
+    operatingStage: "Planned Korean VASP custody and AML review before local counsel signoff",
+    evidenceItems: [
+      {
+        label: "Korea regulator source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date; control evidence remains requested."
+      },
+      {
+        label: "Korea operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service scope, custody boundary, reviewer owner, and counsel handoff timing; regulatory-control evidence remains requested."
+      },
+      {
+        label: "Korea evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic requested-control placeholders and evidence owners without identity files, wallet secrets, or customer records."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

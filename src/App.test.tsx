@@ -852,6 +852,26 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Korea VASP user protection scenario with FSC and KoFIU evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Korea VASP user protection review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("HanRiver VASP User Protection Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /FSC Virtual Asset User Protection Act implementation; Enforcement Decree; KoFIU VASP reporting and AML guidance/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/South Korea virtual asset \/ AML counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Korea VASP user-asset protection, custody, and disclosure evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Korea KoFIU VASP reporting, AML\/CFT, CDD, and STR evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

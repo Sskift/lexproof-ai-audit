@@ -43,6 +43,7 @@ type PackTemplate = {
     | "Japan"
     | "Canada"
     | "Australia"
+    | "South Korea"
     | "Switzerland"
     | "United Arab Emirates"
     | "Brazil";
@@ -322,6 +323,50 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "suspicious matter report",
           "threshold transaction report",
           "seven years"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "South Korea",
+    aliases: ["south korea", "korea", "kr", "republic of korea", "korean"],
+    summary:
+      "Prepare VASP registration/reporting, user-asset protection, deposit custody, cold-wallet, insurance/reserve, abnormal transaction monitoring, AML/CFT, CDD/EDD, STR, real-name account, and local counsel handoff controls for South Korea.",
+    recommendedRole: "South Korea virtual asset / AML counsel",
+    controls: [
+      {
+        id: "kr-fsc-user-asset-protection-custody-control",
+        title: "FSC user-asset protection and custody control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "korea vasp user protection",
+          "user deposits at banks",
+          "users virtual assets separate",
+          "80 percent cold wallet",
+          "cold wallet",
+          "insurance reserve",
+          "abnormal trading monitoring",
+          "korean language whitepaper"
+        ]
+      },
+      {
+        id: "kr-kofiu-vasp-reporting-aml-control",
+        title: "KoFIU VASP reporting, AML/CFT, CDD, and STR control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "kofiu",
+          "vasp reporting",
+          "compliance system",
+          "major shareholders",
+          "isms",
+          "real-name verified checking account",
+          "customer due diligence",
+          "suspicious transaction report",
+          "travel rule"
         ]
       }
     ]

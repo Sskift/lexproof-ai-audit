@@ -249,6 +249,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(australiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Korea VASP user protection path for FSC and KoFIU source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const koreaScenario = findDemoScenarioById(demoScenarios, "korea-vasp-user-protection-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(koreaScenario).toEqual(
+      expect.objectContaining({
+        title: "Korea VASP user protection review",
+        projectName: "HanRiver VASP User Protection Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["South Korea", "FSC", "KoFIU", "VASP AML/CFT"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(koreaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Korea FSC/KoFIU source graph",
+        "Review user-asset protection and custody evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(koreaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

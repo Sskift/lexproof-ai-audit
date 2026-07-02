@@ -22,26 +22,30 @@ export const evidenceTemplates: EvidenceTemplate[] = [
       {
         label: "RWA disclosure assumptions memo",
         kind: "Memo",
-        content: "Requested: summarize token terms, yield assumptions, redemption language, disclosure assumptions, and review owner.",
-        source: "LexProof template: Tokenized Yield / RWA Issuance",
+        content:
+          "Requested: summarize token terms, yield assumptions, redemption language, crypto security classification, token rights, investment expectation, public distribution, disclosure assumptions, intermediary assumptions, and review owner.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
         status: "requested",
         owner: "Counsel"
       },
       {
         label: "Custody and signer control runbook",
         kind: "Runbook",
-        content: "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, and incident response.",
+        content:
+          "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, and responsible owner.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-br-bcb-virtual-asset-service-framework",
         status: "requested",
         owner: "Compliance"
       },
       {
         label: "Investor eligibility review",
         kind: "Checklist",
-        content: "Requested: summarize eligibility assumptions, user restrictions, screening boundary, and marketing approval status.",
+        content:
+          "Requested: summarize eligibility assumptions, investor communication, risk factor coverage, approval route, distribution boundary, retail restrictions, user restrictions, screening boundary, and marketing approval status.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-reg-d-accredited-investor-verification",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-reg-d-accredited-investor-verification; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
         status: "requested",
         owner: "Compliance"
       },
@@ -49,9 +53,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:
-          "Requested: summarize OFAC sanctions screening, wallet screening, geolocation controls, blocked property escalation, reporting, recordkeeping, and reviewer owner without raw KYC or wallet secrets.",
+          "Requested: summarize OFAC sanctions screening, AML/CFT handoff, transaction review handoff, customer protection, data minimization, wallet screening, geolocation controls, blocked property escalation, reporting, recordkeeping, and reviewer owner without raw KYC or wallet secrets.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-ofac-virtual-currency-sanctions-compliance",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-ofac-virtual-currency-sanctions-compliance; regulatory control: control-br-bcb-virtual-asset-service-framework",
         status: "requested",
         owner: "Compliance"
       },

@@ -452,6 +452,52 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks Brazil VASP and crypto-security controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `br-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const brazilProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-brazil-virtual-assets-covered",
+      jurisdictions: ["Brazil"],
+      assetModel: "Tokenized private credit note with yield and public token distribution",
+      userType: "Retail users and qualified investors in Brazil",
+      custodyModel: "Platform controls omnibus wallet and virtual asset transfer approvals",
+      dataSensitivity: "KYC metadata, sanctions screening results, and wallet transaction history",
+      aiUsage: "AI drafts evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor",
+      operatingStage: "Planned public launch",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(brazilProject);
+    const graph = createRegulatoryGraph(brazilProject, audit, brazilProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "br-bcb-virtual-asset-service-framework")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: [
+        "Custody and signer control runbook",
+        "Wallet sanctions screening and escalation controls"
+      ]
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "br-cvm-crypto-asset-securities-guidance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["RWA disclosure assumptions memo", "Investor eligibility review"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "br-bcb-virtual-asset-service-framework" }),
+        expect.objectContaining({ clauseId: "br-cvm-crypto-asset-securities-guidance" })
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches Singapore DPT customer asset safeguarding controls without legal conclusions", () => {
     const singaporeProject: ProjectProfile = {
       ...baseProject,

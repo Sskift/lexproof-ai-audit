@@ -3083,6 +3083,21 @@ describe("App", () => {
         );
       }
 
+      if (path.endsWith("/audit-log?targetType=human-review") && init?.method === "GET") {
+        return appJsonResponse(
+          [
+            createAppAuditLogRecord({
+              id: "audit-log-review",
+              action: "model.run.human-review-queued",
+              targetType: "human-review",
+              targetId: "human-review-full",
+              createdAt: "2026-06-30T00:00:04.000Z"
+            })
+          ],
+          200
+        );
+      }
+
       if (path.endsWith("/audit-log") && init?.method === "GET") {
         return appJsonResponse(
           [
@@ -3161,10 +3176,17 @@ describe("App", () => {
       expect(screen.getByText(/Model Gateway response dddddddddddd/i)).toBeInTheDocument();
       expect(screen.getByText(/Human review request human-review-full/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit log events 4/i)).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: /Audit Log Export/i })).toBeInTheDocument();
+      const auditLogExplorer = within(screen.getByRole("region", { name: /Server Audit Log Explorer/i }));
+      expect(auditLogExplorer.getByRole("heading", { name: /Server Audit Log Explorer/i })).toBeInTheDocument();
       expect(screen.getByText(/Last audit action model.run.human-review-queued/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit actors Compliance/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Download Audit Log JSON/i })).toBeInTheDocument();
+      fireEvent.change(auditLogExplorer.getByLabelText(/Audit log target type/i), { target: { value: "human-review" } });
+      fireEvent.click(auditLogExplorer.getByRole("button", { name: /Refresh Server Audit Log/i }));
+      expect(await auditLogExplorer.findByText(/Audit Log refreshed: 1 metadata-only record/i)).toBeInTheDocument();
+      expect(auditLogExplorer.getByText(/Target types human-review/i)).toBeInTheDocument();
+      expect(auditLogExplorer.getAllByText(/model.run.human-review-queued/i).length).toBeGreaterThan(0);
+      expect(auditLogExplorer.getByText(/Not legal advice. Audit Log exports are review workspace metadata only./i)).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /Model Gateway Evaluation/i })).toBeInTheDocument();
       expect(screen.getByText(/Payload hash cccccccccccc/i)).toBeInTheDocument();
       expect(screen.getByText(/Source evidence eeeeeeeeeeee/i)).toBeInTheDocument();

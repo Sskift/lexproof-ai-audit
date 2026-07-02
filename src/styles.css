@@ -3422,6 +3422,79 @@ textarea {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.audit-log-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.audit-log-filter-grid label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.audit-log-filter-grid span {
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.audit-log-filter-grid input,
+.audit-log-filter-grid select {
+  width: 100%;
+  min-width: 0;
+}
+
+.audit-log-event-list {
+  display: grid;
+  gap: 8px;
+}
+
+.audit-log-event-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.audit-log-event-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.audit-log-event-card header span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: #edf6f6;
+  color: #0c6b6b;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.audit-log-event-card strong,
+.audit-log-event-card p,
+.audit-log-event-card small {
+  overflow-wrap: anywhere;
+}
+
+.audit-log-event-card p {
+  margin: 0;
+  color: #263541;
+}
+
+.audit-log-event-card small {
+  color: #53616f;
+}
+
 .model-evaluation-policy {
   display: grid;
   gap: 5px;
@@ -7737,6 +7810,7 @@ textarea {
   .workspace-action-list,
   .source-gap-triage-summary,
   .source-gap-triage-list,
+  .audit-log-filter-grid,
   .model-connect-receipt > div:first-child,
   .human-review-summary,
   .human-review-filters,

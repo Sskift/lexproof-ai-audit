@@ -1,17 +1,19 @@
-import { useState } from "react";
-import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, RefreshCcw, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
+import { AuditLogClientError, fetchAuditLogRecords } from "../lib/auditLogClient";
 import {
   createAuditLogExport,
-  downloadAuditLogJson,
-  type AuditLogExportRecord
+  downloadAuditLogJson
 } from "../lib/auditLogExport";
+import type { AuditLogFilterInput } from "../lib/auditLogFilters";
 import {
   createModelGatewayEvaluationRecord,
   downloadModelGatewayEvaluationJson,
   type ModelGatewayEvaluationRecord
 } from "../lib/modelGatewayEvaluation";
 import type { ModelConnectReceipt } from "../lib/modelConnect";
+import type { AuditLogRecord } from "../lib/phase2Types";
 import type { ProjectProfile } from "../lib/projectModel";
 import { runSecureReviewJourney, type SecureReviewJourneyResult } from "../lib/secureReviewJourney";
 
@@ -172,7 +174,7 @@ export function SecureReviewWorkspace({
         {journeyError ? (
           <SecureJourneyError error={journeyError} onNavigate={onNavigate} />
         ) : null}
-        {journeyResult ? <SecureJourneyResult result={journeyResult} /> : null}
+        {journeyResult ? <SecureJourneyResult result={journeyResult} apiBaseUrl={apiBaseUrl} /> : null}
       </section>
     </section>
   );
@@ -216,12 +218,8 @@ function statusLabel(status: WorkflowStepProps["status"]): string {
   return "needs input";
 }
 
-function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) {
+function SecureJourneyResult({ result, apiBaseUrl }: { result: SecureReviewJourneyResult; apiBaseUrl: string }) {
   const evaluation = createModelGatewayEvaluationRecord(result.modelGatewayRun);
-  const auditLogExport = createAuditLogExport({
-    workspaceId: result.workspace.id,
-    records: result.auditLogRecords
-  });
 
   return (
     <div className="secure-journey-result">
@@ -233,30 +231,171 @@ function SecureJourneyResult({ result }: { result: SecureReviewJourneyResult }) 
         <JourneyFact label="Audit log events" value={String(result.auditLogRecords.length)} />
       </div>
       <small>{result.notLegalAdviceBoundary}</small>
-      <AuditLogExportPanel exportRecord={auditLogExport} />
+      <AuditLogExplorerPanel
+        apiBaseUrl={apiBaseUrl}
+        workspaceId={result.workspace.id}
+        initialRecords={result.auditLogRecords}
+      />
       <ModelGatewayEvaluationPanel evaluation={evaluation} />
     </div>
   );
 }
 
-function AuditLogExportPanel({ exportRecord }: { exportRecord: AuditLogExportRecord }) {
+type AuditLogExplorerStatus = "idle" | "syncing" | "synced" | "error";
+
+function AuditLogExplorerPanel({
+  apiBaseUrl,
+  workspaceId,
+  initialRecords
+}: {
+  apiBaseUrl: string;
+  workspaceId: string;
+  initialRecords: AuditLogRecord[];
+}) {
+  const [records, setRecords] = useState<AuditLogRecord[]>(initialRecords);
+  const [filters, setFilters] = useState<AuditLogFilterInput>({});
+  const [refreshStatus, setRefreshStatus] = useState<AuditLogExplorerStatus>("idle");
+  const [refreshError, setRefreshError] = useState("");
+  const [refreshRecoveryAction, setRefreshRecoveryAction] = useState("");
+  const exportRecord = createAuditLogExport({
+    workspaceId,
+    records
+  });
   const latestAction = exportRecord.events.at(-1)?.action ?? "none";
+  const visibleEvents = exportRecord.events.slice(-4).reverse();
+
+  useEffect(() => {
+    setRecords(initialRecords);
+    setRefreshStatus("idle");
+    setRefreshError("");
+    setRefreshRecoveryAction("");
+  }, [initialRecords, workspaceId]);
+
+  const updateFilter = (key: keyof AuditLogFilterInput, value: string) => {
+    setFilters((current) => ({
+      ...current,
+      [key]: value
+    }));
+  };
+
+  const refreshAuditLog = async () => {
+    setRefreshStatus("syncing");
+    setRefreshError("");
+    setRefreshRecoveryAction("");
+
+    try {
+      const nextRecords = await fetchAuditLogRecords({
+        apiBaseUrl,
+        workspaceId,
+        filters
+      });
+      setRecords(nextRecords);
+      setRefreshStatus("synced");
+    } catch (error) {
+      setRefreshStatus("error");
+      if (error instanceof AuditLogClientError) {
+        setRefreshError(error.message);
+        setRefreshRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setRefreshError(error instanceof Error ? error.message : "Audit Log refresh failed.");
+      setRefreshRecoveryAction("Start the Phase 2 API, use supported filters, and retry Audit Log refresh.");
+    }
+  };
 
   return (
-    <section className="audit-log-export">
+    <section className="audit-log-export" aria-label="Server Audit Log Explorer">
       <div className="split-title compact-title">
         <div>
           <ClipboardList size={17} aria-hidden="true" />
-          <h3>Audit Log Export</h3>
+          <h3>Server Audit Log Explorer</h3>
         </div>
         <span className="workflow-status complete">{exportRecord.eventCount} events</span>
       </div>
       <p className="section-note">{exportRecord.notLegalAdviceBoundary}</p>
+      <div className="audit-log-filter-grid">
+        <label>
+          <span>Audit log actor</span>
+          <input
+            value={filters.actorId ?? ""}
+            onChange={(event) => updateFilter("actorId", event.target.value)}
+            placeholder="Compliance"
+          />
+        </label>
+        <label>
+          <span>Audit log action</span>
+          <input
+            value={filters.action ?? ""}
+            onChange={(event) => updateFilter("action", event.target.value)}
+            placeholder="human-review.updated"
+          />
+        </label>
+        <label>
+          <span>Audit log target type</span>
+          <select value={filters.targetType ?? ""} onChange={(event) => updateFilter("targetType", event.target.value)}>
+            <option value="">All target types</option>
+            <option value="workspace">workspace</option>
+            <option value="evidence">evidence</option>
+            <option value="model-run">model-run</option>
+            <option value="human-review">human-review</option>
+            <option value="source-approval">source-approval</option>
+            <option value="source-review">source-review</option>
+            <option value="integration-policy">integration-policy</option>
+            <option value="export">export</option>
+          </select>
+        </label>
+        <label>
+          <span>Audit log target ID</span>
+          <input
+            value={filters.targetId ?? ""}
+            onChange={(event) => updateFilter("targetId", event.target.value)}
+            placeholder="human-review-full"
+          />
+        </label>
+      </div>
+      <div className="model-evaluation-actions">
+        <span>Refresh reads metadata-only server records through the Phase 2 Audit Log route.</span>
+        <button type="button" className="secondary" disabled={refreshStatus === "syncing"} onClick={() => void refreshAuditLog()}>
+          <RefreshCcw size={16} aria-hidden="true" />
+          {refreshStatus === "syncing" ? "Refreshing Server Audit Log" : "Refresh Server Audit Log"}
+        </button>
+      </div>
+      {refreshStatus === "synced" ? (
+        <span className="save-state">Audit Log refreshed: {records.length} metadata-only record{records.length === 1 ? "" : "s"}.</span>
+      ) : null}
+      {refreshError ? (
+        <div className="provider-policy-error" role="alert">
+          <strong>{refreshError}</strong>
+          {refreshRecoveryAction ? <span>{refreshRecoveryAction}</span> : null}
+          <small>Not legal advice. Audit Log refresh is review workspace metadata only.</small>
+        </div>
+      ) : null}
       <div className="run-facts audit-log-facts">
         <JourneyFact label="Audit events" value={String(exportRecord.eventCount)} />
         <JourneyFact label="Last audit action" value={latestAction} />
         <JourneyFact label="Audit actors" value={exportRecord.actors.join(", ") || "none"} />
         <JourneyFact label="Target types" value={exportRecord.targetTypes.join(", ") || "none"} />
+      </div>
+      <div className="audit-log-event-list" aria-label="Audit Log Events">
+        {visibleEvents.length ? (
+          visibleEvents.map((event) => (
+            <article key={event.id} className="audit-log-event-card">
+              <header>
+                <span>{event.targetType}</span>
+                <strong>{event.action}</strong>
+              </header>
+              <p>{event.summary}</p>
+              <small>
+                {event.actorId} · {event.targetId} · {event.createdAt}
+              </small>
+              <small>
+                before {shortHash(event.beforeHash)} · after {shortHash(event.afterHash)}
+              </small>
+            </article>
+          ))
+        ) : (
+          <p className="empty-state">No Audit Log records match the current filters. Not legal advice.</p>
+        )}
       </div>
       <div className="model-evaluation-actions">
         <span>Export includes action counts, before/after hashes, targets, and non-secret summaries.</span>

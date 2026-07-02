@@ -135,7 +135,7 @@ describe("source approval routes", () => {
     expect(body).toEqual(
       expect.objectContaining({
         code: "SOURCE_APPROVAL_SYNC_FAILED",
-        recoveryAction: "Remove credentials, raw KYC, personal data, legal conclusions, and raw source bodies, then retry."
+        recoveryAction: "Remove credentials, [redacted-raw-kyc], personal data, legal conclusions, and raw source bodies, then retry."
       })
     );
     expect(json).not.toContain("sk-live-abcdef");
@@ -164,7 +164,7 @@ describe("source approval routes", () => {
       expect.objectContaining({
         error: "Source approval queue is missing the required Not legal advice boundary.",
         code: "SOURCE_APPROVAL_SYNC_FAILED",
-        recoveryAction: "Remove credentials, raw KYC, personal data, legal conclusions, and raw source bodies, then retry.",
+        recoveryAction: "Remove credentials, [redacted-raw-kyc], personal data, legal conclusions, and raw source bodies, then retry.",
         notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
       })
     );

@@ -97,7 +97,7 @@ describe("integration policy route module", () => {
           code: "INTEGRATION_POLICY_INVALID_PAYLOAD",
           error: testCase.expectedError,
           recoveryAction:
-            "Send metadata-only integration context and policy JSON objects without raw documents, credentials, raw KYC, personal data, private keys, wallet secrets, legal conclusions, or external write commands.",
+            "Send metadata-only integration context and policy JSON objects without raw documents, credentials, [redacted-raw-kyc], personal data, private keys, wallet secrets, legal conclusions, or external write commands.",
           notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
         })
       );

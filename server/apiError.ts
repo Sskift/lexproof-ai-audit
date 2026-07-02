@@ -1,3 +1,5 @@
+import { redactClassifiedText } from "../src/lib/dataClassification.js";
+
 export const API_NOT_LEGAL_ADVICE_BOUNDARY =
   "Not legal advice. This API creates audit preparation workflow records only." as const;
 
@@ -16,9 +18,9 @@ export type ApiErrorInput = {
 };
 
 export function createApiErrorResponse(input: ApiErrorInput): ApiErrorResponse {
-  const error = extractErrorMessage(input.error) || input.fallbackMessage;
+  const error = sanitizeApiErrorText(extractErrorMessage(input.error) || input.fallbackMessage);
   const code = input.code.trim() || "API_ERROR";
-  const recoveryAction = input.recoveryAction?.trim();
+  const recoveryAction = input.recoveryAction ? sanitizeApiErrorText(input.recoveryAction) : "";
 
   return {
     error,
@@ -34,4 +36,11 @@ function extractErrorMessage(error: unknown): string {
   }
 
   return error.message.trim();
+}
+
+function sanitizeApiErrorText(value: string): string {
+  return redactClassifiedText(value)
+    .replace(/\b(final legal decision|legal opinion|legal conclusion|legally compliant|legally non-compliant|compliance decision)\b/gi, "[redacted-legal-conclusion]")
+    .replace(/\s+/g, " ")
+    .trim();
 }

@@ -562,7 +562,7 @@ describe("Phase 2 backend app", () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
       error:
-        "Manifest hash must be a SHA-256 hex digest. Artifact hash must be a SHA-256 hex digest. Source pack hash must be a SHA-256 hex digest. Counsel Pack export records must not include raw KYC or personal data. Counsel Pack export records must not include API keys, private keys, or credential material. Server export records accept hashes and metadata only, not raw Markdown or PDF content.",
+        "Manifest hash must be a SHA-256 hex digest. Artifact hash must be a SHA-256 hex digest. Source pack hash must be a SHA-256 hex digest. Counsel Pack export records must not include [redacted-raw-kyc] or personal data. Counsel Pack export records must not include API keys, private keys, or credential material. Server export records accept hashes and metadata only, not raw Markdown or PDF content.",
       code: "COUNSEL_PACK_EXPORT_CREATE_FAILED",
       recoveryAction: "Remove raw content and blocked data classes, then retry with manifest and artifact hashes only.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."

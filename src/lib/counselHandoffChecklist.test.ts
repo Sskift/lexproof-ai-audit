@@ -6,6 +6,7 @@ import {
   exportCounselHandoffChecklistJson,
   type CounselHandoffChecklistInput
 } from "./counselHandoffChecklist";
+import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { ExportSafetyInventory } from "./exportSafetyInventory";
 import type { CounselPackExportRecord } from "./phase2Types";
@@ -136,6 +137,36 @@ describe("createCounselHandoffChecklist", () => {
       })
     );
   });
+
+  it("blocks final handoff when the Human Review workflow still has rejected or returned review items", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      humanReviewQueue: humanReviewQueue({ openCount: 3, blockedCount: 1 }),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "human-review-workflow");
+    const json = exportCounselHandoffChecklistJson(checklist);
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Human Review Workflow",
+        status: "blocked",
+        blockerCount: 1,
+        warningCount: 3,
+        recoveryAction: "Resolve rejected or returned Human Review items before final handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Human review workflow status is audit preparation workflow only."
+      })
+    );
+    expect(item?.evidence).toContain("3 open review items");
+    expect(item?.evidence).toContain("1 blocked");
+    expect(checklist.overallStatus).toBe("blocked");
+    expect(checklist.handoffAllowed).toBe(false);
+    expect(checklist.nextActions).toContain(
+      "Human Review Workflow: Resolve rejected or returned Human Review items before final handoff."
+    );
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+    expect(json).toContain("Not legal advice");
+  });
 });
 
 function baseInput(options: { reverseReviews?: boolean } = {}): CounselHandoffChecklistInput {
@@ -242,6 +273,20 @@ function evidenceVaultControlCoverage(status: "needs-review" | "ready-for-handof
       }
     ],
     notLegalAdviceBoundary: "Not legal advice. Evidence Vault control coverage is audit preparation metadata only."
+  };
+}
+
+function humanReviewQueue({ openCount, blockedCount }: { openCount: number; blockedCount: number }): HumanReviewQueue {
+  return {
+    queueVersion: "lexproof-human-review-queue-v1",
+    items: [],
+    summary: {
+      totalCount: 5,
+      openCount,
+      reviewedCount: 1,
+      blockedCount,
+      notLegalAdviceBoundary: "Not legal advice. Human review workflow status is audit preparation workflow only."
+    }
   };
 }
 

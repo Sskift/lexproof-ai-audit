@@ -1273,6 +1273,7 @@ export default function App() {
       submissionPackHash: submissionPack?.packHash,
       exportSafetyInventory,
       evidenceVaultControlCoverage,
+      humanReviewQueue,
       counselReviews: currentCounselReviews,
       counselPackVersions: currentCounselPackVersions,
       serverExportRecords: currentCounselPackServerExports
@@ -1291,6 +1292,7 @@ export default function App() {
     currentCounselReviews,
     evidenceVaultControlCoverage,
     exportSafetyInventory,
+    humanReviewQueue,
     manifest?.bundleHash,
     project.id,
     project.projectName,

@@ -3,6 +3,7 @@ import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { ExportSafetyInventory, ExportSafetyInventoryStatus } from "./exportSafetyInventory";
+import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { CounselPackExportRecord } from "./phase2Types";
 
 export type CounselHandoffChecklistItemStatus = "ready" | "needs-review" | "needs-action" | "blocked";
@@ -49,6 +50,7 @@ export type CounselHandoffChecklistInput = {
   submissionPackHash?: string;
   exportSafetyInventory: ExportSafetyInventory | null;
   evidenceVaultControlCoverage?: EvidenceVaultControlCoverage | null;
+  humanReviewQueue?: HumanReviewQueue | null;
   counselReviews: CounselReviewItem[];
   counselPackVersions: CounselPackVersionRecord[];
   serverExportRecords: CounselPackExportRecord[];
@@ -66,6 +68,7 @@ export async function createCounselHandoffChecklist({
   submissionPackHash,
   exportSafetyInventory,
   evidenceVaultControlCoverage,
+  humanReviewQueue,
   counselReviews,
   counselPackVersions,
   serverExportRecords,
@@ -77,6 +80,7 @@ export async function createCounselHandoffChecklist({
   const items = [
     createCounselPackVersionItem(latestVersion, manifestHash, regulatorySourcePackHash),
     createCounselReviewStatusItem(counselReviews),
+    ...(humanReviewQueue ? [createHumanReviewWorkflowItem(humanReviewQueue)] : []),
     createHashItem({
       id: "evidence-manifest",
       label: "Evidence Manifest",
@@ -279,6 +283,28 @@ function createEvidenceVaultControlCoverageItem(
         ? "Keep verified vault evidence linked in the Counsel Pack and source handoff."
         : firstRecoveryControl?.nextAction ?? "Sync Evidence Vault control coverage before final handoff.",
     notLegalAdviceBoundary: coverage.notLegalAdviceBoundary
+  });
+}
+
+function createHumanReviewWorkflowItem(queue: HumanReviewQueue): CounselHandoffChecklistItem {
+  const { totalCount, openCount, reviewedCount, blockedCount } = queue.summary;
+  const status: CounselHandoffChecklistItemStatus =
+    blockedCount > 0 ? "blocked" : openCount > 0 ? "needs-review" : "ready";
+
+  return createItem({
+    id: "human-review-workflow",
+    label: "Human Review Workflow",
+    status,
+    evidence: `${reviewedCount}/${totalCount} reviewed, ${openCount} open review item${openCount === 1 ? "" : "s"}, ${blockedCount} blocked.`,
+    blockerCount: blockedCount,
+    warningCount: openCount,
+    recoveryAction:
+      blockedCount > 0
+        ? "Resolve rejected or returned Human Review items before final handoff."
+        : openCount > 0
+          ? "Complete Human Review queue items before external reliance."
+          : "Keep Human Review timeline metadata with the final handoff packet.",
+    notLegalAdviceBoundary: queue.summary.notLegalAdviceBoundary
   });
 }
 

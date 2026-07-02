@@ -5,6 +5,11 @@ const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const bearerToken = "eyJhbGciOiJIUzI1NiJ9.auditPrepPayload.signature";
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const pemPrivateKey = [
+  "-----BEGIN PRIVATE KEY-----",
+  "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7unsafePemBody",
+  "-----END PRIVATE KEY-----"
+].join("\n");
 const walletAddress = "0x1111111111111111111111111111111111111111";
 
 describe("classifyDataBoundaryText", () => {
@@ -131,6 +136,21 @@ describe("classifyDataBoundaryText", () => {
     expect(serialized).not.toContain("abandon ability");
     expect(serialized).not.toContain("access accident");
   });
+
+  it("blocks PEM private-key blocks without leaking headers or key body", () => {
+    const findings = classifyDataBoundaryText(`Do not export this signing artifact:\n${pemPrivateKey}`);
+    const privateKeyFinding = findings.find((finding) => finding.dataClass === "private-key-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(privateKeyFinding).toMatchObject({
+      dataClass: "private-key-material",
+      severity: "block",
+      matchCount: 1
+    });
+    expect(privateKeyFinding?.redactedSnippet).toContain("[redacted-private-key]");
+    expect(serialized).not.toContain("BEGIN PRIVATE KEY");
+    expect(serialized).not.toContain("unsafePemBody");
+  });
 });
 
 describe("redactClassifiedText", () => {
@@ -200,5 +220,14 @@ describe("redactClassifiedText", () => {
     expect(lower).not.toContain("alpha beta");
     expect(lower).not.toContain("echo foxtrot");
     expect(lower).not.toContain("hotel india");
+  });
+
+  it("redacts whole PEM private-key blocks from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`Rotated signing key:\n${pemPrivateKey}`);
+
+    expect(redacted).toContain("[redacted-private-key]");
+    expect(redacted).not.toContain("BEGIN PRIVATE KEY");
+    expect(redacted).not.toContain("unsafePemBody");
+    expect(redacted).not.toContain("END PRIVATE KEY");
   });
 });

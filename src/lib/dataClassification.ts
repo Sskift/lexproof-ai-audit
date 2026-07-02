@@ -35,6 +35,8 @@ const governmentIdPattern =
   /\b(?:driver'?s?\s+licen[cs]e|driving\s+licen[cs]e|national\s+id|government\s+id)\s*(?:number|no\.?|id)?\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{4,24}\b/;
 const authorizationBearerPattern = /\bauthorization\s*:\s*bearer\s+[A-Za-z0-9._~+/=-]{12,}\b/;
 const cloudAccessKeyPattern = /\b(?:aws\s+access\s+key(?:\s+id)?\s*[:=]?\s*)?(?:AKIA|ASIA)[0-9A-Z]{16}\b/;
+const pemPrivateKeyBlockPattern =
+  /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
 const walletSecretLabelPattern = String.raw`(?:seed phrase|mnemonic|recovery phrase|wallet secret(?: phrase)?)`;
 const walletSecretPhrasePattern =
@@ -57,7 +59,7 @@ const classificationRules: ClassificationRule[] = [
   {
     dataClass: "private-key-material",
     severity: "block",
-    pattern: new RegExp(`${walletSecretPhrasePattern.source}|\\bprivate key\\b`, "gi"),
+    pattern: new RegExp(`${pemPrivateKeyBlockPattern.source}|${walletSecretPhrasePattern.source}|\\bprivate key\\b`, "gi"),
     message: "Secret phrase or private-key references must be removed before export handoff."
   },
   {
@@ -143,6 +145,7 @@ export function classifyDataBoundaryText(value: string): ClassifiedDataFinding[]
 
 export function redactClassifiedText(value: string): string {
   return value
+    .replace(new RegExp(pemPrivateKeyBlockPattern.source, "gi"), "[redacted-private-key]")
     .replace(walletSecretPhrasePattern, "[redacted-private-key]")
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
     .replace(new RegExp(authorizationBearerPattern.source, "gi"), "Authorization: Bearer [redacted-secret]")

@@ -102,6 +102,7 @@ describe("evidence templates", () => {
         "Singapore DPT CDD and model handoff register",
         "Japan crypto-asset custody and leakage response register",
         "Canada CTP PRU custody and investor-protection register",
+        "Australia digital asset financial services and VASP AML register",
         "US FinCEN CVC MSB and BSA transfer control register",
         "Wallet sanctions screening and escalation controls"
       ])
@@ -116,6 +117,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-jp-fsa-crypto-asset-custody-user-protection");
     expect(serializedSources).toContain("regulatory control: control-ca-csa-ctp-pru-custody-investor-protection");
+    expect(serializedSources).toContain("regulatory control: control-au-asic-austrac-digital-asset-financial-services");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");

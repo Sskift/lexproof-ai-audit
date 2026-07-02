@@ -168,6 +168,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "australia-digital-asset-source-path",
+    projectName: "SouthernCross Digital Asset Review",
+    title: "Australia digital asset review",
+    summary:
+      "Australia ASIC digital-asset financial services and custody controls plus AUSTRAC virtual asset AML/CTF, CDD, travel-rule, reporting, and recordkeeping counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Australia ASIC/AUSTRAC source graph",
+      "Review digital-asset financial services and custody evidence gaps",
+      "Check VASP AML/CTF, CDD, reporting, and recordkeeping evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Australia", "ASIC", "AUSTRAC", "VASP AML/CTF"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

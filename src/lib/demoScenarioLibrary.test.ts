@@ -225,6 +225,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(canadaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Australia digital asset path for ASIC and AUSTRAC source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const australiaScenario = findDemoScenarioById(demoScenarios, "australia-digital-asset-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(australiaScenario).toEqual(
+      expect.objectContaining({
+        title: "Australia digital asset review",
+        projectName: "SouthernCross Digital Asset Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Australia", "ASIC", "AUSTRAC", "VASP AML/CTF"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(australiaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Australia ASIC/AUSTRAC source graph",
+        "Review digital-asset financial services and custody evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(australiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

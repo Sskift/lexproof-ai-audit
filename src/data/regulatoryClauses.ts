@@ -1253,6 +1253,89 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "au-asic-austrac-digital-asset-financial-services",
+    jurisdiction: "Australia",
+    regulator: "ASIC / AUSTRAC",
+    sourceName:
+      "ASIC INFO 225 Digital assets: Financial products and services; ASIC RG 133; AUSTRAC virtual asset designated services and obligations guidance",
+    sourceUrl: "https://www.asic.gov.au/regulatory-resources/digital-transformation/digital-assets-financial-products-and-services/",
+    citation:
+      "ASIC INFO 225 Digital assets: Financial products and services; ASIC RG 133; AUSTRAC virtual asset designated services and obligations guidance",
+    topic: "custody",
+    summary:
+      "Prepare Australia digital-asset financial product, AFS licensing, dealing, market-making, custodial/depository service, crypto custody-control, AUSTRAC VASP AML/CTF, CDD, travel-rule, reporting, and recordkeeping evidence for local counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "australia",
+      "australian",
+      "asic",
+      "austrac",
+      "digital asset",
+      "crypto asset",
+      "tokenised asset",
+      "stablecoin",
+      "afs licence",
+      "custodial wallet",
+      "virtual asset service provider",
+      "vasp",
+      "aml/ctf",
+      "travel rule"
+    ],
+    evidenceRequests: [
+      {
+        id: "au-asic-digital-asset-financial-services-custody",
+        title: "Australia ASIC digital-asset financial services and custody evidence",
+        reason:
+          "Australia digital-asset review needs financial-product, AFS licensing, dealing, market-making, custodial/depository service, client-asset separation, specialist custody infrastructure, cold-storage, signing-control, compensation, and independent assurance evidence before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "australia asic digital asset",
+          "financial product",
+          "afs licence",
+          "dealing",
+          "market making",
+          "custodial depository service",
+          "client assets separate",
+          "crypto-asset custody",
+          "specialist expertise",
+          "cold storage",
+          "single point of failure",
+          "independent audit"
+        ]
+      },
+      {
+        id: "au-austrac-vasp-aml-ctf-program",
+        title: "Australia AUSTRAC VASP AML/CTF, CDD, reporting, and recordkeeping evidence",
+        reason:
+          "Counsel and compliance review need AUSTRAC virtual asset service provider activity-scope, enrolment/registration, AML/CTF program, customer due diligence, travel-rule, suspicious matter, threshold-transaction, annual compliance, and seven-year recordkeeping evidence without raw KYC.",
+        priority: "P1",
+        keywords: [
+          "austrac",
+          "virtual asset service provider",
+          "vasp",
+          "aml/ctf program",
+          "customer due diligence",
+          "ongoing cdd",
+          "suspicious matter report",
+          "threshold transaction report",
+          "travel rule",
+          "seven years",
+          "registration"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Australia financial-product, AFS licensing, dealing, market-making, or custodial/depository service assumptions should digital-asset counsel review?",
+      "What metadata-only evidence shows AUSTRAC virtual-asset service scope, AML/CTF program ownership, CDD, travel-rule, reporting, and recordkeeping controls without raw KYC, wallet secrets, or customer records?"
+    ],
+    localCounselRole: "Australia digital assets / AML-CTF counsel",
+    effectiveAsOf: "2026-07-01",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against ASIC INFO 225, ASIC RG 133, and AUSTRAC virtual asset designated service and obligations guidance for financial-service scope, custody-control, AML/CTF, CDD, travel-rule, reporting, recordkeeping, and evidence-routing metadata; route interpretation to Australia local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

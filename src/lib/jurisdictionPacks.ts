@@ -42,6 +42,7 @@ type PackTemplate = {
     | "Hong Kong"
     | "Japan"
     | "Canada"
+    | "Australia"
     | "Switzerland"
     | "United Arab Emirates"
     | "Brazil";
@@ -284,6 +285,48 @@ const PACK_TEMPLATES: PackTemplate[] = [
     ]
   },
   {
+    jurisdiction: "Australia",
+    aliases: ["australia", "au", "australian"],
+    summary:
+      "Prepare digital-asset financial-services scope, AFS licensing assumptions, crypto custody controls, AUSTRAC VASP AML/CTF, CDD, travel-rule, reporting, recordkeeping, and local counsel handoff controls for Australia.",
+    recommendedRole: "Australia digital assets / AML-CTF counsel",
+    controls: [
+      {
+        id: "au-asic-financial-services-custody-control",
+        title: "ASIC digital-asset financial services and custody control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "australia asic digital asset",
+          "afs licence",
+          "financial product",
+          "custodial depository service",
+          "client assets separate",
+          "cold storage",
+          "independent audit"
+        ]
+      },
+      {
+        id: "au-austrac-vasp-aml-ctf-control",
+        title: "AUSTRAC VASP AML/CTF, CDD, and recordkeeping control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "austrac",
+          "virtual asset service provider",
+          "aml/ctf program",
+          "customer due diligence",
+          "travel rule",
+          "suspicious matter report",
+          "threshold transaction report",
+          "seven years"
+        ]
+      }
+    ]
+  },
+  {
     jurisdiction: "Switzerland",
     aliases: ["switzerland", "swiss", "ch"],
     summary:
@@ -479,7 +522,18 @@ function isEvidenceReady(item: EvidenceItem): boolean {
 
 function matchPackTemplate(jurisdiction: string): PackTemplate | undefined {
   const normalized = jurisdiction.trim().toLowerCase();
-  return PACK_TEMPLATES.find((template) => template.aliases.some((alias) => normalized.includes(alias) || normalized === alias));
+  return PACK_TEMPLATES.find((template) => template.aliases.some((alias) => aliasMatchesJurisdiction(normalized, alias)));
+}
+
+function aliasMatchesJurisdiction(normalizedJurisdiction: string, alias: string): boolean {
+  const normalizedAlias = alias.trim().toLowerCase();
+  if (!normalizedAlias) {
+    return false;
+  }
+  if (normalizedAlias.length <= 2) {
+    return normalizedJurisdiction === normalizedAlias;
+  }
+  return normalizedJurisdiction.includes(normalizedAlias);
 }
 
 function slug(value: string): string {

@@ -833,6 +833,25 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Australia digital asset scenario with ASIC and AUSTRAC evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Australia digital asset review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("SouthernCross Digital Asset Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /ASIC INFO 225 Digital assets: Financial products and services; ASIC RG 133; AUSTRAC virtual asset designated services and obligations guidance/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Australia digital assets \/ AML-CTF counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Australia/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

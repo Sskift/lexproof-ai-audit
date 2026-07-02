@@ -206,6 +206,39 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "SouthernCross Digital Asset Review",
+    entityType: "Digital asset platform operations team",
+    jurisdictions: ["Australia"],
+    assetModel: "Tokenised yield product with stablecoin payment rails and Australian digital asset service review assumptions",
+    userType: "Australian retail users, wholesale investors, compliance reviewers, and local counsel",
+    custodyModel:
+      "Platform controls client digital assets through omnibus wallets, cold-storage procedures, signer approvals, transfer controls, and external custody assurance placeholders",
+    dataSensitivity:
+      "CDD status summaries, wallet-risk metadata, transaction monitoring summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts audit-prep evidence summaries for human review and Australia counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only ASIC/AUSTRAC handoff",
+    operatingStage: "Planned Australian pilot before digital-asset and AML/CTF counsel review",
+    evidenceItems: [
+      {
+        label: "Australia regulator source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date; control evidence remains requested."
+      },
+      {
+        label: "Australia digital asset operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service scope, custody boundary, reviewer owner, and counsel handoff timing; regulatory-control evidence remains requested."
+      },
+      {
+        label: "Australia evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic requested-control placeholders and evidence owners without identity files, wallet secrets, or customer records."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

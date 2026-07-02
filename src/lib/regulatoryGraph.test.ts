@@ -695,6 +695,92 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
+  it("matches Australia ASIC and AUSTRAC digital asset source controls without legal conclusions", () => {
+    const australiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-australia-digital-assets",
+      projectName: "SouthernCross Digital Asset Review",
+      jurisdictions: ["Australia"],
+      entityType: "Digital asset platform operations team",
+      assetModel: "Tokenised yield product with stablecoin payment rails and Australian digital asset service review assumptions",
+      userType: "Australian retail users and wholesale investors",
+      custodyModel: "Platform controls client digital assets through omnibus wallets, cold storage, and signer approvals",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction monitoring summaries",
+      aiUsage: "AI drafts Australia digital asset evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Australian pilot before digital-asset and AML/CTF counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(australiaProject);
+    const graph = createRegulatoryGraph(australiaProject, audit, australiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["au-asic-austrac-digital-asset-financial-services"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "au-asic-austrac-digital-asset-financial-services")).toMatchObject({
+      jurisdiction: "Australia",
+      regulator: "ASIC / AUSTRAC",
+      sourceUrl: "https://www.asic.gov.au/regulatory-resources/digital-transformation/digital-assets-financial-products-and-services/",
+      citation:
+        "ASIC INFO 225 Digital assets: Financial products and services; ASIC RG 133; AUSTRAC virtual asset designated services and obligations guidance",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "Australia digital assets / AML-CTF counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Australia ASIC digital-asset financial services and custody evidence",
+        "Australia AUSTRAC VASP AML/CTF, CDD, reporting, and recordkeeping evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Australia")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Australia digital assets / AML-CTF counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Australia ASIC and AUSTRAC controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `australia-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const australiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-australia-digital-assets-covered",
+      projectName: "SouthernCross Digital Asset Review",
+      jurisdictions: ["Australia"],
+      entityType: "Digital asset platform operations team",
+      assetModel: "Tokenised yield product with stablecoin payment rails and Australian digital asset service review assumptions",
+      userType: "Australian retail users and wholesale investors",
+      custodyModel: "Platform controls client digital assets through omnibus wallets, cold storage, and signer approvals",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and transaction monitoring summaries",
+      aiUsage: "AI drafts Australia digital asset evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Australian pilot before digital-asset and AML/CTF counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(australiaProject);
+    const graph = createRegulatoryGraph(australiaProject, audit, australiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "au-asic-austrac-digital-asset-financial-services")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Custody and signer control runbook",
+        "Australia digital asset financial services and VASP AML register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "au-asic-austrac-digital-asset-financial-services" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

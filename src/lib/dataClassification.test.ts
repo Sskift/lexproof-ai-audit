@@ -11,6 +11,7 @@ const connectorPassword = "Sup3rSecret!2026";
 const refreshToken = "rt_abcdef1234567890abcdef";
 const githubToken = ["ghp", "syntheticTokenValue1234567890"].join("_");
 const slackToken = ["xoxb", "123456789012", "syntheticSlackTokenValue"].join("-");
+const databaseConnectionUri = "postgres://audit_user:Sup3rSecretPass@db.internal.example.com:5432/lexproof";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const pemPrivateKey = [
   "-----BEGIN PRIVATE KEY-----",
@@ -130,6 +131,22 @@ describe("classifyDataBoundaryText", () => {
     expect(serialized).not.toContain(slackToken);
     expect(serialized).not.toContain("syntheticTokenValue");
     expect(serialized).not.toContain("syntheticSlackTokenValue");
+  });
+
+  it("blocks credential-bearing connection URIs without exposing user, password, or host", () => {
+    const findings = classifyDataBoundaryText(`Parser policy notes include DATABASE_URL=${databaseConnectionUri}.`);
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 1
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-connection-uri]");
+    expect(serialized).not.toContain("audit_user");
+    expect(serialized).not.toContain("Sup3rSecretPass");
+    expect(serialized).not.toContain("db.internal.example.com");
   });
 
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
@@ -274,6 +291,15 @@ describe("redactClassifiedText", () => {
     expect(redacted).not.toContain(slackToken);
     expect(redacted).not.toContain("syntheticTokenValue");
     expect(redacted).not.toContain("syntheticSlackTokenValue");
+  });
+
+  it("redacts credential-bearing connection URIs from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`DATABASE_URL=${databaseConnectionUri}`);
+
+    expect(redacted).toContain("[redacted-connection-uri]");
+    expect(redacted).not.toContain("audit_user");
+    expect(redacted).not.toContain("Sup3rSecretPass");
+    expect(redacted).not.toContain("db.internal.example.com");
   });
 
   it("redacts direct personal identifiers from reusable boundary snippets", () => {

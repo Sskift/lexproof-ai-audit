@@ -39,6 +39,8 @@ const authorizationBearerPattern = /\bauthorization\s*:\s*bearer\s+[A-Za-z0-9._~
 const cloudAccessKeyPattern = /\b(?:aws\s+access\s+key(?:\s+id)?\s*[:=]?\s*)?(?:AKIA|ASIA)[0-9A-Z]{16}\b/;
 const integrationTokenPattern =
   /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,})\b/;
+const credentialConnectionUriPattern =
+  /\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqp|amqps|https?):\/\/[^\s/@:]+:[^\s/@]{6,}@[^\s"'<>]+/;
 const credentialFieldPattern =
   /(["']?)(\b(?:api[_\-\s]?key|secret[_\-\s]?key|client[_\-\s]?secret|client secret|bearer token|access[_\-\s]?token|refresh[_\-\s]?token|session[_\-\s]?token|password|passphrase)\b)\1(\s*[:=]\s*["']?)[^"',;\s]{8,}["']?/gi;
 const pemPrivateKeyBlockPattern =
@@ -78,7 +80,7 @@ const classificationRules: ClassificationRule[] = [
     dataClass: "credential-material",
     severity: "block",
     pattern: new RegExp(
-      `${authorizationBearerPattern.source}|${bearerCredentialPattern.source}|${jwtCredentialPattern.source}|${integrationTokenPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
+      `${authorizationBearerPattern.source}|${bearerCredentialPattern.source}|${jwtCredentialPattern.source}|${integrationTokenPattern.source}|${credentialConnectionUriPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
       "gi"
     ),
     message: "Credential fields must be removed before export handoff."
@@ -158,6 +160,7 @@ export function redactClassifiedText(value: string): string {
     .replace(new RegExp(bearerCredentialPattern.source, "gi"), "Bearer [redacted-secret]")
     .replace(new RegExp(jwtCredentialPattern.source, "gi"), "[redacted-jwt]")
     .replace(new RegExp(integrationTokenPattern.source, "gi"), "[redacted-integration-token]")
+    .replace(new RegExp(credentialConnectionUriPattern.source, "gi"), "[redacted-connection-uri]")
     .replace(new RegExp(cloudAccessKeyPattern.source, "gi"), "[redacted-secret]")
     .replace(new RegExp(credentialFieldPattern.source, "gi"), redactCredentialField)
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")

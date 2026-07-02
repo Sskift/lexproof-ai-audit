@@ -572,6 +572,62 @@ describe("App", () => {
     }
   });
 
+  it("refreshes persisted Source Update Approval records from the Phase 2 API", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-approvals");
+      expect(init).toEqual({ method: "GET" });
+      return appJsonResponse(
+        [
+          {
+            recordVersion: "lexproof-source-approval-record-v1",
+            id: "source-approval-record-persisted-ui",
+            workspaceId: "sample-yieldpassport",
+            queueHash: "a".repeat(64),
+            sourceApprovalItemId: "source-approval-control-eu-mica-title-ii-white-paper",
+            clauseId: "control-eu-mica-title-ii-white-paper",
+            jurisdiction: "European Union",
+            regulator: "ESMA",
+            citation: "Regulation (EU) 2023/1114, Title II",
+            sourceName: "EUR-Lex",
+            sourceUrl: "https://eur-lex.europa.eu/",
+            priority: "P1",
+            approvalStatus: "approval-required",
+            reviewStatus: "review-due",
+            effectiveAsOf: "2024-06-30",
+            lastReviewedAt: "2026-06-01",
+            nextReviewDueAt: "2026-09-01",
+            reviewerNotes: "Review source freshness before counsel handoff.",
+            nextAction: "Refresh and approve MiCA Title II source metadata before it changes source matching.",
+            approvalGate:
+              "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
+            status: "pending-review",
+            matchingBehaviorChanged: false,
+            createdBy: "Compliance",
+            createdAt: "2026-10-01T00:00:00.000Z",
+            notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
+          }
+        ],
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    const queue = screen.getByRole("region", { name: /Source Update Approval Queue/i });
+    fireEvent.change(within(queue).getByLabelText(/Source Approval API base URL/i), {
+      target: { value: "https://api.lexproof.test" }
+    });
+    fireEvent.click(within(queue).getByRole("button", { name: /Refresh Source Approval Records/i }));
+
+    expect(await within(queue).findByText(/Source approval records refreshed: 1 persisted record/i)).toBeInTheDocument();
+    const persisted = within(screen.getByRole("region", { name: /Persisted Source Approval Records/i }));
+    expect(persisted.getByText(/European Union/i)).toBeInTheDocument();
+    expect(persisted.getByText(/Refresh and approve MiCA Title II source metadata/i)).toBeInTheDocument();
+    expect(persisted.getByText(/Not legal advice. Source approval records are audit preparation workflow metadata only./i)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("syncs Source Review Ledger metadata to the Phase 2 API", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-reviews");

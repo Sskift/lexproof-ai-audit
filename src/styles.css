@@ -2172,6 +2172,11 @@ textarea {
   gap: 8px;
 }
 
+.source-approval-records {
+  display: grid;
+  gap: 8px;
+}
+
 .source-approval-item {
   display: grid;
   gap: 6px;

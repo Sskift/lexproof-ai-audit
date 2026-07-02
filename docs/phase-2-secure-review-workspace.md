@@ -200,6 +200,21 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
 - `GET /api/workspaces/:workspaceId/model-runs/:runId`
   - returns a single run receipt without credentials
 
+### Source Review and Approval
+
+- `POST /api/workspaces/:workspaceId/source-reviews`
+  - persists metadata-only Source Review Ledger records with a stable ledger hash and audit-log entry
+  - keeps `matchingBehaviorChanged: false`
+  - does not accept raw source bodies, credentials, raw KYC, personal data, or legal conclusions
+- `GET /api/workspaces/:workspaceId/source-reviews`
+  - lists persisted source review records without changing source matching behavior
+- `POST /api/workspaces/:workspaceId/source-approvals`
+  - persists metadata-only Source Update Approval Queue records with a stable queue hash and audit-log entry
+  - keeps source matching gated until counsel or compliance review records refreshed source metadata
+  - does not accept raw source bodies, credentials, raw KYC, personal data, or legal conclusions
+- `GET /api/workspaces/:workspaceId/source-approvals`
+  - lists persisted source approval records and is wired to the command-center refresh flow
+
 ### Human Review
 
 - `POST /api/workspaces/:workspaceId/reviews`

@@ -200,6 +200,7 @@ import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
 import type {
   CounselPackExportRecord,
+  RegulatorySourceApprovalRecord,
   RegulatorySourceApprovalSyncResult,
   RegulatorySourceReviewSyncResult
 } from "./lib/phase2Types";
@@ -219,6 +220,7 @@ import {
 } from "./lib/regulatorySourcePack";
 import { createRegulatorySourceApprovalQueue } from "./lib/regulatorySourceApproval";
 import {
+  fetchRegulatorySourceApprovalRecords,
   RegulatorySourceApprovalClientError,
   syncRegulatorySourceApprovalQueue
 } from "./lib/regulatorySourceApprovalClient";
@@ -430,6 +432,11 @@ export default function App() {
   const [sourceApprovalSyncStatus, setSourceApprovalSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [sourceApprovalSyncError, setSourceApprovalSyncError] = useState("");
   const [sourceApprovalSyncRecoveryAction, setSourceApprovalSyncRecoveryAction] = useState("");
+  const [sourceApprovalRecords, setSourceApprovalRecords] = useState<RegulatorySourceApprovalRecord[]>([]);
+  const [sourceApprovalRecordRefreshStatus, setSourceApprovalRecordRefreshStatus] =
+    useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [sourceApprovalRecordRefreshError, setSourceApprovalRecordRefreshError] = useState("");
+  const [sourceApprovalRecordRefreshRecoveryAction, setSourceApprovalRecordRefreshRecoveryAction] = useState("");
   const [sourceReviewApiBaseUrl, setSourceReviewApiBaseUrl] = useState("");
   const [sourceReviewSyncResult, setSourceReviewSyncResult] = useState<RegulatorySourceReviewSyncResult | null>(null);
   const [sourceReviewSyncStatus, setSourceReviewSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
@@ -453,6 +460,10 @@ export default function App() {
   const regulatorySourceApprovalQueue = useMemo(
     () => createRegulatorySourceApprovalQueue(regulatorySourceReview),
     [regulatorySourceReview]
+  );
+  const activeSourceApprovalRecords = useMemo(
+    () => sourceApprovalRecords.filter((record) => record.workspaceId === project.id),
+    [project.id, sourceApprovalRecords]
   );
   const regulatoryControlMatrix = useMemo(
     () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
@@ -1953,6 +1964,10 @@ export default function App() {
         createdBy: modelIntakeProfile.humanReviewOwner || "Compliance"
       });
       setSourceApprovalSyncResult(result);
+      setSourceApprovalRecords((current) => [
+        ...result.records,
+        ...current.filter((record) => record.workspaceId !== project.id)
+      ]);
       setSourceApprovalSyncStatus("synced");
     } catch (error) {
       setSourceApprovalSyncStatus("error");
@@ -1963,6 +1978,33 @@ export default function App() {
       }
       setSourceApprovalSyncError(error instanceof Error ? error.message : "Source approval sync failed.");
       setSourceApprovalSyncRecoveryAction("Start the Phase 2 API and retry source approval sync.");
+    }
+  };
+
+  const refreshSourceApprovalRecords = async () => {
+    setSourceApprovalRecordRefreshStatus("syncing");
+    setSourceApprovalRecordRefreshError("");
+    setSourceApprovalRecordRefreshRecoveryAction("");
+
+    try {
+      const records = await fetchRegulatorySourceApprovalRecords({
+        apiBaseUrl: sourceApprovalApiBaseUrl,
+        workspaceId: project.id
+      });
+      setSourceApprovalRecords((current) => [
+        ...records,
+        ...current.filter((record) => record.workspaceId !== project.id)
+      ]);
+      setSourceApprovalRecordRefreshStatus("synced");
+    } catch (error) {
+      setSourceApprovalRecordRefreshStatus("error");
+      if (error instanceof RegulatorySourceApprovalClientError) {
+        setSourceApprovalRecordRefreshError(error.message);
+        setSourceApprovalRecordRefreshRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setSourceApprovalRecordRefreshError(error instanceof Error ? error.message : "Source approval record refresh failed.");
+      setSourceApprovalRecordRefreshRecoveryAction("Start the Phase 2 API and retry source approval record refresh.");
     }
   };
 
@@ -2090,6 +2132,10 @@ export default function App() {
             sourceApprovalSyncStatus={sourceApprovalSyncStatus}
             sourceApprovalSyncError={sourceApprovalSyncError}
             sourceApprovalSyncRecoveryAction={sourceApprovalSyncRecoveryAction}
+            sourceApprovalRecords={activeSourceApprovalRecords}
+            sourceApprovalRecordRefreshStatus={sourceApprovalRecordRefreshStatus}
+            sourceApprovalRecordRefreshError={sourceApprovalRecordRefreshError}
+            sourceApprovalRecordRefreshRecoveryAction={sourceApprovalRecordRefreshRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
             jurisdictionEvidenceMap={jurisdictionEvidenceMap}
             jurisdictionReadinessDigest={jurisdictionReadinessDigest}
@@ -2104,6 +2150,7 @@ export default function App() {
             onSyncSourceReviewLedger={syncSourceReviewLedger}
             onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}
             onSyncSourceApprovalQueue={syncSourceApprovalQueue}
+            onRefreshSourceApprovalRecords={refreshSourceApprovalRecords}
             onNavigate={setActiveTab}
             onRequestSourceGapEvidence={requestSourceGapEvidence}
           />

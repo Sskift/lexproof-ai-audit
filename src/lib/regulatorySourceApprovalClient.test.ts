@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { syncRegulatorySourceApprovalQueue } from "./regulatorySourceApprovalClient";
+import {
+  fetchRegulatorySourceApprovalRecords,
+  syncRegulatorySourceApprovalQueue
+} from "./regulatorySourceApprovalClient";
 import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceApprovalSyncResult } from "./phase2Types";
 
@@ -131,6 +134,69 @@ describe("regulatory source approval client", () => {
     ).rejects.toMatchObject({
       code: "SOURCE_APPROVAL_SYNC_INVALID_RESPONSE",
       recoveryAction: "Verify the Phase 2 API is returning metadata-only source approval records."
+    });
+  });
+
+  it("fetches persisted source approval records without posting source payloads", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => syncResult.records
+    })) as unknown as typeof fetch;
+
+    const records = await fetchRegulatorySourceApprovalRecords({
+      apiBaseUrl: "https://api.lexproof.test/",
+      workspaceId: "workspace-source",
+      fetcher
+    });
+
+    expect(records).toEqual(syncResult.records);
+    const [url, init] = (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+    expect(url).toBe("https://api.lexproof.test/api/workspaces/workspace-source/source-approvals");
+    expect(init).toEqual({ method: "GET" });
+    expect(JSON.stringify(init)).not.toContain("rawSourceBody");
+    expect(JSON.stringify(init)).not.toContain("apiKey");
+  });
+
+  it("rejects malformed persisted source approval records before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => [{ ...syncResult.records[0], matchingBehaviorChanged: true }]
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchRegulatorySourceApprovalRecords({
+        apiBaseUrl: "https://api.lexproof.test",
+        workspaceId: "workspace-source",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "SOURCE_APPROVAL_SYNC_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning metadata-only source approval records."
+    });
+  });
+
+  it("redacts unsafe API error text when persisted source approval refresh fails", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      json: async () => ({
+        error: "Source approval refresh failed with raw KYC passport data and api key=sk-live-abcdef1234567890abcdef1234567890.",
+        code: "SOURCE_APPROVAL_RECORD_REFRESH_REJECTED",
+        recoveryAction:
+          "Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef and retry.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchRegulatorySourceApprovalRecords({
+        workspaceId: "workspace-source",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "SOURCE_APPROVAL_RECORD_REFRESH_REJECTED",
+      message: expect.stringContaining("[redacted-raw-kyc]"),
+      recoveryAction: expect.stringContaining("[redacted-private-key]"),
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
   });
 });

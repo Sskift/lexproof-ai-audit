@@ -10,6 +10,12 @@ export type SyncRegulatorySourceApprovalQueueInput = {
   fetcher?: typeof fetch;
 };
 
+export type FetchRegulatorySourceApprovalRecordsInput = {
+  apiBaseUrl?: string;
+  workspaceId: string;
+  fetcher?: typeof fetch;
+};
+
 const QUEUE_BOUNDARY = "Not legal advice. Source update approvals are audit preparation workflow metadata only." as const;
 const RECORD_BOUNDARY = "Not legal advice. Source approval records are audit preparation workflow metadata only." as const;
 const DEFAULT_API_ERROR_BOUNDARY = "Not legal advice. This API creates audit preparation workflow records only." as const;
@@ -67,6 +73,35 @@ export async function syncRegulatorySourceApprovalQueue({
   }
 
   return validateSyncResult(payload);
+}
+
+export async function fetchRegulatorySourceApprovalRecords({
+  apiBaseUrl,
+  workspaceId,
+  fetcher = globalThis.fetch?.bind(globalThis)
+}: FetchRegulatorySourceApprovalRecordsInput): Promise<RegulatorySourceApprovalRecord[]> {
+  if (!fetcher) {
+    throw new RegulatorySourceApprovalClientError("Fetch is required to refresh source approval records.", {
+      code: "SOURCE_APPROVAL_RECORDS_FETCH_UNAVAILABLE",
+      recoveryAction: "Run this action in a browser or provide a fetch-compatible API client."
+    });
+  }
+
+  const response = await fetcher(buildSourceApprovalUrl(apiBaseUrl, workspaceId), {
+    method: "GET"
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorPayload = asSafeApiErrorResponse(payload);
+    throw new RegulatorySourceApprovalClientError(errorPayload.error ?? "Source approval record refresh failed.", {
+      code: errorPayload.code ?? "SOURCE_APPROVAL_RECORD_REFRESH_FAILED",
+      recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry source approval record refresh.",
+      notLegalAdviceBoundary: errorPayload.notLegalAdviceBoundary ?? DEFAULT_API_ERROR_BOUNDARY
+    });
+  }
+
+  return validateSourceApprovalRecords(payload);
 }
 
 function buildSourceApprovalUrl(apiBaseUrl: string | undefined, workspaceId: string): string {
@@ -134,6 +169,18 @@ function validateSyncResult(payload: unknown): RegulatorySourceApprovalSyncResul
   }
 
   return payload as RegulatorySourceApprovalSyncResult;
+}
+
+function validateSourceApprovalRecords(payload: unknown): RegulatorySourceApprovalRecord[] {
+  if (!Array.isArray(payload)) {
+    throw invalidResponseError("Source approval record refresh response must be a JSON array.");
+  }
+
+  if (!payload.every(isSourceApprovalRecord)) {
+    throw invalidResponseError("Source approval record refresh response has invalid metadata records.");
+  }
+
+  return payload;
 }
 
 function isSourceApprovalRecord(value: unknown): value is RegulatorySourceApprovalRecord {

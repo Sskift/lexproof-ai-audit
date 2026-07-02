@@ -35,7 +35,11 @@ import {
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { SourceFreshnessBoard } from "../lib/sourceFreshnessBoard";
 import type { ProjectProfile } from "../lib/projectModel";
-import type { RegulatorySourceApprovalSyncResult, RegulatorySourceReviewSyncResult } from "../lib/phase2Types";
+import type {
+  RegulatorySourceApprovalRecord,
+  RegulatorySourceApprovalSyncResult,
+  RegulatorySourceReviewSyncResult
+} from "../lib/phase2Types";
 import type { WorkspaceActionItem, WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
 import type { WorkspaceCockpitBrief, WorkspaceCockpitBriefStatus } from "../lib/workspaceCockpitBrief";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
@@ -56,6 +60,10 @@ type RegulatoryCommandCenterProps = {
   sourceApprovalSyncStatus: "idle" | "syncing" | "synced" | "error";
   sourceApprovalSyncError: string;
   sourceApprovalSyncRecoveryAction: string;
+  sourceApprovalRecords: RegulatorySourceApprovalRecord[];
+  sourceApprovalRecordRefreshStatus: "idle" | "syncing" | "synced" | "error";
+  sourceApprovalRecordRefreshError: string;
+  sourceApprovalRecordRefreshRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
   jurisdictionEvidenceMap: JurisdictionEvidenceMap | null;
   jurisdictionReadinessDigest: JurisdictionReadinessDigest | null;
@@ -70,6 +78,7 @@ type RegulatoryCommandCenterProps = {
   onSyncSourceReviewLedger: () => Promise<void> | void;
   onSourceApprovalApiBaseUrlChange: (value: string) => void;
   onSyncSourceApprovalQueue: () => Promise<void> | void;
+  onRefreshSourceApprovalRecords: () => Promise<void> | void;
   onNavigate: (tab: WorkspaceActionTarget) => void;
   onRequestSourceGapEvidence: (item: SourceEvidenceGapTriageItem) => void;
 };
@@ -90,6 +99,10 @@ export function RegulatoryCommandCenter({
   sourceApprovalSyncStatus,
   sourceApprovalSyncError,
   sourceApprovalSyncRecoveryAction,
+  sourceApprovalRecords,
+  sourceApprovalRecordRefreshStatus,
+  sourceApprovalRecordRefreshError,
+  sourceApprovalRecordRefreshRecoveryAction,
   controlMatrix,
   jurisdictionEvidenceMap,
   jurisdictionReadinessDigest,
@@ -104,12 +117,14 @@ export function RegulatoryCommandCenter({
   onSyncSourceReviewLedger,
   onSourceApprovalApiBaseUrlChange,
   onSyncSourceApprovalQueue,
+  onRefreshSourceApprovalRecords,
   onNavigate,
   onRequestSourceGapEvidence
 }: RegulatoryCommandCenterProps) {
   const topClauses = graph.matchedClauses.slice(0, 4);
   const topGaps = graph.evidenceGaps.slice(0, 8);
   const topSourceReviewItems = sourceReview.items.slice(0, 4);
+  const topSourceApprovalRecords = sourceApprovalRecords.slice(0, 4);
   const topCounselRoutes = localCounselRoutingPlan?.routes.slice(0, 4) ?? [];
   const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
   const [sourceGapTriage, setSourceGapTriage] = useState<SourceEvidenceGapTriage | null>(null);
@@ -576,6 +591,15 @@ export function RegulatoryCommandCenter({
             <RefreshCcw size={16} aria-hidden="true" />
             {sourceApprovalSyncStatus === "syncing" ? "Syncing Source Approval Queue" : "Sync Source Approval Queue"}
           </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={onRefreshSourceApprovalRecords}
+            disabled={sourceApprovalRecordRefreshStatus === "syncing" || sourceApprovalSyncStatus === "syncing"}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {sourceApprovalRecordRefreshStatus === "syncing" ? "Refreshing Source Approval Records" : "Refresh Source Approval Records"}
+          </button>
           <small>
             Syncs source approval metadata only. Source matching remains gated until counsel or compliance review records refreshed
             metadata.
@@ -587,11 +611,24 @@ export function RegulatoryCommandCenter({
               {sourceApprovalSyncResult.queueHash.slice(0, 12)}...
             </span>
           ) : null}
+          {sourceApprovalRecordRefreshStatus === "synced" ? (
+            <span className="save-state">
+              Source approval records refreshed: {sourceApprovalRecords.length} persisted record
+              {sourceApprovalRecords.length === 1 ? "" : "s"}. Matching behavior unchanged.
+            </span>
+          ) : null}
           {sourceApprovalSyncError ? (
             <div className="provider-policy-error" role="alert">
               <strong>{sourceApprovalSyncError}</strong>
               {sourceApprovalSyncRecoveryAction ? <span>{sourceApprovalSyncRecoveryAction}</span> : null}
               <small>Not legal advice. Source approval sync is audit preparation workflow metadata only.</small>
+            </div>
+          ) : null}
+          {sourceApprovalRecordRefreshError ? (
+            <div className="provider-policy-error" role="alert">
+              <strong>{sourceApprovalRecordRefreshError}</strong>
+              {sourceApprovalRecordRefreshRecoveryAction ? <span>{sourceApprovalRecordRefreshRecoveryAction}</span> : null}
+              <small>Not legal advice. Source approval record refresh is audit preparation workflow metadata only.</small>
             </div>
           ) : null}
         </div>
@@ -613,6 +650,29 @@ export function RegulatoryCommandCenter({
             </article>
           ))}
         </div>
+        {topSourceApprovalRecords.length ? (
+          <section className="source-approval-records" aria-label="Persisted Source Approval Records">
+            <div className="reg-section-title">
+              <ListChecks size={16} aria-hidden="true" />
+              <h4>Persisted Source Approval Records</h4>
+            </div>
+            <div className="source-approval-list">
+              {topSourceApprovalRecords.map((record) => (
+                <article key={record.id} className={`source-approval-item ${record.approvalStatus}`}>
+                  <header>
+                    <span>{formatApprovalStatus(record.approvalStatus)}</span>
+                    <strong>{record.jurisdiction}</strong>
+                  </header>
+                  <p>{record.nextAction}</p>
+                  <small>
+                    {record.citation} · queue {record.queueHash.slice(0, 12)}... · status {record.status}
+                  </small>
+                  <small>{record.notLegalAdviceBoundary}</small>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
 
       <div className="reg-command-layout">

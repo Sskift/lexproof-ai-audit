@@ -220,6 +220,10 @@ The Source Freshness Board turns Source Review Ledger dates into an operating bo
 
 ![Source Update Approval Queue](docs/assets/screenshots/source-update-approval-queue.png)
 
+The Source Update Approval Queue can sync metadata-only approval records to the Phase 2 API and refresh persisted records back into the command center through `GET /api/workspaces/:workspaceId/source-approvals`. Matching behavior stays unchanged until counsel or compliance review records refreshed source metadata. Not legal advice.
+
+![Source Approval persisted record refresh](docs/assets/screenshots/source-approval-record-refresh.png)
+
 ![Source Approval API Sync](docs/assets/screenshots/source-approval-api-sync.png)
 
 ![Risk Audit with source-linked issue cards](docs/assets/screenshots/risk-audit-source-links.jpg)

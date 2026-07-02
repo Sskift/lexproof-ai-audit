@@ -6496,6 +6496,7 @@ textarea {
 }
 
 .submission-asset,
+.submission-export-safety,
 .submission-mapping,
 .submission-limitation {
   display: grid;
@@ -6510,38 +6511,50 @@ textarea {
   border-color: #b9ddc6;
 }
 
-.submission-asset.needs-action {
+.submission-asset.needs-action,
+.submission-export-safety.needs-action {
   border-color: #e9bd87;
 }
 
-.submission-asset.blocked {
+.submission-asset.blocked,
+.submission-export-safety.blocked {
   border-color: #e6aaa2;
 }
 
-.submission-asset header {
+.submission-export-safety.ready {
+  border-color: #b9ddc6;
+}
+
+.submission-asset header,
+.submission-export-safety header {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.submission-asset header svg {
+.submission-asset header svg,
+.submission-export-safety header svg {
   color: #0c7b7b;
   flex: 0 0 auto;
 }
 
 .submission-asset.needs-action header svg,
-.submission-asset.blocked header svg {
+.submission-asset.blocked header svg,
+.submission-export-safety.needs-action header svg,
+.submission-export-safety.blocked header svg {
   color: #a74421;
 }
 
 .submission-asset header strong,
+.submission-export-safety header strong,
 .submission-mapping strong,
 .submission-limitation strong {
   color: #102a43;
   line-height: 1.35;
 }
 
-.submission-asset header span {
+.submission-asset header span,
+.submission-export-safety header span {
   margin-left: auto;
   border-radius: 999px;
   background: #e7edf8;
@@ -6553,12 +6566,21 @@ textarea {
 }
 
 .submission-asset p,
+.submission-export-safety p,
 .submission-limitation p,
 .submission-asset small,
+.submission-export-safety small,
 .submission-mapping small,
 .submission-limitation small {
   margin: 0;
   color: #53616f;
+  line-height: 1.45;
+}
+
+.submission-export-safety ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #31424f;
   line-height: 1.45;
 }
 

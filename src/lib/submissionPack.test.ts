@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile, createSubmissionFit } from "./auditEngine";
+import { createDataBoundaryReport } from "./dataBoundary";
 import { createSubmissionPack, exportSubmissionPackJson } from "./submissionPack";
 import type { DemoReadinessReport } from "./demoReadiness";
 import type { EvidenceManifest } from "./evidenceManifest";
@@ -87,6 +88,14 @@ const demoReadinessReport: DemoReadinessReport = {
   notLegalAdviceBoundary: "Not legal advice. Demo readiness checks are audit preparation readiness metadata only."
 };
 
+const dataBoundaryReport = createDataBoundaryReport({
+  project,
+  evidenceItems: project.evidenceItems,
+  counselQuestions: [],
+  counselReviews: [],
+  aiEvents: []
+});
+
 describe("createSubmissionPack", () => {
   it("builds a judge-facing artifact with hashes, limitations, feature mapping, and non-advice boundary", async () => {
     const audit = analyzeAuditProfile(project);
@@ -97,6 +106,7 @@ describe("createSubmissionPack", () => {
       manifest,
       regulatorySourcePack,
       demoReadinessReport,
+      dataBoundaryReport,
       counselPackVersionCount: 2,
       serverExportRecordCount: 1,
       modelConnectStatus: "ready",
@@ -129,6 +139,7 @@ describe("createSubmissionPack", () => {
       manifest,
       regulatorySourcePack,
       demoReadinessReport,
+      dataBoundaryReport,
       counselPackVersionCount: 1,
       serverExportRecordCount: 0,
       modelConnectStatus: "ready" as const
@@ -144,6 +155,52 @@ describe("createSubmissionPack", () => {
 
     expect(second.packHash).toBe(first.packHash);
     expect(changed.packHash).not.toBe(first.packHash);
+  });
+
+  it("includes export safety readiness for judge handoff without leaking raw boundary findings", async () => {
+    const audit = analyzeAuditProfile(project);
+    const exportSafetyDataBoundaryReport = createDataBoundaryReport({
+      project,
+      evidenceItems: project.evidenceItems,
+      counselQuestions: [],
+      counselReviews: [],
+      aiEvents: []
+    });
+
+    const pack = await createSubmissionPack({
+      project,
+      audit,
+      fit: createSubmissionFit(),
+      manifest,
+      regulatorySourcePack,
+      demoReadinessReport,
+      dataBoundaryReport: exportSafetyDataBoundaryReport,
+      counselPackVersionCount: 0,
+      serverExportRecordCount: 0,
+      modelConnectStatus: "ready",
+      generatedAt: "2026-07-01T00:00:00.000Z"
+    });
+
+    expect(pack.exportSafetySummary).toEqual(
+      expect.objectContaining({
+        status: "needs-action",
+        exportHandoffAllowed: false,
+        boundaryStatus: exportSafetyDataBoundaryReport.status,
+        boundaryBlockerCount: exportSafetyDataBoundaryReport.blockerCount,
+        manifestReady: true,
+        regulatorySourcePackReady: true,
+        counselPackVersionReady: false,
+        serverExportRecordReady: false,
+        notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
+      })
+    );
+    expect(pack.exportSafetySummary.nextActions).toEqual(
+      expect.arrayContaining([
+        "Save a Counsel Pack version to lock Markdown and source-pack hashes.",
+        "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running."
+      ])
+    );
+    expect(exportSubmissionPackJson(pack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|private key 0x/i);
   });
 
   it("exports metadata-only JSON with sensitive project text redacted", async () => {
@@ -168,6 +225,13 @@ describe("createSubmissionPack", () => {
       manifest: null,
       regulatorySourcePack: null,
       demoReadinessReport,
+      dataBoundaryReport: createDataBoundaryReport({
+        project: unsafeProject,
+        evidenceItems: unsafeProject.evidenceItems,
+        counselQuestions: [],
+        counselReviews: [],
+        aiEvents: []
+      }),
       counselPackVersionCount: 0,
       serverExportRecordCount: 0,
       modelConnectStatus: "blocked",

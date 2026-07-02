@@ -652,6 +652,13 @@ Owns Sources-level export handoff readiness:
 
 The inventory is a safety checklist for audit-prep handoff. It does not make legal conclusions, upload raw evidence, store secrets, perform KYC, or enable external adapters.
 
+### `src/lib/submissionPack.ts`
+
+Owns the judge-facing submission artifact:
+
+- `createSubmissionPack(input)` generates metadata-only Submission Pack JSON with project risk posture, manifest/source-pack hashes, demo readiness, model-connect status, export safety summary, required assets, hackathon mapping, known limitations, and a stable pack hash.
+- The export safety summary uses the current data-boundary report plus manifest, Regulatory Source Pack, Counsel Pack version, and server export-record readiness. It returns handoff status, blocker/warning counts, next actions, and the Not legal advice boundary without storing raw evidence or legal conclusions.
+
 ### `src/lib/securityReviewChecklist.ts`
 
 Owns integration security readiness behavior:

@@ -1,4 +1,5 @@
 import type { AuditResult, SubmissionFit } from "./auditEngine";
+import type { DataBoundaryReport } from "./dataBoundary";
 import { redactClassifiedText } from "./dataClassification";
 import type { DemoReadinessReport } from "./demoReadiness";
 import type { EvidenceManifest } from "./evidenceManifest";
@@ -7,6 +8,7 @@ import type { RegulatorySourcePack } from "./regulatorySourcePack";
 
 export type SubmissionPackStatus = "ready" | "needs-action" | "blocked";
 export type SubmissionModelConnectStatus = "ready" | "not-configured" | "blocked";
+export type SubmissionExportSafetyStatus = "ready" | "needs-action" | "blocked";
 
 export type SubmissionPackAsset = {
   label: string;
@@ -28,6 +30,20 @@ export type SubmissionPackKnownLimitation = {
   mitigation: string;
 };
 
+export type SubmissionExportSafetySummary = {
+  status: SubmissionExportSafetyStatus;
+  exportHandoffAllowed: boolean;
+  boundaryStatus: DataBoundaryReport["status"];
+  boundaryBlockerCount: number;
+  boundaryWarningCount: number;
+  manifestReady: boolean;
+  regulatorySourcePackReady: boolean;
+  counselPackVersionReady: boolean;
+  serverExportRecordReady: boolean;
+  nextActions: string[];
+  notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only.";
+};
+
 export type SubmissionPack = {
   packVersion: "lexproof-submission-pack-v1";
   projectId: string;
@@ -46,6 +62,7 @@ export type SubmissionPack = {
   evidenceGapCount: number;
   counselPackVersionCount: number;
   serverExportRecordCount: number;
+  exportSafetySummary: SubmissionExportSafetySummary;
   requiredAssets: SubmissionPackAsset[];
   featureMappings: SubmissionPackFeatureMapping[];
   knownLimitations: SubmissionPackKnownLimitation[];
@@ -61,6 +78,7 @@ export type CreateSubmissionPackInput = {
   manifest: EvidenceManifest | null;
   regulatorySourcePack: RegulatorySourcePack | null;
   demoReadinessReport: DemoReadinessReport;
+  dataBoundaryReport: DataBoundaryReport;
   counselPackVersionCount: number;
   serverExportRecordCount: number;
   modelConnectStatus: SubmissionModelConnectStatus;
@@ -74,6 +92,7 @@ export async function createSubmissionPack(input: CreateSubmissionPackInput): Pr
   const projectName = sanitize(input.project.projectName || "Untitled project");
   const manifestHash = sanitizeHash(input.manifest?.bundleHash ?? "");
   const regulatorySourcePackHash = sanitizeHash(input.regulatorySourcePack?.packHash ?? "");
+  const exportSafetySummary = createExportSafetySummary(input);
   const requiredAssets = createRequiredAssets(input);
   const featureMappings = createFeatureMappings(input);
   const knownLimitations = createKnownLimitations();
@@ -96,6 +115,7 @@ export async function createSubmissionPack(input: CreateSubmissionPackInput): Pr
     evidenceGapCount: input.regulatorySourcePack?.evidenceGapCount ?? 0,
     counselPackVersionCount: input.counselPackVersionCount,
     serverExportRecordCount: input.serverExportRecordCount,
+    exportSafetySummary,
     requiredAssets,
     featureMappings,
     knownLimitations,
@@ -166,6 +186,53 @@ function createAsset(label: string, status: SubmissionPackStatus, evidence: stri
     evidence: sanitize(evidence),
     recoveryAction: sanitize(recoveryAction)
   };
+}
+
+function createExportSafetySummary(input: CreateSubmissionPackInput): SubmissionExportSafetySummary {
+  const manifestReady = Boolean(input.manifest?.bundleHash);
+  const regulatorySourcePackReady = Boolean(input.regulatorySourcePack?.packHash);
+  const counselPackVersionReady = input.counselPackVersionCount > 0;
+  const serverExportRecordReady = input.serverExportRecordCount > 0;
+  const missingActions = [
+    !manifestReady ? "Generate an Evidence Manifest before judge or counsel handoff." : "",
+    !regulatorySourcePackReady ? "Open Counsel Pack or Sources after Regulatory Source Pack calculation completes." : "",
+    !counselPackVersionReady ? "Save a Counsel Pack version to lock Markdown and source-pack hashes." : "",
+    !serverExportRecordReady ? "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running." : ""
+  ];
+  const boundaryActions =
+    input.dataBoundaryReport.status === "clean" ? [] : input.dataBoundaryReport.remediation.map(sanitize);
+  const nextActions = unique([...missingActions, ...boundaryActions].map(sanitize).filter(Boolean));
+  const missingRequiredArtifact = !manifestReady || !regulatorySourcePackReady || !counselPackVersionReady || !serverExportRecordReady;
+  const status = createExportSafetyStatus(input.dataBoundaryReport, missingRequiredArtifact);
+
+  return {
+    status,
+    exportHandoffAllowed: status === "ready",
+    boundaryStatus: input.dataBoundaryReport.status,
+    boundaryBlockerCount: input.dataBoundaryReport.blockerCount,
+    boundaryWarningCount: input.dataBoundaryReport.warningCount,
+    manifestReady,
+    regulatorySourcePackReady,
+    counselPackVersionReady,
+    serverExportRecordReady,
+    nextActions: nextActions.length > 0 ? nextActions : ["Submission export safety is ready for metadata-only judge handoff."],
+    notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
+  };
+}
+
+function createExportSafetyStatus(
+  dataBoundaryReport: DataBoundaryReport,
+  missingRequiredArtifact: boolean
+): SubmissionExportSafetyStatus {
+  if (!dataBoundaryReport.exportAllowed || dataBoundaryReport.status === "blocked") {
+    return "blocked";
+  }
+
+  if (missingRequiredArtifact || dataBoundaryReport.status === "needs-review") {
+    return "needs-action";
+  }
+
+  return "ready";
 }
 
 function createFeatureMappings(input: CreateSubmissionPackInput): SubmissionPackFeatureMapping[] {
@@ -283,6 +350,10 @@ function sanitizeHash(value: string): string {
 
 function sanitize(value: string): string {
   return redactClassifiedText(value.replace(/\s+/g, " ").trim());
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))];
 }
 
 async function sha256Hex(payload: string): Promise<string> {

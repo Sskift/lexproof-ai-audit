@@ -1,6 +1,11 @@
 import { CheckCircle2, Download, FileJson, TriangleAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
-import { exportSubmissionPackJson, type SubmissionPack, type SubmissionPackStatus } from "../lib/submissionPack";
+import {
+  exportSubmissionPackJson,
+  type SubmissionExportSafetyStatus,
+  type SubmissionPack,
+  type SubmissionPackStatus
+} from "../lib/submissionPack";
 
 type SubmissionPackPanelProps = {
   pack: SubmissionPack | null;
@@ -28,6 +33,7 @@ export function SubmissionPackPanel({ pack }: SubmissionPackPanelProps) {
             <SubmissionFact label="Manifest hash" value={pack.manifestHash || "missing"} />
             <SubmissionFact label="Regulatory Source Pack hash" value={pack.regulatorySourcePackHash || "missing"} />
             <SubmissionFact label="Demo readiness" value={pack.demoReadinessStatus} />
+            <SubmissionFact label="Export safety" value={formatExportSafetyStatus(pack.exportSafetySummary.status)} />
           </div>
 
           <div className="submission-pack-actions">
@@ -42,6 +48,31 @@ export function SubmissionPackPanel({ pack }: SubmissionPackPanelProps) {
           </div>
 
           <div className="submission-pack-grid">
+            <section className="submission-pack-section" aria-label="Submission export safety">
+              <h3>Export safety summary</h3>
+              <article className={`submission-export-safety ${pack.exportSafetySummary.status}`}>
+                <header>
+                  {pack.exportSafetySummary.status === "ready" ? (
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                  ) : (
+                    <TriangleAlert size={16} aria-hidden="true" />
+                  )}
+                  <strong>Handoff {formatExportSafetyStatus(pack.exportSafetySummary.status)}</strong>
+                  <span>{pack.exportSafetySummary.exportHandoffAllowed ? "allowed" : "blocked"}</span>
+                </header>
+                <p>
+                  Boundary {pack.exportSafetySummary.boundaryStatus} | {pack.exportSafetySummary.boundaryBlockerCount} blockers |{" "}
+                  {pack.exportSafetySummary.boundaryWarningCount} warnings
+                </p>
+                <ul>
+                  {pack.exportSafetySummary.nextActions.slice(0, 4).map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
+                <small>{pack.exportSafetySummary.notLegalAdviceBoundary}</small>
+              </article>
+            </section>
+
             <section className="submission-pack-section" aria-label="Submission required assets">
               <h3>Required assets</h3>
               <div className="submission-asset-list">
@@ -105,6 +136,14 @@ function SubmissionFact({ label, value }: { label: string; value: string }) {
 }
 
 function statusLabel(status: SubmissionPackStatus): string {
+  if (status === "needs-action") {
+    return "needs action";
+  }
+
+  return status;
+}
+
+function formatExportSafetyStatus(status: SubmissionExportSafetyStatus): string {
   if (status === "needs-action") {
     return "needs action";
   }

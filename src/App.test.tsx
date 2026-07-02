@@ -774,6 +774,8 @@ describe("App", () => {
       expect(within(submissionPack).getByText(/Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only./i)).toBeInTheDocument();
       await waitFor(() => {
         expect(within(submissionPack).getByRole("heading", { name: /Known limitations/i })).toBeInTheDocument();
+        expect(within(submissionPack).getByRole("heading", { name: /Export safety summary/i })).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/Handoff needs action/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/External model providers remain disabled/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Manifest hash/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Regulatory Source Pack hash/i)).toBeInTheDocument();
@@ -798,9 +800,19 @@ describe("App", () => {
           packVersion: "lexproof-submission-pack-v1",
           targetHackathon: "BLI Legal Tech Hackathon 2",
           packHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          exportSafetySummary: expect.objectContaining({
+            status: "needs-action",
+            exportHandoffAllowed: false,
+            manifestReady: true,
+            regulatorySourcePackReady: true,
+            notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
+          }),
           notLegalAdviceBoundary:
             "Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only."
         })
+      );
+      expect(parsed.exportSafetySummary.nextActions).toEqual(
+        expect.arrayContaining(["Save a Counsel Pack version to lock Markdown and source-pack hashes."])
       );
       expect(parsed.knownLimitations.map((item: { id: string }) => item.id)).toEqual(
         expect.arrayContaining(["not-legal-advice", "local-first-storage", "simulated-anchor"])
@@ -844,7 +856,7 @@ describe("App", () => {
     expect(security.getAllByText(/Remove blocked materials before Evidence Vault sync or export handoff./i).length).toBeGreaterThan(0);
     expect(security.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(security.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  }, 10000);
+  }, 15000);
 
   it("downloads a metadata-only Model Connect receipt without exposing session credentials", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;

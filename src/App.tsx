@@ -937,6 +937,7 @@ export default function App() {
       manifest,
       regulatorySourcePack,
       demoReadinessReport,
+      dataBoundaryReport,
       counselPackVersionCount: currentCounselPackVersions.length,
       serverExportRecordCount: currentCounselPackServerExports.length,
       modelConnectStatus: submissionModelConnectStatus
@@ -953,6 +954,7 @@ export default function App() {
     audit,
     currentCounselPackServerExports.length,
     currentCounselPackVersions.length,
+    dataBoundaryReport,
     demoReadinessReport,
     fit,
     manifest,

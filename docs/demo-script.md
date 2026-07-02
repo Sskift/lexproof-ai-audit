@@ -152,7 +152,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **Sources**.
    - Show **Export Safety Inventory** with inventory hash, boundary status, export handoff allowed/blocked state, artifact statuses, Source Freshness Board hash/status when available, and the Not legal advice boundary.
    - Click **Download Export Inventory JSON** to show the metadata-only redacted handoff inventory.
-   - Show the generated **Submission Pack** with pack hash, manifest hash, Regulatory Source Pack hash, demo readiness, required assets, hackathon mapping, and known limitations.
+   - Show the generated **Submission Pack** with pack hash, manifest hash, Regulatory Source Pack hash, export safety summary, demo readiness, required assets, hackathon mapping, and known limitations.
    - Click **Download Submission Pack JSON** for the judge-facing metadata artifact.
    - Confirm the boundary: Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only.
    - Screenshot: `docs/assets/screenshots/export-safety-inventory.png`.

@@ -229,7 +229,7 @@ function matchesClause(clause: RegulatoryClause, activeFlagIds: Set<string>, pro
 }
 
 function evidenceMatchesRequest(item: EvidenceItem, request: RegulatoryEvidenceRequest): boolean {
-  const text = normalize([item.label, item.kind, item.source, item.content].filter(Boolean).join(" "));
+  const text = normalize(stripMachineControlIds([item.label, item.kind, item.source, item.content].filter(Boolean).join(" ")));
   return request.keywords.some((keyword) => keywordMatchesEvidenceText(keyword, text));
 }
 
@@ -284,6 +284,10 @@ function priorityWeight(priority: "P0" | "P1" | "P2"): number {
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function stripMachineControlIds(value: string): string {
+  return value.replace(/\bcontrol-[a-z0-9-]+\b/gi, " ");
 }
 
 function keywordMatchesEvidenceText(keyword: string, text: string): boolean {

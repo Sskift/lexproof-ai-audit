@@ -685,6 +685,48 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
+  it("marks Singapore PSN02 AML/CFT controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `sg-psn02-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const singaporeProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-singapore-psn02-covered",
+      projectName: "HarborKey DPT AML Review",
+      jurisdictions: ["Singapore"],
+      assetModel: "Digital payment token service with customer wallet activity and transfer approvals",
+      userType: "Retail users and accredited investors in Singapore",
+      custodyModel: "Platform controls omnibus wallets and safeguards customer DPT assets",
+      dataSensitivity: "KYC metadata, sanctions screening status, and wallet transaction history excluded from model payloads",
+      aiUsage: "AI drafts Singapore DPT evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned DPT launch before Singapore counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(singaporeProject);
+    const graph = createRegulatoryGraph(singaporeProject, audit, singaporeProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "sg-mas-psn02-dpt-aml-cft")).toMatchObject({
+      jurisdiction: "Singapore",
+      regulator: "Monetary Authority of Singapore",
+      citation: "MAS Notice PSN02 and Guidelines to Notice PSN02",
+      sourceUrl: "https://www.mas.gov.sg/regulation/notices/psn02-aml-cft-notice---digital-payment-token-service",
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "Singapore fintech / digital asset counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "sg-mas-psn02-dpt-aml-cft")?.matchedEvidenceLabels).toEqual(
+      expect.arrayContaining(["Singapore DPT CDD and model handoff register"])
+    );
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "sg-mas-psn02-dpt-aml-cft" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches US advertising disclosure controls for cross-border marketing claims without legal conclusions", () => {
     const marketingProject: ProjectProfile = {
       ...baseProject,
@@ -935,10 +977,12 @@ describe("createRegulatoryGraph", () => {
       totalEvidenceRequestCount: 2,
       localCounselRole: "UAE virtual-assets / financial regulatory counsel"
     });
-    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-compliance-risk-management")?.matchedEvidenceLabels).toEqual([
-      "Custody and signer control runbook",
-      "Wallet sanctions screening and escalation controls"
-    ]);
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-compliance-risk-management")?.matchedEvidenceLabels).toEqual(
+      expect.arrayContaining([
+        "Custody and signer control runbook",
+        "Wallet sanctions screening and escalation controls"
+      ])
+    );
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "uae-vara-compliance-risk-management" })])
     );

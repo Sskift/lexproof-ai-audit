@@ -70,6 +70,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Counsel"
       },
       {
+        label: "Singapore DPT CDD and model handoff register",
+        kind: "Register",
+        content:
+          "Requested: summarize Singapore DPT CDD handoff, wallet history metadata boundary, MAS PSN02 review owner, and evidence-export exclusion notes.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-sg-mas-psn02-dpt-aml-cft",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:

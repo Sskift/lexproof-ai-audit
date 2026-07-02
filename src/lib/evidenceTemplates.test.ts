@@ -97,6 +97,7 @@ describe("evidence templates", () => {
         "RWA disclosure assumptions memo",
         "Custody and signer control runbook",
         "Investor eligibility review",
+        "Singapore DPT CDD and model handoff register",
         "Wallet sanctions screening and escalation controls"
       ])
     );
@@ -104,6 +105,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
+    expect(serializedSources).toContain("regulatory control: control-sg-mas-psn02-dpt-aml-cft");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");

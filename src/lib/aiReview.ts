@@ -169,7 +169,14 @@ function createRedactionFindings(item: EvidenceItem): RedactionFinding[] {
   const findings: RedactionFinding[] = [];
 
   addFinding(findings, item, /0x[a-fA-F0-9]{64}/g, "private-key-like value", "block", "Private-key-like material must be removed before model review.");
-  addFinding(findings, item, /\b(seed phrase|mnemonic|private key)\b/gi, "secret phrase reference", "block", "Secret phrase references must be removed before model review.");
+  addFinding(
+    findings,
+    item,
+    /\b(seed phrase|mnemonic|recovery phrase|wallet secret(?: phrase)?|private key)\b/gi,
+    "secret phrase reference",
+    "block",
+    "Secret phrase references must be removed before model review."
+  );
   addFinding(findings, item, /\b(raw\s+kyc|kyc)\b/gi, "raw KYC reference", "warn", "KYC references need human review and should not expose raw files to a model.");
   addFinding(
     findings,

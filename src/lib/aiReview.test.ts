@@ -92,6 +92,36 @@ describe("createRedactionReport", () => {
     expect(JSON.stringify(report)).not.toContain("0xaaaaaaaa");
   });
 
+  it("blocks wallet recovery phrases before evidence can be sent to a model", () => {
+    const phrase = "abandon ability able about above absent absorb abstract absurd abuse access accident";
+    const report = createRedactionReport([
+      {
+        label: "Wallet recovery runbook",
+        kind: "Markdown",
+        content: `Wallet recovery phrase: ${phrase}. Keep this outside LexProof.`,
+        status: "draft",
+        owner: "Engineering"
+      }
+    ]);
+    const serialized = JSON.stringify(report).toLowerCase();
+
+    expect(report.status).toBe("blocked");
+    expect(report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          evidenceLabel: "Wallet recovery runbook",
+          category: "secret phrase reference",
+          severity: "block",
+          matchCount: 1
+        })
+      ])
+    );
+    expect(report.evidencePreview[0].contentPreview).toContain("[redacted-private-key]");
+    expect(serialized).not.toContain("wallet recovery phrase");
+    expect(serialized).not.toContain("abandon ability");
+    expect(serialized).not.toContain("access accident");
+  });
+
   it("marks KYC and personal-data references for review before sending evidence to a model", () => {
     const report = createRedactionReport([
       {

@@ -1,4 +1,5 @@
 import { redactDataBoundaryText } from "./dataBoundary";
+import type { EvidenceItem } from "./projectModel";
 import type { MatchedRegulatoryClause, RegulatoryEvidenceGap, RegulatoryGraph } from "./regulatoryGraph";
 
 export type SourceEvidenceGapTriageStatus = "ready-for-counsel" | "needs-evidence";
@@ -104,6 +105,17 @@ export function downloadSourceEvidenceGapTriageJson(filename: string, triage: So
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+export function createEvidenceItemFromSourceGapTriageItem(item: SourceEvidenceGapTriageItem): EvidenceItem {
+  return {
+    label: sanitize(item.evidenceLedgerDraft.label),
+    kind: item.evidenceLedgerDraft.kind,
+    content: sanitize(item.evidenceLedgerDraft.content),
+    source: sanitize(item.evidenceLedgerDraft.source),
+    status: item.evidenceLedgerDraft.status,
+    owner: item.evidenceLedgerDraft.owner
+  };
 }
 
 function createTriageItem(

@@ -1869,6 +1869,10 @@ textarea {
   line-height: 1.3;
 }
 
+.source-gap-triage-item > button {
+  justify-self: start;
+}
+
 .reg-source-review.review-due {
   border-color: #e9bd87;
   background: #fffaf2;

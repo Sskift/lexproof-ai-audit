@@ -28,7 +28,8 @@ import {
 import {
   createSourceEvidenceGapTriage,
   downloadSourceEvidenceGapTriageJson,
-  type SourceEvidenceGapTriage
+  type SourceEvidenceGapTriage,
+  type SourceEvidenceGapTriageItem
 } from "../lib/sourceEvidenceGapTriage";
 import type { RegulatorySourceReview, RegulatorySourceReviewStatus } from "../lib/regulatorySourceReview";
 import type { SourceFreshnessBoard } from "../lib/sourceFreshnessBoard";
@@ -69,6 +70,7 @@ type RegulatoryCommandCenterProps = {
   onSourceApprovalApiBaseUrlChange: (value: string) => void;
   onSyncSourceApprovalQueue: () => Promise<void> | void;
   onNavigate: (tab: WorkspaceActionTarget) => void;
+  onRequestSourceGapEvidence: (item: SourceEvidenceGapTriageItem) => void;
 };
 
 export function RegulatoryCommandCenter({
@@ -101,7 +103,8 @@ export function RegulatoryCommandCenter({
   onSyncSourceReviewLedger,
   onSourceApprovalApiBaseUrlChange,
   onSyncSourceApprovalQueue,
-  onNavigate
+  onNavigate,
+  onRequestSourceGapEvidence
 }: RegulatoryCommandCenterProps) {
   const topClauses = graph.matchedClauses.slice(0, 4);
   const topGaps = graph.evidenceGaps.slice(0, 8);
@@ -283,6 +286,10 @@ export function RegulatoryCommandCenter({
                   <strong>{item.evidenceLedgerDraft.label}</strong>
                   <small>{item.evidenceLedgerDraft.content}</small>
                 </div>
+                <button type="button" className="secondary" onClick={() => onRequestSourceGapEvidence(item)}>
+                  <ListChecks size={14} aria-hidden="true" />
+                  Request Evidence
+                </button>
               </article>
             ))}
           </div>

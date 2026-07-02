@@ -3,6 +3,7 @@ import { analyzeAuditProfile } from "./auditEngine";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import {
   createSourceEvidenceGapTriage,
+  createEvidenceItemFromSourceGapTriageItem,
   exportSourceEvidenceGapTriageJson
 } from "./sourceEvidenceGapTriage";
 import type { ProjectProfile } from "./projectModel";
@@ -104,5 +105,27 @@ describe("createSourceEvidenceGapTriage", () => {
     expect(json.endsWith("\n")).toBe(true);
     expect(json).toContain("Not legal advice");
     expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw evidence bytes/i);
+  });
+
+  it("turns a triage item into a metadata-only Evidence Ledger request", async () => {
+    const graph = createRegulatoryGraph(project, analyzeAuditProfile(project), project.evidenceItems);
+    const triage = await createSourceEvidenceGapTriage({
+      graph,
+      maxItems: 1,
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+    const evidence = createEvidenceItemFromSourceGapTriageItem(triage.items[0]);
+
+    expect(evidence).toEqual(
+      expect.objectContaining({
+        kind: "Checklist",
+        status: "requested",
+        owner: "Compliance"
+      })
+    );
+    expect(evidence.label).toBe(triage.items[0]?.title);
+    expect(evidence.source).toContain(`regulatory control: control-${triage.items[0]?.clauseId}`);
+    expect(evidence.content).toContain("metadata-only evidence");
+    expect(JSON.stringify(evidence)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|sk-live|api_key|passport number/i);
   });
 });

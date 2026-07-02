@@ -82,6 +82,29 @@ describe("App", () => {
     expect(screen.getByText(/Evidence Templates/i)).toBeInTheDocument();
   });
 
+  it("requests a source evidence gap into the Evidence Ledger from the command center", async () => {
+    render(<App />);
+
+    const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+    const requestButtons = within(sourceGapTriage).getAllByRole("button", { name: /Request Evidence/i });
+
+    fireEvent.click(requestButtons[0]);
+
+    expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Label for evidence 4/i)).toHaveValue(
+      "US accredited-investor verification and solicitation-controls evidence"
+    );
+    expect((screen.getByLabelText(/Source for evidence 4/i) as HTMLInputElement).value).toContain(
+      "regulatory control: control-us-sec-reg-d-accredited-investor-verification"
+    );
+    expect((screen.getByLabelText(/Content for evidence 4/i) as HTMLTextAreaElement).value).toContain(
+      "Exclude [redacted-raw-kyc], credentials, private keys"
+    );
+    expect(screen.getByLabelText(/Status for evidence 4/i)).toHaveValue("requested");
+    expect(screen.getByText(/source-gap-requested US accredited-investor verification/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+  });
+
   it("shows and downloads the Regulatory Control Matrix from the command center", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

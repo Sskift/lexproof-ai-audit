@@ -68,6 +68,7 @@ import {
   createEvidenceCreatedEvent,
   createEvidenceRemovedEvent,
   createEvidenceUpdateEvent,
+  type EvidenceAuditAction,
   type EvidenceAuditEvent
 } from "./lib/evidenceAuditTrail";
 import {
@@ -226,6 +227,10 @@ import {
   createSourceFreshnessBoard,
   type SourceFreshnessBoard
 } from "./lib/sourceFreshnessBoard";
+import {
+  createEvidenceItemFromSourceGapTriageItem,
+  type SourceEvidenceGapTriageItem
+} from "./lib/sourceEvidenceGapTriage";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
   createRiskEvidenceCoverage,
@@ -1439,7 +1444,7 @@ export default function App() {
     setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   };
 
-  const addEvidence = (item: EvidenceItem) => {
+  const addEvidence = (item: EvidenceItem, auditAction: EvidenceAuditAction = "created") => {
     const now = new Date().toISOString();
     const nextItem = {
       ...item,
@@ -1457,9 +1462,14 @@ export default function App() {
       updatedAt: now
     }));
     setEvidenceAuditEvents((current) => [
-      createEvidenceCreatedEvent(project.id, nextItem, nextItem.owner ?? "Founder", now),
+      createEvidenceCreatedEvent(project.id, nextItem, nextItem.owner ?? "Founder", now, auditAction),
       ...current
     ].slice(0, 120));
+  };
+
+  const requestSourceGapEvidence = (item: SourceEvidenceGapTriageItem) => {
+    addEvidence(createEvidenceItemFromSourceGapTriageItem(item), "source-gap-requested");
+    setActiveTab("evidence");
   };
 
   const updateEvidence = (index: number, updates: Partial<EvidenceItem>) => {
@@ -2006,6 +2016,7 @@ export default function App() {
             onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}
             onSyncSourceApprovalQueue={syncSourceApprovalQueue}
             onNavigate={setActiveTab}
+            onRequestSourceGapEvidence={requestSourceGapEvidence}
           />
 
           <SecureReviewWorkspace

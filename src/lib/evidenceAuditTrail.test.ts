@@ -35,6 +35,24 @@ describe("evidence audit trail events", () => {
     expect(event.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("records source-gap requested evidence as a distinct audit-prep action", () => {
+    const event = createEvidenceCreatedEvent(
+      "project-1",
+      evidence,
+      "Compliance",
+      "2026-07-02T00:00:00.000Z",
+      "source-gap-requested"
+    );
+
+    expect(event).toMatchObject({
+      action: "source-gap-requested",
+      actor: "Compliance",
+      summary: "source-gap-requested Launch memo",
+      changedFields: ["label", "kind", "content", "source", "status", "owner"]
+    });
+    expect(JSON.stringify(event)).toContain("Not legal advice");
+  });
+
   it("records only material evidence fields that changed during an update", () => {
     const event = createEvidenceUpdateEvent(
       "project-1",

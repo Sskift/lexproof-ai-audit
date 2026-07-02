@@ -1,6 +1,12 @@
 import type { EvidenceItem, EvidenceOwner } from "./projectModel";
 
-export type EvidenceAuditAction = "created" | "updated" | "removed" | "template-applied" | "source-gap-requested";
+export type EvidenceAuditAction =
+  | "created"
+  | "updated"
+  | "removed"
+  | "template-applied"
+  | "source-gap-requested"
+  | "source-gap-refreshed";
 
 export type EvidenceAuditActor = EvidenceOwner | "System";
 

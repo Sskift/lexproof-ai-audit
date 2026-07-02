@@ -95,6 +95,9 @@ describe("App", () => {
       "US accredited-investor verification and solicitation-controls evidence"
     );
     expect((screen.getByLabelText(/Source for evidence 4/i) as HTMLInputElement).value).toContain(
+      "source gap: us-sec-reg-d-accredited-investor-verification-us-accredited-investor-verification-solicitation-controls"
+    );
+    expect((screen.getByLabelText(/Source for evidence 4/i) as HTMLInputElement).value).toContain(
       "regulatory control: control-us-sec-reg-d-accredited-investor-verification"
     );
     expect((screen.getByLabelText(/Content for evidence 4/i) as HTMLTextAreaElement).value).toContain(
@@ -102,8 +105,18 @@ describe("App", () => {
     );
     expect(screen.getByLabelText(/Status for evidence 4/i)).toHaveValue("requested");
     expect(screen.getByText(/source-gap-requested US accredited-investor verification/i)).toBeInTheDocument();
+
+    const refreshedSourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+    expect(within(refreshedSourceGapTriage).getByText(/Requested in Ledger/i)).toBeInTheDocument();
+    fireEvent.click(within(refreshedSourceGapTriage).getByRole("button", { name: /Open Request/i }));
+
+    expect(await screen.findByLabelText(/Label for evidence 4/i)).toHaveValue(
+      "US accredited-investor verification and solicitation-controls evidence"
+    );
+    expect(screen.queryByLabelText(/Label for evidence 5/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/source-gap-refreshed US accredited-investor verification/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
-  });
+  }, 10000);
 
   it("shows and downloads the Regulatory Control Matrix from the command center", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;

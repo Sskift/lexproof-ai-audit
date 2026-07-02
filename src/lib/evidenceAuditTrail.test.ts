@@ -53,6 +53,25 @@ describe("evidence audit trail events", () => {
     expect(JSON.stringify(event)).toContain("Not legal advice");
   });
 
+  it("records source-gap refreshes without implying legal approval", () => {
+    const event = createEvidenceCreatedEvent(
+      "project-1",
+      evidence,
+      "Compliance",
+      "2026-07-02T01:00:00.000Z",
+      "source-gap-refreshed"
+    );
+
+    expect(event).toMatchObject({
+      action: "source-gap-refreshed",
+      actor: "Compliance",
+      summary: "source-gap-refreshed Launch memo",
+      changedFields: ["label", "kind", "content", "source", "status", "owner"]
+    });
+    expect(JSON.stringify(event)).not.toMatch(/\blegal approval\b|\blegal opinion\b|\bcompliant\b|\bnon-compliant\b/i);
+    expect(event.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("records only material evidence fields that changed during an update", () => {
     const event = createEvidenceUpdateEvent(
       "project-1",

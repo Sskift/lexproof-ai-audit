@@ -228,7 +228,7 @@ import {
   type SourceFreshnessBoard
 } from "./lib/sourceFreshnessBoard";
 import {
-  createEvidenceItemFromSourceGapTriageItem,
+  createEvidenceRequestOperationFromSourceGapTriageItem,
   type SourceEvidenceGapTriageItem
 } from "./lib/sourceEvidenceGapTriage";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
@@ -1468,7 +1468,31 @@ export default function App() {
   };
 
   const requestSourceGapEvidence = (item: SourceEvidenceGapTriageItem) => {
-    addEvidence(createEvidenceItemFromSourceGapTriageItem(item), "source-gap-requested");
+    const operation = createEvidenceRequestOperationFromSourceGapTriageItem(project.evidenceItems, item);
+
+    if (operation.operation === "create") {
+      addEvidence(operation.evidenceItem, "source-gap-requested");
+      setActiveTab("evidence");
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const nextItem = {
+      ...operation.evidenceItem,
+      updatedAt: now
+    };
+
+    setProject((current) => ({
+      ...current,
+      evidenceItems: current.evidenceItems.map((evidenceItem, index) =>
+        index === operation.existingIndex ? { ...nextItem, id: evidenceItem.id, addedAt: evidenceItem.addedAt } : evidenceItem
+      ),
+      updatedAt: now
+    }));
+    setEvidenceAuditEvents((current) => [
+      createEvidenceCreatedEvent(project.id, nextItem, nextItem.owner ?? "Compliance", now, "source-gap-refreshed"),
+      ...current
+    ].slice(0, 120));
     setActiveTab("evidence");
   };
 

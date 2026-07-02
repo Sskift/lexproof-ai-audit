@@ -3,6 +3,7 @@ import { analyzeAuditProfile } from "./auditEngine";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import {
   createSourceEvidenceGapTriage,
+  createEvidenceRequestOperationFromSourceGapTriageItem,
   createEvidenceItemFromSourceGapTriageItem,
   exportSourceEvidenceGapTriageJson
 } from "./sourceEvidenceGapTriage";
@@ -124,8 +125,76 @@ describe("createSourceEvidenceGapTriage", () => {
       })
     );
     expect(evidence.label).toBe(triage.items[0]?.title);
+    expect(evidence.source).toContain(`source gap: ${triage.items[0]?.id}`);
     expect(evidence.source).toContain(`regulatory control: control-${triage.items[0]?.clauseId}`);
     expect(evidence.content).toContain("metadata-only evidence");
     expect(JSON.stringify(evidence)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|sk-live|api_key|passport number/i);
+  });
+
+  it("reuses an existing source-gap Evidence Ledger request instead of creating a duplicate", async () => {
+    const graph = createRegulatoryGraph(project, analyzeAuditProfile(project), project.evidenceItems);
+    const triage = await createSourceEvidenceGapTriage({
+      graph,
+      maxItems: 1,
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+    const item = triage.items[0];
+    const firstOperation = createEvidenceRequestOperationFromSourceGapTriageItem([], item);
+    const existingEvidence = {
+      ...firstOperation.evidenceItem,
+      id: "evidence-existing-source-gap",
+      content: "Reviewer-edited metadata request",
+      status: "rejected" as const,
+      owner: "Founder" as const,
+      addedAt: "2026-07-02T01:00:00.000Z"
+    };
+    const secondOperation = createEvidenceRequestOperationFromSourceGapTriageItem([existingEvidence], item);
+
+    expect(firstOperation).toEqual(
+      expect.objectContaining({
+        operation: "create",
+        existingIndex: -1,
+        controlId: `control-${item.clauseId}`,
+        notLegalAdviceBoundary: "Not legal advice. Source evidence gap triage is audit preparation workflow metadata only."
+      })
+    );
+    expect(secondOperation).toEqual(
+      expect.objectContaining({
+        operation: "refresh",
+        existingIndex: 0,
+        controlId: `control-${item.clauseId}`,
+        notLegalAdviceBoundary: "Not legal advice. Source evidence gap triage is audit preparation workflow metadata only."
+      })
+    );
+    expect(secondOperation.evidenceItem).toEqual(
+      expect.objectContaining({
+        id: "evidence-existing-source-gap",
+        content: "Reviewer-edited metadata request",
+        status: "requested",
+        owner: "Founder",
+        addedAt: "2026-07-02T01:00:00.000Z"
+      })
+    );
+    expect(secondOperation.statusMessage).toContain("no duplicate evidence item");
+    expect(JSON.stringify(secondOperation)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|legal opinion|final legal decision/i);
+  });
+
+  it("does not collapse different evidence gaps from the same regulatory control", async () => {
+    const graph = createRegulatoryGraph(project, analyzeAuditProfile(project), project.evidenceItems);
+    const triage = await createSourceEvidenceGapTriage({
+      graph,
+      maxItems: 6,
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+    const first = triage.items[0];
+    const sameControlDifferentGap = triage.items.find((item) => item.clauseId === first.clauseId && item.id !== first.id);
+    expect(sameControlDifferentGap).toBeDefined();
+
+    const firstRequest = createEvidenceRequestOperationFromSourceGapTriageItem([], first).evidenceItem;
+    const secondOperation = createEvidenceRequestOperationFromSourceGapTriageItem([firstRequest], sameControlDifferentGap!);
+
+    expect(secondOperation.operation).toBe("create");
+    expect(secondOperation.existingIndex).toBe(-1);
+    expect(secondOperation.evidenceItem.source).toContain(`source gap: ${sameControlDifferentGap?.id}`);
   });
 });

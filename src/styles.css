@@ -1830,6 +1830,16 @@ textarea {
   line-height: 1.4;
 }
 
+.source-gap-request-state {
+  justify-self: start;
+  border: 1px solid #b8d8c8;
+  border-radius: 999px;
+  background: #eef8f2;
+  color: #24563a !important;
+  padding: 3px 7px;
+  font-weight: 900;
+}
+
 .source-gap-triage-item a {
   display: flex;
   gap: 6px;

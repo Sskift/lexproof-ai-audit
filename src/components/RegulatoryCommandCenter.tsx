@@ -26,6 +26,7 @@ import {
   type RegulatorySourceApprovalStatus
 } from "../lib/regulatorySourceApproval";
 import {
+  createEvidenceRequestOperationFromSourceGapTriageItem,
   createSourceEvidenceGapTriage,
   downloadSourceEvidenceGapTriageJson,
   type SourceEvidenceGapTriage,
@@ -266,32 +267,40 @@ export function RegulatoryCommandCenter({
             {sourceGapTriage.items.length === 0 ? (
               <p className="empty-state">No source evidence gaps are open in the current graph.</p>
             ) : null}
-            {sourceGapTriage.items.map((item) => (
-              <article key={item.id} className={`source-gap-triage-item ${item.priority.toLowerCase()}`}>
-                <header>
-                  <span>{item.priority}</span>
-                  <strong>{item.title}</strong>
-                </header>
-                <p>{item.reason}</p>
-                <small>
-                  {item.jurisdiction} · {item.citation}
-                </small>
-                <small>{item.localCounselRole}</small>
-                <a href={item.sourceUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink size={14} aria-hidden="true" />
-                  {item.sourceName}
-                </a>
-                <div className="source-gap-draft">
-                  <span>Evidence draft</span>
-                  <strong>{item.evidenceLedgerDraft.label}</strong>
-                  <small>{item.evidenceLedgerDraft.content}</small>
-                </div>
-                <button type="button" className="secondary" onClick={() => onRequestSourceGapEvidence(item)}>
-                  <ListChecks size={14} aria-hidden="true" />
-                  Request Evidence
-                </button>
-              </article>
-            ))}
+            {sourceGapTriage.items.map((item) => {
+              const requestOperation = createEvidenceRequestOperationFromSourceGapTriageItem(project.evidenceItems, item);
+              const isRequested = requestOperation.operation === "refresh";
+
+              return (
+                <article key={item.id} className={`source-gap-triage-item ${item.priority.toLowerCase()}`}>
+                  <header>
+                    <span>{item.priority}</span>
+                    <strong>{item.title}</strong>
+                  </header>
+                  <p>{item.reason}</p>
+                  <small>
+                    {item.jurisdiction} · {item.citation}
+                  </small>
+                  <small>{item.localCounselRole}</small>
+                  {isRequested ? (
+                    <small className="source-gap-request-state">Requested in Ledger · {requestOperation.controlId}</small>
+                  ) : null}
+                  <a href={item.sourceUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink size={14} aria-hidden="true" />
+                    {item.sourceName}
+                  </a>
+                  <div className="source-gap-draft">
+                    <span>Evidence draft</span>
+                    <strong>{item.evidenceLedgerDraft.label}</strong>
+                    <small>{item.evidenceLedgerDraft.content}</small>
+                  </div>
+                  <button type="button" className="secondary" onClick={() => onRequestSourceGapEvidence(item)}>
+                    <ListChecks size={14} aria-hidden="true" />
+                    {isRequested ? "Open Request" : "Request Evidence"}
+                  </button>
+                </article>
+              );
+            })}
           </div>
         </section>
       ) : null}

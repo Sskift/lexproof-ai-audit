@@ -45,6 +45,15 @@ export type SourceEvidenceGapTriage = {
   notLegalAdviceBoundary: "Not legal advice. Source evidence gap triage is audit preparation workflow metadata only.";
 };
 
+export type SourceEvidenceGapEvidenceRequestOperation = {
+  operation: "create" | "refresh";
+  existingIndex: number;
+  controlId: string;
+  evidenceItem: EvidenceItem;
+  statusMessage: string;
+  notLegalAdviceBoundary: "Not legal advice. Source evidence gap triage is audit preparation workflow metadata only.";
+};
+
 export type CreateSourceEvidenceGapTriageInput = {
   graph: RegulatoryGraph;
   maxItems?: number;
@@ -118,6 +127,49 @@ export function createEvidenceItemFromSourceGapTriageItem(item: SourceEvidenceGa
   };
 }
 
+export function createEvidenceRequestOperationFromSourceGapTriageItem(
+  existingItems: EvidenceItem[],
+  item: SourceEvidenceGapTriageItem
+): SourceEvidenceGapEvidenceRequestOperation {
+  const controlId = getSourceEvidenceGapControlId(item);
+  const draft = createEvidenceItemFromSourceGapTriageItem(item);
+  const existingIndex = existingItems.findIndex((evidenceItem) => evidenceItemReferencesSourceGap(evidenceItem, item.id, controlId, draft.label));
+
+  if (existingIndex === -1) {
+    return {
+      operation: "create",
+      existingIndex,
+      controlId,
+      evidenceItem: draft,
+      statusMessage: `Create a new metadata-only Evidence Ledger request for ${controlId}.`,
+      notLegalAdviceBoundary: NOT_LEGAL_ADVICE
+    };
+  }
+
+  const existing = existingItems[existingIndex];
+
+  return {
+    operation: "refresh",
+    existingIndex,
+    controlId,
+    evidenceItem: {
+      ...existing,
+      label: existing.label.trim() || draft.label,
+      kind: existing.kind.trim() || draft.kind,
+      content: existing.content.trim() || draft.content,
+      source: existing.source?.trim() || draft.source,
+      status: existing.status === "draft" || existing.status === "rejected" ? "requested" : (existing.status ?? draft.status),
+      owner: existing.owner ?? draft.owner
+    },
+    statusMessage: `Reuse the existing Evidence Ledger request for ${controlId}; no duplicate evidence item is created.`,
+    notLegalAdviceBoundary: NOT_LEGAL_ADVICE
+  };
+}
+
+export function getSourceEvidenceGapControlId(item: SourceEvidenceGapTriageItem): string {
+  return `control-${sanitize(item.clauseId).toLowerCase()}`;
+}
+
 function createTriageItem(
   gap: RegulatoryEvidenceGap,
   clause: MatchedRegulatoryClause | undefined
@@ -147,7 +199,7 @@ function createTriageItem(
       kind: "Checklist",
       status: "requested",
       owner: "Compliance",
-      source: `Regulatory Source Graph; regulatory control: ${controlId}; source: ${sourceName}; citation: ${citation}`,
+      source: `Regulatory Source Graph; source gap: ${sanitize(gap.id)}; regulatory control: ${controlId}; source: ${sourceName}; citation: ${citation}`,
       content: `Requested: prepare metadata-only evidence for ${title}; cite ${citation}; identify reviewer owner, retained source lineage, open assumptions, and counsel questions. Exclude raw KYC, credentials, private keys, seed phrases, and personal data.`
     },
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE
@@ -186,6 +238,34 @@ function priorityWeight(priority: RegulatoryEvidenceGap["priority"]): number {
 
 function sanitize(value: string): string {
   return redactDataBoundaryText(value.replace(/\s+/g, " ").trim());
+}
+
+function evidenceItemReferencesSourceGap(item: EvidenceItem, sourceGapId: string, controlId: string, label: string): boolean {
+  const text = [item.source, item.label, item.kind].filter(Boolean).join(" ");
+  if (extractSourceGapIds(text).includes(sourceGapId.toLowerCase())) {
+    return true;
+  }
+
+  return evidenceItemReferencesControl(item, controlId) && normalizeMatch(item.label) === normalizeMatch(label);
+}
+
+function evidenceItemReferencesControl(item: EvidenceItem, controlId: string): boolean {
+  const text = [item.source, item.label, item.kind].filter(Boolean).join(" ");
+  return extractControlIds(text).includes(controlId.toLowerCase());
+}
+
+function extractSourceGapIds(value: string): string[] {
+  return unique(Array.from(value.matchAll(/source gap:\s*([a-z0-9-]+)/gi)).map((match) => match[1].toLowerCase()));
+}
+
+function extractControlIds(value: string): string[] {
+  return unique(
+    Array.from(value.matchAll(/regulatory control:\s*(control-[a-z0-9-]+)/gi)).map((match) => match[1].toLowerCase())
+  );
+}
+
+function normalizeMatch(value: string | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function unique(values: string[]): string[] {

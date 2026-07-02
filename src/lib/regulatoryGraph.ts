@@ -230,7 +230,7 @@ function matchesClause(clause: RegulatoryClause, activeFlagIds: Set<string>, pro
 
 function evidenceMatchesRequest(item: EvidenceItem, request: RegulatoryEvidenceRequest): boolean {
   const text = normalize([item.label, item.kind, item.source, item.content].filter(Boolean).join(" "));
-  return request.keywords.some((keyword) => text.includes(keyword.toLowerCase()));
+  return request.keywords.some((keyword) => keywordMatchesEvidenceText(keyword, text));
 }
 
 function normalizeProjectText(project: ProjectProfile): string {
@@ -284,6 +284,21 @@ function priorityWeight(priority: "P0" | "P1" | "P2"): number {
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function keywordMatchesEvidenceText(keyword: string, text: string): boolean {
+  const normalized = normalize(keyword);
+  if (!normalized) {
+    return false;
+  }
+  if (normalized.includes(" ")) {
+    return text.includes(normalized);
+  }
+  return new RegExp(`\\b${escapeRegExp(normalized)}\\b`, "i").test(text);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function unique(values: string[]): string[] {

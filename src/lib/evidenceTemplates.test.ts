@@ -86,6 +86,8 @@ describe("evidence templates", () => {
       ])
     );
     expect(items.every((item) => item.status === "requested")).toBe(true);
+    expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
+    expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");

@@ -263,6 +263,41 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
+  it("marks US crypto asset and EU MiCA issuance controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `rwa-issuance-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...baseProject,
+      jurisdictions: ["United States", "European Union"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-cftc-crypto-asset-interpretation")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining(["RWA disclosure assumptions memo", "Investor eligibility review"])
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-title-ii-white-paper")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining(["RWA disclosure assumptions memo", "Evidence anchor procedure"])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "us-sec-cftc-crypto-asset-interpretation" }),
+        expect.objectContaining({ clauseId: "eu-mica-title-ii-white-paper" })
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches EU and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);

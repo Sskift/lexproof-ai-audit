@@ -25,7 +25,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         content:
           "Requested: summarize token terms, yield assumptions, redemption language, crypto security classification, token rights, investment expectation, public distribution, disclosure assumptions, intermediary assumptions, and review owner.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-cftc-crypto-asset-interpretation; regulatory control: control-eu-mica-title-ii-white-paper; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
         status: "requested",
         owner: "Counsel"
       },
@@ -45,7 +45,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         content:
           "Requested: summarize eligibility assumptions, investor communication, risk factor coverage, approval route, distribution boundary, retail restrictions, user restrictions, screening boundary, and marketing approval status.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-reg-d-accredited-investor-verification; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-cftc-crypto-asset-interpretation; regulatory control: control-us-sec-reg-d-accredited-investor-verification; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
         status: "requested",
         owner: "Compliance"
       },
@@ -62,8 +62,10 @@ export const evidenceTemplates: EvidenceTemplate[] = [
       {
         label: "Evidence anchor procedure",
         kind: "Procedure",
-        content: "Requested: define what is hashed, what is public, what remains private, and who approves any anchor receipt.",
-        source: "LexProof template: Tokenized Yield / RWA Issuance",
+        content:
+          "Requested: define what is hashed, what is public, what remains private, management approval, manifest provenance, source lineage, and who approves any anchor receipt.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-title-ii-white-paper",
         status: "requested",
         owner: "Engineering"
       }

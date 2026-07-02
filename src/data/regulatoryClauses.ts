@@ -1,6 +1,7 @@
 export type RegulatoryClauseTopic =
   | "asset-classification"
   | "marketing"
+  | "activity-scope"
   | "custody"
   | "data"
   | "aml-cft"
@@ -1696,7 +1697,7 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     sourceName: "VARA Virtual Assets and Related Activities Regulations 2023",
     sourceUrl: "https://rulebooks.vara.ae/rulebook/virtual-assets-and-related-activities-regulations-2023",
     citation: "VARA Virtual Assets and Related Activities Regulations 2023",
-    topic: "marketing",
+    topic: "activity-scope",
     summary:
       "Prepare virtual asset issuance, activity scope, marketing, licensing, AML/CFT, market conduct, and confidentiality review evidence for UAE local counsel.",
     triggerFlagIds: ["asset-yield", "retail", "public-launch", "custody"],
@@ -1725,9 +1726,9 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     ],
     localCounselRole: "UAE virtual-assets / financial regulatory counsel",
     effectiveAsOf: "2025-06-19",
-    lastReviewedAt: "2026-06-30",
+    lastReviewedAt: "2026-07-03",
     reviewerNotes:
-      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
+      "Source metadata reviewed against the current VARA rulebook page effective 19 June 2025 for activity-scope, issuance, licensing, AML/CFT, market-conduct, marketing-access, and counsel-handoff evidence routing; route interpretation to UAE local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
@@ -1740,12 +1741,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     topic: "marketing",
     summary:
       "Prepare UAE virtual-asset marketing approval, risk-warning, audience targeting, KOL remuneration, incentives, and marketing recordkeeping evidence for Dubai VARA counsel review.",
-    triggerFlagIds: ["retail", "public-launch"],
+    triggerFlagIds: [],
     triggerKeywords: [
-      "united arab emirates",
-      "uae",
-      "dubai",
-      "vara",
       "marketing",
       "promotion",
       "promotional",
@@ -1844,9 +1841,9 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     ],
     localCounselRole: "UAE virtual-assets / financial regulatory counsel",
     effectiveAsOf: "2025-06-19",
-    lastReviewedAt: "2026-06-30",
+    lastReviewedAt: "2026-07-03",
     reviewerNotes:
-      "Source metadata reviewed for citation, URL, trigger facts, and evidence-request routing; route interpretation to local counsel.",
+      "Source metadata reviewed against the current VARA Compliance and Risk Management Rulebook page effective 19 June 2025 for compliance management, MLRO/AML-CFT controls, CDD, Travel Rule, sanctions, books and records, audit, client virtual assets, proof-of-reserves, reconciliation, and counsel-handoff evidence routing; route interpretation to UAE local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

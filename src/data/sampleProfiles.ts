@@ -367,6 +367,39 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Dubai VARA Operating Review",
+    entityType: "Virtual asset service provider operations team",
+    jurisdictions: ["United Arab Emirates"],
+    assetModel: "Dubai virtual asset issuance, exchange, transfer, and custody service with activity-scope and licensing assumptions",
+    userType: "UAE institutional treasury partners, compliance reviewers, operations owners, and local counsel",
+    custodyModel:
+      "Platform safeguards client virtual assets through hosted wallet controls, reconciliation, withdrawal approvals, and proof-of-reserves placeholders",
+    dataSensitivity:
+      "CDD status summaries, wallet-risk metadata, transaction-monitoring summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts audit-prep evidence summaries for human review and UAE counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only VARA counsel handoff",
+    operatingStage: "Pre-production VARA operating, AML/CFT, and custody workflow review before local counsel signoff",
+    evidenceItems: [
+      {
+        label: "VARA regulator source inventory",
+        kind: "CSV",
+        content: "Official source names, URLs, review date, reviewer notes, next review date, and handoff owner."
+      },
+      {
+        label: "UAE operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic operating narrative, reviewer owner, product team contact, and counsel handoff timing."
+      },
+      {
+        label: "UAE evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic pending-item owners, request dates, and evidence-intake placeholders without identity files, wallet secrets, or customer records."
+      }
+    ]
+  },
+  {
     projectName: "SignalBridge Marketing Review",
     entityType: "Virtual asset marketing operations team",
     jurisdictions: ["United States", "European Union", "United Kingdom", "United Arab Emirates"],

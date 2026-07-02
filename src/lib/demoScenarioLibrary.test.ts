@@ -345,6 +345,31 @@ describe("validateDemoScenarioLibrary", () => {
     expect(ukScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded UAE VARA operating path for activity-scope and custody demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const uaeScenario = findDemoScenarioById(demoScenarios, "uae-vara-operating-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(uaeScenario).toEqual(
+      expect.objectContaining({
+        title: "UAE VARA operating review",
+        projectName: "Dubai VARA Operating Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["United Arab Emirates", "VARA", "Compliance", "Client virtual assets"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(uaeScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect UAE VARA operating source graph",
+        "Review virtual-asset activity-scope and licensing evidence gaps",
+        "Check AML/CFT, client virtual asset custody, proof-of-reserves, and reconciliation evidence",
+        "Export counsel pack"
+      ])
+    );
+    expect(uaeScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded marketing claims path for source-linked promotion review demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const marketingScenario = findDemoScenarioById(demoScenarios, "cross-border-marketing-claims-path");

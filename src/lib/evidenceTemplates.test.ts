@@ -128,6 +128,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-stablecoin-guidance-06-2024");
+    expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-compliance-risk-management");
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
     expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");

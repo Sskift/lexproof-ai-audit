@@ -258,6 +258,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "uae-vara-operating-source-path",
+    projectName: "Dubai VARA Operating Review",
+    title: "UAE VARA operating review",
+    summary:
+      "Dubai VARA virtual-asset activity-scope, licensing, compliance management, AML/CFT, client virtual asset custody, proof-of-reserves, reconciliation, and local-counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect UAE VARA operating source graph",
+      "Review virtual-asset activity-scope and licensing evidence gaps",
+      "Check AML/CFT, client virtual asset custody, proof-of-reserves, and reconciliation evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["United Arab Emirates", "VARA", "Compliance", "Client virtual assets"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "cross-border-marketing-claims-path",
     projectName: "SignalBridge Marketing Review",
     title: "Marketing claims review",

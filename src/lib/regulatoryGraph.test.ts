@@ -1662,6 +1662,73 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches UAE VARA operating source controls without triggering marketing-only regulations", () => {
+    const uaeProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-uae-vara-operating",
+      projectName: "Dubai VARA Operating Review",
+      jurisdictions: ["United Arab Emirates"],
+      assetModel: "Dubai virtual asset issuance, exchange, transfer, and custody service with activity-scope and licensing assumptions",
+      userType: "UAE institutional treasury partners, compliance reviewers, operations owners, and local counsel",
+      custodyModel:
+        "Platform safeguards client virtual assets through hosted wallet controls, reconciliation, withdrawal approvals, and proof-of-reserves placeholders",
+      dataSensitivity:
+        "CDD status summaries, wallet-risk metadata, transaction-monitoring summaries, and customer records excluded from demo evidence",
+      aiUsage: "AI drafts audit-prep evidence summaries for human review and UAE counsel routing",
+      blockchainUse: "Simulated evidence anchor for metadata-only VARA counsel handoff",
+      operatingStage: "Pre-production VARA operating, AML/CFT, and custody workflow review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(uaeProject);
+    const graph = createRegulatoryGraph(uaeProject, audit, uaeProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["uae-vara-va-regulations-activity-scope", "uae-vara-compliance-risk-management"])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toContain("uae-vara-marketing-regulations-2024");
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-va-regulations-activity-scope")).toMatchObject({
+      jurisdiction: "United Arab Emirates",
+      regulator: "Dubai Virtual Assets Regulatory Authority",
+      citation: "VARA Virtual Assets and Related Activities Regulations 2023",
+      sourceUrl: "https://rulebooks.vara.ae/rulebook/virtual-assets-and-related-activities-regulations-2023",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      coveredEvidenceCount: 0,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "UAE virtual-assets / financial regulatory counsel",
+      effectiveAsOf: "2025-06-19",
+      lastReviewedAt: "2026-07-03"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uae-vara-compliance-risk-management")).toMatchObject({
+      jurisdiction: "United Arab Emirates",
+      regulator: "Dubai Virtual Assets Regulatory Authority",
+      citation: "VARA Compliance and Risk Management Rulebook",
+      sourceUrl: "https://rulebooks.vara.ae/rulebook/compliance-and-risk-management-rulebook",
+      topic: "custody",
+      coverageStatus: "missing",
+      coveredEvidenceCount: 0,
+      totalEvidenceRequestCount: 2,
+      localCounselRole: "UAE virtual-assets / financial regulatory counsel",
+      effectiveAsOf: "2025-06-19",
+      lastReviewedAt: "2026-07-03"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "UAE virtual asset activity scope and licensing evidence",
+        "UAE marketing and cross-border access evidence",
+        "UAE compliance, AML/CFT, and audit control evidence",
+        "UAE client virtual asset custody and proof-of-reserves evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "United Arab Emirates")).toMatchObject({
+      matchedClauseCount: 2,
+      missingEvidenceCount: 4,
+      readiness: "evidence-gaps",
+      localCounselRole: "UAE virtual-assets / financial regulatory counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks UAE VARA compliance and risk controls covered when RWA template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,

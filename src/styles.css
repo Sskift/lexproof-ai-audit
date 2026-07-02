@@ -3723,6 +3723,28 @@ textarea {
   font-weight: 800;
 }
 
+.ai-review-error-panel {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #f0b8ad;
+  border-radius: 8px;
+  background: #fff6f4;
+  color: #7a1f16;
+}
+
+.ai-review-error-panel strong,
+.ai-review-error-panel span,
+.ai-review-error-panel small {
+  overflow-wrap: anywhere;
+}
+
+.ai-review-error-panel span,
+.ai-review-error-panel small {
+  color: #7f4a42;
+  line-height: 1.45;
+}
+
 .checklist-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

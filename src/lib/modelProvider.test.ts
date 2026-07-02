@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildOpenAICompatibleRequest, createMockModelProvider, validateModelSettings } from "./modelProvider";
+import {
+  buildOpenAICompatibleRequest,
+  createMockModelProvider,
+  createOpenAICompatibleModelProvider,
+  ModelProviderClientError,
+  validateModelSettings
+} from "./modelProvider";
 import type { AIReviewPayload } from "./aiReview";
 
 const payload: AIReviewPayload = {
@@ -77,6 +83,93 @@ describe("buildOpenAICompatibleRequest", () => {
       model: "legal-review-model",
       response_format: { type: "json_object" }
     });
+  });
+});
+
+describe("createOpenAICompatibleModelProvider", () => {
+  it("turns provider network failures into a safe recoverable client error", async () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const fetcher = async () => {
+      throw new Error(`Failed to fetch with api_key=${apiKey}, private key ${privateKey}, and legal opinion request.`);
+    };
+
+    let thrown: unknown;
+    try {
+      await createOpenAICompatibleModelProvider(
+        {
+          provider: "openai-compatible",
+          baseUrl: "https://offline-model.example.com/v1",
+          model: "legal-review-model",
+          apiKey: "sk-session-only"
+        },
+        fetcher as typeof fetch
+      ).completeReview(payload);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ModelProviderClientError);
+    const error = thrown as ModelProviderClientError;
+    expect(error).toMatchObject({
+      name: "ModelProviderClientError",
+      code: "MODEL_PROVIDER_NETWORK_ERROR",
+      message: "Model provider request could not reach the configured endpoint.",
+      notLegalAdviceBoundary: "Not legal advice. Model provider errors are audit preparation workflow metadata only."
+    });
+    expect(error.recoveryAction).toContain("Check the provider Base URL");
+    const serialized = JSON.stringify(error);
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/legal opinion/i);
+  });
+
+  it("surfaces safe provider request failures without leaking secrets, raw KYC, or legal conclusions", async () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const fetcher = async () =>
+      new Response(
+        JSON.stringify({
+          error: `Provider rejected api_key=${apiKey} after raw KYC passport data and private key ${privateKey}; final legal decision required.`,
+          code: "MODEL_PROVIDER_REJECTED",
+          recoveryAction: `Remove passport data, rotate private key ${privateKey}, and retry without legal opinion reliance.`,
+          notLegalAdviceBoundary: "Not legal advice. Model provider errors are audit preparation workflow metadata only."
+        }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+
+    let thrown: unknown;
+    try {
+      await createOpenAICompatibleModelProvider(
+        {
+          provider: "openai-compatible",
+          baseUrl: "https://models.example.com/v1",
+          model: "legal-review-model",
+          apiKey: "sk-session-only"
+        },
+        fetcher as typeof fetch
+      ).completeReview(payload);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ModelProviderClientError);
+    const error = thrown as ModelProviderClientError;
+    expect(error).toMatchObject({
+      name: "ModelProviderClientError",
+      code: "MODEL_PROVIDER_REJECTED",
+      notLegalAdviceBoundary: "Not legal advice. Model provider errors are audit preparation workflow metadata only."
+    });
+    expect(error.recoveryAction).toContain("retry");
+    const serialized = JSON.stringify({
+      message: error.message,
+      code: error.code,
+      recoveryAction: error.recoveryAction,
+      notLegalAdviceBoundary: error.notLegalAdviceBoundary
+    });
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC|passport data|legal opinion|final legal decision/i);
   });
 });
 

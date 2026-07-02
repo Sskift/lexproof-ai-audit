@@ -22,6 +22,8 @@ type AIReviewPanelProps = {
   modelConnectReceipt: ModelConnectReceipt | null;
   status: "idle" | "running" | "complete" | "error";
   error: string;
+  errorRecoveryAction?: string;
+  errorBoundary?: string;
   onSettingsChange: (settings: ModelSettings) => void;
   onValidateModelConnect: () => void;
   onRunReview: () => void;
@@ -38,6 +40,8 @@ export function AIReviewPanel({
   modelConnectReceipt,
   status,
   error,
+  errorRecoveryAction,
+  errorBoundary,
   onSettingsChange,
   onValidateModelConnect,
   onRunReview
@@ -218,8 +222,14 @@ export function AIReviewPanel({
           {status === "running" ? "Running AI Review" : "Run AI Review"}
         </button>
         {redactionBlocked ? <span className="error-text">Redaction Gate blocked this model call.</span> : null}
-        {error ? <span className="error-text">{error}</span> : null}
       </div>
+      {error ? (
+        <div className="ai-review-error-panel" role="alert">
+          <strong>{error}</strong>
+          {errorRecoveryAction ? <span>Recovery: {errorRecoveryAction}</span> : null}
+          {errorBoundary ? <small>{errorBoundary}</small> : null}
+        </div>
+      ) : null}
 
       <section className="review-section">
         <div className="panel-title compact-title">

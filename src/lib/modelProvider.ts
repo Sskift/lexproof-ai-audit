@@ -1,4 +1,5 @@
 import type { AIReviewPayload } from "./aiReview";
+import { asSafeApiErrorResponse } from "./apiErrorClient";
 import { classifyDataBoundaryText, type ClassifiedDataClass } from "./dataClassification";
 
 export type ModelProviderKind = "mock" | "openai-compatible";
@@ -24,6 +25,25 @@ export type ModelProvider = {
   providerLabel: string;
   completeReview: (payload: AIReviewPayload) => Promise<ModelProviderResponse>;
 };
+
+const DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY =
+  "Not legal advice. Model provider errors are audit preparation workflow metadata only.";
+
+export class ModelProviderClientError extends Error {
+  code: string;
+  recoveryAction: string;
+  notLegalAdviceBoundary: string;
+
+  constructor(message: string, options?: Partial<Pick<ModelProviderClientError, "code" | "recoveryAction" | "notLegalAdviceBoundary">>) {
+    super(message);
+    this.name = "ModelProviderClientError";
+    this.code = options?.code ?? "MODEL_PROVIDER_CLIENT_ERROR";
+    this.recoveryAction =
+      options?.recoveryAction ??
+      "Check the provider Base URL, model name, and session-only API key, then retry after Redaction Gate passes.";
+    this.notLegalAdviceBoundary = options?.notLegalAdviceBoundary ?? DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY;
+  }
+}
 
 export function validateModelSettings(settings: ModelSettings): ModelSettingsValidation {
   const errors: string[] = [];
@@ -136,10 +156,27 @@ export function createOpenAICompatibleModelProvider(settings: ModelSettings, fet
     providerLabel: settings.model || "OpenAI-compatible model",
     async completeReview(payload) {
       const request = buildOpenAICompatibleRequest(settings, payload);
-      const response = await fetcher(request.url, request.init);
+      let response: Response;
+      try {
+        response = await fetcher(request.url, request.init);
+      } catch {
+        throw new ModelProviderClientError("Model provider request could not reach the configured endpoint.", {
+          code: "MODEL_PROVIDER_NETWORK_ERROR",
+          recoveryAction:
+            "Check the provider Base URL, CORS policy, model endpoint availability, and session-only API key before retrying.",
+          notLegalAdviceBoundary: DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY
+        });
+      }
 
       if (!response.ok) {
-        throw new Error(`Model request failed with status ${response.status}.`);
+        const errorPayload = asSafeApiErrorResponse(await readModelProviderErrorPayload(response));
+        throw new ModelProviderClientError(errorPayload.error ?? `Model request failed with status ${response.status}.`, {
+          code: errorPayload.code ?? "MODEL_PROVIDER_REQUEST_FAILED",
+          recoveryAction:
+            errorPayload.recoveryAction ??
+            "Check the provider Base URL, model name, and session-only API key, then retry after Redaction Gate passes.",
+          notLegalAdviceBoundary: errorPayload.notLegalAdviceBoundary ?? DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY
+        });
       }
 
       const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -149,4 +186,8 @@ export function createOpenAICompatibleModelProvider(settings: ModelSettings, fet
       };
     }
   };
+}
+
+async function readModelProviderErrorPayload(response: Response): Promise<unknown> {
+  return response.json().catch(() => ({}));
 }

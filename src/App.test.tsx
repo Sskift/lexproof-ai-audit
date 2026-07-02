@@ -1024,6 +1024,49 @@ describe("App", () => {
     }
   });
 
+  it("shows recoverable AI Review provider errors without leaking provider secrets or legal conclusions", async () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const fetchMock = vi.fn(async () =>
+      appJsonResponse(
+        {
+          error: `Provider rejected api_key=${apiKey} after raw KYC passport data and private key ${privateKey}; final legal decision required.`,
+          code: "MODEL_PROVIDER_REJECTED",
+          recoveryAction: `Rotate private key ${privateKey}, remove passport data, then retry without legal opinion reliance.`,
+          notLegalAdviceBoundary: "Not legal advice. Model provider errors are audit preparation workflow metadata only."
+        },
+        429
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
+    const aiReviewPanel = screen.getByRole("heading", { name: "AI Review", level: 2 }).closest("section") as HTMLElement;
+    const aiReview = within(aiReviewPanel);
+    fireEvent.change(aiReview.getByLabelText("Provider"), { target: { value: "openai-compatible" } });
+    fireEvent.change(aiReview.getByLabelText("Base URL"), { target: { value: "https://api.lexproof-model.test/v1" } });
+    fireEvent.change(aiReview.getByLabelText("Model name"), { target: { value: "gpt-review" } });
+    fireEvent.change(aiReview.getByLabelText("API key"), { target: { value: "sk-test-session-only" } });
+    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+
+    expect(await screen.findByText(/Model Connect receipt/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Run AI Review/i }));
+
+    const errorAlert = await aiReview.findByRole("alert");
+    expect(within(errorAlert).getByText(/Provider rejected/i)).toBeInTheDocument();
+    expect(within(errorAlert).getByText(/Rotate \[redacted-private-key\]/i)).toBeInTheDocument();
+    expect(
+      within(errorAlert).getByText(/Not legal advice. Model provider errors are audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
+    const errorText = errorAlert.textContent ?? "";
+    expect(errorText).not.toContain(apiKey);
+    expect(errorText).not.toContain(privateKey);
+    expect(errorText).not.toMatch(/raw KYC|passport data|legal opinion|final legal decision/i);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  }, 15000);
+
   it("shows Integration Readiness Registry adapter states and blocked recovery without leaking unsafe evidence", async () => {
     render(<App />);
 

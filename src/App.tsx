@@ -172,6 +172,7 @@ import { runAIReviewWithLedger, type ModelReviewRun } from "./lib/modelReviewLed
 import {
   createMockModelProvider,
   createOpenAICompatibleModelProvider,
+  ModelProviderClientError,
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
@@ -364,6 +365,8 @@ export default function App() {
   const [humanReviewDecisions, setHumanReviewDecisions] = useState<HumanReviewDecision[]>(() => loadStoredHumanReviewDecisions());
   const [aiReviewStatus, setAIReviewStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
   const [aiReviewError, setAIReviewError] = useState("");
+  const [aiReviewErrorRecoveryAction, setAIReviewErrorRecoveryAction] = useState("");
+  const [aiReviewErrorBoundary, setAIReviewErrorBoundary] = useState("");
   const [providerPolicyApiBaseUrl, setProviderPolicyApiBaseUrl] = useState("");
   const [serverProviderPolicyReport, setServerProviderPolicyReport] = useState<ModelGatewayProviderPolicyReport | null>(null);
   const [providerPolicySyncStatus, setProviderPolicySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
@@ -1476,6 +1479,8 @@ export default function App() {
 
   const handleRunAIReview = async () => {
     setAIReviewError("");
+    setAIReviewErrorRecoveryAction("");
+    setAIReviewErrorBoundary("");
     const redactionReport = createRedactionReport(project.evidenceItems);
     if (redactionReport.status === "blocked") {
       setAIReviewStatus("error");
@@ -1513,6 +1518,12 @@ export default function App() {
       setAIReviewStatus("complete");
     } catch (error) {
       setAIReviewStatus("error");
+      if (error instanceof ModelProviderClientError) {
+        setAIReviewError(error.message);
+        setAIReviewErrorRecoveryAction(error.recoveryAction);
+        setAIReviewErrorBoundary(error.notLegalAdviceBoundary);
+        return;
+      }
       setAIReviewError(error instanceof Error ? error.message : "Model review failed.");
     }
   };
@@ -2062,6 +2073,8 @@ export default function App() {
               modelIntakeSummary={modelIntakeSummary}
               status={aiReviewStatus}
               error={aiReviewError}
+              errorRecoveryAction={aiReviewErrorRecoveryAction}
+              errorBoundary={aiReviewErrorBoundary}
               modelConnectReceipt={modelConnectReceipt}
               onSettingsChange={updateModelSettings}
               onValidateModelConnect={handleValidateModelConnect}

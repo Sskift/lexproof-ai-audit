@@ -4,6 +4,8 @@ import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassifica
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const bearerToken = "eyJhbGciOiJIUzI1NiJ9.auditPrepPayload.signature";
 const standaloneBearerToken = "eyJhbGciOiJSUzI1NiJ9.auditEvidencePayload.signature";
+const jwtToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJsZXhwcm9vZiIsInN1YiI6ImRlbW8ifQ.invalidSignatureHash";
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
 const connectorPassword = "Sup3rSecret!2026";
 const refreshToken = "rt_abcdef1234567890abcdef";
@@ -77,6 +79,21 @@ describe("classifyDataBoundaryText", () => {
     });
     expect(credentialFinding?.redactedSnippet).toContain("Bearer [redacted-secret]");
     expect(serialized).not.toContain(standaloneBearerToken);
+  });
+
+  it("blocks unlabeled JWT credentials without exposing compact token values", () => {
+    const findings = classifyDataBoundaryText(`Evidence note accidentally pasted model session JWT ${jwtToken}.`);
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 1
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-jwt]");
+    expect(serialized).not.toContain(jwtToken);
+    expect(serialized).not.toContain("invalidSignatureHash");
   });
 
   it("blocks password and token fields without exposing connector credential values", () => {
@@ -210,6 +227,14 @@ describe("redactClassifiedText", () => {
 
     expect(redacted).toContain("Bearer [redacted-secret]");
     expect(redacted).not.toContain(standaloneBearerToken);
+  });
+
+  it("redacts unlabeled JWT credentials from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`Accidental JWT paste: ${jwtToken}`);
+
+    expect(redacted).toContain("[redacted-jwt]");
+    expect(redacted).not.toContain(jwtToken);
+    expect(redacted).not.toContain("invalidSignatureHash");
   });
 
   it("redacts password and token field values from reusable boundary snippets", () => {

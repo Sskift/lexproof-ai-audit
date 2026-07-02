@@ -99,6 +99,7 @@ describe("evidence templates", () => {
         "EU DORA ICT resilience register",
         "Investor eligibility review",
         "Singapore DPT CDD and model handoff register",
+        "US FinCEN CVC MSB and BSA transfer control register",
         "Wallet sanctions screening and escalation controls"
       ])
     );
@@ -115,8 +116,10 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-uae-vara-compliance-risk-management");
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
     expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");
+    expect(serializedSources).toContain("regulatory control: control-us-fincen-cvc-msb-bsa-travel-rule");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
+    expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
   });
 
   it("recommends AI workflow evidence with regulatory control links", () => {

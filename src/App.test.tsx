@@ -706,6 +706,8 @@ describe("App", () => {
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Regulation \(EU\) 2022\/2554, DORA Articles 5-16, 17-23, and 28/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EU DORA ICT risk management and incident-response evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/FinCEN FIN-2019-G001; 31 C\.F\.R\. 1022\.210; 31 C\.F\.R\. 1010\.410\(e\)-\(f\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US FinCEN CVC MSB activity-scope and AML program evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
   });
 
@@ -3559,7 +3561,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Apply recommended tokenized yield \/ RWA template/i }));
 
     expect(await screen.findByDisplayValue("RWA disclosure assumptions memo")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("requested");
+    expect(screen.getByLabelText("Status for evidence 1")).toHaveValue("requested");
   });
 
   it("runs AI Review with mock model settings and exposes missing evidence", async () => {

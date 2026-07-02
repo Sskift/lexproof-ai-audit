@@ -63,6 +63,17 @@ describe("createRegulatorySourceReview", () => {
         action: expect.stringContaining("Refresh")
       })
     );
-    expect(review.items.every((item) => item.reviewStatus === "review-due")).toBe(true);
+    expect(review.items.find((item) => item.clauseId === "us-sec-cftc-crypto-asset-interpretation")).toEqual(
+      expect.objectContaining({
+        reviewStatus: "review-due",
+        nextReviewDueAt: "2026-09-28"
+      })
+    );
+    expect(review.items.find((item) => item.clauseId === "us-fincen-cvc-msb-bsa-travel-rule")).toEqual(
+      expect.objectContaining({
+        reviewStatus: "current",
+        nextReviewDueAt: "2026-10-01"
+      })
+    );
   });
 });

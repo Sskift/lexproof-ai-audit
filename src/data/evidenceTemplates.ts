@@ -90,6 +90,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "US FinCEN CVC MSB and BSA transfer control register",
+        kind: "Register",
+        content:
+          "Requested: summarize FinCEN CVC business model, hosted wallet boundary, money transmission assumptions, MSB registration handoff, AML program, compliance officer, training, independent review, transaction monitoring, SAR and CTR escalation, Travel Rule transmittal recordkeeping, originator and beneficiary information handling, retention owner, and reviewer owner without raw KYC or full wallet histories.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-fincen-cvc-msb-bsa-travel-rule",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:

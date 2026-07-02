@@ -66,7 +66,8 @@ describe("createRegulatoryGraph", () => {
         "sg-mas-psn02-dpt-aml-cft",
         "ch-finma-ico-token-classification",
         "uae-vara-va-regulations-activity-scope",
-        "us-sec-cftc-crypto-asset-interpretation"
+        "us-sec-cftc-crypto-asset-interpretation",
+        "us-fincen-cvc-msb-bsa-travel-rule"
       ])
     );
 
@@ -159,8 +160,12 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "Prepare US accredited-investor verification and solicitation-controls evidence for counsel review.",
         "Prepare US crypto asset classification and offering analysis for counsel review.",
-        "Prepare US Regulation D offering exemption and investor eligibility evidence for counsel review."
+        "Prepare US FinCEN CVC MSB activity-scope and AML program evidence for counsel review.",
+        "Prepare US FinCEN BSA transfer recordkeeping and Travel Rule handoff evidence for counsel review."
       ])
+    );
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining(["US Regulation D offering exemption and investor eligibility evidence"])
     );
   });
 
@@ -261,6 +266,58 @@ describe("createRegulatoryGraph", () => {
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "us-ofac-virtual-currency-sanctions-compliance" })])
+    );
+  });
+
+  it("matches US FinCEN CVC MSB and BSA transfer controls for custody and wallet-transfer facts", () => {
+    const audit = analyzeAuditProfile(baseProject);
+    const graph = createRegulatoryGraph(baseProject, audit, baseProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["us-fincen-cvc-msb-bsa-travel-rule"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-fincen-cvc-msb-bsa-travel-rule")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "Financial Crimes Enforcement Network (FinCEN)",
+      citation: "FinCEN FIN-2019-G001; 31 C.F.R. 1022.210; 31 C.F.R. 1010.410(e)-(f)",
+      sourceUrl:
+        "https://www.fincen.gov/resources/statutes-regulations/guidance/application-fincens-regulations-certain-business-models",
+      topic: "aml-cft",
+      coverageStatus: "missing",
+      localCounselRole: "US FinCEN / BSA virtual-currency counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US FinCEN CVC MSB activity-scope and AML program evidence",
+        "US FinCEN BSA transfer recordkeeping and Travel Rule handoff evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks US FinCEN controls covered when RWA BSA transfer evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-fincen-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...baseProject,
+      jurisdictions: ["United States"],
+      custodyModel: "Platform hosted wallet controls omnibus CVC wallets and virtual asset transfer approvals",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-fincen-cvc-msb-bsa-travel-rule")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["US FinCEN CVC MSB and BSA transfer control register"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "us-fincen-cvc-msb-bsa-travel-rule" })])
     );
   });
 
@@ -533,10 +590,10 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2,
-      matchedEvidenceLabels: [
+      matchedEvidenceLabels: expect.arrayContaining([
         "Custody and signer control runbook",
         "Wallet sanctions screening and escalation controls"
-      ]
+      ])
     });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "br-cvm-crypto-asset-securities-guidance")).toMatchObject({
       coverageStatus: "covered",

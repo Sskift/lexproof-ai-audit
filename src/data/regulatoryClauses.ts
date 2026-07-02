@@ -262,6 +262,84 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-fincen-cvc-msb-bsa-travel-rule",
+    jurisdiction: "United States",
+    regulator: "Financial Crimes Enforcement Network (FinCEN)",
+    sourceName: "Application of FinCEN's Regulations to Certain Business Models Involving Convertible Virtual Currencies",
+    sourceUrl:
+      "https://www.fincen.gov/resources/statutes-regulations/guidance/application-fincens-regulations-certain-business-models",
+    citation: "FinCEN FIN-2019-G001; 31 C.F.R. 1022.210; 31 C.F.R. 1010.410(e)-(f)",
+    topic: "aml-cft",
+    summary:
+      "Prepare convertible virtual currency business-model, money transmission, MSB registration, AML program, transfer recordkeeping, and Travel Rule handoff evidence for US BSA/FinCEN counsel review.",
+    triggerFlagIds: ["custody"],
+    triggerKeywords: [
+      "fincen",
+      "cvc",
+      "convertible virtual currency",
+      "money transmission",
+      "money services business",
+      "msb",
+      "hosted wallet",
+      "customer wallet activity",
+      "virtual asset transfer",
+      "virtual asset transfer approvals",
+      "wallet transaction history",
+      "travel rule",
+      "transmittal of funds"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-fincen-cvc-msb-activity-scope-aml-program",
+        title: "US FinCEN CVC MSB activity-scope and AML program evidence",
+        reason:
+          "US CVC review needs business-model, hosted-wallet, money-transmission, MSB registration, AML program, compliance officer, training, independent review, and transaction-monitoring evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "fincen",
+          "cvc",
+          "business model",
+          "hosted wallet",
+          "money transmission",
+          "msb",
+          "registration",
+          "aml program",
+          "compliance officer",
+          "independent review",
+          "transaction monitoring"
+        ]
+      },
+      {
+        id: "us-fincen-bsa-transfer-recordkeeping-travel-rule",
+        title: "US FinCEN BSA transfer recordkeeping and Travel Rule handoff evidence",
+        reason:
+          "Counsel and compliance review need metadata-only transfer recordkeeping, originator/beneficiary information handling, SAR/CTR escalation, retention, and reviewer-owner evidence without raw KYC or full wallet histories.",
+        priority: "P0",
+        keywords: [
+          "travel rule",
+          "transmittal",
+          "funds transfer",
+          "transfer recordkeeping",
+          "transmittal recordkeeping",
+          "originator",
+          "beneficiary",
+          "sar",
+          "ctr"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which CVC business-model, hosted-wallet, money-transmission, MSB registration, or BSA AML program assumptions should US FinCEN/BSA counsel review?",
+      "What transfer recordkeeping, Travel Rule, SAR/CTR escalation, retention, and reviewer-owner evidence should be retained without exporting raw KYC or full wallet histories?"
+    ],
+    localCounselRole: "US FinCEN / BSA virtual-currency counsel",
+    effectiveAsOf: "2019-05-09",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against FinCEN FIN-2019-G001 and current eCFR MSB AML program plus funds-transfer recordkeeping references for CVC activity-scope and BSA evidence routing; route interpretation to US FinCEN/BSA counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-title-ii-white-paper",
     jurisdiction: "European Union",
     regulator: "European Union",

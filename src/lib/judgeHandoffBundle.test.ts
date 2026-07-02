@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { CounselHandoffChecklist } from "./counselHandoffChecklist";
 import type { DemoRunbook } from "./demoRunbook";
 import type { ExportSafetyInventory } from "./exportSafetyInventory";
 import {
@@ -126,6 +127,46 @@ describe("createJudgeHandoffBundle", () => {
     expect(JSON.stringify(gate)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
   });
 
+  it("includes the Counsel Handoff Checklist as a final judge artifact when available", async () => {
+    const bundle = await createJudgeHandoffBundle({
+      projectName: "YieldPassport",
+      submissionPack: submissionPack(),
+      demoRunbook: demoRunbook(),
+      exportSafetyInventory: exportSafetyInventory(),
+      counselHandoffChecklist: counselHandoffChecklist(),
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+
+    const checklistArtifact = bundle.artifacts.find((artifact) => artifact.id === "counsel-handoff-checklist");
+    const gate = createJudgeHandoffReadinessGate(bundle);
+    const json = exportJudgeHandoffBundleJson(bundle);
+
+    expect(bundle.artifactCount).toBe(4);
+    expect(bundle.blockedCount).toBe(1);
+    expect(bundle.exportHandoffAllowed).toBe(false);
+    expect(checklistArtifact).toEqual(
+      expect.objectContaining({
+        label: "Counsel Handoff Checklist JSON",
+        status: "blocked",
+        artifactHash: "f".repeat(64),
+        recoveryAction: "Resolve rejected or returned Human Review items before final handoff."
+      })
+    );
+    expect(gate.primaryAction).toEqual(
+      expect.objectContaining({
+        id: "counsel-handoff-checklist",
+        targetSurface: "counsel-pack",
+        buttonLabel: "Open Counsel Handoff Checklist"
+      })
+    );
+    expect(bundle.nextActions).toEqual(
+      expect.arrayContaining(["Resolve rejected or returned Human Review items before final handoff."])
+    );
+    expect(json).toContain("Counsel Handoff Checklist JSON");
+    expect(json).toContain("Not legal advice");
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|legal opinion|final legal decision|raw KYC/i);
+  });
+
   it("marks the readiness gate ready when all judge handoff artifacts are export-safe", async () => {
     const basePack = submissionPack();
     const bundle = await createJudgeHandoffBundle({
@@ -158,6 +199,28 @@ describe("createJudgeHandoffBundle", () => {
     expect(gate.summary).toContain("ready for metadata-only judge handoff");
   });
 });
+
+function counselHandoffChecklist(overrides: Partial<CounselHandoffChecklist> = {}): CounselHandoffChecklist {
+  return {
+    checklistVersion: "lexproof-counsel-handoff-checklist-v1",
+    projectId: "project-yieldpassport",
+    projectName: "YieldPassport",
+    generatedAt: "2026-07-02T00:00:00.000Z",
+    checklistHash: "f".repeat(64),
+    overallStatus: "blocked",
+    handoffAllowed: false,
+    itemCount: 8,
+    readyCount: 6,
+    needsReviewCount: 1,
+    needsActionCount: 0,
+    blockedCount: 1,
+    items: [],
+    blockers: ["Human Review Workflow: Resolve rejected or returned Human Review items before final handoff."],
+    nextActions: ["Resolve rejected or returned Human Review items before final handoff."],
+    notLegalAdviceBoundary: "Not legal advice. Counsel handoff checklists are audit preparation workflow metadata only.",
+    ...overrides
+  };
+}
 
 function submissionPack(overrides: Partial<SubmissionPack> = {}): SubmissionPack {
   return {

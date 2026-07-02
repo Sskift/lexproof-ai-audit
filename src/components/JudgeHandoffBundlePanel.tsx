@@ -27,7 +27,7 @@ export function JudgeHandoffBundlePanel({ bundle, onNavigate }: JudgeHandoffBund
       <SectionHeader
         icon={FileJson}
         title="Judge Handoff Bundle"
-        subtitle="Single metadata-only JSON handoff for Submission Pack, Demo Runbook, and Export Safety Inventory."
+        subtitle="Single metadata-only JSON handoff for Submission Pack, Demo Runbook, Export Safety Inventory, and Counsel Handoff Checklist."
       />
       <p className="section-note">
         {bundle?.notLegalAdviceBoundary ?? "Not legal advice. Judge handoff bundles are audit preparation metadata only."}

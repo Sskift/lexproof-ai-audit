@@ -3150,6 +3150,7 @@ describe("App", () => {
         expect(within(bundlePanel).getByText(/Submission Pack JSON/i)).toBeInTheDocument();
         expect(within(bundlePanel).getAllByText(/Demo Runbook JSON/i).length).toBeGreaterThan(0);
         expect(within(bundlePanel).getByText(/Export Safety Inventory JSON/i)).toBeInTheDocument();
+        expect(within(bundlePanel).getByText(/Counsel Handoff Checklist JSON/i)).toBeInTheDocument();
       });
       const downloadButton = await screen.findByRole("button", { name: /Download Judge Handoff Bundle JSON/i });
       await waitFor(() => expect(downloadButton).toBeEnabled());
@@ -3169,7 +3170,7 @@ describe("App", () => {
       expect(parsed).toEqual(
         expect.objectContaining({
           bundleVersion: "lexproof-judge-handoff-bundle-v1",
-          artifactCount: 3,
+          artifactCount: 4,
           exportHandoffAllowed: false,
           notLegalAdviceBoundary: "Not legal advice. Judge handoff bundles are audit preparation metadata only."
         })
@@ -3179,7 +3180,8 @@ describe("App", () => {
         expect.arrayContaining([
           expect.objectContaining({ id: "submission-pack", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) }),
           expect.objectContaining({ id: "demo-runbook", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) }),
-          expect.objectContaining({ id: "export-safety-inventory", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) })
+          expect.objectContaining({ id: "export-safety-inventory", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) }),
+          expect.objectContaining({ id: "counsel-handoff-checklist", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) })
         ])
       );
       expect(payload).toContain("Not legal advice");
@@ -3675,7 +3677,7 @@ describe("App", () => {
 
     expect(await screen.findByText(/Human review decision saved for .*Counsel Pack v1/i)).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice; this is an audit preparation workflow status/i)).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("includes saved Human Review timeline metadata in the Counsel Pack preview", async () => {
     render(<App />);

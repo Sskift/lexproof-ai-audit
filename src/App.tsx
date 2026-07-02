@@ -1250,7 +1250,8 @@ export default function App() {
       projectName: project.projectName,
       submissionPack,
       demoRunbook,
-      exportSafetyInventory
+      exportSafetyInventory,
+      counselHandoffChecklist
     }).then((nextBundle) => {
       if (live) {
         setJudgeHandoffBundle(nextBundle);
@@ -1260,7 +1261,7 @@ export default function App() {
     return () => {
       live = false;
     };
-  }, [activeTab, demoRunbook, exportSafetyInventory, project.projectName, submissionPack]);
+  }, [activeTab, counselHandoffChecklist, demoRunbook, exportSafetyInventory, project.projectName, submissionPack]);
 
   useEffect(() => {
     let live = true;

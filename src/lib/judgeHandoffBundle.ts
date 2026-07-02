@@ -1,4 +1,5 @@
 import { redactClassifiedText } from "./dataClassification";
+import type { CounselHandoffChecklist, CounselHandoffChecklistStatus } from "./counselHandoffChecklist";
 import type { DemoRunbook } from "./demoRunbook";
 import type { ExportSafetyInventory, ExportSafetyInventoryStatus } from "./exportSafetyInventory";
 import type { SubmissionExportSafetyStatus, SubmissionPack } from "./submissionPack";
@@ -6,7 +7,7 @@ import type { SubmissionExportSafetyStatus, SubmissionPack } from "./submissionP
 export type JudgeHandoffBundleArtifactStatus = "ready" | "needs-review" | "needs-action" | "blocked" | "missing";
 
 export type JudgeHandoffBundleArtifact = {
-  id: "submission-pack" | "demo-runbook" | "export-safety-inventory";
+  id: "submission-pack" | "demo-runbook" | "export-safety-inventory" | "counsel-handoff-checklist";
   label: string;
   status: JudgeHandoffBundleArtifactStatus;
   artifactHash: string;
@@ -62,6 +63,7 @@ export type CreateJudgeHandoffBundleInput = {
   submissionPack: SubmissionPack | null;
   demoRunbook: DemoRunbook | null;
   exportSafetyInventory: ExportSafetyInventory | null;
+  counselHandoffChecklist?: CounselHandoffChecklist | null;
   generatedAt?: string;
 };
 
@@ -75,23 +77,32 @@ export async function createJudgeHandoffBundle({
   submissionPack,
   demoRunbook,
   exportSafetyInventory,
+  counselHandoffChecklist,
   generatedAt = new Date().toISOString()
 }: CreateJudgeHandoffBundleInput): Promise<JudgeHandoffBundle> {
   const artifacts = [
     createSubmissionPackArtifact(submissionPack),
     createDemoRunbookArtifact(demoRunbook),
-    createExportSafetyInventoryArtifact(exportSafetyInventory)
+    createExportSafetyInventoryArtifact(exportSafetyInventory),
+    ...(counselHandoffChecklist ? [createCounselHandoffChecklistArtifact(counselHandoffChecklist)] : [])
   ];
   const readyCount = artifacts.filter((artifact) => artifact.status === "ready").length;
   const needsReviewCount = artifacts.filter((artifact) => artifact.status === "needs-review").length;
   const missingCount = artifacts.filter((artifact) => artifact.status === "missing").length;
   const blockedCount = artifacts.filter((artifact) => artifact.status === "blocked").length;
-  const nextActions = createNextActions({ submissionPack, demoRunbook, exportSafetyInventory, artifacts });
+  const nextActions = createNextActions({
+    submissionPack,
+    demoRunbook,
+    exportSafetyInventory,
+    counselHandoffChecklist,
+    artifacts
+  });
   const exportHandoffAllowed =
     artifacts.every((artifact) => artifact.status === "ready") &&
     Boolean(submissionPack?.exportSafetySummary.exportHandoffAllowed) &&
     demoRunbook?.status === "ready" &&
-    Boolean(exportSafetyInventory?.exportHandoffAllowed);
+    Boolean(exportSafetyInventory?.exportHandoffAllowed) &&
+    (!counselHandoffChecklist || counselHandoffChecklist.handoffAllowed);
   const hashPayload: Omit<JudgeHandoffBundle, "generatedAt" | "bundleHash"> = {
     bundleVersion: "lexproof-judge-handoff-bundle-v1",
     projectName: sanitize(projectName || submissionPack?.projectName || exportSafetyInventory?.projectName || "Untitled project"),
@@ -212,6 +223,23 @@ function createExportSafetyInventoryArtifact(inventory: ExportSafetyInventory | 
   };
 }
 
+function createCounselHandoffChecklistArtifact(checklist: CounselHandoffChecklist): JudgeHandoffBundleArtifact {
+  const artifactHash = sanitizeHash(checklist.checklistHash);
+  return {
+    id: "counsel-handoff-checklist",
+    label: "Counsel Handoff Checklist JSON",
+    status: artifactHash ? mapCounselHandoffChecklistStatus(checklist.overallStatus) : "missing",
+    artifactHash,
+    recoveryAction: sanitize(
+      checklist.handoffAllowed
+        ? "Keep the Counsel Handoff Checklist with the final judge packet."
+        : checklist.nextActions[0] ?? "Open Counsel Pack and resolve final handoff checklist blockers."
+    ),
+    sourceSurface: "Sources",
+    notLegalAdviceBoundary: checklist.notLegalAdviceBoundary
+  };
+}
+
 function createRecoveryAction(artifact: JudgeHandoffBundleArtifact): JudgeHandoffRecoveryAction {
   const target = recoveryTargetForArtifact(artifact);
 
@@ -245,6 +273,14 @@ function recoveryTargetForArtifact(artifact: JudgeHandoffBundleArtifact): Pick<
       targetSurface: "judge-demo-readiness",
       buttonLabel: "Open Judge Demo Readiness",
       reason: "Complete demo API preflight and runbook readiness before judge handoff."
+    };
+  }
+
+  if (artifact.id === "counsel-handoff-checklist") {
+    return {
+      targetSurface: "counsel-pack",
+      buttonLabel: "Open Counsel Handoff Checklist",
+      reason: "Resolve final checklist blockers before judge handoff."
     };
   }
 
@@ -290,11 +326,13 @@ function createNextActions({
   submissionPack,
   demoRunbook,
   exportSafetyInventory,
+  counselHandoffChecklist,
   artifacts
 }: {
   submissionPack: SubmissionPack | null;
   demoRunbook: DemoRunbook | null;
   exportSafetyInventory: ExportSafetyInventory | null;
+  counselHandoffChecklist?: CounselHandoffChecklist | null;
   artifacts: JudgeHandoffBundleArtifact[];
 }): string[] {
   const artifactActions = artifacts
@@ -303,7 +341,8 @@ function createNextActions({
   const sourceActions = [
     ...(submissionPack?.exportSafetySummary.nextActions ?? []),
     ...(demoRunbook?.nextActions ?? []),
-    ...(exportSafetyInventory?.nextActions.filter(() => exportSafetyInventory.overallStatus !== "ready") ?? [])
+    ...(exportSafetyInventory?.nextActions.filter(() => exportSafetyInventory.overallStatus !== "ready") ?? []),
+    ...(counselHandoffChecklist?.nextActions.filter(() => !counselHandoffChecklist.handoffAllowed) ?? [])
   ];
   const nextActions = unique([...sourceActions, ...artifactActions].map(sanitize).filter(Boolean));
 
@@ -335,6 +374,10 @@ function mapDemoRunbookStatus(status: DemoRunbook["status"]): JudgeHandoffBundle
 }
 
 function mapInventoryStatus(status: ExportSafetyInventoryStatus): JudgeHandoffBundleArtifactStatus {
+  return status;
+}
+
+function mapCounselHandoffChecklistStatus(status: CounselHandoffChecklistStatus): JudgeHandoffBundleArtifactStatus {
   return status;
 }
 

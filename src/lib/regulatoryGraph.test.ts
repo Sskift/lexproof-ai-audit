@@ -62,6 +62,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "eu-mica-title-ii-white-paper",
         "eu-dora-ict-operational-resilience",
+        "eu-tfr-crypto-asset-transfer-information",
         "uk-fca-crypto-financial-promotions",
         "sg-mas-psn02-dpt-aml-cft",
         "ch-finma-ico-token-classification",
@@ -80,8 +81,8 @@ describe("createRegulatoryGraph", () => {
     });
 
     expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "European Union")).toMatchObject({
-      matchedClauseCount: 4,
-      missingEvidenceCount: 8,
+      matchedClauseCount: 5,
+      missingEvidenceCount: 10,
       readiness: "evidence-gaps",
       localCounselRole: "EU crypto-asset / data protection counsel"
     });
@@ -420,7 +421,7 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
-  it("matches EU MiCA custody and DORA operational-resilience controls for platform wallet custody facts", () => {
+  it("matches EU MiCA custody, DORA, and TFR controls for platform wallet custody facts", () => {
     const custodyProject: ProjectProfile = {
       ...baseProject,
       id: "project-eu-casp-custody",
@@ -434,7 +435,11 @@ describe("createRegulatoryGraph", () => {
     const graph = createRegulatoryGraph(custodyProject, audit, custodyProject.evidenceItems);
 
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
-      expect.arrayContaining(["eu-mica-casp-custody-administration", "eu-dora-ict-operational-resilience"])
+      expect.arrayContaining([
+        "eu-mica-casp-custody-administration",
+        "eu-dora-ict-operational-resilience",
+        "eu-tfr-crypto-asset-transfer-information"
+      ])
     );
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-casp-custody-administration")).toMatchObject({
       jurisdiction: "European Union",
@@ -449,7 +454,9 @@ describe("createRegulatoryGraph", () => {
         "EU CASP custody and administration policy evidence",
         "EU client crypto-asset safeguarding and access-control evidence",
         "EU DORA ICT risk management and incident-response evidence",
-        "EU DORA ICT third-party service register evidence"
+        "EU DORA ICT third-party service register evidence",
+        "EU TFR crypto-asset transfer information register",
+        "EU TFR missing or incomplete transfer-information handling evidence"
       ])
     );
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-dora-ict-operational-resilience")).toMatchObject({
@@ -460,10 +467,18 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "EU DORA / operational resilience counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-tfr-crypto-asset-transfer-information")).toMatchObject({
+      jurisdiction: "European Union",
+      topic: "aml-cft",
+      citation: "Regulation (EU) 2023/1113; EBA Travel Rule Guidelines under Regulation (EU) 2023/1113",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1113/oj/eng",
+      coverageStatus: "missing",
+      localCounselRole: "EU AML/CFT crypto-asset transfer counsel"
+    });
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("marks EU MiCA custody and DORA controls covered when RWA custody template evidence is verified", () => {
+  it("marks EU MiCA custody, DORA, and TFR controls covered when RWA custody template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `rwa-template-${index + 1}`,
@@ -493,10 +508,17 @@ describe("createRegulatoryGraph", () => {
       totalEvidenceRequestCount: 2,
       matchedEvidenceLabels: ["Custody and signer control runbook", "EU DORA ICT resilience register"]
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-tfr-crypto-asset-transfer-information")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["EU TFR Travel Rule transfer information register"]
+    });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "eu-mica-casp-custody-administration" }),
-        expect.objectContaining({ clauseId: "eu-dora-ict-operational-resilience" })
+        expect.objectContaining({ clauseId: "eu-dora-ict-operational-resilience" }),
+        expect.objectContaining({ clauseId: "eu-tfr-crypto-asset-transfer-information" })
       ])
     );
   });

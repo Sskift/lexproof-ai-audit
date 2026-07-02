@@ -706,6 +706,8 @@ describe("App", () => {
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Regulation \(EU\) 2022\/2554, DORA Articles 5-16, 17-23, and 28/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EU DORA ICT risk management and incident-response evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Regulation \(EU\) 2023\/1113; EBA Travel Rule Guidelines under Regulation \(EU\) 2023\/1113/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU TFR crypto-asset transfer information register/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/FinCEN FIN-2019-G001; 31 C\.F\.R\. 1022\.210; 31 C\.F\.R\. 1010\.410\(e\)-\(f\)/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US FinCEN CVC MSB activity-scope and AML program evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();

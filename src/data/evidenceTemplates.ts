@@ -50,6 +50,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "EU TFR Travel Rule transfer information register",
+        kind: "Register",
+        content:
+          "Requested: summarize EU TFR, Regulation EU 2023/1113, crypto-asset transfer information, Travel Rule transfer information, counterparty CASP handling, originator and beneficiary information mapping, EU TFR missing information, missing incomplete information, transfer information handling, travel rule exception, counterparty escalation, rejection or return handling, retention owner, reviewer owner, and source-lineage evidence without raw KYC or full wallet histories.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-tfr-crypto-asset-transfer-information",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Investor eligibility review",
         kind: "Checklist",
         content:

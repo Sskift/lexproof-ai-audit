@@ -316,15 +316,12 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
           "Counsel and compliance review need metadata-only transfer recordkeeping, originator/beneficiary information handling, SAR/CTR escalation, retention, and reviewer-owner evidence without raw KYC or full wallet histories.",
         priority: "P0",
         keywords: [
-          "travel rule",
-          "transmittal",
-          "funds transfer",
+          "fincen bsa",
+          "bsa transfer",
           "transfer recordkeeping",
           "transmittal recordkeeping",
-          "originator",
-          "beneficiary",
-          "sar",
-          "ctr"
+          "sar and ctr",
+          "cvc msb transfer"
         ]
       }
     ],
@@ -563,6 +560,69 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-07-02",
     reviewerNotes:
       "Source metadata reviewed against the DORA regulation, European Commission DORA implementing/delegated acts page, and EBA operational-resilience materials for ICT risk, incident reporting, testing, and third-party risk evidence routing; route interpretation to EU local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "eu-tfr-crypto-asset-transfer-information",
+    jurisdiction: "European Union",
+    regulator: "European Union / European Banking Authority",
+    sourceName: "Regulation (EU) 2023/1113 on information accompanying transfers of funds and certain crypto-assets",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1113/oj/eng",
+    citation: "Regulation (EU) 2023/1113; EBA Travel Rule Guidelines under Regulation (EU) 2023/1113",
+    topic: "aml-cft",
+    summary:
+      "Prepare crypto-asset transfer information, originator/beneficiary handling, missing or incomplete information escalation, and counterparty CASP workflow evidence for EU TFR/Travel Rule counsel review.",
+    triggerFlagIds: ["custody", "sensitive-data"],
+    triggerKeywords: [
+      "transfer of crypto-assets",
+      "crypto-asset transfer",
+      "travel rule",
+      "originator",
+      "beneficiary",
+      "counterparty casp",
+      "casp",
+      "wallet transaction history",
+      "virtual asset transfer"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-tfr-crypto-asset-transfer-information-register",
+        title: "EU TFR crypto-asset transfer information register",
+        reason:
+          "EU crypto-asset transfer review needs metadata-only transfer information mapping, counterparty CASP handling, Travel Rule transfer-information routing, and source-lineage evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "eu tfr",
+          "regulation eu 2023/1113",
+          "crypto-asset transfer information",
+          "counterparty casp",
+          "travel rule transfer information"
+        ]
+      },
+      {
+        id: "eu-tfr-missing-incomplete-transfer-information",
+        title: "EU TFR missing or incomplete transfer-information handling evidence",
+        reason:
+          "Counsel and compliance review need procedures for missing or incomplete crypto-asset transfer information, escalation owners, rejection/return handling, retention, and reviewer notes without raw KYC or full wallet histories.",
+        priority: "P1",
+        keywords: [
+          "eu tfr missing information",
+          "missing incomplete information",
+          "transfer information handling",
+          "travel rule exception",
+          "counterparty escalation"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which EU TFR crypto-asset transfer information, counterparty CASP, and originator/beneficiary handling assumptions should EU AML/CFT counsel review?",
+      "What evidence shows missing or incomplete transfer-information escalation, rejection/return handling, retention, and reviewer ownership without exporting raw KYC or full wallet histories?"
+    ],
+    localCounselRole: "EU AML/CFT crypto-asset transfer counsel",
+    effectiveAsOf: "2024-12-30",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against Regulation (EU) 2023/1113 and EBA Travel Rule Guidelines for crypto-asset transfer information, missing/incomplete information handling, and counterparty CASP evidence routing; route interpretation to EU AML/CFT counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

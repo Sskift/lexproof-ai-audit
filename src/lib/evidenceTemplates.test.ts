@@ -97,6 +97,7 @@ describe("evidence templates", () => {
         "RWA disclosure assumptions memo",
         "Custody and signer control runbook",
         "EU DORA ICT resilience register",
+        "EU TFR Travel Rule transfer information register",
         "Investor eligibility review",
         "Singapore DPT CDD and model handoff register",
         "US FinCEN CVC MSB and BSA transfer control register",
@@ -108,6 +109,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
     expect(serializedSources).toContain("regulatory control: control-eu-dora-ict-operational-resilience");
+    expect(serializedSources).toContain("regulatory control: control-eu-tfr-crypto-asset-transfer-information");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-psn02-dpt-aml-cft");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");

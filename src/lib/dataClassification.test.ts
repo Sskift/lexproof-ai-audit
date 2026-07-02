@@ -13,6 +13,8 @@ const refreshToken = "rt_abcdef1234567890abcdef";
 const githubToken = ["ghp", "syntheticTokenValue1234567890"].join("_");
 const slackToken = ["xoxb", "123456789012", "syntheticSlackTokenValue"].join("-");
 const databaseConnectionUri = "postgres://audit_user:Sup3rSecretPass@db.internal.example.com:5432/lexproof";
+const webhookSigningSecret = ["whsec", "syntheticWebhookSecretValue123456"].join("_");
+const signingSecret = "synthetic-signing-secret-value-123456";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const pemPrivateKey = [
   "-----BEGIN PRIVATE KEY-----",
@@ -164,6 +166,24 @@ describe("classifyDataBoundaryText", () => {
     expect(serialized).not.toContain("audit_user");
     expect(serialized).not.toContain("Sup3rSecretPass");
     expect(serialized).not.toContain("db.internal.example.com");
+  });
+
+  it("blocks webhook and signing secrets without exposing secret values", () => {
+    const findings = classifyDataBoundaryText(
+      `Webhook policy copied ${webhookSigningSecret}; signing_secret=${signingSecret}; webhook_secret=${signingSecret}.`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 3
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-webhook-secret]");
+    expect(serialized).not.toContain(webhookSigningSecret);
+    expect(serialized).not.toContain(signingSecret);
+    expect(serialized).not.toContain("syntheticWebhookSecretValue");
   });
 
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
@@ -327,6 +347,19 @@ describe("redactClassifiedText", () => {
     expect(redacted).not.toContain("audit_user");
     expect(redacted).not.toContain("Sup3rSecretPass");
     expect(redacted).not.toContain("db.internal.example.com");
+  });
+
+  it("redacts webhook and signing secrets from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(
+      `Webhook: ${webhookSigningSecret}; signing_secret=${signingSecret}; webhook_secret=${signingSecret}`
+    );
+
+    expect(redacted).toContain("[redacted-webhook-secret]");
+    expect(redacted).toContain("signing_secret=[redacted-secret]");
+    expect(redacted).toContain("webhook_secret=[redacted-secret]");
+    expect(redacted).not.toContain(webhookSigningSecret);
+    expect(redacted).not.toContain(signingSecret);
+    expect(redacted).not.toContain("syntheticWebhookSecretValue");
   });
 
   it("redacts direct personal identifiers from reusable boundary snippets", () => {

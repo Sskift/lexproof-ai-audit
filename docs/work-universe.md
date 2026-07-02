@@ -100,7 +100,7 @@ The repository already has:
 - Editable Evidence Ledger with review-stage statuses, rejected-record replacement requests, empty-state Evidence Intake Guidance, local file metadata hashing, evidence templates, audit trail JSON, deterministic Evidence Manifest, Evidence Vault control coverage summary, Evidence Vault Lineage Digest with stable digest hash and JSON download, simulated anchor receipt, Counsel Pack export templates, Export Safety Gate data-boundary blocker, Counsel Handoff Checklist with a stable checklist hash and JSON download, local Counsel Pack version history with manifest/Markdown/source-pack hashes and diff metadata, and Phase 2 server export records for the latest Pack Version.
 - Jurisdiction checklist and jurisdiction packs for initial US/EU/UK/Singapore/Switzerland/UAE/Brazil routing.
 - Demo script, screenshots, Demo Scenario Library launcher, Workspace Journey rail, Source Review Packet export, and integration tests for the full secure review journey, Counsel Pack template selection, version-history export path, server export-record path, command-center Regulatory Control Matrix export, Jurisdiction Readiness Digest export, and seeded judge paths.
-- Generated Submission Pack JSON in Sources with pack hash, manifest hash, Regulatory Source Pack hash, export safety summary, demo readiness, required assets, feature-to-theme mapping, known limitations, and Not legal advice boundary.
+- Generated Submission Pack JSON in Sources with pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, export safety summary, demo readiness, required assets, feature-to-theme mapping, known limitations, and Not legal advice boundary.
 
 Future work should extend these capabilities, not create parallel demo-only paths.
 
@@ -497,7 +497,7 @@ Implemented first slice:
 
 - Demo Scenario Library in `src/data/demoScenarios.ts`, `src/lib/demoScenarioLibrary.ts`, and `DemoScenarioLibrary`: maps realistic synthetic sample profiles into short judge-ready routes, expected artifacts, focus tags, and recommended workbench tabs. The seeded set now includes RWA launch, DAO review, public-source review, AI legal workflow review, Brazil VASP source review, Singapore DPT custody review, and marketing claims review paths. The validation layer rejects unknown samples, missing Not legal advice boundaries, weak paths, empty artifacts, raw KYC, private-key, seed-phrase, and live-key demo text.
 - Submission Pack artifact in `src/lib/submissionPack.ts` and `SubmissionPackPanel`: generates a metadata-only judge packet with stable pack hash, manifest/source-pack/Demo Runbook hashes, export safety summary, demo readiness, required assets, hackathon mapping, known limitations, and JSON download.
-- Demo Runbook artifact in `src/lib/demoRunbook.ts` and `DemoReadinessPanel`: generates a metadata-only clean-clone runbook with scenario paths, screenshots, API preflight status, limitations, Not legal advice boundary, stable runbook hash, JSON download for hackathon judges, and Sources-level handoff tracking through Submission Pack and Export Safety Inventory.
+- Demo Runbook artifact in `src/lib/demoRunbook.ts`, `DemoReadinessPanel`, and `SubmissionPackPanel`: generates a metadata-only clean-clone runbook with scenario paths, screenshots, API preflight status, limitations, Not legal advice boundary, stable runbook hash, JSON download for hackathon judges from Project Workspace or Sources, and Sources-level handoff tracking through Submission Pack and Export Safety Inventory.
 
 Build:
 

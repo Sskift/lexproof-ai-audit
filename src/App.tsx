@@ -2102,7 +2102,12 @@ export default function App() {
             />
           ) : null}
           {activeTab === "sources" ? (
-            <SourcesPanel audit={audit} exportSafetyInventory={exportSafetyInventory} submissionPack={submissionPack} />
+            <SourcesPanel
+              audit={audit}
+              demoRunbook={demoRunbook}
+              exportSafetyInventory={exportSafetyInventory}
+              submissionPack={submissionPack}
+            />
           ) : null}
         </section>
       </main>
@@ -2170,10 +2175,12 @@ function RiskAuditPanel({
 
 function SourcesPanel({
   audit,
+  demoRunbook,
   exportSafetyInventory,
   submissionPack
 }: {
   audit: ReturnType<typeof analyzeAuditProfile>;
+  demoRunbook: DemoRunbook | null;
   exportSafetyInventory: ExportSafetyInventory | null;
   submissionPack: SubmissionPack | null;
 }) {
@@ -2194,7 +2201,7 @@ function SourcesPanel({
         <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
       </div>
       <ExportSafetyInventoryPanel inventory={exportSafetyInventory} />
-      <SubmissionPackPanel pack={submissionPack} />
+      <SubmissionPackPanel pack={submissionPack} demoRunbook={demoRunbook} />
     </section>
   );
 }

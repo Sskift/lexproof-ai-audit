@@ -3003,6 +3003,61 @@ describe("App", () => {
     }
   });
 
+  it("downloads the Demo Runbook JSON from the Sources handoff", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:sources-demo-runbook");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+      const submissionPack = await screen.findByRole("region", { name: /Submission Pack/i });
+      await waitFor(() => {
+        expect(within(submissionPack).getByText(/Demo Runbook hash/i)).toBeInTheDocument();
+      });
+      const downloadButton = await within(submissionPack).findByRole("button", { name: /Download Demo Runbook JSON/i });
+      await waitFor(() => expect(downloadButton).toBeEnabled());
+      fireEvent.click(downloadButton);
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:sources-demo-runbook");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Demo Runbook JSON blob to be created from Sources.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          runbookVersion: "lexproof-demo-runbook-v1",
+          apiPreflightStatus: "not-checked",
+          notLegalAdviceBoundary: "Not legal advice. Demo runbooks are audit preparation demo metadata only."
+        })
+      );
+      expect(parsed.runbookHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(payload).toContain("Counsel Pack -> Sources");
+      expect(payload).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("downloads an Export Safety Inventory that blocks unsafe handoff without leaking secrets", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

@@ -1,5 +1,6 @@
 import { CheckCircle2, Download, FileJson, TriangleAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
+import { downloadDemoRunbookJson, type DemoRunbook } from "../lib/demoRunbook";
 import {
   exportSubmissionPackJson,
   type SubmissionExportSafetyStatus,
@@ -9,9 +10,10 @@ import {
 
 type SubmissionPackPanelProps = {
   pack: SubmissionPack | null;
+  demoRunbook: DemoRunbook | null;
 };
 
-export function SubmissionPackPanel({ pack }: SubmissionPackPanelProps) {
+export function SubmissionPackPanel({ pack, demoRunbook }: SubmissionPackPanelProps) {
   return (
     <section className="submission-pack-panel" role="region" aria-label="Submission Pack">
       <SectionHeader
@@ -41,6 +43,19 @@ export function SubmissionPackPanel({ pack }: SubmissionPackPanelProps) {
             <button type="button" className="secondary" onClick={() => downloadSubmissionPackJson(pack)}>
               <Download size={16} aria-hidden="true" />
               Download Submission Pack JSON
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={!demoRunbook}
+              onClick={() => {
+                if (demoRunbook) {
+                  downloadDemoRunbookJson(`${slug(pack.projectName)}-demo-runbook.json`, demoRunbook);
+                }
+              }}
+            >
+              <Download size={16} aria-hidden="true" />
+              Download Demo Runbook JSON
             </button>
             <span>
               {pack.evidenceItemCount} evidence items | {pack.counselPackVersionCount} pack versions |{" "}

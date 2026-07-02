@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassification";
 
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const bearerToken = "eyJhbGciOiJIUzI1NiJ9.auditPrepPayload.signature";
+const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const walletAddress = "0x1111111111111111111111111111111111111111";
 
@@ -36,6 +38,23 @@ describe("classifyDataBoundaryText", () => {
 
     expect(credentialFinding?.redactedSnippet).toContain("[redacted-api-key]");
     expect(credentialFinding?.redactedSnippet).not.toMatch(/\braw\s+K/i);
+  });
+
+  it("blocks provider authorization headers and cloud access keys without exposing token values", () => {
+    const findings = classifyDataBoundaryText(
+      `Model proxy metadata includes Authorization: Bearer ${bearerToken} and AWS access key ${awsAccessKey}.`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 2
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
+    expect(serialized).not.toContain(bearerToken);
+    expect(serialized).not.toContain(awsAccessKey);
   });
 
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
@@ -122,6 +141,14 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-private-key]");
     expect(redacted).not.toContain(apiKey);
     expect(redacted).not.toContain(privateKey);
+  });
+
+  it("redacts provider authorization headers and cloud access keys from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`Authorization: Bearer ${bearerToken}; AWS access key ${awsAccessKey}.`);
+
+    expect(redacted).toContain("[redacted-secret]");
+    expect(redacted).not.toContain(bearerToken);
+    expect(redacted).not.toContain(awsAccessKey);
   });
 
   it("redacts direct personal identifiers from reusable boundary snippets", () => {

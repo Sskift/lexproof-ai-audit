@@ -33,6 +33,8 @@ const dateOfBirthPattern =
   /\b(?:date of birth|dob|birthdate)\s*[:#-]?\s*(?:\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|[A-Z][a-z]+ \d{1,2},? \d{4})\b/;
 const governmentIdPattern =
   /\b(?:driver'?s?\s+licen[cs]e|driving\s+licen[cs]e|national\s+id|government\s+id)\s*(?:number|no\.?|id)?\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{4,24}\b/;
+const authorizationBearerPattern = /\bauthorization\s*:\s*bearer\s+[A-Za-z0-9._~+/=-]{12,}\b/;
+const cloudAccessKeyPattern = /\b(?:aws\s+access\s+key(?:\s+id)?\s*[:=]?\s*)?(?:AKIA|ASIA)[0-9A-Z]{16}\b/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
 const walletSecretLabelPattern = String.raw`(?:seed phrase|mnemonic|recovery phrase|wallet secret(?: phrase)?)`;
 const walletSecretPhrasePattern =
@@ -67,7 +69,10 @@ const classificationRules: ClassificationRule[] = [
   {
     dataClass: "credential-material",
     severity: "block",
-    pattern: /\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)\s*[:=]\s*[\w.\-]{8,}/gi,
+    pattern: new RegExp(
+      `${authorizationBearerPattern.source}|${cloudAccessKeyPattern.source}|\\b(api[_\\-\\s]?key|secret[_\\-\\s]?key|client secret|bearer token)\\s*[:=]\\s*[\\w.\\-]{8,}`,
+      "gi"
+    ),
     message: "Credential fields must be removed before export handoff."
   },
   {
@@ -140,6 +145,8 @@ export function redactClassifiedText(value: string): string {
   return value
     .replace(walletSecretPhrasePattern, "[redacted-private-key]")
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
+    .replace(new RegExp(authorizationBearerPattern.source, "gi"), "Authorization: Bearer [redacted-secret]")
+    .replace(new RegExp(cloudAccessKeyPattern.source, "gi"), "[redacted-secret]")
     .replace(/\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)(\s*[:=]\s*)[\w.\-]{8,}/gi, "$1$2[redacted-secret]")
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")
     .replace(new RegExp(evmWalletAddressPattern.source, "gi"), "[redacted-wallet-address]")

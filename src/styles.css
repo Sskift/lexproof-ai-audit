@@ -3387,6 +3387,7 @@ textarea {
 }
 
 .audit-log-export,
+.model-run-ledger,
 .model-gateway-evaluation {
   display: grid;
   gap: 10px;
@@ -3396,7 +3397,8 @@ textarea {
   background: #fbfdfe;
 }
 
-.audit-log-export {
+.audit-log-export,
+.model-run-ledger {
   border-color: #c9d5de;
   background: #ffffff;
 }
@@ -3413,11 +3415,13 @@ textarea {
 }
 
 .audit-log-export .section-note,
+.model-run-ledger .section-note,
 .model-gateway-evaluation .section-note {
   margin: 0;
 }
 
 .audit-log-facts,
+.model-run-ledger-facts,
 .evaluation-facts {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -3452,7 +3456,8 @@ textarea {
   gap: 8px;
 }
 
-.audit-log-event-card {
+.audit-log-event-card,
+.model-run-ledger-card {
   display: grid;
   gap: 6px;
   min-width: 0;
@@ -3462,14 +3467,16 @@ textarea {
   background: #ffffff;
 }
 
-.audit-log-event-card header {
+.audit-log-event-card header,
+.model-run-ledger-card header {
   display: flex;
   justify-content: space-between;
   gap: 8px;
   align-items: center;
 }
 
-.audit-log-event-card header span {
+.audit-log-event-card header span,
+.model-run-ledger-card header span {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 3px 7px;
@@ -3480,19 +3487,48 @@ textarea {
   text-transform: uppercase;
 }
 
+.model-run-ledger-card.completed header span {
+  background: #e6f6ec;
+  color: #0f6b3f;
+}
+
+.model-run-ledger-card.blocked header span,
+.model-run-ledger-card.failed header span {
+  background: #fff0ed;
+  color: #9e2f22;
+}
+
 .audit-log-event-card strong,
 .audit-log-event-card p,
-.audit-log-event-card small {
+.audit-log-event-card small,
+.model-run-ledger-card strong,
+.model-run-ledger-card p,
+.model-run-ledger-card small,
+.model-run-ledger-card li {
   overflow-wrap: anywhere;
 }
 
-.audit-log-event-card p {
+.audit-log-event-card p,
+.model-run-ledger-card p {
   margin: 0;
   color: #263541;
 }
 
-.audit-log-event-card small {
+.audit-log-event-card small,
+.model-run-ledger-card small {
   color: #53616f;
+}
+
+.model-run-ledger-list {
+  display: grid;
+  gap: 8px;
+}
+
+.model-run-ledger-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #53616f;
+  line-height: 1.4;
 }
 
 .model-evaluation-policy {
@@ -7818,6 +7854,7 @@ textarea {
   .human-review-grid,
   .template-grid,
   .audit-log-facts,
+  .model-run-ledger-facts,
   .evaluation-facts,
   .integration-adapter-grid,
   .integration-dossier-policy-list,

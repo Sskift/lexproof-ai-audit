@@ -12,8 +12,9 @@ import {
   downloadModelGatewayEvaluationJson,
   type ModelGatewayEvaluationRecord
 } from "../lib/modelGatewayEvaluation";
+import { ModelGatewayRunClientError, fetchModelGatewayRuns } from "../lib/modelGatewayRunClient";
 import type { ModelConnectReceipt } from "../lib/modelConnect";
-import type { AuditLogRecord } from "../lib/phase2Types";
+import { createModelGatewayRunSummary, type AuditLogRecord, type ModelGatewayRun, type ModelGatewayRunSummary } from "../lib/phase2Types";
 import type { ProjectProfile } from "../lib/projectModel";
 import { runSecureReviewJourney, type SecureReviewJourneyResult } from "../lib/secureReviewJourney";
 
@@ -236,6 +237,7 @@ function SecureJourneyResult({ result, apiBaseUrl }: { result: SecureReviewJourn
         workspaceId={result.workspace.id}
         initialRecords={result.auditLogRecords}
       />
+      <ModelGatewayRunLedgerPanel apiBaseUrl={apiBaseUrl} workspaceId={result.workspace.id} initialRun={result.modelGatewayRun} />
       <ModelGatewayEvaluationPanel evaluation={evaluation} />
     </div>
   );
@@ -407,6 +409,133 @@ function AuditLogExplorerPanel({
           <Download size={16} aria-hidden="true" />
           Download Audit Log JSON
         </button>
+      </div>
+    </section>
+  );
+}
+
+type ModelGatewayRunLedgerStatus = "idle" | "syncing" | "synced" | "error";
+
+function ModelGatewayRunLedgerPanel({
+  apiBaseUrl,
+  workspaceId,
+  initialRun
+}: {
+  apiBaseUrl: string;
+  workspaceId: string;
+  initialRun: ModelGatewayRun;
+}) {
+  const [runs, setRuns] = useState<ModelGatewayRunSummary[]>(() => [createModelGatewayRunSummary(initialRun)]);
+  const [refreshStatus, setRefreshStatus] = useState<ModelGatewayRunLedgerStatus>("idle");
+  const [refreshError, setRefreshError] = useState("");
+  const [refreshRecoveryAction, setRefreshRecoveryAction] = useState("");
+  const visibleRuns = runs.slice(-4).reverse();
+  const latestRun = visibleRuns[0];
+
+  useEffect(() => {
+    setRuns([createModelGatewayRunSummary(initialRun)]);
+    setRefreshStatus("idle");
+    setRefreshError("");
+    setRefreshRecoveryAction("");
+  }, [initialRun, workspaceId]);
+
+  const refreshModelRuns = async () => {
+    setRefreshStatus("syncing");
+    setRefreshError("");
+    setRefreshRecoveryAction("");
+
+    try {
+      const nextRuns = await fetchModelGatewayRuns({
+        apiBaseUrl,
+        workspaceId
+      });
+      setRuns(nextRuns);
+      setRefreshStatus("synced");
+    } catch (error) {
+      setRefreshStatus("error");
+      if (error instanceof ModelGatewayRunClientError) {
+        setRefreshError(error.message);
+        setRefreshRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setRefreshError(error instanceof Error ? error.message : "Model Gateway run refresh failed.");
+      setRefreshRecoveryAction("Start the Phase 2 API and retry Model Gateway run refresh.");
+    }
+  };
+
+  return (
+    <section className="model-run-ledger" aria-label="Server Model Run Ledger">
+      <div className="split-title compact-title">
+        <div>
+          <ServerCog size={17} aria-hidden="true" />
+          <h3>Server Model Run Ledger</h3>
+        </div>
+        <span className={`workflow-status ${latestRun?.status ?? "idle"}`}>{runs.length} runs</span>
+      </div>
+      <p className="section-note">
+        AI-assisted draft for audit preparation only. Not legal advice. Refresh reads persisted metadata-only Model Gateway
+        run summaries from the Phase 2 API.
+      </p>
+      <div className="model-evaluation-actions">
+        <span>Use this to confirm Model Gateway receipts survive reloads and human-review status sync.</span>
+        <button type="button" className="secondary" disabled={refreshStatus === "syncing"} onClick={() => void refreshModelRuns()}>
+          <RefreshCcw size={16} aria-hidden="true" />
+          {refreshStatus === "syncing" ? "Refreshing Server Model Runs" : "Refresh Server Model Runs"}
+        </button>
+      </div>
+      {refreshStatus === "synced" ? (
+        <span className="save-state">
+          Model Gateway runs refreshed: {runs.length} metadata-only run{runs.length === 1 ? "" : "s"}.
+        </span>
+      ) : null}
+      {refreshError ? (
+        <div className="provider-policy-error" role="alert">
+          <strong>{refreshError}</strong>
+          {refreshRecoveryAction ? <span>{refreshRecoveryAction}</span> : null}
+          <small>Not legal advice. Model Gateway run refresh is review workspace metadata only.</small>
+        </div>
+      ) : null}
+      {latestRun ? (
+        <div className="run-facts model-run-ledger-facts">
+          <JourneyFact label="Latest run" value={latestRun.id} />
+          <JourneyFact label="Latest status" value={latestRun.status} />
+          <JourneyFact label="Human review" value={latestRun.humanReviewStatus} />
+          <JourneyFact label="Retry state" value={latestRun.retryState} />
+          <JourneyFact label="Payload hash" value={shortHash(latestRun.payloadHash)} />
+          <JourneyFact label="Response hash" value={shortHash(latestRun.responseHash)} />
+        </div>
+      ) : null}
+      <div className="model-run-ledger-list" aria-label="Model Gateway Run Records">
+        {visibleRuns.length ? (
+          visibleRuns.map((run) => (
+            <article key={run.id} className={`model-run-ledger-card ${run.status}`}>
+              <header>
+                <span>{run.status}</span>
+                <strong>{run.id}</strong>
+              </header>
+              <p>
+                {run.providerLabel} · {run.model} · human review {run.humanReviewStatus}
+              </p>
+              <small>
+                payload {shortHash(run.payloadHash)} · response {shortHash(run.responseHash)} · source{" "}
+                {shortHash(run.sourceEvidenceHash)}
+              </small>
+              <small>
+                retry {run.retryState} · {run.requiresHumanReview ? "human review required" : "no human review required"}
+              </small>
+              {run.remediationSteps.length ? (
+                <ul>
+                  {run.remediationSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ul>
+              ) : null}
+              <small>{run.boundary}</small>
+            </article>
+          ))
+        ) : (
+          <p className="empty-state">No persisted Model Gateway run records were returned. Not legal advice.</p>
+        )}
       </div>
     </section>
   );

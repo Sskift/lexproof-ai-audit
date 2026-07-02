@@ -3062,6 +3062,29 @@ describe("App", () => {
         );
       }
 
+      if (path.endsWith("/model-runs") && init?.method === "GET") {
+        return appJsonResponse(
+          [
+            {
+              id: "model-gateway-run-full",
+              providerLabel: "Mock local reviewer gateway",
+              model: "lexproof-mock",
+              status: "completed",
+              redactionStatus: "clean",
+              humanReviewStatus: "needs-review",
+              payloadHash: "c".repeat(64),
+              responseHash: "d".repeat(64),
+              sourceEvidenceHash: "e".repeat(64),
+              retryState: "not-needed",
+              remediationSteps: [],
+              requiresHumanReview: true,
+              boundary: "AI-assisted draft for audit preparation only. Not legal advice."
+            }
+          ],
+          200
+        );
+      }
+
       if (path.endsWith("/reviews") && init?.method === "GET") {
         return appJsonResponse(
           [
@@ -3187,11 +3210,21 @@ describe("App", () => {
       expect(auditLogExplorer.getByText(/Target types human-review/i)).toBeInTheDocument();
       expect(auditLogExplorer.getAllByText(/model.run.human-review-queued/i).length).toBeGreaterThan(0);
       expect(auditLogExplorer.getByText(/Not legal advice. Audit Log exports are review workspace metadata only./i)).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: /Model Gateway Evaluation/i })).toBeInTheDocument();
-      expect(screen.getByText(/Payload hash cccccccccccc/i)).toBeInTheDocument();
-      expect(screen.getByText(/Source evidence eeeeeeeeeeee/i)).toBeInTheDocument();
-      expect(screen.getByText(/Human review needs-review/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Download Model Evaluation JSON/i })).toBeInTheDocument();
+      const modelRunLedger = within(screen.getByRole("region", { name: /Server Model Run Ledger/i }));
+      expect(modelRunLedger.getByRole("heading", { name: /Server Model Run Ledger/i })).toBeInTheDocument();
+      expect(modelRunLedger.getByText(/Latest run model-gateway-run-full/i)).toBeInTheDocument();
+      fireEvent.click(modelRunLedger.getByRole("button", { name: /Refresh Server Model Runs/i }));
+      expect(await modelRunLedger.findByText(/Model Gateway runs refreshed: 1 metadata-only run/i)).toBeInTheDocument();
+      expect(modelRunLedger.getAllByText(/Human review needs-review/i).length).toBeGreaterThan(0);
+      expect(modelRunLedger.getAllByText(/Retry state not-needed/i).length).toBeGreaterThan(0);
+      expect(modelRunLedger.getAllByText(/AI-assisted draft for audit preparation only. Not legal advice./i).length).toBeGreaterThan(0);
+      const modelEvaluationSection = screen.getByRole("heading", { name: /Model Gateway Evaluation/i }).closest("section");
+      expect(modelEvaluationSection).not.toBeNull();
+      const modelEvaluation = within(modelEvaluationSection as HTMLElement);
+      expect(modelEvaluation.getByText(/Payload hash cccccccccccc/i)).toBeInTheDocument();
+      expect(modelEvaluation.getByText(/Source evidence eeeeeeeeeeee/i)).toBeInTheDocument();
+      expect(modelEvaluation.getByText(/Human review needs-review/i)).toBeInTheDocument();
+      expect(modelEvaluation.getByRole("button", { name: /Download Model Evaluation JSON/i })).toBeInTheDocument();
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     } finally {
       vi.unstubAllGlobals();

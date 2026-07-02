@@ -197,6 +197,7 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
   - returns `ModelGatewayRun` metadata, source evidence hashes, and response hashes without raw payloads
 - `GET /api/workspaces/:workspaceId/model-runs`
   - returns model run summaries
+  - is wired to the Secure Review Workspace Server Model Run Ledger through `src/lib/modelGatewayRunClient.ts`; refresh failures are sanitized and remain Not legal advice
 - `GET /api/workspaces/:workspaceId/model-runs/:runId`
   - returns a single run receipt without credentials
 

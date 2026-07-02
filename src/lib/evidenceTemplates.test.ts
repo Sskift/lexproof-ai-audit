@@ -21,7 +21,7 @@ const aiLegalWorkflowProject: ProjectProfile = {
   id: "template-ai-workflow",
   projectName: "LexAssist Evidence Desk",
   entityType: "Legal operations AI workflow",
-  jurisdictions: ["European Union", "United Kingdom"],
+  jurisdictions: ["United States", "European Union", "United Kingdom"],
   assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
   userType: "In-house counsel and compliance reviewers",
   custodyModel: "No custody; metadata-only evidence records",
@@ -124,7 +124,7 @@ describe("evidence templates", () => {
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
   });
 
-  it("recommends AI workflow evidence with regulatory control links", () => {
+  it("recommends AI workflow evidence with US, EU, and UK regulatory control links", () => {
     const recommended = recommendEvidenceTemplates(aiLegalWorkflowProject);
     const items = createEvidenceItemsFromTemplate("ai-compliance-workflow");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
@@ -133,6 +133,10 @@ describe("evidence templates", () => {
       id: "ai-compliance-workflow",
       title: "AI Legal / Compliance Workflow"
     });
+    expect(items.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["AI system use policy", "NIST GenAI output review and provenance register"])
+    );
+    expect(serializedSources).toContain("regulatory control: control-us-nist-ai-rmf-governance");
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");
     expect(serializedSources).toContain("regulatory control: control-uk-ico-ai-data-protection-governance");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");

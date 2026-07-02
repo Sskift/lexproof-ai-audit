@@ -730,6 +730,69 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-nist-ai-rmf-governance",
+    jurisdiction: "United States",
+    regulator: "National Institute of Standards and Technology",
+    sourceName: "NIST Artificial Intelligence Risk Management Framework and Generative AI Profile",
+    sourceUrl: "https://www.nist.gov/itl/ai-risk-management-framework",
+    citation: "NIST AI RMF 1.0 and NIST AI 600-1 Generative AI Profile",
+    topic: "ai-governance",
+    summary:
+      "Prepare AI risk governance, model-use context, measurement, risk treatment, generative-AI output review, and human accountability evidence for US AI governance review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "legal operations ai workflow",
+      "ai-assisted matter intake",
+      "legal workflow",
+      "generative ai",
+      "model use limits",
+      "permitted model use",
+      "source-linked counsel"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-nist-ai-rmf-govern-map-measure-manage",
+        title: "US NIST AI RMF govern-map-measure-manage evidence",
+        reason:
+          "US AI governance review needs AI use-case context, risk owners, risk tolerance, measurement approach, model-limit decisions, and manage/monitor evidence before counsel or compliance reliance.",
+        priority: "P1",
+        keywords: [
+          "nist ai rmf",
+          "govern map measure manage",
+          "ai risk owner",
+          "model use limits",
+          "risk measurement",
+          "manage monitor"
+        ]
+      },
+      {
+        id: "us-nist-genai-output-review-provenance",
+        title: "US NIST GenAI output review and provenance evidence",
+        reason:
+          "Generative-AI workflow review needs output review, unsupported-claim handling, source provenance, content-risk escalation, and human accountability evidence without exporting confidential matter text.",
+        priority: "P1",
+        keywords: [
+          "nist ai 600-1",
+          "generative ai profile",
+          "output review",
+          "unsupported claims",
+          "source provenance",
+          "human accountability"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which NIST AI RMF governance, mapping, measurement, and management assumptions should US AI governance reviewers inspect for this workflow?",
+      "What evidence shows generative-AI outputs remain draft audit preparation with provenance, unsupported-claim handling, escalation, and accountable human review?"
+    ],
+    localCounselRole: "US AI governance / model risk counsel",
+    effectiveAsOf: "2023-01-26",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against NIST AI RMF 1.0, NIST AI Resource Center AI RMF core functions, and NIST AI 600-1 Generative AI Profile for governance, context mapping, measurement, risk management, GenAI output review, and provenance evidence routing; route interpretation to US AI governance reviewers.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uk-fca-crypto-financial-promotions",
     jurisdiction: "United Kingdom",
     regulator: "Financial Conduct Authority",

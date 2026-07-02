@@ -189,9 +189,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "AI system use policy",
         kind: "Policy",
         content:
-          "Requested: define AI system use policy, permitted model use, prohibited inputs, review owner, human review, escalation, and non-advice output boundary.",
+          "Requested: define AI system use policy, permitted model use, prohibited inputs, review owner, human review, escalation, non-advice output boundary, NIST AI RMF use-case context, AI risk owner, risk measurement, model use limits, and manage-monitor evidence.",
         source:
-          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance",
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance; regulatory control: control-us-nist-ai-rmf-governance",
         status: "requested",
         owner: "Product"
       },
@@ -212,6 +212,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: list source lineage, retrieval dates, assumptions, unsupported claims, risk-control handling, and counsel review notes.",
         source:
           "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance; regulatory control: control-uk-ico-ai-data-protection-governance",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "NIST GenAI output review and provenance register",
+        kind: "Register",
+        content:
+          "Requested: document NIST AI 600-1, generative AI profile, output review, unsupported claims, source provenance, content-risk escalation, human accountability, reviewer owner, and confidential matter text exclusion.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-nist-ai-rmf-governance",
         status: "requested",
         owner: "Compliance"
       },

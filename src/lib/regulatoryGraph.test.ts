@@ -23,7 +23,7 @@ const aiLegalWorkflowProject: ProjectProfile = {
   id: "project-ai-legal-workflow",
   projectName: "LexAssist Evidence Desk",
   entityType: "Legal operations AI workflow",
-  jurisdictions: ["European Union", "United Kingdom"],
+  jurisdictions: ["United States", "European Union", "United Kingdom"],
   assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
   userType: "In-house counsel, compliance reviewers, and outside counsel",
   custodyModel: "No custody; workspace stores metadata-only evidence records",
@@ -357,14 +357,27 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches EU and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches US, EU, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
-      expect.arrayContaining(["eu-ai-act-ai-literacy-governance", "uk-ico-ai-data-protection-governance"])
+      expect.arrayContaining([
+        "us-nist-ai-rmf-governance",
+        "eu-ai-act-ai-literacy-governance",
+        "uk-ico-ai-data-protection-governance"
+      ])
     );
 
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nist-ai-rmf-governance")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "National Institute of Standards and Technology",
+      sourceUrl: "https://www.nist.gov/itl/ai-risk-management-framework",
+      citation: "NIST AI RMF 1.0 and NIST AI 600-1 Generative AI Profile",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "US AI governance / model risk counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-ai-literacy-governance")).toMatchObject({
       jurisdiction: "European Union",
       sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
@@ -381,6 +394,8 @@ describe("createRegulatoryGraph", () => {
     });
     expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
       expect.arrayContaining([
+        "US NIST AI RMF govern-map-measure-manage evidence",
+        "US NIST GenAI output review and provenance evidence",
         "EU AI use policy and human oversight evidence",
         "EU AI source lineage and risk-control evidence",
         "UK AI data-protection and redaction evidence",
@@ -408,6 +423,15 @@ describe("createRegulatoryGraph", () => {
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nist-ai-rmf-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "AI system use policy",
+        "NIST GenAI output review and provenance register"
+      ])
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-ico-ai-data-protection-governance")).toMatchObject({
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
@@ -415,6 +439,7 @@ describe("createRegulatoryGraph", () => {
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
+        expect.objectContaining({ clauseId: "us-nist-ai-rmf-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
       ])
@@ -536,7 +561,11 @@ describe("createRegulatoryGraph", () => {
     const graph = createRegulatoryGraph(manualProject, audit, manualProject.evidenceItems);
 
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
-      expect.arrayContaining(["eu-ai-act-ai-literacy-governance", "uk-ico-ai-data-protection-governance"])
+      expect.arrayContaining([
+        "us-nist-ai-rmf-governance",
+        "eu-ai-act-ai-literacy-governance",
+        "uk-ico-ai-data-protection-governance"
+      ])
     );
   });
 

@@ -35,6 +35,8 @@ const governmentIdPattern =
   /\b(?:driver'?s?\s+licen[cs]e|driving\s+licen[cs]e|national\s+id|government\s+id)\s*(?:number|no\.?|id)?\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{4,24}\b/;
 const authorizationBearerPattern = /\bauthorization\s*:\s*bearer\s+[A-Za-z0-9._~+/=-]{12,}\b/;
 const cloudAccessKeyPattern = /\b(?:aws\s+access\s+key(?:\s+id)?\s*[:=]?\s*)?(?:AKIA|ASIA)[0-9A-Z]{16}\b/;
+const credentialFieldPattern =
+  /(["']?)(\b(?:api[_\-\s]?key|secret[_\-\s]?key|client[_\-\s]?secret|client secret|bearer token|access[_\-\s]?token|refresh[_\-\s]?token|session[_\-\s]?token|password|passphrase)\b)\1(\s*[:=]\s*["']?)[^"',;\s]{8,}["']?/gi;
 const pemPrivateKeyBlockPattern =
   /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
@@ -72,7 +74,7 @@ const classificationRules: ClassificationRule[] = [
     dataClass: "credential-material",
     severity: "block",
     pattern: new RegExp(
-      `${authorizationBearerPattern.source}|${cloudAccessKeyPattern.source}|\\b(api[_\\-\\s]?key|secret[_\\-\\s]?key|client secret|bearer token)\\s*[:=]\\s*[\\w.\\-]{8,}`,
+      `${authorizationBearerPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
       "gi"
     ),
     message: "Credential fields must be removed before export handoff."
@@ -150,7 +152,7 @@ export function redactClassifiedText(value: string): string {
     .replace(/0x[a-fA-F0-9]{64}/g, "[redacted-private-key]")
     .replace(new RegExp(authorizationBearerPattern.source, "gi"), "Authorization: Bearer [redacted-secret]")
     .replace(new RegExp(cloudAccessKeyPattern.source, "gi"), "[redacted-secret]")
-    .replace(/\b(api[_\-\s]?key|secret[_\-\s]?key|client secret|bearer token)(\s*[:=]\s*)[\w.\-]{8,}/gi, "$1$2[redacted-secret]")
+    .replace(new RegExp(credentialFieldPattern.source, "gi"), redactCredentialField)
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")
     .replace(new RegExp(evmWalletAddressPattern.source, "gi"), "[redacted-wallet-address]")
     .replace(/\b[a-fA-F0-9]{24,}\b/g, "[redacted-hex-material]")
@@ -162,6 +164,11 @@ export function redactClassifiedText(value: string): string {
     .replace(new RegExp(governmentIdPattern.source, "gi"), "[redacted-government-id]")
     .replace(new RegExp(phonePattern.source, "gi"), "[redacted-phone]")
     .replace(/(?<!-)\b(passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]");
+}
+
+function redactCredentialField(_match: string, keyQuote: string, label: string, separator: string): string {
+  const valueQuote = separator.match(/["']$/)?.[0] ?? "";
+  return `${keyQuote}${label}${keyQuote}${separator}[redacted-secret]${valueQuote}`;
 }
 
 function isNegatedKycReference(text: string, matchIndex: number): boolean {

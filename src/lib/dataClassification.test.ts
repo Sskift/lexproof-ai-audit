@@ -4,6 +4,8 @@ import { classifyDataBoundaryText, redactClassifiedText } from "./dataClassifica
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const bearerToken = "eyJhbGciOiJIUzI1NiJ9.auditPrepPayload.signature";
 const awsAccessKey = "AKIAIOSFODNN7EXAMPLE";
+const connectorPassword = "Sup3rSecret!2026";
+const refreshToken = "rt_abcdef1234567890abcdef";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const pemPrivateKey = [
   "-----BEGIN PRIVATE KEY-----",
@@ -60,6 +62,23 @@ describe("classifyDataBoundaryText", () => {
     expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
     expect(serialized).not.toContain(bearerToken);
     expect(serialized).not.toContain(awsAccessKey);
+  });
+
+  it("blocks password and token fields without exposing connector credential values", () => {
+    const findings = classifyDataBoundaryText(
+      `Connector draft {"password":"${connectorPassword}","refresh_token":"${refreshToken}"}.`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 2
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-secret]");
+    expect(serialized).not.toContain(connectorPassword);
+    expect(serialized).not.toContain(refreshToken);
   });
 
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
@@ -169,6 +188,16 @@ describe("redactClassifiedText", () => {
     expect(redacted).toContain("[redacted-secret]");
     expect(redacted).not.toContain(bearerToken);
     expect(redacted).not.toContain(awsAccessKey);
+  });
+
+  it("redacts password and token field values from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(`password="${connectorPassword}"; refresh_token=${refreshToken}`);
+
+    expect(redacted).toContain('password="[redacted-secret]"');
+    expect(redacted).toContain("refresh_token=[redacted-secret]");
+    expect(redacted).toContain("[redacted-secret]");
+    expect(redacted).not.toContain(connectorPassword);
+    expect(redacted).not.toContain(refreshToken);
   });
 
   it("redacts direct personal identifiers from reusable boundary snippets", () => {

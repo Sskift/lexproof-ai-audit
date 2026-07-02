@@ -35,7 +35,17 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         content:
           "Requested: document wallet authority, signer quorum, withdrawal approval, emergency pause, incident response, virtual asset service activity scope, authorization assumptions, custody boundaries, transfer controls, responsible owner, client virtual asset treatment, and proof of reserves evidence.",
         source:
-          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-casp-custody-administration; regulatory control: control-eu-dora-ict-operational-resilience; regulatory control: control-sg-mas-dpt-customer-asset-safeguards; regulatory control: control-hk-sfc-vatp-client-asset-custody; regulatory control: control-br-bcb-virtual-asset-service-framework; regulatory control: control-uae-vara-compliance-risk-management",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "EU DORA ICT resilience register",
+        kind: "Register",
+        content:
+          "Requested: summarize ICT risk management, business continuity, incident classification, incident response, escalation owner, testing cadence, critical function mapping, ICT third-party service register, subcontracting, access logging, exit plan, resilience testing, and recovery evidence without credentials or raw customer records.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-dora-ict-operational-resilience",
         status: "requested",
         owner: "Compliance"
       },

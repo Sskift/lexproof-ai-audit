@@ -704,6 +704,8 @@ describe("App", () => {
     expect(screen.getByLabelText(/Project name/i)).toHaveValue("YieldPassport");
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Regulation \(EU\) 2022\/2554, DORA Articles 5-16, 17-23, and 28/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU DORA ICT risk management and incident-response evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
   });
 

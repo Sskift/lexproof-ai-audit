@@ -54,6 +54,7 @@ describe("createRegulatoryControlMatrix", () => {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
       custodyModel: "No custody; issuer only prepares metadata summaries for counsel review",
+      dataSensitivity: "Public disclosure metadata and source-lineage notes for this review fixture",
       aiUsage: "Manual evidence summary only",
       evidenceItems: [
         {
@@ -90,6 +91,7 @@ describe("createRegulatoryControlMatrix", () => {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
       custodyModel: "No custody; issuer only prepares metadata summaries for counsel review",
+      dataSensitivity: "Public disclosure metadata and source-lineage notes for this review fixture",
       aiUsage: "Manual evidence summary only",
       evidenceItems: [
         {

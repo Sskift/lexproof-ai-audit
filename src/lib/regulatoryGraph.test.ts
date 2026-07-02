@@ -61,6 +61,7 @@ describe("createRegulatoryGraph", () => {
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
       expect.arrayContaining([
         "eu-mica-title-ii-white-paper",
+        "eu-dora-ict-operational-resilience",
         "uk-fca-crypto-financial-promotions",
         "sg-mas-psn02-dpt-aml-cft",
         "ch-finma-ico-token-classification",
@@ -78,8 +79,8 @@ describe("createRegulatoryGraph", () => {
     });
 
     expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "European Union")).toMatchObject({
-      matchedClauseCount: 3,
-      missingEvidenceCount: 6,
+      matchedClauseCount: 4,
+      missingEvidenceCount: 8,
       readiness: "evidence-gaps",
       localCounselRole: "EU crypto-asset / data protection counsel"
     });
@@ -256,7 +257,7 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2,
-      matchedEvidenceLabels: ["Wallet sanctions screening and escalation controls"]
+      matchedEvidenceLabels: expect.arrayContaining(["Wallet sanctions screening and escalation controls"])
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "us-ofac-virtual-currency-sanctions-compliance" })])
@@ -362,7 +363,7 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
-  it("matches EU MiCA custody and administration controls for platform wallet custody facts", () => {
+  it("matches EU MiCA custody and DORA operational-resilience controls for platform wallet custody facts", () => {
     const custodyProject: ProjectProfile = {
       ...baseProject,
       id: "project-eu-casp-custody",
@@ -376,7 +377,7 @@ describe("createRegulatoryGraph", () => {
     const graph = createRegulatoryGraph(custodyProject, audit, custodyProject.evidenceItems);
 
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
-      expect.arrayContaining(["eu-mica-casp-custody-administration"])
+      expect.arrayContaining(["eu-mica-casp-custody-administration", "eu-dora-ict-operational-resilience"])
     );
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-casp-custody-administration")).toMatchObject({
       jurisdiction: "European Union",
@@ -389,13 +390,23 @@ describe("createRegulatoryGraph", () => {
     expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
       expect.arrayContaining([
         "EU CASP custody and administration policy evidence",
-        "EU client crypto-asset safeguarding and access-control evidence"
+        "EU client crypto-asset safeguarding and access-control evidence",
+        "EU DORA ICT risk management and incident-response evidence",
+        "EU DORA ICT third-party service register evidence"
       ])
     );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-dora-ict-operational-resilience")).toMatchObject({
+      jurisdiction: "European Union",
+      topic: "operational-resilience",
+      citation: "Regulation (EU) 2022/2554, DORA Articles 5-16, 17-23, and 28",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2022/2554/oj/eng",
+      coverageStatus: "missing",
+      localCounselRole: "EU DORA / operational resilience counsel"
+    });
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("marks EU MiCA custody controls covered when RWA custody template evidence is verified", () => {
+  it("marks EU MiCA custody and DORA controls covered when RWA custody template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `rwa-template-${index + 1}`,
@@ -417,10 +428,19 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2,
-      matchedEvidenceLabels: ["Custody and signer control runbook"]
+      matchedEvidenceLabels: expect.arrayContaining(["Custody and signer control runbook"])
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-dora-ict-operational-resilience")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Custody and signer control runbook", "EU DORA ICT resilience register"]
     });
     expect(graph.evidenceGaps).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ clauseId: "eu-mica-casp-custody-administration" })])
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "eu-mica-casp-custody-administration" }),
+        expect.objectContaining({ clauseId: "eu-dora-ict-operational-resilience" })
+      ])
     );
   });
 
@@ -644,7 +664,7 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2,
-      matchedEvidenceLabels: ["Custody and signer control runbook"]
+      matchedEvidenceLabels: expect.arrayContaining(["Custody and signer control runbook"])
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "hk-sfc-vatp-client-asset-custody" })])
@@ -678,7 +698,7 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2,
-      matchedEvidenceLabels: ["Custody and signer control runbook"]
+      matchedEvidenceLabels: expect.arrayContaining(["Custody and signer control runbook"])
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ clauseId: "sg-mas-dpt-customer-asset-safeguards" })])

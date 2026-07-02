@@ -6,6 +6,7 @@ export type RegulatoryClauseTopic =
   | "aml-cft"
   | "ai-governance"
   | "governance"
+  | "operational-resilience"
   | "evidence";
 
 export type RegulatoryEvidenceRequest = {
@@ -417,6 +418,73 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-07-01",
     reviewerNotes:
       "Source metadata reviewed against MiCA Article 75 custody and administration routing plus ESMA MiCA materials; route interpretation and applicability to EU local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "eu-dora-ict-operational-resilience",
+    jurisdiction: "European Union",
+    regulator: "European Union / European Supervisory Authorities",
+    sourceName: "Regulation (EU) 2022/2554 on digital operational resilience for the financial sector",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2022/2554/oj/eng",
+    citation: "Regulation (EU) 2022/2554, DORA Articles 5-16, 17-23, and 28",
+    topic: "operational-resilience",
+    summary:
+      "Prepare ICT risk management, major incident reporting, digital operational resilience testing, and ICT third-party risk evidence for EU financial-sector and CASP custody review.",
+    triggerFlagIds: ["custody", "sensitive-data"],
+    triggerKeywords: [
+      "dora",
+      "digital operational resilience",
+      "ict risk",
+      "incident reporting",
+      "third-party risk",
+      "casp",
+      "crypto-asset service provider",
+      "client crypto-asset",
+      "custody administration"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-dora-ict-risk-management-incident-response",
+        title: "EU DORA ICT risk management and incident-response evidence",
+        reason:
+          "EU operational-resilience review needs ICT risk-management policy, business-continuity runbook, incident classification, escalation owner, testing cadence, and recovery evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "ict risk management",
+          "business continuity",
+          "incident classification",
+          "incident response",
+          "escalation owner",
+          "testing cadence",
+          "recovery"
+        ]
+      },
+      {
+        id: "eu-dora-ict-third-party-register",
+        title: "EU DORA ICT third-party service register evidence",
+        reason:
+          "CASP or custody workflows using cloud, wallet, analytics, or model vendors should retain ICT third-party service register, critical-function mapping, subcontracting, access logging, exit, and resilience-testing evidence.",
+        priority: "P1",
+        keywords: [
+          "ict third-party service register",
+          "critical function",
+          "subcontracting",
+          "access logging",
+          "exit plan",
+          "resilience testing",
+          "vendor register"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which DORA ICT risk, incident reporting, testing, and third-party service controls should EU counsel or compliance reviewers map to this CASP or custody workflow?",
+      "What evidence shows operational resilience, critical service dependencies, access logging, exit planning, and incident escalation without storing raw credentials or customer records?"
+    ],
+    localCounselRole: "EU DORA / operational resilience counsel",
+    effectiveAsOf: "2025-01-17",
+    lastReviewedAt: "2026-07-02",
+    reviewerNotes:
+      "Source metadata reviewed against the DORA regulation, European Commission DORA implementing/delegated acts page, and EBA operational-resilience materials for ICT risk, incident reporting, testing, and third-party risk evidence routing; route interpretation to EU local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

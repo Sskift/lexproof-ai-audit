@@ -127,6 +127,38 @@ describe("createModelReviewRun", () => {
     expect(secondRun.responseHash).toBe(firstRun.responseHash);
     expect(secondRun.runId).not.toBe(firstRun.runId);
   });
+
+  it("redacts unsafe display metadata before exporting a model review ledger run", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const unsafePayload = {
+      ...payload,
+      project: {
+        ...payload.project,
+        projectName: `Model Ledger ${apiKey} final legal decision`
+      }
+    };
+
+    const run = await createModelReviewRun({
+      payload: unsafePayload,
+      responseContent: JSON.stringify({ extractedFacts: ["Tokenized yield note"] }),
+      providerLabel: `Provider leaked ${apiKey}`,
+      model: `model-${privateKey}-raw KYC packet`,
+      redactionStatus: "needs-review",
+      generatedAt: "2026-06-29T00:00:00.000Z"
+    });
+    const json = exportModelReviewRunJson(run);
+
+    expect(run.projectName).toContain("[redacted-api-key]");
+    expect(run.projectName).toContain("[redacted-legal-conclusion]");
+    expect(run.providerLabel).toContain("[redacted-api-key]");
+    expect(run.model).toContain("[redacted-private-key]");
+    expect(run.model).toContain("[redacted-raw-kyc]");
+    expect(json).not.toContain(apiKey);
+    expect(json).not.toContain(privateKey);
+    expect(json).not.toMatch(/final legal decision|raw KYC packet/i);
+    expect(json).toContain("AI-assisted draft for audit preparation only. Not legal advice.");
+  });
 });
 
 describe("runAIReviewWithLedger", () => {

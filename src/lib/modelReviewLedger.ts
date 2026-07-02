@@ -2,6 +2,7 @@ import type { AuditResult } from "./auditEngine";
 import {
   buildAIReviewPayload,
   parseAIReviewJson,
+  redactSensitiveContent,
   type AIReviewPayload,
   type AIReviewResult,
   type RedactionReport
@@ -53,9 +54,9 @@ export async function createModelReviewRun(input: CreateModelReviewRunInput): Pr
     runId: `ai-run-${runIdHash.slice(0, 16)}`,
     generatedAt,
     projectId: input.projectId ?? "unscoped-project",
-    projectName: input.payload.project.projectName,
-    providerLabel: input.providerLabel,
-    model: input.model,
+    projectName: createSafeLedgerDisplayText(input.payload.project.projectName),
+    providerLabel: createSafeLedgerDisplayText(input.providerLabel),
+    model: createSafeLedgerDisplayText(input.model),
     redactionStatus: input.redactionStatus,
     payloadHash,
     responseHash,
@@ -138,4 +139,8 @@ function stableStringify(value: unknown): string {
 
 function mergeUnique(values: string[]): string[] {
   return Array.from(new Set(values));
+}
+
+function createSafeLedgerDisplayText(value: string): string {
+  return redactSensitiveContent(value).replace(/\s+/g, " ").trim();
 }

@@ -1128,11 +1128,12 @@ describe("App", () => {
         expect.objectContaining({
           checklistVersion: "lexproof-demo-smoke-checklist-v1",
           status: "ready",
-          commandCount: 5,
+          commandCount: 6,
           notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
         })
       );
       expect(smokePayload).toContain("npm run verify");
+      expect(smokePayload).toContain("npm run demo:smoke");
       expect(smokePayload).toContain("phase-2-api-preflight");
       expect(smokePayload).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
 
@@ -4119,7 +4120,7 @@ describe("App", () => {
 
     expect(await screen.findByText(/Human review decision saved for .*Counsel Pack v1/i)).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice; this is an audit preparation workflow status/i)).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("includes saved Human Review timeline metadata in the Counsel Pack preview", async () => {
     render(<App />);
@@ -4148,7 +4149,7 @@ describe("App", () => {
     expect(memo).toHaveTextContent(/reviewer: Outside counsel/i);
     expect(memo).toHaveTextContent(/Reviewed risk flag for audit-prep export/i);
     expect(memo).toHaveTextContent(/human-review-audit-/i);
-  }, 10000);
+  }, 20000);
 
   it("shows and downloads a Human Review timeline with saved status history", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;

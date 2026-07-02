@@ -70,6 +70,7 @@ export type DemoSmokeChecklistStep = {
     | "run-verify"
     | "build-server"
     | "start-api"
+    | "run-demo-smoke"
     | "start-frontend"
     | "phase-2-api-preflight"
     | "screenshot-set";
@@ -125,6 +126,7 @@ export const demoReadinessCommands = [
   "npm run verify",
   "npm run build:server",
   "DATABASE_URL=file:./demo-review-workspace.db npm run start:api",
+  "DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke",
   "npm run dev"
 ];
 
@@ -170,7 +172,13 @@ export function createDemoSmokeChecklist(report: DemoReadinessReport): DemoSmoke
     createCommandStep("run-verify", "Run verification", report.cleanCloneCommands[1], "Run the full repository verification gate."),
     createCommandStep("build-server", "Build Phase 2 API", report.cleanCloneCommands[2], "Build the server bundle before starting the API."),
     createCommandStep("start-api", "Start Phase 2 API", report.cleanCloneCommands[3], "Start the local metadata-only API with a disposable SQLite file."),
-    createCommandStep("start-frontend", "Start workbench", report.cleanCloneCommands[4], "Start the local Vite workbench for the judge path."),
+    createCommandStep(
+      "run-demo-smoke",
+      "Run demo smoke CLI",
+      report.cleanCloneCommands[4],
+      "Check repository files, screenshots, and the Phase 2 API health endpoint before opening the workbench."
+    ),
+    createCommandStep("start-frontend", "Start workbench", report.cleanCloneCommands[5], "Start the local Vite workbench for the judge path."),
     {
       id: "phase-2-api-preflight",
       label: apiPreflightCheck.label,

@@ -8,11 +8,13 @@ Run the API and web app in separate terminals:
 
 ```bash
 npm install
+npm run verify
 npm run build:server
 DATABASE_URL=file:./demo-review-workspace.db npm run start:api
 ```
 
 ```bash
+DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
 npm run dev
 ```
 
@@ -23,6 +25,7 @@ Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks f
 Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 
 - Confirm **Scenario library**, **Clean clone commands**, **Private credentials not required**, and **Screenshot set** are ready.
+- Confirm the terminal `npm run demo:smoke` result is `ready`; use `npm run demo:smoke -- --skip-api` only for offline repository checks.
 - Enter `http://127.0.0.1:8787` in **Demo API base URL**, click **Check Demo API**, and confirm **Phase 2 API preflight ready**.
 - Click **Download Demo Runbook JSON** and show the stable runbook hash, scenario count, API preflight status, screenshot references, limitations, and Not legal advice boundary.
 - Screenshot: `docs/assets/screenshots/judge-demo-readiness.png`.

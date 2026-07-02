@@ -12,6 +12,7 @@
     "pretest": "npm run prisma:generate",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
+    "demo:smoke": "node scripts/demo-smoke.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "verify": "npm test && npm run build"
   },

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { demoReadinessScreenshotRefs } from "../data/demoReadiness";
@@ -76,6 +77,7 @@ describe("demo readiness", () => {
       ["run-verify", "ready"],
       ["build-server", "ready"],
       ["start-api", "ready"],
+      ["run-demo-smoke", "ready"],
       ["start-frontend", "ready"],
       ["phase-2-api-preflight", "not-checked"],
       ["screenshot-set", "ready"]
@@ -181,6 +183,31 @@ describe("demo readiness", () => {
     const missingRefs = demoReadinessScreenshotRefs.filter((ref) => !existsSync(resolve(process.cwd(), ref)));
 
     expect(missingRefs).toEqual([]);
+  });
+
+  it("runs the clean-clone demo smoke CLI without API dependencies when explicitly skipped", () => {
+    const output = execFileSync(process.execPath, ["scripts/demo-smoke.mjs", "--skip-api", "--json"], {
+      cwd: process.cwd(),
+      encoding: "utf8"
+    });
+    const report = JSON.parse(output);
+
+    expect(report).toEqual(
+      expect.objectContaining({
+        reportVersion: "lexproof-demo-smoke-cli-v1",
+        status: "ready",
+        notLegalAdviceBoundary: "Not legal advice. Demo smoke checks are audit preparation readiness metadata only."
+      })
+    );
+    expect(report.checks.map((check: { id: string; status: string }) => [check.id, check.status])).toEqual([
+      ["package-scripts", "ready"],
+      ["required-files", "ready"],
+      ["screenshot-assets", "ready"],
+      ["phase-2-api-health", "ready"]
+    ]);
+    expect(report.nextActions).toEqual(["Demo smoke checks are ready for the clean-clone judge path."]);
+    expect(JSON.stringify(report)).toContain("Not legal advice");
+    expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
   });
 
   it("checks the Phase 2 API health endpoint and returns capability evidence", async () => {

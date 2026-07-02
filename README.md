@@ -87,7 +87,7 @@ Key evidence:
 - Counsel Handoff Checklist in Counsel Pack, with a stable checklist hash, export safety status, evidence manifest/source pack/submission pack readiness, review status, saved version state, server export-record state, and downloadable metadata-only JSON. Not legal advice.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, export safety summary, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
-- Demo Smoke Checklist JSON from Judge Demo Readiness, plus Demo Runbook JSON from Judge Demo Readiness and Sources with clean-clone commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash for hackathon judges. Not legal advice.
+- Demo Smoke Checklist JSON and `npm run demo:smoke` CLI preflight from Judge Demo Readiness, plus Demo Runbook JSON from Judge Demo Readiness and Sources with clean-clone commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash for hackathon judges. Not legal advice.
 - Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Demo Runbook JSON, Source Freshness Board hash/status, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Judge Handoff Bundle JSON from Sources that consolidates Submission Pack, Demo Runbook, Export Safety Inventory, and Counsel Handoff Checklist hashes/statuses into one metadata-only judge packet with a stable bundle hash and Not legal advice boundary.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
@@ -102,7 +102,7 @@ The Demo Scenario Library turns seeded synthetic profiles into runnable judging 
 
 ![Demo Scenario Library marketing claims path](docs/assets/screenshots/demo-scenario-library-marketing-claims.png)
 
-Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, a downloadable Demo Smoke Checklist JSON, validated synthetic scenarios, no private credentials, current screenshot set, a `/api/health` preflight for the Phase 2 API, and a downloadable Demo Runbook JSON with a stable runbook hash. Not legal advice.
+Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, the `npm run demo:smoke` CLI preflight, a downloadable Demo Smoke Checklist JSON, validated synthetic scenarios, no private credentials, current screenshot set, a `/api/health` preflight for the Phase 2 API, and a downloadable Demo Runbook JSON with a stable runbook hash. Not legal advice.
 
 ![Judge Demo Readiness](docs/assets/screenshots/judge-demo-readiness.png)
 
@@ -432,6 +432,20 @@ The Judge Handoff Bundle gives evaluators one Sources-level JSON packet that lis
 
 The runnable judge path is documented in [docs/demo-script.md](docs/demo-script.md). It starts the Phase 2 API, opens the Vite app, and walks through:
 
+Clean-clone smoke gate:
+
+```bash
+# Terminal 1
+npm install
+npm run verify
+npm run build:server
+DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+
+# Terminal 2
+DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
+npm run dev
+```
+
 1. Demo Scenario Library launch from a synthetic profile such as **High-risk RWA launch**, **DAO proposal review**, **Brazil VASP source review**, **Swiss FINMA stablecoin review**, **Hong Kong VATP custody review**, **Japan crypto custody review**, **Canada CTP custody review**, **Australia digital asset review**, **Korea VASP user protection review**, **India VDA PMLA review**, **UK cryptoasset AML review**, or **Marketing claims review**.
 2. Workspace Journey review on the command center to show the full path and next blocked/review action.
 3. Model Connect validation with the mock local reviewer.
@@ -538,6 +552,18 @@ npm run build:server
 npm run start:api
 ```
 
+Once the API is running, the judge smoke CLI checks required npm scripts, demo files, screenshot assets, and `/api/health` without using private credentials:
+
+```bash
+DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
+```
+
+For offline repository-only checks, use:
+
+```bash
+npm run demo:smoke -- --skip-api
+```
+
 The API defaults to `http://127.0.0.1:8787` and currently exposes `GET /api/health`, Model Gateway adapter readiness, provider policy and secret policy evaluation routes, Object Storage Policy Evaluation, Document Parser Policy Evaluation, Chain Anchor Policy Evaluation, GRC Destination Policy Evaluation, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, mock Model Gateway run create/list/lookup routes, Human Review create/update/list plus queue-view routes, Source Approval sync/list routes, Counsel Pack export-record create/list/read routes, Integration Policy Evaluation receipt listing, filtered Audit Log listing, and Prisma/SQLite persistence for workspace/evidence/model/review/integration-policy/source-approval/export/audit records. Health and API preflight behavior lives in `server/systemRoutes.ts`, keeping `server/app.ts` focused on composition and shared hooks. Evidence uploads are hashed server-side and responses stay metadata-only. Evidence Vault manifests are generated from persisted metadata through `src/lib/evidenceVaultManifest.ts`, with stable item ordering, lineage/status/version/control-link hashing, no raw file bytes, and no source-note body content in the JSON; the Evidence Ledger can download that server manifest after sync. Duplicate evidence hashes are blocked with recoverable errors, rejected vault records can be superseded by replacement metadata with parent lineage and a replacement reason, and invalid status transitions return recovery guidance before any write or audit-log mutation. Model Gateway policy routes evaluate provider readiness and secret-policy controls without accepting provider credentials or enabling external proxying. `POST /api/integrations/object-storage/policy` evaluates metadata-only object-storage controls without raw uploads, credentials, storage buckets, or adapter enablement; it always returns `externalObjectStorageAllowed: false`. `POST /api/integrations/document-parser/policy` evaluates metadata-only document parser controls without raw document bytes, raw document body, credentials, OCR execution, parser adapters, or legal-decision output; it always returns `externalDocumentParsingAllowed: false`. `POST /api/integrations/chain-anchor/policy` evaluates metadata-only simulated anchor controls without wallet keys, signed transactions, raw evidence, raw KYC, credentials, or blockchain submission; it always returns `externalChainAnchoringAllowed: false` and `anchorMode: simulated-only`. `POST /api/integrations/grc-destination/policy` evaluates metadata-only GRC destination controls without API keys, webhook secrets, raw ticket bodies, raw KYC, personal data, or external ticket creation; it always returns `externalGrcTicketCreationAllowed: false`. When those integration policy requests include a workspace ID and the Phase 2 API repository is active, the response also includes a metadata-only `evaluationRecord`, persists that receipt, and writes an audit-log entry; `GET /api/workspaces/:workspaceId/integration-policy-evaluations` lists the receipts without raw policy, context, evidence, credential, or ticket body content. `POST /api/workspaces/:workspaceId/source-approvals` persists metadata-only source approval records and audit-log entries from the Source Update Approval Queue while keeping `matchingBehaviorChanged: false`; `GET /api/workspaces/:workspaceId/source-approvals` lists those records. `GET /api/workspaces/:workspaceId/audit-log` supports actor, action, target type, and target ID filters from the Secure Review Workspace without returning raw payloads, credentials, raw KYC, personal data, or legal conclusions. Model Gateway runs enforce Redaction Gate status, allowed data classes, purpose, human-review owner, credential/KYC blockers, and adapter policy. Successful runs persist payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status, then automatically create a model-run Human Review request with audit-log metadata; the Secure Review Workspace can refresh persisted run summaries through the Server Model Run Ledger. Failed or blocked runs persist safe failure receipts with run IDs, retry state, error codes, and remediation steps without returning raw payloads. Human Review queue views group filtered review records by target type, status, reviewer, and next action for evidence, model-run, risk-flag, clause-match, and counsel-pack targets without representing review as legal approval; evidence-target decisions sync Evidence Vault status, and model-run decisions sync Model Gateway human-review status plus audit-log metadata. Counsel Pack export records persist version number, artifact name, manifest hash, artifact hash, review summary, source count, Regulatory Source Pack hash, source review status, and the Not legal advice boundary without storing raw Markdown/PDF content. The backend only enables the local mock model adapter in this phase; OpenAI-compatible and enterprise-proxy adapters are listed as disabled placeholders even when secret policy controls evaluate ready, until a separate adapter enablement review is approved. It does not persist uploaded file bytes, store model credentials, process KYC, call external model providers, upload to object storage, run OCR, create external GRC tickets, or write to a blockchain.
 
 Source Review Ledger persistence is also available through `POST /api/workspaces/:workspaceId/source-reviews` and `GET /api/workspaces/:workspaceId/source-reviews`. It stores metadata-only source review records with a stable ledger hash, audit-log entry, `matchingBehaviorChanged: false`, and the Not legal advice boundary; it does not ingest raw source bodies or change regulatory matching behavior.
@@ -545,8 +571,12 @@ Source Review Ledger persistence is also available through `POST /api/workspaces
 For the scripted hackathon demo, use a disposable SQLite file:
 
 ```bash
+# Terminal 1
 npm run build:server
 DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+
+# Terminal 2
+DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
 ```
 
 Then run the frontend in another terminal:

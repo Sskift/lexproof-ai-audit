@@ -207,6 +207,12 @@ Start the API with local SQLite:
 DATABASE_URL=file:./demo-review-workspace.db npm run start:api
 ```
 
+Run the judge smoke CLI once the API is up:
+
+```bash
+DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
+```
+
 Start the frontend in a second terminal:
 
 ```bash

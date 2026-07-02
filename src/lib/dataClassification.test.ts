@@ -15,6 +15,13 @@ const slackToken = ["xoxb", "123456789012", "syntheticSlackTokenValue"].join("-"
 const databaseConnectionUri = "postgres://audit_user:Sup3rSecretPass@db.internal.example.com:5432/lexproof";
 const webhookSigningSecret = ["whsec", "syntheticWebhookSecretValue123456"].join("_");
 const signingSecret = "synthetic-signing-secret-value-123456";
+const slackWebhookUrl = [
+  "https://hooks.slack.com/services",
+  "T00000000",
+  "B00000000",
+  "syntheticWebhookUrlToken123456"
+].join("/");
+const webhookCallbackUrl = "https://hooks.example.test/inbound/synthetic-shared-webhook-key-123456";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const pemPrivateKey = [
   "-----BEGIN PRIVATE KEY-----",
@@ -184,6 +191,25 @@ describe("classifyDataBoundaryText", () => {
     expect(serialized).not.toContain(webhookSigningSecret);
     expect(serialized).not.toContain(signingSecret);
     expect(serialized).not.toContain("syntheticWebhookSecretValue");
+  });
+
+  it("blocks secret-bearing webhook URLs without exposing URL token values", () => {
+    const findings = classifyDataBoundaryText(
+      `Integration draft copied ${slackWebhookUrl}; webhook_url="${webhookCallbackUrl}".`
+    );
+    const credentialFinding = findings.find((finding) => finding.dataClass === "credential-material");
+    const serialized = JSON.stringify(findings);
+
+    expect(credentialFinding).toMatchObject({
+      dataClass: "credential-material",
+      severity: "block",
+      matchCount: 2
+    });
+    expect(credentialFinding?.redactedSnippet).toContain("[redacted-webhook-url]");
+    expect(serialized).not.toContain(slackWebhookUrl);
+    expect(serialized).not.toContain(webhookCallbackUrl);
+    expect(serialized).not.toContain("syntheticWebhookUrlToken");
+    expect(serialized).not.toContain("synthetic-shared-webhook-key");
   });
 
   it("ignores negated raw KYC references so metadata-only safety copy is not blocked", () => {
@@ -360,6 +386,19 @@ describe("redactClassifiedText", () => {
     expect(redacted).not.toContain(webhookSigningSecret);
     expect(redacted).not.toContain(signingSecret);
     expect(redacted).not.toContain("syntheticWebhookSecretValue");
+  });
+
+  it("redacts secret-bearing webhook URLs from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText(
+      `Webhook endpoint ${slackWebhookUrl}; webhook_url="${webhookCallbackUrl}"`
+    );
+
+    expect(redacted).toContain("[redacted-webhook-url]");
+    expect(redacted).toContain('webhook_url="[redacted-secret]"');
+    expect(redacted).not.toContain(slackWebhookUrl);
+    expect(redacted).not.toContain(webhookCallbackUrl);
+    expect(redacted).not.toContain("syntheticWebhookUrlToken");
+    expect(redacted).not.toContain("synthetic-shared-webhook-key");
   });
 
   it("redacts direct personal identifiers from reusable boundary snippets", () => {

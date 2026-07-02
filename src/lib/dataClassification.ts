@@ -42,10 +42,12 @@ const cloudAccessKeyPattern = /\b(?:aws\s+access\s+key(?:\s+id)?\s*[:=]?\s*)?(?:
 const integrationTokenPattern =
   /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,})\b/;
 const webhookSecretPattern = /\bwhsec_[A-Za-z0-9_]{20,}\b/;
+const secretWebhookUrlPattern =
+  /\bhttps:\/\/(?:hooks\.slack\.com\/services\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]{20,}|discord(?:app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9._-]{20,})\b/;
 const credentialConnectionUriPattern =
   /\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqp|amqps|https?):\/\/[^\s/@:]+:[^\s/@]{6,}@[^\s"'<>]+/;
 const credentialFieldPattern =
-  /(["']?)(\b(?:api[_\-\s]?key|secret[_\-\s]?key|client[_\-\s]?secret|client secret|bearer token|access[_\-\s]?token|refresh[_\-\s]?token|session[_\-\s]?token|webhook[_\-\s]?secret|signing[_\-\s]?secret|password|passphrase)\b)\1(\s*[:=]\s*["']?)[^"',;\s]{8,}["']?/gi;
+  /(["']?)(\b(?:api[_\-\s]?key|secret[_\-\s]?key|client[_\-\s]?secret|client secret|bearer token|access[_\-\s]?token|refresh[_\-\s]?token|session[_\-\s]?token|webhook[_\-\s]?secret|signing[_\-\s]?secret|webhook[_\-\s]?url|password|passphrase)\b)\1(\s*[:=]\s*["']?)[^"',;\s]{8,}["']?/gi;
 const pemPrivateKeyBlockPattern =
   /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
@@ -83,7 +85,7 @@ const classificationRules: ClassificationRule[] = [
     dataClass: "credential-material",
     severity: "block",
     pattern: new RegExp(
-      `${authorizationBearerPattern.source}|${authorizationBasicPattern.source}|${bearerCredentialPattern.source}|${basicCredentialPattern.source}|${jwtCredentialPattern.source}|${integrationTokenPattern.source}|${webhookSecretPattern.source}|${credentialConnectionUriPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
+      `${authorizationBearerPattern.source}|${authorizationBasicPattern.source}|${bearerCredentialPattern.source}|${basicCredentialPattern.source}|${jwtCredentialPattern.source}|${integrationTokenPattern.source}|${webhookSecretPattern.source}|${secretWebhookUrlPattern.source}|${credentialConnectionUriPattern.source}|${cloudAccessKeyPattern.source}|${credentialFieldPattern.source}`,
       "gi"
     ),
     message: "Credential fields must be removed before export handoff."
@@ -166,6 +168,7 @@ export function redactClassifiedText(value: string): string {
     .replace(new RegExp(jwtCredentialPattern.source, "gi"), "[redacted-jwt]")
     .replace(new RegExp(integrationTokenPattern.source, "gi"), "[redacted-integration-token]")
     .replace(new RegExp(webhookSecretPattern.source, "gi"), "[redacted-webhook-secret]")
+    .replace(new RegExp(secretWebhookUrlPattern.source, "gi"), "[redacted-webhook-url]")
     .replace(new RegExp(credentialConnectionUriPattern.source, "gi"), "[redacted-connection-uri]")
     .replace(new RegExp(cloudAccessKeyPattern.source, "gi"), "[redacted-secret]")
     .replace(new RegExp(credentialFieldPattern.source, "gi"), redactCredentialField)

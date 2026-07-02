@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { demoReadinessScreenshotRefs } from "../data/demoReadiness";
 import type { DemoScenarioValidationResult } from "./demoScenarioLibrary";
 import {
   checkDemoApiPreflight,
+  createDemoScreenshotInventory,
   createDemoReadinessReport,
   demoReadinessCommands
 } from "./demoReadiness";
@@ -30,7 +34,7 @@ describe("demo readiness", () => {
     const report = createDemoReadinessReport({
       scenarioValidation: validScenarioValidation,
       scenarioCount: 4,
-      screenshotRefs: ["demo-01-model-connect.png", "demo-02-evidence-ledger.png"],
+      screenshotRefs: ["docs/assets/screenshots/demo-01-model-connect.png", "docs/assets/screenshots/demo-02-evidence-ledger.png"],
       apiPreflight: { status: "not-checked" }
     });
 
@@ -66,7 +70,7 @@ describe("demo readiness", () => {
         errors: ["unsafe-demo includes blocked demo text: private key."]
       },
       scenarioCount: 1,
-      screenshotRefs: ["demo-01-model-connect.png"],
+      screenshotRefs: ["docs/assets/screenshots/demo-01-model-connect.png"],
       apiPreflight: {
         status: "ready",
         service: healthResponse.service,
@@ -83,6 +87,67 @@ describe("demo readiness", () => {
       recoveryAction: "Fix seeded demo scenarios before judging."
     });
     expect(report.nextActions).toContain("Fix seeded demo scenarios before judging.");
+  });
+
+  it("blocks readiness when registered screenshot refs are unsafe, duplicated, or missing from the asset set", () => {
+    const inventory = createDemoScreenshotInventory(
+      [
+        "docs/assets/screenshots/demo-01-model-connect.png",
+        "docs/assets/screenshots/demo-01-model-connect.png",
+        "docs/assets/screenshots/missing-demo-step.png",
+        "../secrets/sk-live-abcdef1234567890abcdef1234567890.png"
+      ],
+      ["docs/assets/screenshots/demo-01-model-connect.png"]
+    );
+    const report = createDemoReadinessReport({
+      scenarioValidation: validScenarioValidation,
+      scenarioCount: 4,
+      screenshotRefs: [
+        "docs/assets/screenshots/demo-01-model-connect.png",
+        "docs/assets/screenshots/demo-01-model-connect.png",
+        "docs/assets/screenshots/missing-demo-step.png",
+        "../secrets/sk-live-abcdef1234567890abcdef1234567890.png"
+      ],
+      availableScreenshotRefs: ["docs/assets/screenshots/demo-01-model-connect.png"],
+      apiPreflight: {
+        status: "ready",
+        service: healthResponse.service,
+        version: healthResponse.version,
+        capabilities: ["modelGateway: mock-run-ready"],
+        checkedAt: "2026-07-01T00:00:00.000Z",
+        notLegalAdviceBoundary: healthResponse.notLegalAdviceBoundary
+      }
+    });
+    const screenshotCheck = report.checks.find((check) => check.id === "screenshot-set");
+
+    expect(inventory).toMatchObject({
+      inventoryVersion: "lexproof-demo-screenshot-inventory-v1",
+      usableCount: 1,
+      blockedCount: 3,
+      missingCount: 1,
+      duplicateCount: 1,
+      unsafeCount: 1,
+      notLegalAdviceBoundary: "Not legal advice. Demo screenshot inventory is audit preparation readiness metadata only."
+    });
+    expect(JSON.stringify(inventory)).not.toContain("sk-live");
+    expect(report.status).toBe("blocked");
+    expect(screenshotCheck).toMatchObject({
+      status: "blocked",
+      recoveryAction: "Fix missing, duplicate, or unsafe screenshot references under docs/assets/screenshots before judging."
+    });
+    expect(screenshotCheck?.detail).toContain("1 usable screenshot");
+    expect(screenshotCheck?.detail).toContain("3 blocked screenshot references");
+    expect(report.nextActions).toContain(
+      "Fix missing, duplicate, or unsafe screenshot references under docs/assets/screenshots before judging."
+    );
+    expect(JSON.stringify(report)).not.toContain("sk-live");
+    expect(report.screenshotRefs).toEqual(["docs/assets/screenshots/demo-01-model-connect.png"]);
+  });
+
+  it("keeps all registered demo screenshot refs pointed at tracked local assets", () => {
+    const missingRefs = demoReadinessScreenshotRefs.filter((ref) => !existsSync(resolve(process.cwd(), ref)));
+
+    expect(missingRefs).toEqual([]);
   });
 
   it("checks the Phase 2 API health endpoint and returns capability evidence", async () => {

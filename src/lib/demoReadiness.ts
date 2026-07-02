@@ -32,6 +32,28 @@ export type DemoReadinessCheck = {
   recoveryAction: string;
 };
 
+export type DemoScreenshotFindingReason = "unsafe-path" | "unsupported-extension" | "duplicate" | "missing";
+
+export type DemoScreenshotFinding = {
+  ref: string;
+  reason: DemoScreenshotFindingReason;
+  message: string;
+};
+
+export type DemoScreenshotInventory = {
+  inventoryVersion: "lexproof-demo-screenshot-inventory-v1";
+  registeredCount: number;
+  usableCount: number;
+  blockedCount: number;
+  missingCount: number;
+  duplicateCount: number;
+  unsafeCount: number;
+  unsupportedCount: number;
+  usableRefs: string[];
+  findings: DemoScreenshotFinding[];
+  notLegalAdviceBoundary: "Not legal advice. Demo screenshot inventory is audit preparation readiness metadata only.";
+};
+
 export type DemoReadinessReport = {
   reportVersion: "lexproof-demo-readiness-v1";
   status: DemoReadinessStatus;
@@ -46,6 +68,7 @@ export type DemoReadinessInput = {
   scenarioValidation: DemoScenarioValidationResult;
   scenarioCount: number;
   screenshotRefs: string[];
+  availableScreenshotRefs?: string[];
   apiPreflight: DemoApiPreflight;
 };
 
@@ -64,8 +87,12 @@ type HealthResponseShape = {
 };
 
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Demo readiness checks are audit preparation readiness metadata only." as const;
+const SCREENSHOT_INVENTORY_BOUNDARY = "Not legal advice. Demo screenshot inventory is audit preparation readiness metadata only." as const;
 const API_PREFLIGHT_RECOVERY = "Start the Phase 2 API, confirm /api/health is reachable, and retry the demo preflight.";
+const SCREENSHOT_RECOVERY = "Fix missing, duplicate, or unsafe screenshot references under docs/assets/screenshots before judging.";
 const capabilityOrder = ["modelGateway", "evidenceVault", "humanReview", "exports", "auditLog"];
+const screenshotPathPrefix = "docs/assets/screenshots/";
+const screenshotExtensionPattern = /\.(png|jpe?g|webp)$/i;
 
 export const demoReadinessCommands = [
   "npm install",
@@ -76,6 +103,7 @@ export const demoReadinessCommands = [
 ];
 
 export function createDemoReadinessReport(input: DemoReadinessInput): DemoReadinessReport {
+  const screenshotInventory = createDemoScreenshotInventory(input.screenshotRefs, input.availableScreenshotRefs);
   const checks: DemoReadinessCheck[] = [
     createScenarioCheck(input.scenarioValidation, input.scenarioCount),
     {
@@ -92,7 +120,7 @@ export function createDemoReadinessReport(input: DemoReadinessInput): DemoReadin
       detail: "The judge path uses synthetic profiles, mock model review, metadata-only evidence, and simulated anchors.",
       recoveryAction: "Keep real API keys, private keys, raw KYC, and personal data out of the demo."
     },
-    createScreenshotCheck(input.screenshotRefs),
+    createScreenshotCheck(screenshotInventory),
     createApiPreflightCheck(input.apiPreflight)
   ];
   const status = createReadinessStatus(checks);
@@ -102,9 +130,64 @@ export function createDemoReadinessReport(input: DemoReadinessInput): DemoReadin
     status,
     checks,
     cleanCloneCommands: [...demoReadinessCommands],
-    screenshotRefs: input.screenshotRefs.map(sanitize).filter(Boolean),
+    screenshotRefs: screenshotInventory.usableRefs,
     nextActions: createNextActions(checks),
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE_BOUNDARY
+  };
+}
+
+export function createDemoScreenshotInventory(
+  screenshotRefs: string[],
+  availableScreenshotRefs?: string[]
+): DemoScreenshotInventory {
+  const availableSet = availableScreenshotRefs ? new Set(availableScreenshotRefs.map(normalizeScreenshotRef).filter(Boolean)) : null;
+  const seen = new Set<string>();
+  const usableRefs: string[] = [];
+  const findings: DemoScreenshotFinding[] = [];
+
+  for (const rawRef of screenshotRefs) {
+    const ref = normalizeScreenshotRef(rawRef);
+    if (!ref) {
+      continue;
+    }
+
+    if (!isSafeScreenshotRef(ref)) {
+      findings.push(createScreenshotFinding(ref, "unsafe-path", "Screenshot refs must stay under docs/assets/screenshots."));
+      continue;
+    }
+
+    if (!screenshotExtensionPattern.test(ref)) {
+      findings.push(createScreenshotFinding(ref, "unsupported-extension", "Screenshot refs must use png, jpg, jpeg, or webp image files."));
+      continue;
+    }
+
+    if (seen.has(ref)) {
+      findings.push(createScreenshotFinding(ref, "duplicate", "Screenshot refs must be unique in the demo readiness set."));
+      continue;
+    }
+
+    seen.add(ref);
+
+    if (availableSet && !availableSet.has(ref)) {
+      findings.push(createScreenshotFinding(ref, "missing", "Screenshot ref is not present in the available screenshot asset set."));
+      continue;
+    }
+
+    usableRefs.push(ref);
+  }
+
+  return {
+    inventoryVersion: "lexproof-demo-screenshot-inventory-v1",
+    registeredCount: screenshotRefs.length,
+    usableCount: usableRefs.length,
+    blockedCount: findings.length,
+    missingCount: findings.filter((finding) => finding.reason === "missing").length,
+    duplicateCount: findings.filter((finding) => finding.reason === "duplicate").length,
+    unsafeCount: findings.filter((finding) => finding.reason === "unsafe-path").length,
+    unsupportedCount: findings.filter((finding) => finding.reason === "unsupported-extension").length,
+    usableRefs,
+    findings,
+    notLegalAdviceBoundary: SCREENSHOT_INVENTORY_BOUNDARY
   };
 }
 
@@ -159,10 +242,18 @@ function createScenarioCheck(validation: DemoScenarioValidationResult, scenarioC
   };
 }
 
-function createScreenshotCheck(screenshotRefs: string[]): DemoReadinessCheck {
-  const sanitizedRefs = screenshotRefs.map(sanitize).filter(Boolean);
+function createScreenshotCheck(inventory: DemoScreenshotInventory): DemoReadinessCheck {
+  if (inventory.blockedCount > 0) {
+    return {
+      id: "screenshot-set",
+      label: "Screenshot set",
+      status: "blocked",
+      detail: `${inventory.usableCount} usable screenshot${inventory.usableCount === 1 ? "" : "s"}; ${inventory.blockedCount} blocked screenshot reference${inventory.blockedCount === 1 ? "" : "s"} (${createScreenshotFindingSummary(inventory)}).`,
+      recoveryAction: SCREENSHOT_RECOVERY
+    };
+  }
 
-  if (sanitizedRefs.length === 0) {
+  if (inventory.usableCount === 0) {
     return {
       id: "screenshot-set",
       label: "Screenshot set",
@@ -176,7 +267,7 @@ function createScreenshotCheck(screenshotRefs: string[]): DemoReadinessCheck {
     id: "screenshot-set",
     label: "Screenshot set",
     status: "ready",
-    detail: `${sanitizedRefs.length} current screenshots are referenced for the judge path.`,
+    detail: `${inventory.usableCount} current screenshots are registered and passed path checks for the judge path.`,
     recoveryAction: "Refresh screenshots after visible UI changes."
   };
 }
@@ -286,6 +377,42 @@ function buildHealthUrl(apiBaseUrl: string | undefined): string {
   const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
 
   return `${base}/api/health`;
+}
+
+function normalizeScreenshotRef(value: string): string {
+  return sanitize(value).replace(/\\/g, "/").replace(/^\/+/, "");
+}
+
+function isSafeScreenshotRef(value: string): boolean {
+  return (
+    value.startsWith(screenshotPathPrefix) &&
+    !value.includes("..") &&
+    !/^[a-z][a-z0-9+.-]*:/i.test(value) &&
+    !value.includes("\0")
+  );
+}
+
+function createScreenshotFinding(
+  ref: string,
+  reason: DemoScreenshotFindingReason,
+  message: string
+): DemoScreenshotFinding {
+  return {
+    ref: sanitize(ref),
+    reason,
+    message
+  };
+}
+
+function createScreenshotFindingSummary(inventory: DemoScreenshotInventory): string {
+  const parts = [
+    inventory.missingCount > 0 ? `${inventory.missingCount} missing` : "",
+    inventory.duplicateCount > 0 ? `${inventory.duplicateCount} duplicate` : "",
+    inventory.unsafeCount > 0 ? `${inventory.unsafeCount} unsafe` : "",
+    inventory.unsupportedCount > 0 ? `${inventory.unsupportedCount} unsupported` : ""
+  ].filter(Boolean);
+
+  return parts.join(", ") || "no usable screenshot references";
 }
 
 function resolveFetcher(fetcher: typeof fetch | undefined): typeof fetch {

@@ -112,6 +112,7 @@ lexproof-ai-audit/
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
       regulatoryControlMatrix.ts # Metadata-only source/evidence/source-review control matrix
       jurisdictionEvidenceMap.ts # Metadata-only per-jurisdiction evidence map and hash
+      jurisdictionReadinessDigest.ts # Metadata-only per-jurisdiction handoff digest and hash
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
       sourceFreshnessBoard.ts # Metadata-only source review scheduling board and hash
       regulatorySourceReviewSync.ts # Metadata-only Source Review Ledger sync records and ledger hash
@@ -165,6 +166,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview })
   -> createJurisdictionEvidenceMap({ matrix: regulatoryControlMatrix })
   -> createSourceFreshnessBoard({ sourceReview: regulatorySourceReview })
+  -> createJurisdictionReadinessDigest({ evidenceMap, localCounselRoutingPlan, sourceFreshnessBoard })
   -> recommendEvidenceTemplates(project)
   -> validateModelConnectionProfile(modelIntakeProfile)
   -> buildModelIntakeSummary(modelIntakeProfile, project AI events)
@@ -435,6 +437,16 @@ Owns per-jurisdiction evidence-map workflow metadata for the Regulatory Command 
 - `exportJurisdictionEvidenceMapJson(map)` and `downloadJurisdictionEvidenceMapJson(filename, map)` produce redacted metadata-only JSON for counsel/compliance handoff.
 
 Jurisdiction evidence maps are audit preparation workflow metadata only. They do not decide legal applicability, classify compliance, ingest raw evidence content, or replace local counsel review.
+
+### `src/lib/jurisdictionReadinessDigest.ts`
+
+Owns per-jurisdiction handoff digest metadata for the Regulatory Command Center:
+
+- `createJurisdictionReadinessDigest({ evidenceMap, localCounselRoutingPlan, sourceFreshnessBoard })` combines the Jurisdiction Evidence Map, Local Counsel Routing Plan, and Source Freshness Board into one per-jurisdiction status table with evidence blockers, source freshness blockers, local counsel route state, next action, and a stable SHA-256 digest hash.
+- Digest status is workflow-only: `needs-evidence`, `needs-source-review`, `metadata-missing`, `ready-for-counsel`, or `no-jurisdictions`.
+- `exportJurisdictionReadinessDigestJson(digest)` and `downloadJurisdictionReadinessDigestJson(filename, digest)` produce redacted metadata-only JSON for counsel/compliance handoff.
+
+Jurisdiction readiness digests are audit preparation workflow metadata only. They do not decide legal applicability, classify compliance, ingest raw evidence content, or replace local counsel review.
 
 ### `src/lib/localCounselRouting.ts`
 
@@ -786,7 +798,7 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
-- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source freshness lanes, source update approval gates, control matrices, jurisdiction evidence maps, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `sourceFreshnessBoard.ts`, `regulatorySourceApproval.ts`, `regulatoryControlMatrix.ts`, and `jurisdictionEvidenceMap.ts`.
+- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source freshness lanes, source update approval gates, control matrices, jurisdiction evidence maps, jurisdiction readiness digest, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `sourceFreshnessBoard.ts`, `regulatorySourceApproval.ts`, `regulatoryControlMatrix.ts`, `jurisdictionEvidenceMap.ts`, and `jurisdictionReadinessDigest.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
 - `IntegrationReadinessPanel` renders adapter readiness, Integration Enablement Dossier, Model Gateway provider/secret policy controls, Object Storage Policy Evaluation, Document Parser Policy Evaluation, Chain Anchor Policy Evaluation, GRC Destination Policy Evaluation, server sync states, recovery states, and metadata-only JSON downloads while keeping external providers, object storage, raw-document parsing, chain anchoring, and external ticket creation disabled by default.

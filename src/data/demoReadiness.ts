@@ -8,6 +8,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/demo-scenario-library-marketing-claims.png",
   "docs/assets/screenshots/counsel-pack-marketing-claims-template.png",
   "docs/assets/screenshots/regulatory-control-matrix.png",
+  "docs/assets/screenshots/jurisdiction-readiness-digest.png",
   "docs/assets/screenshots/evidence-retention-remediation-queue.png",
   "docs/assets/screenshots/evidence-ledger-review-stage-statuses.png",
   "docs/assets/screenshots/evidence-ledger-rejected-replacement.png",

@@ -1105,6 +1105,132 @@ textarea {
   flex: 0 0 auto;
 }
 
+.jurisdiction-readiness-digest {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #cfdce5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.jurisdiction-readiness-digest.needs-evidence,
+.jurisdiction-readiness-digest.needs-source-review {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.jurisdiction-readiness-digest.metadata-missing {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.jurisdiction-readiness-digest > p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.digest-handoff {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.digest-handoff.allowed {
+  background: #dff2e6;
+  color: #1f6c3f;
+}
+
+.digest-handoff.blocked {
+  background: #f8dfc0;
+  color: #7a3f15;
+}
+
+.jurisdiction-digest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.jurisdiction-digest-row {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 10px;
+}
+
+.jurisdiction-digest-row.needs-evidence,
+.jurisdiction-digest-row.metadata-missing {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.jurisdiction-digest-row.needs-source-review {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.jurisdiction-digest-row header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.jurisdiction-digest-row header span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #e7edf8;
+  color: #33495f;
+  padding: 3px 7px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.jurisdiction-digest-row.needs-evidence header span,
+.jurisdiction-digest-row.metadata-missing header span {
+  background: #f3d3cf;
+  color: #86362b;
+}
+
+.jurisdiction-digest-row.needs-source-review header span {
+  background: #f6e1c1;
+  color: #7a3f15;
+}
+
+.jurisdiction-digest-row strong,
+.jurisdiction-digest-row p,
+.jurisdiction-digest-row small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.jurisdiction-digest-row strong {
+  color: #172431;
+  font-size: 0.86rem;
+}
+
+.jurisdiction-digest-row p,
+.jurisdiction-digest-row small {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 .jurisdiction-map-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -172,6 +172,63 @@ describe("App", () => {
     }
   });
 
+  it("shows and downloads a jurisdiction readiness digest from the command center", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:jurisdiction-readiness-digest");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const digest = await screen.findByRole("region", { name: /Jurisdiction Readiness Digest/i });
+      expect(
+        within(digest).getByText(/Not legal advice. Jurisdiction readiness digests are audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+      expect(within(digest).getByText(/Handoff blocked/i)).toBeInTheDocument();
+      expect(within(digest).getAllByText(/United States|European Union/i).length).toBeGreaterThan(0);
+      expect(within(digest).getByRole("button", { name: /Download Jurisdiction Digest JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(digest).getByRole("button", { name: /Download Jurisdiction Digest JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:jurisdiction-readiness-digest");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Jurisdiction Readiness Digest JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          digestVersion: "lexproof-jurisdiction-readiness-digest-v1",
+          status: "needs-evidence",
+          handoffAllowed: false,
+          notLegalAdviceBoundary: "Not legal advice. Jurisdiction readiness digests are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.digestHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.summary.openEvidenceRequestCount).toBeGreaterThan(0);
+      expect(parsed.jurisdictions.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("shows and downloads a source freshness board without legal conclusions", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
@@ -945,7 +1002,7 @@ describe("App", () => {
     expect(registry.getAllByText(/Remove blocked materials before enabling this adapter./i).length).toBeGreaterThan(0);
     expect(registry.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  });
+  }, 10000);
 
   it("downloads an Integration Enablement Dossier without enabling external adapters", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;

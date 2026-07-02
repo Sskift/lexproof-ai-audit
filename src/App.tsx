@@ -187,6 +187,10 @@ import {
   createJurisdictionEvidenceMap,
   type JurisdictionEvidenceMap
 } from "./lib/jurisdictionEvidenceMap";
+import {
+  createJurisdictionReadinessDigest,
+  type JurisdictionReadinessDigest
+} from "./lib/jurisdictionReadinessDigest";
 import { createRegulatoryControlMatrix } from "./lib/regulatoryControlMatrix";
 import { createRegulatoryGraph } from "./lib/regulatoryGraph";
 import {
@@ -394,6 +398,7 @@ export default function App() {
   const [sourceReviewSyncError, setSourceReviewSyncError] = useState("");
   const [sourceReviewSyncRecoveryAction, setSourceReviewSyncRecoveryAction] = useState("");
   const [jurisdictionEvidenceMap, setJurisdictionEvidenceMap] = useState<JurisdictionEvidenceMap | null>(null);
+  const [jurisdictionReadinessDigest, setJurisdictionReadinessDigest] = useState<JurisdictionReadinessDigest | null>(null);
   const [sourceFreshnessBoard, setSourceFreshnessBoard] = useState<SourceFreshnessBoard | null>(null);
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
@@ -441,6 +446,26 @@ export default function App() {
       active = false;
     };
   }, [regulatorySourceReview]);
+  useEffect(() => {
+    let active = true;
+    setJurisdictionReadinessDigest(null);
+
+    if (jurisdictionEvidenceMap) {
+      createJurisdictionReadinessDigest({
+        evidenceMap: jurisdictionEvidenceMap,
+        localCounselRoutingPlan,
+        sourceFreshnessBoard
+      }).then((nextDigest) => {
+        if (active) {
+          setJurisdictionReadinessDigest(nextDigest);
+        }
+      });
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [jurisdictionEvidenceMap, localCounselRoutingPlan, sourceFreshnessBoard]);
   const fit = useMemo(() => createSubmissionFit(), []);
   const demoScenarioValidation = useMemo(() => validateDemoScenarioLibrary(demoScenarios, sampleProfiles), []);
   const demoReadinessReport = useMemo(
@@ -1804,6 +1829,7 @@ export default function App() {
             sourceApprovalSyncRecoveryAction={sourceApprovalSyncRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
             jurisdictionEvidenceMap={jurisdictionEvidenceMap}
+            jurisdictionReadinessDigest={jurisdictionReadinessDigest}
             sourceFreshnessBoard={sourceFreshnessBoard}
             localCounselRoutingPlan={localCounselRoutingPlan}
             actionQueue={workspaceActionQueue}

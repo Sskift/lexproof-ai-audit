@@ -8,6 +8,11 @@ import {
   downloadLocalCounselRoutingPlanJson,
   type LocalCounselRoutingPlan
 } from "../lib/localCounselRouting";
+import {
+  downloadJurisdictionReadinessDigestJson,
+  type JurisdictionReadinessDigest,
+  type JurisdictionReadinessDigestStatus
+} from "../lib/jurisdictionReadinessDigest";
 import type { RegulatoryControlMatrix } from "../lib/regulatoryControlMatrix";
 import type { RegulatoryGraph, RegulatoryReadiness } from "../lib/regulatoryGraph";
 import {
@@ -44,6 +49,7 @@ type RegulatoryCommandCenterProps = {
   sourceApprovalSyncRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
   jurisdictionEvidenceMap: JurisdictionEvidenceMap | null;
+  jurisdictionReadinessDigest: JurisdictionReadinessDigest | null;
   sourceFreshnessBoard: SourceFreshnessBoard | null;
   localCounselRoutingPlan: LocalCounselRoutingPlan | null;
   actionQueue: WorkspaceActionQueue;
@@ -75,6 +81,7 @@ export function RegulatoryCommandCenter({
   sourceApprovalSyncRecoveryAction,
   controlMatrix,
   jurisdictionEvidenceMap,
+  jurisdictionReadinessDigest,
   sourceFreshnessBoard,
   localCounselRoutingPlan,
   actionQueue,
@@ -180,6 +187,71 @@ export function RegulatoryCommandCenter({
 
       {jurisdictionEvidenceMap ? (
         <JurisdictionEvidenceMapPanel map={jurisdictionEvidenceMap} projectId={project.id} />
+      ) : null}
+
+      {jurisdictionReadinessDigest ? (
+        <section
+          className={`jurisdiction-readiness-digest ${jurisdictionReadinessDigest.status}`}
+          aria-label="Jurisdiction Readiness Digest"
+        >
+          <div className="reg-source-review-header">
+            <div className="reg-section-title">
+              <Globe2 size={17} aria-hidden="true" />
+              <h3>Jurisdiction Readiness Digest</h3>
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                downloadJurisdictionReadinessDigestJson(
+                  `lexproof-${project.id}-jurisdiction-readiness-digest.json`,
+                  jurisdictionReadinessDigest
+                )
+              }
+            >
+              <Download size={15} aria-hidden="true" />
+              Download Jurisdiction Digest JSON
+            </button>
+          </div>
+          <div className="reg-source-review-summary">
+            <Metric
+              label="Handoff"
+              value={jurisdictionReadinessDigest.handoffAllowed ? "allowed" : "blocked"}
+              helper={formatDigestStatus(jurisdictionReadinessDigest.status)}
+            />
+            <Metric
+              label="Jurisdictions"
+              value={jurisdictionReadinessDigest.jurisdictionCount}
+              helper={`${jurisdictionReadinessDigest.summary.openEvidenceRequestCount} open evidence requests`}
+            />
+            <Metric
+              label="Source blockers"
+              value={jurisdictionReadinessDigest.summary.sourceFreshnessBlockerCount}
+              helper={`${jurisdictionReadinessDigest.summary.dueSoonSourceCount} due soon`}
+            />
+            <Metric label="Digest hash" value={jurisdictionReadinessDigest.digestHash.slice(0, 12)} helper="metadata-only" />
+          </div>
+          <p>{jurisdictionReadinessDigest.notLegalAdviceBoundary}</p>
+          <strong className={`digest-handoff ${jurisdictionReadinessDigest.handoffAllowed ? "allowed" : "blocked"}`}>
+            {jurisdictionReadinessDigest.handoffAllowed ? "Handoff allowed" : "Handoff blocked"}
+          </strong>
+          <div className="jurisdiction-digest-list">
+            {jurisdictionReadinessDigest.jurisdictions.slice(0, 4).map((item) => (
+              <article key={item.jurisdiction} className={`jurisdiction-digest-row ${item.status}`}>
+                <header>
+                  <span>{formatDigestStatus(item.status)}</span>
+                  <strong>{item.jurisdiction}</strong>
+                </header>
+                <p>{item.nextAction}</p>
+                <small>
+                  {item.controlCount} controls · {item.openEvidenceRequestCount} evidence requests ·{" "}
+                  {item.sourceFreshnessBlockerCount} source blockers
+                </small>
+                <small>{item.localCounselRoles.join(", ") || "Local counsel route pending"}</small>
+              </article>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {localCounselRoutingPlan ? (
@@ -537,6 +609,22 @@ function formatLocalCounselSourceStatus(status: LocalCounselRoutingPlan["routes"
     return "not tracked";
   }
   return "current";
+}
+
+function formatDigestStatus(status: JurisdictionReadinessDigestStatus): string {
+  if (status === "ready-for-counsel") {
+    return "ready for counsel";
+  }
+  if (status === "needs-evidence") {
+    return "needs evidence";
+  }
+  if (status === "needs-source-review") {
+    return "needs source review";
+  }
+  if (status === "metadata-missing") {
+    return "metadata missing";
+  }
+  return "no jurisdictions";
 }
 
 function formatJourneyStatus(status: WorkspaceJourneyStatus): string {

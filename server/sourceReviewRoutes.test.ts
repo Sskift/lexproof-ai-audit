@@ -146,4 +146,31 @@ describe("source review routes", () => {
 
     await server.close();
   });
+
+  it("rejects source review sync payloads that omit the Not legal advice boundary", async () => {
+    const server = buildServer();
+
+    const sourceReviewWithoutBoundary: Partial<typeof sourceReview> = { ...sourceReview };
+    delete sourceReviewWithoutBoundary.notLegalAdviceBoundary;
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-source/source-reviews",
+      payload: {
+        createdBy: "Source reviewer",
+        sourceReview: sourceReviewWithoutBoundary
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        error: "Source review ledger is missing the required Not legal advice boundary.",
+        code: "SOURCE_REVIEW_SYNC_FAILED",
+        recoveryAction: "Remove credentials, raw KYC, personal data, legal conclusions, and raw source bodies, then retry.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+
+    await server.close();
+  });
 });

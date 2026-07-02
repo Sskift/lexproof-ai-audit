@@ -16,8 +16,6 @@ export type SourceReviewRoutesOptions = {
   repository: ReviewWorkspaceRepository;
 };
 
-const SOURCE_REVIEW_BOUNDARY = "Not legal advice. Source review metadata is audit preparation lineage only." as const;
-
 export function registerSourceReviewRoutes(server: FastifyInstance, options: SourceReviewRoutesOptions): void {
   const { repository } = options;
 
@@ -85,7 +83,7 @@ function createSourceReviewPayload(value: unknown): RegulatorySourceReviewSyncLe
     reviewWindowDays: numberField(value.reviewWindowDays),
     items: Array.isArray(value.items) ? value.items.map(createItemPayload) : [],
     actions: Array.isArray(value.actions) ? value.actions.map(createActionPayload) : [],
-    notLegalAdviceBoundary: SOURCE_REVIEW_BOUNDARY
+    notLegalAdviceBoundary: stringField(value.notLegalAdviceBoundary) as RegulatorySourceReviewSyncLedger["notLegalAdviceBoundary"]
   };
 }
 

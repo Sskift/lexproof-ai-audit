@@ -143,4 +143,32 @@ describe("source approval routes", () => {
 
     await server.close();
   });
+
+  it("rejects source approval sync payloads that replace the Not legal advice boundary", async () => {
+    const server = buildServer();
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-source/source-approvals",
+      payload: {
+        createdBy: "Source reviewer",
+        queue: {
+          ...approvalQueue,
+          notLegalAdviceBoundary: "Legal approval granted."
+        }
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        error: "Source approval queue is missing the required Not legal advice boundary.",
+        code: "SOURCE_APPROVAL_SYNC_FAILED",
+        recoveryAction: "Remove credentials, raw KYC, personal data, legal conclusions, and raw source bodies, then retry.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+
+    await server.close();
+  });
 });

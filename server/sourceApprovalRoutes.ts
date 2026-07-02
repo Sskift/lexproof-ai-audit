@@ -13,10 +13,6 @@ export type SourceApprovalRoutesOptions = {
   repository: ReviewWorkspaceRepository;
 };
 
-const QUEUE_BOUNDARY = "Not legal advice. Source update approvals are audit preparation workflow metadata only." as const;
-const APPROVAL_GATE =
-  "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata." as const;
-
 export function registerSourceApprovalRoutes(server: FastifyInstance, options: SourceApprovalRoutesOptions): void {
   const { repository } = options;
 
@@ -77,14 +73,14 @@ function createQueuePayload(value: unknown): RegulatorySourceApprovalSyncQueue {
 
   const items = Array.isArray(value.items) ? value.items.map(createItemPayload) : [];
   return {
-    queueVersion: "lexproof-regulatory-source-approval-queue-v1",
+    queueVersion: stringField(value.queueVersion) as RegulatorySourceApprovalSyncQueue["queueVersion"],
     generatedAt: stringField(value.generatedAt),
     status: queueStatusField(value.status),
     totalItemCount: numberField(value.totalItemCount),
     approvalRequiredCount: numberField(value.approvalRequiredCount),
     metadataRequiredCount: numberField(value.metadataRequiredCount),
     items,
-    notLegalAdviceBoundary: QUEUE_BOUNDARY
+    notLegalAdviceBoundary: stringField(value.notLegalAdviceBoundary) as RegulatorySourceApprovalSyncQueue["notLegalAdviceBoundary"]
   };
 }
 
@@ -109,8 +105,8 @@ function createItemPayload(value: unknown): RegulatorySourceApprovalSyncItem {
     nextReviewDueAt: stringField(value.nextReviewDueAt),
     reviewerNotes: stringField(value.reviewerNotes),
     nextAction: stringField(value.nextAction),
-    approvalGate: APPROVAL_GATE,
-    notLegalAdviceBoundary: QUEUE_BOUNDARY
+    approvalGate: stringField(value.approvalGate) as RegulatorySourceApprovalSyncItem["approvalGate"],
+    notLegalAdviceBoundary: stringField(value.notLegalAdviceBoundary) as RegulatorySourceApprovalSyncItem["notLegalAdviceBoundary"]
   };
 }
 

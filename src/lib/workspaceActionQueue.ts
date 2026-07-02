@@ -1,6 +1,6 @@
 import type { DataBoundaryReport } from "./dataBoundary";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
-import type { HumanReviewQueue } from "./humanReviewWorkflow";
+import type { HumanReviewQueue, HumanReviewQueueItem } from "./humanReviewWorkflow";
 import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
@@ -53,6 +53,7 @@ export type CreateWorkspaceActionQueueInput = {
   manifestHash?: string;
   counselPackVersionCount: number;
   evidenceRecertificationQueue?: EvidenceRecertificationQueue;
+  evaluatedAt?: string;
 };
 
 const NOT_LEGAL_ADVICE = "Not legal advice. Workspace actions are audit preparation workflow prompts only.";
@@ -65,7 +66,7 @@ export function createWorkspaceActionQueue(input: CreateWorkspaceActionQueueInpu
     createExportSafetyAction(input.dataBoundaryReport),
     createEvidenceRecertificationAction(input.evidenceRecertificationQueue),
     createSourceRefreshAction(input.sourceReview),
-    createHumanReviewOpenAction(input.humanReviewQueue),
+    createHumanReviewOpenAction(input.humanReviewQueue, input.evaluatedAt),
     createSecurityReadinessAction(input.securityReviewChecklist),
     createCounselPackVersionAction(input),
     createCounselPackExportAction(input)
@@ -182,9 +183,24 @@ function createSourceRefreshAction(sourceReview: RegulatorySourceReview): Worksp
   });
 }
 
-function createHumanReviewOpenAction(queue: HumanReviewQueue): WorkspaceActionItem | null {
+function createHumanReviewOpenAction(queue: HumanReviewQueue, evaluatedAt = new Date().toISOString()): WorkspaceActionItem | null {
   if (queue.summary.openCount === 0) {
     return null;
+  }
+
+  const overdueItems = getOverdueHumanReviewItems(queue, evaluatedAt);
+  if (overdueItems.length > 0) {
+    const firstItem = overdueItems[0];
+    const dueLabel = firstItem.dueAt.slice(0, 10);
+
+    return createAction({
+      id: "complete-human-review",
+      priority: "P0",
+      target: "review",
+      title: "Resolve overdue human review",
+      summary: `${overdueItems.length} open review item${overdueItems.length === 1 ? "" : "s"} overdue before export reliance. First: ${firstItem.title} due ${dueLabel}; reviewer ${firstItem.reviewer}.`,
+      cta: "Open review queue"
+    });
   }
 
   return createAction({
@@ -195,6 +211,26 @@ function createHumanReviewOpenAction(queue: HumanReviewQueue): WorkspaceActionIt
     summary: `${queue.summary.openCount} review item${queue.summary.openCount === 1 ? "" : "s"} need reviewer status before external reliance.`,
     cta: "Open review queue"
   });
+}
+
+function getOverdueHumanReviewItems(queue: HumanReviewQueue, evaluatedAt: string): HumanReviewQueueItem[] {
+  const evaluatedTime = Date.parse(evaluatedAt);
+  if (Number.isNaN(evaluatedTime)) {
+    return [];
+  }
+
+  return queue.items
+    .filter((item) => item.status !== "reviewed" && item.status !== "rejected")
+    .filter((item) => {
+      const dueTime = Date.parse(item.dueAt);
+      return !Number.isNaN(dueTime) && dueTime < evaluatedTime;
+    })
+    .sort(
+      (left, right) =>
+        Date.parse(left.dueAt) - Date.parse(right.dueAt) ||
+        priorityWeight(left.priority) - priorityWeight(right.priority) ||
+        left.title.localeCompare(right.title)
+    );
 }
 
 function createSecurityReadinessAction(report: SecurityReviewChecklistReport): WorkspaceActionItem | null {

@@ -115,6 +115,53 @@ describe("createWorkspaceActionQueue", () => {
     expect(queue.items[0].summary).toContain("2026-04-01");
     expect(queue.items[0].notLegalAdviceBoundary).toContain("Not legal advice");
   });
+
+  it("escalates overdue human review work to a P0 command-center action", () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({ evidenceGaps: [] }),
+      sourceReview: sourceReview({ actionCount: 0 }),
+      humanReviewQueue: humanReviewQueue({
+        openCount: 2,
+        blockedCount: 0,
+        items: [
+          humanReviewItem({
+            targetId: "overdue-model-run",
+            title: "Model Gateway receipt review",
+            dueAt: "2026-06-29T00:00:00.000Z",
+            reviewer: "AI governance reviewer"
+          }),
+          humanReviewItem({
+            targetId: "future-counsel-pack",
+            title: "Counsel Pack version review",
+            dueAt: "2026-07-10T00:00:00.000Z",
+            reviewer: "Counsel"
+          })
+        ]
+      }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "ready", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 2,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 1,
+      evaluatedAt: "2026-07-02T00:00:00.000Z"
+    });
+
+    expect(queue.items[0]).toEqual(
+      expect.objectContaining({
+        id: "complete-human-review",
+        priority: "P0",
+        target: "review",
+        title: "Resolve overdue human review",
+        cta: "Open review queue"
+      })
+    );
+    expect(queue.items[0].summary).toContain("1 open review item overdue");
+    expect(queue.items[0].summary).toContain("Model Gateway receipt review");
+    expect(queue.items[0].summary).toContain("2026-06-29");
+    expect(queue.items[0].summary).toContain("AI governance reviewer");
+    expect(queue.items[0].notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });
 
 function validation(overrides: Partial<ProjectValidationResult>): ProjectValidationResult {
@@ -159,10 +206,18 @@ function sourceReview({ actionCount }: { actionCount: number }): RegulatorySourc
   };
 }
 
-function humanReviewQueue({ openCount, blockedCount }: { openCount: number; blockedCount: number }): HumanReviewQueue {
+function humanReviewQueue({
+  openCount,
+  blockedCount,
+  items = []
+}: {
+  openCount: number;
+  blockedCount: number;
+  items?: HumanReviewQueue["items"];
+}): HumanReviewQueue {
   return {
     queueVersion: "lexproof-human-review-queue-v1",
-    items: [],
+    items,
     summary: {
       totalCount: openCount + blockedCount,
       openCount,
@@ -170,6 +225,27 @@ function humanReviewQueue({ openCount, blockedCount }: { openCount: number; bloc
       blockedCount,
       notLegalAdviceBoundary: "Not legal advice. Human review workflow status is audit preparation workflow only."
     }
+  };
+}
+
+function humanReviewItem(overrides: Partial<HumanReviewQueue["items"][number]>): HumanReviewQueue["items"][number] {
+  return {
+    queueVersion: "lexproof-human-review-queue-item-v1",
+    id: "human-review-queue-ai-event-default",
+    projectId: "project-action-queue",
+    targetType: "ai-event",
+    targetId: "default-target",
+    sourceId: "default-source",
+    title: "Default review item",
+    summary: "Review output before audit-prep reliance.",
+    priority: "P1",
+    status: "needs-review",
+    reviewer: "Reviewer",
+    decisionNote: "",
+    dueAt: "2026-07-10T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Human review queue items are audit preparation workflow records only.",
+    ...overrides
   };
 }
 

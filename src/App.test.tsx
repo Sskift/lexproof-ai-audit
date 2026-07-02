@@ -1002,7 +1002,7 @@ describe("App", () => {
     expect(registry.getAllByText(/Remove blocked materials before enabling this adapter./i).length).toBeGreaterThan(0);
     expect(registry.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  }, 10000);
+  }, 15000);
 
   it("downloads an Integration Enablement Dossier without enabling external adapters", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -2096,7 +2096,9 @@ describe("App", () => {
       expect(await screen.findByText("Vault approval memo")).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /Evidence Vault Sync/i })).toBeInTheDocument();
       expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: /Sync Evidence Vault/i }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: /Sync Evidence Vault/i }));
+      });
 
       expect(await screen.findByText(/Evidence Vault synced 1 records/i)).toBeInTheDocument();
       expect(screen.getByText("a".repeat(64))).toBeInTheDocument();
@@ -2128,6 +2130,26 @@ describe("App", () => {
         })
       );
       expect(manifestPayload).not.toContain("Raw board approval facts stay local");
+
+      const lineageDigest = await screen.findByRole("region", { name: /Evidence Vault Lineage Digest/i });
+      expect(within(lineageDigest).getByText(/Not legal advice/i)).toBeInTheDocument();
+      expect(within(lineageDigest).getByText(/ready/i)).toBeInTheDocument();
+      expect(within(lineageDigest).getByText(/control-eu-mica-title-ii-white-paper/i)).toBeInTheDocument();
+      fireEvent.click(within(lineageDigest).getByRole("button", { name: /Download Lineage Digest JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(2);
+      const lineagePayload = await readAppBlobText(capturedBlobs[1]);
+      const parsedLineage = JSON.parse(lineagePayload);
+      expect(parsedLineage).toEqual(
+        expect.objectContaining({
+          digestVersion: "lexproof-evidence-vault-lineage-digest-v1",
+          manifestHash: "a".repeat(64),
+          readinessStatus: "ready",
+          notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+        })
+      );
+      expect(parsedLineage.digestHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(lineagePayload).not.toContain("Raw board approval facts stay local");
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

@@ -92,7 +92,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **Evidence Ledger**.
    - Apply the **tokenized yield / RWA** evidence template, or add one local synthetic evidence item.
    - For the AI alternate path, apply the **AI compliance workflow** evidence template and show source references such as `regulatory control: control-eu-ai-act-ai-literacy-governance` and `regulatory control: control-uk-ico-ai-data-protection-governance`.
-   - Include a source reference such as `regulatory control: control-eu-mica-title-ii-white-paper`, sync to the local Evidence Vault API, and show the vault record's **Controls:** line plus manifest hash. Click **Download Vault Manifest JSON** to show the server manifest is a metadata-only artifact. In the AI alternate path, show **Evidence Vault Control Coverage** with the EU AI Act and UK ICO control IDs linked across vault records and manifest items. Not legal advice.
+   - Include a source reference such as `regulatory control: control-eu-mica-title-ii-white-paper`, sync to the local Evidence Vault API, and show the vault record's **Controls:** line plus manifest hash. Click **Download Vault Manifest JSON** to show the server manifest is a metadata-only artifact, then show **Evidence Vault Lineage Digest** and click **Download Lineage Digest JSON** to prove active/replaced/rejected counts, manifest hash, and linked controls are exportable without source-note body text. In the AI alternate path, show **Evidence Vault Control Coverage** with the EU AI Act and UK ICO control IDs linked across vault records and manifest items. Not legal advice.
    - Change one synthetic evidence item to `under-review`, then `rejected`, then click **Create replacement** to show the local ledger preserves the rejected record and opens a new metadata-only replacement request rather than treating rejection as legal approval or deletion. Not legal advice.
    - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
    - Show **Evidence Retention Readiness** and confirm normal demo evidence is metadata-only or needs human confirmation before vault sync. Not legal advice.
@@ -102,6 +102,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Review-stage status screenshot: `docs/assets/screenshots/evidence-ledger-review-stage-statuses.png`.
    - Rejected replacement screenshot: `docs/assets/screenshots/evidence-ledger-rejected-replacement.png`.
    - Vault manifest screenshot: `docs/assets/screenshots/evidence-vault-manifest-download.png`.
+   - Vault lineage digest screenshot: `docs/assets/screenshots/evidence-vault-lineage-digest.png`.
    - AI control-coverage screenshot: `docs/assets/screenshots/evidence-vault-control-coverage-ai.png`.
 
 4. **Run risk audit**

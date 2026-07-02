@@ -5028,6 +5028,123 @@ textarea {
   gap: 8px;
 }
 
+.vault-lineage-digest {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #c6d6ea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vault-lineage-digest.ready {
+  border-color: #b8d8c8;
+}
+
+.vault-lineage-digest.needs-replacement {
+  border-color: #e0a89a;
+  background: #fff8f5;
+}
+
+.vault-lineage-digest.needs-manifest,
+.vault-lineage-digest.empty {
+  border-color: #d8c17b;
+  background: #fffaf0;
+}
+
+.vault-lineage-digest p {
+  margin: 0;
+  color: #40515f;
+  line-height: 1.45;
+}
+
+.vault-lineage-digest > .split-title span {
+  border-radius: 999px;
+  background: #edf3fb;
+  color: #26435e;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.vault-lineage-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 8px;
+}
+
+.vault-lineage-summary .vault-metric strong {
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}
+
+.vault-lineage-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.vault-lineage-actions div {
+  display: grid;
+  gap: 4px;
+}
+
+.vault-lineage-actions strong {
+  color: #172431;
+}
+
+.vault-lineage-actions span {
+  color: #526476;
+  line-height: 1.35;
+}
+
+.vault-lineage-list,
+.vault-lineage-links {
+  display: grid;
+  gap: 8px;
+}
+
+.vault-lineage-list {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.vault-lineage-list code,
+.vault-lineage-links article {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.vault-lineage-list code {
+  overflow-wrap: anywhere;
+  color: #172431;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.vault-lineage-links article {
+  display: grid;
+  gap: 4px;
+}
+
+.vault-lineage-links strong,
+.vault-lineage-links span {
+  overflow-wrap: anywhere;
+}
+
+.vault-lineage-links span {
+  color: #526476;
+  font-size: 0.8rem;
+}
+
 .vault-control-coverage {
   display: grid;
   gap: 10px;

@@ -6,6 +6,7 @@ import {
   DatabaseZap,
   Download,
   FileUp,
+  GitBranch,
   History,
   LockKeyhole,
   RefreshCcw,
@@ -28,6 +29,11 @@ import {
   type EvidenceVaultRecordResponse
 } from "../lib/evidenceVaultClient";
 import { createEvidenceVaultControlCoverage, type EvidenceVaultControlCoverage } from "../lib/evidenceVaultControlCoverage";
+import {
+  createEvidenceVaultLineageDigest,
+  downloadEvidenceVaultLineageDigestJson,
+  type EvidenceVaultLineageDigest
+} from "../lib/evidenceVaultLineageDigest";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import { createRejectedEvidenceReplacementDraft } from "../lib/evidenceReplacement";
 import { evidenceStatuses, type EvidenceItem, type EvidenceOwner, type EvidenceStatus } from "../lib/projectModel";
@@ -105,6 +111,7 @@ export function EvidenceLedger({
   const [vaultReplacementReasons, setVaultReplacementReasons] = useState<Record<string, string>>({});
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
+  const [vaultLineageDigest, setVaultLineageDigest] = useState<EvidenceVaultLineageDigest | null>(null);
   const [retentionRemediationQueue, setRetentionRemediationQueue] = useState<EvidenceRetentionRemediationQueue | null>(null);
   const [recertificationQueue, setRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const vaultControlCoverage = useMemo(
@@ -150,6 +157,30 @@ export function EvidenceLedger({
       isActive = false;
     };
   }, [evidenceItems, projectId]);
+  useEffect(() => {
+    let isActive = true;
+
+    if (vaultRecords.length === 0) {
+      setVaultLineageDigest(null);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    void createEvidenceVaultLineageDigest({
+      workspaceId: projectId,
+      records: vaultRecords,
+      manifest: vaultManifest
+    }).then((digest) => {
+      if (isActive) {
+        setVaultLineageDigest(digest);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [projectId, vaultManifest, vaultRecords]);
 
   const canAdd = draft.label.trim().length > 0 && draft.content.trim().length > 0;
   const canSyncVault =
@@ -485,6 +516,7 @@ export function EvidenceLedger({
             Evidence Vault synced {vaultRecords.length} records. Manifest contains {vaultManifest.itemCount} items.
           </p>
         ) : null}
+        {vaultLineageDigest ? <VaultLineageDigestPanel digest={vaultLineageDigest} /> : null}
         {vaultControlCoverage.controlCount > 0 ? <VaultControlCoveragePanel coverage={vaultControlCoverage} /> : null}
         {vaultRecoveryState ? <p className="save-state vault-recovery-state">{vaultRecoveryState} Not legal advice.</p> : null}
         {vaultError ? <p className="error-text">{vaultError}</p> : null}
@@ -978,6 +1010,62 @@ function VaultMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function VaultLineageDigestPanel({ digest }: { digest: EvidenceVaultLineageDigest }) {
+  return (
+    <section className={`vault-lineage-digest ${digest.readinessStatus}`} aria-label="Evidence Vault Lineage Digest">
+      <div className="split-title compact-title">
+        <div>
+          <GitBranch size={17} aria-hidden="true" />
+          <h3>Evidence Vault Lineage Digest</h3>
+        </div>
+        <span>{formatLineageStatus(digest.readinessStatus)}</span>
+      </div>
+      <p>{digest.notLegalAdviceBoundary}</p>
+      <div className="vault-lineage-summary">
+        <VaultMetric label="Digest hash" value={shortHash(digest.digestHash)} />
+        <VaultMetric label="Manifest hash" value={digest.manifestHash ? shortHash(digest.manifestHash) : "not synced"} />
+        <VaultMetric label="Active records" value={String(digest.lineageCounts.activeRecords)} />
+        <VaultMetric label="Replaced records" value={String(digest.lineageCounts.replacedRecords)} />
+        <VaultMetric label="Open rejected" value={String(digest.lineageCounts.openRejectedRecords)} />
+        <VaultMetric label="Lineage links" value={String(digest.lineageCounts.lineageLinkCount)} />
+      </div>
+      <div className="vault-lineage-actions">
+        <div>
+          <strong>Next action</strong>
+          <span>{digest.nextActions[0] ?? "Keep lineage metadata with the Evidence Manifest."}</span>
+        </div>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => downloadEvidenceVaultLineageDigestJson("evidence-vault-lineage-digest.json", digest)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Lineage Digest JSON
+        </button>
+      </div>
+      {digest.linkedControlIds.length > 0 ? (
+        <div className="vault-lineage-list" aria-label="Lineage linked controls">
+          {digest.linkedControlIds.slice(0, 4).map((controlId) => (
+            <code key={controlId}>{controlId}</code>
+          ))}
+        </div>
+      ) : null}
+      {digest.lineageLinks.length > 0 ? (
+        <div className="vault-lineage-links" aria-label="Vault lineage links">
+          {digest.lineageLinks.slice(0, 3).map((link) => (
+            <article key={`${link.parentEvidenceId}-${link.replacementEvidenceId}`}>
+              <strong>{link.parentEvidenceId}</strong>
+              <span>
+                replaced by {link.replacementEvidenceId} · v{link.replacementVersion} · {link.replacementStatus}
+              </span>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function VaultControlCoveragePanel({ coverage }: { coverage: EvidenceVaultControlCoverage }) {
   return (
     <section className="vault-control-coverage" aria-label="Evidence Vault Control Coverage">
@@ -1008,6 +1096,26 @@ function VaultControlCoveragePanel({ coverage }: { coverage: EvidenceVaultContro
       <small>{coverage.notLegalAdviceBoundary}</small>
     </section>
   );
+}
+
+function formatLineageStatus(status: EvidenceVaultLineageDigest["readinessStatus"]) {
+  if (status === "needs-replacement") {
+    return "needs replacement";
+  }
+
+  if (status === "needs-manifest") {
+    return "needs manifest";
+  }
+
+  return status;
+}
+
+function shortHash(hash: string): string {
+  if (hash.length <= 18) {
+    return hash;
+  }
+
+  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
 }
 
 function VaultErrorRecoveryPanel({ error }: { error: VaultErrorDetails }) {

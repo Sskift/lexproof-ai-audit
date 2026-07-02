@@ -102,6 +102,7 @@ lexproof-ai-audit/
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
       evidenceVaultManifest.ts # Server Evidence Vault persisted metadata manifests
+      evidenceVaultLineageDigest.ts # Evidence Vault lineage readiness digest and JSON export
       anchorReceipt.ts       # Local simulated manifest anchor receipt
       phase2Types.ts         # Phase 2 backend-boundary type contracts and pure helpers
       phase2ApiContracts.ts  # Phase 2 API route, boundary, and Prisma schema draft contracts
@@ -590,6 +591,16 @@ Owns server Evidence Vault manifest behavior for persisted metadata:
 
 Evidence Vault manifests are audit preparation metadata only. They do not expose raw document content, raw KYC, personal data, or legal conclusions.
 
+### `src/lib/evidenceVaultLineageDigest.ts`
+
+Owns Evidence Vault lineage handoff behavior for persisted metadata:
+
+- `createEvidenceVaultLineageDigest({ workspaceId, records, manifest })` summarizes active, replaced, open-rejected, lineage-link, linked-control, linked-risk, and manifest-hash state.
+- `exportEvidenceVaultLineageDigestJson(digest)` and `downloadEvidenceVaultLineageDigestJson(filename, digest)` provide the Evidence Ledger download surface.
+- The hash payload excludes `generatedAt` and source-note body text, while replacement links, replacement reason hashes, status counts, and manifest hashes change the digest hash.
+
+Evidence Vault lineage digests are audit preparation metadata only. They do not expose raw file bytes, source-note body text, raw KYC, credentials, personal data, or legal conclusions.
+
 ### `src/lib/anchorReceipt.ts`
 
 Owns simulated manifest anchoring:
@@ -880,10 +891,13 @@ The gateway must keep model output as draft audit preparation. It must not chang
 - block active duplicate hashes before storing a second evidence record
 - let rejected records be superseded by replacement metadata while preserving parent/child relationships and replacement reasons
 - feed the Evidence Manifest with stable server-side evidence versions
+- feed the Evidence Vault Lineage Digest with stable active/replaced/rejected counts, lineage links, manifest hash, and recovery actions
 
 The Phase 2 draft must not store raw KYC or personal data. Secure document parsing and OCR should be added only after privacy and retention boundaries are documented.
 
 `src/lib/evidenceVaultWorkflow.ts` owns the shared Evidence Vault status machine. `server/evidenceVaultRoutes.ts` uses it before PATCH writes so rejected evidence cannot be directly reactivated and superseded records stay historical; users must use the replacement endpoint to preserve parent/child lineage. `server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
+
+`src/lib/evidenceVaultLineageDigest.ts` turns those persisted metadata records plus the server manifest hash into a downloadable lineage digest from `EvidenceLedger`, so reviewers can see active, replaced, and open rejected states without exposing source-note body text or treating evidence status as legal approval.
 
 `src/lib/evidenceUploadBoundary.ts` is called by `server/evidenceVaultService.ts` before record creation so unsafe metadata is blocked server-side even if a client bypasses the UI retention gate. It reuses `src/lib/dataClassification.ts` for scanner coverage and returns class-level errors without echoing credentials, private keys, or raw KYC snippets.
 

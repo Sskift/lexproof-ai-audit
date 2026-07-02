@@ -43,9 +43,21 @@ describe("Audit Log route module", () => {
       summary: "Updated evidence status to verified.",
       createdAt: "2026-06-30T00:02:00.000Z"
     });
+    const fourthRecord = createAuditLogRecord({
+      workspaceId: "workspace-audit-routes",
+      actorId: "Integration policy evaluator",
+      action: "integration-policy.evaluated",
+      targetType: "integration-policy",
+      targetId: "integration-policy-evaluation-1",
+      beforeHash: "",
+      afterHash: "b".repeat(64),
+      summary: "Evaluated object-storage integration policy as audit preparation metadata.",
+      createdAt: "2026-06-30T00:03:00.000Z"
+    });
     await repository.appendAuditLogRecord(firstRecord);
     await repository.appendAuditLogRecord(secondRecord);
     await repository.appendAuditLogRecord(thirdRecord);
+    await repository.appendAuditLogRecord(fourthRecord);
 
     const response = await server.inject({
       method: "GET",
@@ -72,6 +84,12 @@ describe("Audit Log route module", () => {
         action: "evidence.updated",
         targetType: "evidence",
         notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
+      }),
+      expect.objectContaining({
+        id: fourthRecord.id,
+        action: "integration-policy.evaluated",
+        targetType: "integration-policy",
+        notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
       })
     ]);
     expect(response.body.toLowerCase()).not.toContain("api_key");
@@ -91,13 +109,28 @@ describe("Audit Log route module", () => {
     expect(filteredResponse.statusCode).toBe(200);
     expect(filteredResponse.json()).toEqual([expect.objectContaining({ id: thirdRecord.id, actorId: "Counsel", targetType: "evidence" })]);
 
+    const integrationPolicyFilterResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-audit-routes/audit-log?targetType=integration-policy&action=integration-policy.evaluated"
+    });
+    expect(integrationPolicyFilterResponse.statusCode).toBe(200);
+    expect(integrationPolicyFilterResponse.json()).toEqual([
+      expect.objectContaining({
+        id: fourthRecord.id,
+        actorId: "Integration policy evaluator",
+        targetType: "integration-policy",
+        summary: "Evaluated object-storage integration policy as audit preparation metadata."
+      })
+    ]);
+
     const invalidFilterResponse = await server.inject({
       method: "GET",
       url: "/api/workspaces/workspace-audit-routes/audit-log?targetType=legal-opinion"
     });
     expect(invalidFilterResponse.statusCode).toBe(400);
     expect(invalidFilterResponse.json()).toEqual({
-      error: "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, or export.",
+      error:
+        "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, integration-policy, or export.",
       code: "AUDIT_LOG_FILTER_FAILED",
       recoveryAction: "Use supported audit log filters for actorId, action, targetType, or targetId.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."

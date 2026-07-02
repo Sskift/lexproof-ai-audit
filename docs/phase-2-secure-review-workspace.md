@@ -218,7 +218,8 @@ Boundary rule: React owns interaction state and workbench rendering. The backend
 ### Audit Logs
 
 - `GET /api/workspaces/:workspaceId/audit-log`
-  - lists operation metadata for workspace, evidence, model, review, and export actions
+  - lists operation metadata for workspace, evidence, model, review, source, integration-policy, and export actions
+  - supports metadata-only filters for `actorId`, `action`, `targetType`, and `targetId`
 
 ## Data Model Draft
 

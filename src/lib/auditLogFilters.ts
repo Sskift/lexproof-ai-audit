@@ -31,6 +31,7 @@ const auditLogTargetTypes: AuditLogRecord["targetType"][] = [
   "human-review",
   "source-approval",
   "source-review",
+  "integration-policy",
   "export"
 ];
 
@@ -58,7 +59,7 @@ export function normalizeAuditLogFilters(input: AuditLogFilterInput): AuditLogFi
       return {
         valid: false,
         errors: [
-          "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, or export."
+          "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, integration-policy, or export."
         ]
       };
     }

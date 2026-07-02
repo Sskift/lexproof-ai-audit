@@ -22,6 +22,14 @@ describe("createAuditLogExport", () => {
           action: "model.run.created",
           targetType: "model-run",
           createdAt: "2026-06-30T00:00:03.000Z"
+        }),
+        createRecord({
+          id: "audit-log-4",
+          action: "integration-policy.evaluated",
+          targetType: "integration-policy",
+          targetId: "integration-policy-evaluation-1",
+          summary: "Evaluated object-storage integration policy as audit preparation metadata.",
+          createdAt: "2026-06-30T00:00:04.000Z"
         })
       ],
       exportedAt: "2026-06-30T00:01:00.000Z"
@@ -31,17 +39,25 @@ describe("createAuditLogExport", () => {
       exportVersion: "lexproof-audit-log-export-v1",
       workspaceId: "workspace-audit-export",
       exportedAt: "2026-06-30T00:01:00.000Z",
-      eventCount: 3,
+      eventCount: 4,
       firstEventAt: "2026-06-30T00:00:01.000Z",
-      lastEventAt: "2026-06-30T00:00:03.000Z",
+      lastEventAt: "2026-06-30T00:00:04.000Z",
       actionCounts: {
+        "integration-policy.evaluated": 1,
         "model.run.created": 2,
         "workspace.created": 1
       },
       actors: ["Compliance"],
-      targetTypes: ["model-run", "workspace"]
+      targetTypes: ["integration-policy", "model-run", "workspace"]
     });
-    expect(exportRecord.events.map((event) => event.id)).toEqual(["audit-log-1", "audit-log-2", "audit-log-3"]);
+    expect(exportRecord.events.map((event) => event.id)).toEqual(["audit-log-1", "audit-log-2", "audit-log-3", "audit-log-4"]);
+    expect(exportRecord.events.at(-1)).toEqual(
+      expect.objectContaining({
+        targetType: "integration-policy",
+        targetId: "integration-policy-evaluation-1",
+        summary: "Evaluated object-storage integration policy as audit preparation metadata."
+      })
+    );
     expect(exportRecord.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 

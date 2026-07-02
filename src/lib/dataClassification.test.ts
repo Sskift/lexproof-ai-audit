@@ -60,6 +60,25 @@ describe("classifyDataBoundaryText", () => {
     expect(JSON.stringify(findings)).not.toContain("AB1234567");
   });
 
+  it("flags date of birth and government identity numbers without exposing raw values", () => {
+    const findings = classifyDataBoundaryText(
+      "KYC summary includes DOB 1990-01-02, driver license D1234567, and national ID SG-1234567-Z for removal."
+    );
+
+    const personalDataFinding = findings.find((finding) => finding.dataClass === "personal-data");
+    const serialized = JSON.stringify(findings);
+
+    expect(personalDataFinding).toMatchObject({
+      dataClass: "personal-data",
+      severity: "warn",
+      matchCount: 3
+    });
+    expect(personalDataFinding?.redactedSnippet).toContain("[redacted-date-of-birth]");
+    expect(serialized).not.toContain("1990-01-02");
+    expect(serialized).not.toContain("D1234567");
+    expect(serialized).not.toContain("SG-1234567-Z");
+  });
+
   it("flags wallet addresses as reviewable Web3 identifiers without treating them as private keys", () => {
     const findings = classifyDataBoundaryText(
       `Evidence note references treasury wallet ${walletAddress} and signer wallet 0x2222222222222222222222222222222222222222 for review.`
@@ -118,6 +137,16 @@ describe("redactClassifiedText", () => {
     expect(redacted).not.toContain("+1 415 555 0199");
     expect(redacted).not.toContain("123-45-6789");
     expect(redacted).not.toContain("AB1234567");
+  });
+
+  it("redacts date of birth and government identity numbers from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText("DOB 1990-01-02; driver license D1234567; national ID SG-1234567-Z.");
+
+    expect(redacted).toContain("[redacted-date-of-birth]");
+    expect(redacted).toContain("[redacted-government-id]");
+    expect(redacted).not.toContain("1990-01-02");
+    expect(redacted).not.toContain("D1234567");
+    expect(redacted).not.toContain("SG-1234567-Z");
   });
 
   it("redacts wallet addresses without changing private-key redaction", () => {

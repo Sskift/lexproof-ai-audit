@@ -29,6 +29,10 @@ const emailPattern = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/;
 const phonePattern = /\+\d[\d\s().-]{7,}\d|\b(?:phone|tel|mobile)\s*[:#-]?\s*\d[\d\s().-]{7,}\d\b/;
 const ssnPattern = /\b(?:ssn|social security number)?\s*[:#-]?\s*\d{3}-\d{2}-\d{4}\b/;
 const passportIdPattern = /\bpassport(?:\s+(?:number|no\.?|id))?\s+(?:[A-Z]{1,3}\d{5,9}|\d{6,12})\b/;
+const dateOfBirthPattern =
+  /\b(?:date of birth|dob|birthdate)\s*[:#-]?\s*(?:\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|[A-Z][a-z]+ \d{1,2},? \d{4})\b/;
+const governmentIdPattern =
+  /\b(?:driver'?s?\s+licen[cs]e|driving\s+licen[cs]e|national\s+id|government\s+id)\s*(?:number|no\.?|id)?\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{4,24}\b/;
 const evmWalletAddressPattern = /\b0x[a-fA-F0-9]{40}\b/;
 const walletSecretLabelPattern = String.raw`(?:seed phrase|mnemonic|recovery phrase|wallet secret(?: phrase)?)`;
 const walletSecretPhrasePattern =
@@ -37,7 +41,7 @@ const walletSecretPhrasePattern =
     "gi"
   );
 const directPersonalIdentifierPattern = new RegExp(
-  `${emailPattern.source}|${phonePattern.source}|${ssnPattern.source}|${passportIdPattern.source}`,
+  `${emailPattern.source}|${phonePattern.source}|${ssnPattern.source}|${passportIdPattern.source}|${dateOfBirthPattern.source}|${governmentIdPattern.source}`,
   "gi"
 );
 
@@ -144,6 +148,8 @@ export function redactClassifiedText(value: string): string {
     .replace(new RegExp(emailPattern.source, "gi"), "[redacted-email]")
     .replace(new RegExp(ssnPattern.source, "gi"), "[redacted-ssn]")
     .replace(new RegExp(passportIdPattern.source, "gi"), "[redacted-passport-id]")
+    .replace(new RegExp(dateOfBirthPattern.source, "gi"), "[redacted-date-of-birth]")
+    .replace(new RegExp(governmentIdPattern.source, "gi"), "[redacted-government-id]")
     .replace(new RegExp(phonePattern.source, "gi"), "[redacted-phone]")
     .replace(/(?<!-)\b(passport\s+number|social security number|ssn)\b/gi, "[redacted-personal-data]");
 }

@@ -22,6 +22,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/demo-05-secure-review-journey.png",
   "docs/assets/screenshots/demo-06-counsel-pack-export.png",
   "docs/assets/screenshots/counsel-handoff-checklist.png",
+  "docs/assets/screenshots/judge-handoff-bundle.png",
   "docs/assets/screenshots/sources-demo-runbook-handoff.png",
   "docs/assets/screenshots/submission-pack-export-safety-summary.jpg"
 ];

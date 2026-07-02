@@ -21,6 +21,7 @@ import { ExportSafetyInventoryPanel } from "./components/ExportSafetyInventoryPa
 import { GrcTicketExportPanel } from "./components/GrcTicketExportPanel";
 import { HumanReviewPanel } from "./components/HumanReviewPanel";
 import { IntegrationReadinessPanel } from "./components/IntegrationReadinessPanel";
+import { JudgeHandoffBundlePanel } from "./components/JudgeHandoffBundlePanel";
 import { JurisdictionChecklistPanel } from "./components/JurisdictionChecklistPanel";
 import { ModelIntakePanel } from "./components/ModelIntakePanel";
 import { ProjectWorkspace } from "./components/ProjectWorkspace";
@@ -121,6 +122,7 @@ import {
   createIntegrationEnablementDossier,
   type IntegrationEnablementDossier
 } from "./lib/integrationEnablementDossier";
+import { createJudgeHandoffBundle, type JudgeHandoffBundle } from "./lib/judgeHandoffBundle";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
   createModelGatewayProviderPolicyReport,
@@ -336,6 +338,7 @@ export default function App() {
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
   const [exportSafetyInventory, setExportSafetyInventory] = useState<ExportSafetyInventory | null>(null);
+  const [judgeHandoffBundle, setJudgeHandoffBundle] = useState<JudgeHandoffBundle | null>(null);
   const [counselHandoffChecklist, setCounselHandoffChecklist] = useState<CounselHandoffChecklist | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
@@ -1190,6 +1193,32 @@ export default function App() {
       live = false;
     };
   }, [dataBoundaryReport, exportSafetyArtifacts, project.id, project.projectName]);
+
+  useEffect(() => {
+    let live = true;
+
+    if (activeTab !== "sources" || !submissionPack || !demoRunbook || !exportSafetyInventory) {
+      setJudgeHandoffBundle(null);
+      return () => {
+        live = false;
+      };
+    }
+
+    createJudgeHandoffBundle({
+      projectName: project.projectName,
+      submissionPack,
+      demoRunbook,
+      exportSafetyInventory
+    }).then((nextBundle) => {
+      if (live) {
+        setJudgeHandoffBundle(nextBundle);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [activeTab, demoRunbook, exportSafetyInventory, project.projectName, submissionPack]);
 
   useEffect(() => {
     let live = true;
@@ -2106,6 +2135,7 @@ export default function App() {
               audit={audit}
               demoRunbook={demoRunbook}
               exportSafetyInventory={exportSafetyInventory}
+              judgeHandoffBundle={judgeHandoffBundle}
               submissionPack={submissionPack}
             />
           ) : null}
@@ -2177,11 +2207,13 @@ function SourcesPanel({
   audit,
   demoRunbook,
   exportSafetyInventory,
+  judgeHandoffBundle,
   submissionPack
 }: {
   audit: ReturnType<typeof analyzeAuditProfile>;
   demoRunbook: DemoRunbook | null;
   exportSafetyInventory: ExportSafetyInventory | null;
+  judgeHandoffBundle: JudgeHandoffBundle | null;
   submissionPack: SubmissionPack | null;
 }) {
   return (
@@ -2200,6 +2232,7 @@ function SourcesPanel({
         <Github size={20} aria-hidden="true" />
         <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
       </div>
+      <JudgeHandoffBundlePanel bundle={judgeHandoffBundle} />
       <ExportSafetyInventoryPanel inventory={exportSafetyInventory} />
       <SubmissionPackPanel pack={submissionPack} demoRunbook={demoRunbook} />
     </section>

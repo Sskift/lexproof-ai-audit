@@ -6712,6 +6712,159 @@ textarea {
   margin-bottom: 0;
 }
 
+.judge-handoff-bundle {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #c8d8e6;
+  border-radius: 8px;
+  background: #f7fbfa;
+}
+
+.judge-handoff-bundle.ready {
+  border-color: #b8d8c8;
+  background: #f7fcf9;
+}
+
+.judge-handoff-bundle.needs-action {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.judge-handoff-summary,
+.judge-handoff-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.judge-handoff-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.judge-handoff-fact,
+.judge-handoff-actions,
+.judge-handoff-next-actions,
+.judge-handoff-artifact {
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.judge-handoff-fact {
+  padding: 12px;
+}
+
+.judge-handoff-fact span,
+.judge-handoff-fact code {
+  display: block;
+}
+
+.judge-handoff-fact span {
+  margin-bottom: 5px;
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.judge-handoff-fact code {
+  overflow-wrap: anywhere;
+  color: #102a43;
+  font-size: 0.78rem;
+}
+
+.judge-handoff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.judge-handoff-actions strong,
+.judge-handoff-actions span {
+  color: #31424f;
+}
+
+.judge-handoff-next-actions {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-color: #e9bd87;
+  color: #7a4a16;
+}
+
+.judge-handoff-next-actions ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.judge-handoff-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.judge-handoff-artifact {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+}
+
+.judge-handoff-artifact.ready {
+  border-color: #b8d8c8;
+}
+
+.judge-handoff-artifact.needs-review,
+.judge-handoff-artifact.needs-action,
+.judge-handoff-artifact.missing {
+  border-color: #e9bd87;
+}
+
+.judge-handoff-artifact.blocked {
+  border-color: #e2a7a1;
+}
+
+.judge-handoff-artifact header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.judge-handoff-artifact header svg {
+  color: #0c7b7b;
+}
+
+.judge-handoff-artifact.needs-review header svg,
+.judge-handoff-artifact.needs-action header svg,
+.judge-handoff-artifact.missing header svg,
+.judge-handoff-artifact.blocked header svg {
+  color: #a74421;
+}
+
+.judge-handoff-artifact header strong {
+  color: #102a43;
+  line-height: 1.35;
+}
+
+.judge-handoff-artifact header span {
+  color: #53616f;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.judge-handoff-artifact small {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
 .export-safety-inventory {
   display: grid;
   gap: 12px;
@@ -7085,6 +7238,8 @@ textarea {
   .evaluation-facts,
   .integration-adapter-grid,
   .integration-dossier-policy-list,
+  .judge-handoff-summary,
+  .judge-handoff-grid,
   .export-inventory-summary,
   .export-inventory-grid,
   .provider-policy-summary,

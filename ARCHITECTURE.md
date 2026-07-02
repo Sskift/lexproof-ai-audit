@@ -56,6 +56,7 @@ lexproof-ai-audit/
       JurisdictionChecklistPanel.tsx # Jurisdiction checklist, policy controls, and local-counsel routing
       EvidenceLedger.tsx     # Editable evidence queue and manifest display
       CounselPackPanel.tsx   # Markdown, manifest, source pack, and simulated receipt export
+      JudgeHandoffBundlePanel.tsx # Sources-level judge bundle summary and JSON download
       ExportSafetyInventoryPanel.tsx # Sources-level handoff readiness inventory and JSON download
       SubmissionPackPanel.tsx # Judge-facing submission metadata artifact and JSON download
     data/
@@ -125,6 +126,7 @@ lexproof-ai-audit/
       regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
       submissionPack.ts      # Metadata-only hackathon submission pack artifact and stable hash
       exportSafetyInventory.ts # Sources-level export artifact inventory, blockers, and stable hash
+      judgeHandoffBundle.ts  # Sources-level judge bundle across submission, runbook, and inventory hashes
       workspaceActionQueue.ts # First-screen operational action queue across evidence/model/review/export readiness
       counselPack.ts         # Markdown pack and browser download helper
       dataClassification.ts  # Shared security data-classification and redaction rules
@@ -206,6 +208,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createServerCounselPackExportRecord(apiBaseUrl, workspaceId, latestVersion) for metadata-only Phase 2 export records
   -> createSubmissionPack(project, audit, manifest, source pack, demo readiness, demo runbook summary) for judge-facing metadata artifact
   -> createExportSafetyInventory(project, data boundary report, handoff artifacts including Demo Runbook JSON) for Sources-level export readiness
+  -> createJudgeHandoffBundle(Submission Pack, Demo Runbook, Export Safety Inventory) for a single judge metadata packet
   -> createCounselHandoffChecklist(export safety inventory, manifest/source/submission hashes, review/version/server export metadata)
   -> tabbed UI surfaces, Markdown download, version JSON download, and browser Print / Save PDF
 ```
@@ -679,6 +682,15 @@ Owns Sources-level export handoff readiness:
 - `exportSafetyInventoryJson(inventory)` and `downloadExportSafetyInventoryJson(filename, inventory)` export redacted metadata only.
 
 The inventory is a safety checklist for audit-prep handoff. It does not make legal conclusions, upload raw evidence, store secrets, perform KYC, or enable external adapters.
+
+### `src/lib/judgeHandoffBundle.ts`
+
+Owns the single Sources-level judge packet:
+
+- `createJudgeHandoffBundle(input)` combines Submission Pack JSON, Demo Runbook JSON, and Export Safety Inventory JSON hashes/statuses into one metadata-only packet with recovery actions, artifact counts, and a stable bundle hash.
+- `exportJudgeHandoffBundleJson(bundle)` and `downloadJudgeHandoffBundleJson(filename, bundle)` export readable metadata-only JSON from the Sources tab.
+
+The bundle is a judge handoff index. It does not store raw evidence, Markdown content, credentials, KYC material, legal conclusions, or chain-write claims.
 
 ### `src/lib/submissionPack.ts`
 

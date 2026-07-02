@@ -3058,6 +3058,72 @@ describe("App", () => {
     }
   });
 
+  it("downloads a metadata-only Judge Handoff Bundle from Sources", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:judge-handoff-bundle");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+      const bundlePanel = await screen.findByRole("region", { name: /Judge Handoff Bundle/i });
+      await waitFor(() => {
+        expect(within(bundlePanel).getByText(/Submission Pack JSON/i)).toBeInTheDocument();
+        expect(within(bundlePanel).getAllByText(/Demo Runbook JSON/i).length).toBeGreaterThan(0);
+        expect(within(bundlePanel).getByText(/Export Safety Inventory JSON/i)).toBeInTheDocument();
+      });
+      const downloadButton = await screen.findByRole("button", { name: /Download Judge Handoff Bundle JSON/i });
+      await waitFor(() => expect(downloadButton).toBeEnabled());
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:judge-handoff-bundle");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Judge Handoff Bundle JSON blob to be created from Sources.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          bundleVersion: "lexproof-judge-handoff-bundle-v1",
+          artifactCount: 3,
+          exportHandoffAllowed: false,
+          notLegalAdviceBoundary: "Not legal advice. Judge handoff bundles are audit preparation metadata only."
+        })
+      );
+      expect(parsed.bundleHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.artifacts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: "submission-pack", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) }),
+          expect.objectContaining({ id: "demo-runbook", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) }),
+          expect.objectContaining({ id: "export-safety-inventory", artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/) })
+        ])
+      );
+      expect(payload).toContain("Not legal advice");
+      expect(payload).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("downloads an Export Safety Inventory that blocks unsafe handoff without leaking secrets", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

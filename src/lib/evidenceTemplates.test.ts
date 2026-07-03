@@ -110,6 +110,7 @@ describe("evidence templates", () => {
         "Korea VASP user protection and AML reporting register",
         "India VDA SP FIU-IND registration and AML reporting register",
         "US FinCEN CVC MSB and BSA transfer control register",
+        "New York NYDFS BitLicense and custody customer-protection register",
         "Wallet sanctions screening and escalation controls"
       ])
     );
@@ -138,6 +139,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
     expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");
     expect(serializedSources).toContain("regulatory control: control-us-fincen-cvc-msb-bsa-travel-rule");
+    expect(serializedSources).toContain("regulatory control: control-us-nydfs-bitlicense-custody-customer-protection");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");

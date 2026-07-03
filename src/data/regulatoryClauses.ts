@@ -410,6 +410,76 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-nydfs-bitlicense-custody-customer-protection",
+    jurisdiction: "United States",
+    regulator: "New York Department of Financial Services",
+    sourceName: "NYDFS Virtual Currency Business Licensing and Updated Custodial Structures Guidance",
+    sourceUrl: "https://www.dfs.ny.gov/virtual_currency_businesses",
+    citation: "23 NYCRR Part 200; NYDFS Updated Guidance on Custodial Structures, September 30, 2025",
+    topic: "custody",
+    summary:
+      "Prepare New York virtual-currency business activity, BitLicense or trust-company route, customer asset segregation, beneficial-interest, sub-custody, disclosure, reconciliation, and books-and-records evidence for NYDFS counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "new york",
+      "nydfs",
+      "bitlicense",
+      "new york resident",
+      "virtual currency business activity",
+      "limited purpose trust company",
+      "customer virtual currency",
+      "customer asset segregation"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-nydfs-vc-business-activity-license-route",
+        title: "New York NYDFS virtual-currency business activity and license-route evidence",
+        reason:
+          "New York virtual-currency review needs activity-scope, New York user or resident access, BitLicense or trust-company route, NMLS/application owner, stablecoin or coin-listing assumptions, and money-transmission handoff evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "nydfs",
+          "bitlicense",
+          "new york virtual currency",
+          "virtual currency business activity",
+          "new york resident",
+          "limited purpose trust company",
+          "nmls",
+          "license route"
+        ]
+      },
+      {
+        id: "us-nydfs-custody-segregation-beneficial-interest-disclosure",
+        title: "New York NYDFS custody segregation, beneficial-interest, and disclosure evidence",
+        reason:
+          "NYDFS custody review needs customer virtual currency segregation, omnibus or per-customer wallet accounting, internal ledger, reconciliation, beneficial-interest disclosure, sub-custody approval, books and records, and no-proprietary-use evidence without raw KYC or wallet secrets.",
+        priority: "P0",
+        keywords: [
+          "customer virtual currency",
+          "segregation",
+          "beneficial interest",
+          "omnibus wallet",
+          "internal ledger",
+          "reconciliation",
+          "sub-custody",
+          "customer disclosure",
+          "books and records",
+          "proprietary use"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which New York virtual-currency business activity, New York resident access, BitLicense, trust-company, or money-transmission assumptions should NYDFS counsel review?",
+      "What evidence shows customer virtual currency segregation, beneficial-interest disclosure, reconciliation, sub-custody approval, and no proprietary use without exporting raw KYC, customer records, or wallet secrets?"
+    ],
+    localCounselRole: "New York virtual-currency / NYDFS counsel",
+    effectiveAsOf: "2025-09-30",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against the NYDFS virtual-currency business licensing page, 23 NYCRR Part 200 references, and NYDFS updated custodial-structures guidance dated September 30, 2025 for New York activity-scope, license-route, customer asset segregation, sub-custody, disclosure, reconciliation, and books-and-records evidence routing; route interpretation to New York virtual-currency counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-title-ii-white-paper",
     jurisdiction: "European Union",
     regulator: "European Union",

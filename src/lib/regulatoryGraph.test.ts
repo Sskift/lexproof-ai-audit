@@ -223,6 +223,84 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches New York NYDFS BitLicense and custody customer-protection source controls without legal conclusions", () => {
+    const nyProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-new-york-vc-custody",
+      projectName: "Hudson RWA Custody Review",
+      jurisdictions: ["United States"],
+      entityType: "Virtual currency custody and tokenized private-credit operations team",
+      assetModel:
+        "Tokenized private credit note with New York resident access, BitLicense planning, stablecoin rails, and virtual currency business activity assumptions",
+      userType: "New York residents, accredited investors, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform maintains custody or control of customer virtual currency through omnibus wallet accounting, internal ledger reconciliation, sub-custody planning, and no proprietary use controls",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, customer records excluded, and wallet secrets excluded",
+      aiUsage: "AI drafts NYDFS custody evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application NYDFS BitLicense and custody customer-protection review before New York counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(nyProject);
+    const graph = createRegulatoryGraph(nyProject, audit, nyProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["us-nydfs-bitlicense-custody-customer-protection"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nydfs-bitlicense-custody-customer-protection")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "New York Department of Financial Services",
+      sourceUrl: "https://www.dfs.ny.gov/virtual_currency_businesses",
+      citation: "23 NYCRR Part 200; NYDFS Updated Guidance on Custodial Structures, September 30, 2025",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "New York virtual-currency / NYDFS counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "New York NYDFS virtual-currency business activity and license-route evidence",
+        "New York NYDFS custody segregation, beneficial-interest, and disclosure evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).toContain("Not legal advice");
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks New York NYDFS BitLicense and custody controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `nydfs-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const nyProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-new-york-vc-custody-covered",
+      jurisdictions: ["United States"],
+      assetModel:
+        "Tokenized private credit note with New York resident access, BitLicense planning, and virtual currency business activity assumptions",
+      userType: "New York residents, accredited investors, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform maintains custody or control of customer virtual currency through omnibus wallet accounting, internal ledger reconciliation, sub-custody planning, and no proprietary use controls",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, customer records excluded, and wallet secrets excluded",
+      aiUsage: "AI drafts NYDFS custody evidence summaries for human review",
+      operatingStage: "Pre-application NYDFS BitLicense and custody customer-protection review before New York counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(nyProject);
+    const graph = createRegulatoryGraph(nyProject, audit, nyProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nydfs-bitlicense-custody-customer-protection")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["New York NYDFS BitLicense and custody customer-protection register"]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "us-nydfs-bitlicense-custody-customer-protection" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches Germany BaFin MiCAR CASP custody source controls without legal conclusions", () => {
     const deProject: ProjectProfile = {
       ...baseProject,

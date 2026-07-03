@@ -230,6 +230,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "New York NYDFS BitLicense and custody customer-protection register",
+        kind: "Register",
+        content:
+          "Requested: summarize New York virtual currency business activity, New York resident access, BitLicense or limited purpose trust company route, NMLS application owner, money transmission handoff, customer virtual currency segregation, omnibus wallet or per-customer wallet accounting, internal ledger, reconciliation, beneficial interest disclosure, sub-custody approval, books and records, no proprietary use, reviewer owner, and no raw KYC, wallet secrets, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-nydfs-bitlicense-custody-customer-protection",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:

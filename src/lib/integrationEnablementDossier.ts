@@ -2,6 +2,7 @@ import type { ChainAnchorPolicyReport } from "./chainAnchorPolicy";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { DocumentParserPolicyReport } from "./documentParserPolicy";
 import type { GrcDestinationPolicyReport } from "./grcDestinationPolicy";
+import type { IntegrationPolicyEvaluationRecord } from "./integrationPolicyEvaluation";
 import type { IntegrationAdapterId, IntegrationAdapterStatus, IntegrationReadinessRegistry } from "./integrationReadiness";
 import type { ModelGatewayProviderPolicyReport } from "./modelGatewayProviderPolicy";
 import type { ModelGatewaySecretPolicyReport } from "./modelGatewaySecretPolicy";
@@ -26,6 +27,25 @@ export type IntegrationEnablementPolicyReportSummary = {
   externalCapability: string;
   externalCapabilityAllowed: false;
   externalCapabilityStatus: string;
+  nextActions: string[];
+  notLegalAdviceBoundary: string;
+};
+
+export type IntegrationEnablementPolicyEvaluationSummary = {
+  id: string;
+  policyId: IntegrationPolicyEvaluationRecord["policyId"];
+  reportVersion: string;
+  status: Exclude<IntegrationAdapterStatus, "disabled">;
+  approvedControlCount: number;
+  requiredControlCount: number;
+  externalCapabilityAllowed: false;
+  externalCapabilityStatus: string;
+  reportHash: string;
+  contextHash: string;
+  policyHash: string;
+  evaluatorId: string;
+  source: "server";
+  createdAt: string;
   nextActions: string[];
   notLegalAdviceBoundary: string;
 };
@@ -55,10 +75,12 @@ export type IntegrationEnablementDossier = {
   blockedCount: number;
   disabledCount: number;
   policyReportCount: number;
+  policyEvaluationRecordCount: number;
   externalEnablementAllowed: false;
   externalEnablementStatus: "disabled-by-default" | "blocked-by-policy" | "needs-policy-review";
   adapters: IntegrationEnablementAdapterSummary[];
   policyReports: IntegrationEnablementPolicyReportSummary[];
+  policyEvaluationRecords: IntegrationEnablementPolicyEvaluationSummary[];
   blockerCount: number;
   blockers: string[];
   nextActions: string[];
@@ -73,6 +95,7 @@ export type CreateIntegrationEnablementDossierInput = {
   documentParserPolicyReport: DocumentParserPolicyReport;
   chainAnchorPolicyReport: ChainAnchorPolicyReport;
   grcDestinationPolicyReport: GrcDestinationPolicyReport;
+  policyEvaluationRecords?: IntegrationPolicyEvaluationRecord[];
   generatedAt?: string;
 };
 
@@ -89,6 +112,7 @@ export async function createIntegrationEnablementDossier({
   documentParserPolicyReport,
   chainAnchorPolicyReport,
   grcDestinationPolicyReport,
+  policyEvaluationRecords = [],
   generatedAt = new Date().toISOString()
 }: CreateIntegrationEnablementDossierInput): Promise<IntegrationEnablementDossier> {
   const adapters = registry.adapters.map((adapter) => ({
@@ -141,6 +165,9 @@ export async function createIntegrationEnablementDossier({
       externalCapabilityStatus: grcDestinationPolicyReport.externalGrcTicketCreationStatus
     })
   ];
+  const evaluationRecords = policyEvaluationRecords
+    .map(summarizePolicyEvaluationRecord)
+    .sort((left, right) => `${right.createdAt}-${right.id}`.localeCompare(`${left.createdAt}-${left.id}`));
   const blockedCount = adapters.filter((adapter) => adapter.status === "blocked").length;
   const needsPolicyCount = adapters.filter((adapter) => adapter.status === "needs-policy").length;
   const readyCount = adapters.filter((adapter) => adapter.status === "ready").length;
@@ -156,6 +183,7 @@ export async function createIntegrationEnablementDossier({
     registryStatus: normalizeStatus(registry.overallStatus),
     adapters,
     policyReports,
+    policyEvaluationRecords: evaluationRecords,
     blockers,
     nextActions,
     externalEnablementAllowed: false
@@ -173,14 +201,37 @@ export async function createIntegrationEnablementDossier({
     blockedCount,
     disabledCount,
     policyReportCount: policyReports.length,
+    policyEvaluationRecordCount: evaluationRecords.length,
     externalEnablementAllowed: false,
     externalEnablementStatus: createExternalEnablementStatus(blockedCount + policyBlockedCount, needsPolicyCount + policyNeedsReviewCount),
     adapters,
     policyReports,
+    policyEvaluationRecords: evaluationRecords,
     blockerCount: blockers.length,
     blockers,
     nextActions,
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE
+  };
+}
+
+function summarizePolicyEvaluationRecord(record: IntegrationPolicyEvaluationRecord): IntegrationEnablementPolicyEvaluationSummary {
+  return {
+    id: sanitize(record.id),
+    policyId: record.policyId,
+    reportVersion: sanitize(record.reportVersion),
+    status: normalizeNonDisabledStatus(record.overallStatus),
+    approvedControlCount: Math.max(0, Math.trunc(record.approvedControlCount)),
+    requiredControlCount: Math.max(0, Math.trunc(record.requiredControlCount)),
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: sanitize(record.externalCapabilityStatus),
+    reportHash: preserveSha256(record.reportHash),
+    contextHash: preserveSha256(record.contextHash),
+    policyHash: preserveSha256(record.policyHash),
+    evaluatorId: sanitize(record.evaluatorId),
+    source: "server",
+    createdAt: sanitize(record.createdAt),
+    nextActions: record.nextActions.map(sanitize).filter(Boolean),
+    notLegalAdviceBoundary: sanitize(record.notLegalAdviceBoundary)
   };
 }
 
@@ -328,8 +379,21 @@ function normalizeStatus(value: string): IntegrationAdapterStatus {
   return "blocked";
 }
 
+function normalizeNonDisabledStatus(value: string): Exclude<IntegrationAdapterStatus, "disabled"> {
+  if (value === "ready" || value === "needs-policy" || value === "blocked") {
+    return value;
+  }
+
+  return "blocked";
+}
+
 function sanitize(value: string): string {
   return redactDataBoundaryText(value.replace(/\s+/g, " ").trim());
+}
+
+function preserveSha256(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : "[invalid-hash]";
 }
 
 function unique(values: string[]): string[] {

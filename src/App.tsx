@@ -808,7 +808,8 @@ export default function App() {
       objectStoragePolicyReport: activeObjectStoragePolicyReport,
       documentParserPolicyReport: activeDocumentParserPolicyReport,
       chainAnchorPolicyReport: activeChainAnchorPolicyReport,
-      grcDestinationPolicyReport: activeGrcDestinationPolicyReport
+      grcDestinationPolicyReport: activeGrcDestinationPolicyReport,
+      policyEvaluationRecords: activeIntegrationPolicyEvaluationRecords
     }).then((dossier) => {
       if (!cancelled) {
         setIntegrationEnablementDossier(dossier);
@@ -825,6 +826,7 @@ export default function App() {
     activeModelGatewayProviderPolicyReport,
     activeModelGatewaySecretPolicyReport,
     activeObjectStoragePolicyReport,
+    activeIntegrationPolicyEvaluationRecords,
     integrationReadinessRegistry
   ]);
   const workspaceActionQueue = useMemo(

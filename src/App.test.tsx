@@ -1974,6 +1974,9 @@ describe("App", () => {
     expect(receipts.getByText(/Document Parser Policy/i)).toBeInTheDocument();
     expect(receipts.getByText(/7\/9 controls ready; external capability is disabled/i)).toBeInTheDocument();
     expect(receipts.getByText(/Not legal advice. Integration policy evaluation records are audit preparation metadata only./i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(registry.getByText(/Server receipts/i).parentElement).toHaveTextContent("1");
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

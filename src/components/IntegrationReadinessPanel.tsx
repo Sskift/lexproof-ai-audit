@@ -342,6 +342,7 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
       <div className="provider-policy-summary secret-policy-summary">
         <ProviderPolicyFact label="Dossier hash" value={dossier ? `${dossier.dossierHash.slice(0, 12)}...` : "Calculating"} />
         <ProviderPolicyFact label="Policy reports" value={dossier ? String(dossier.policyReportCount) : "0"} />
+        <ProviderPolicyFact label="Server receipts" value={dossier ? String(dossier.policyEvaluationRecordCount) : "0"} />
         <ProviderPolicyFact label="External enablement" value={dossier?.externalEnablementAllowed ? "Enabled" : "Disabled"} />
       </div>
       <div className="provider-policy-summary secret-policy-summary">

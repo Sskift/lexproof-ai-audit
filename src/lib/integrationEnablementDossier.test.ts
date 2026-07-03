@@ -7,6 +7,7 @@ import {
   exportIntegrationEnablementDossierJson,
   type CreateIntegrationEnablementDossierInput
 } from "./integrationEnablementDossier";
+import { createIntegrationPolicyEvaluationRecord } from "./integrationPolicyEvaluation";
 import type { IntegrationReadinessRegistry } from "./integrationReadiness";
 import { createModelGatewayProviderPolicyReport, defaultModelGatewayProviderAdapters } from "./modelGatewayProviderPolicy";
 import { createModelGatewaySecretPolicyReport } from "./modelGatewaySecretPolicy";
@@ -83,6 +84,84 @@ describe("createIntegrationEnablementDossier", () => {
     expect(json).not.toContain(privateKey);
     expect(json).not.toContain("raw KYC packet");
     expect(JSON.parse(json)).toEqual(expect.objectContaining({ externalEnablementAllowed: false }));
+  });
+
+  it("includes persisted server policy evaluation receipts without raw policy payloads", async () => {
+    const input = createInput({ readyPolicyControls: true });
+    const evaluationRecord = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "integration-enable",
+      policyId: "object-storage",
+      report: input.objectStoragePolicyReport,
+      context: {
+        workspaceId: "integration-enable",
+        evidenceCount: 2,
+        manifestHash: "a".repeat(64)
+      },
+      policy: {
+        policyOwner: "Storage owner",
+        retentionDays: 365,
+        apiKey: "sk-live-abcdef1234567890abcdef1234567890",
+        rawEvidence: "raw customer file body should not enter dossier"
+      },
+      evaluatorId: "Storage owner",
+      createdAt: "2026-07-03T08:00:00.000Z"
+    });
+    const dossier = await createIntegrationEnablementDossier({
+      ...input,
+      policyEvaluationRecords: [evaluationRecord]
+    });
+    const json = exportIntegrationEnablementDossierJson(dossier);
+
+    expect(dossier.policyEvaluationRecordCount).toBe(1);
+    expect(dossier.policyEvaluationRecords[0]).toEqual(
+      expect.objectContaining({
+        id: evaluationRecord.id,
+        policyId: "object-storage",
+        source: "server",
+        externalCapabilityAllowed: false,
+        reportHash: evaluationRecord.reportHash,
+        contextHash: evaluationRecord.contextHash,
+        policyHash: evaluationRecord.policyHash,
+        notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+      })
+    );
+    expect(json).toContain("policyEvaluationRecords");
+    expect(json).toContain(evaluationRecord.policyHash);
+    expect(json).not.toContain("sk-live-abcdef");
+    expect(json).not.toContain("raw customer file body");
+    expect(json).not.toContain("rawEvidence");
+  });
+
+  it("changes the dossier hash when server policy evaluation receipts change", async () => {
+    const input = createInput({ readyPolicyControls: true });
+    const firstRecord = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "integration-enable",
+      policyId: "object-storage",
+      report: input.objectStoragePolicyReport,
+      context: { workspaceId: "integration-enable" },
+      policy: { retentionDays: 365 },
+      createdAt: "2026-07-03T08:00:00.000Z"
+    });
+    const secondRecord = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "integration-enable",
+      policyId: "object-storage",
+      report: input.objectStoragePolicyReport,
+      context: { workspaceId: "integration-enable" },
+      policy: { retentionDays: 180 },
+      createdAt: "2026-07-03T08:00:00.000Z"
+    });
+
+    const firstDossier = await createIntegrationEnablementDossier({
+      ...input,
+      policyEvaluationRecords: [firstRecord]
+    });
+    const secondDossier = await createIntegrationEnablementDossier({
+      ...input,
+      policyEvaluationRecords: [secondRecord]
+    });
+
+    expect(secondRecord.policyHash).not.toBe(firstRecord.policyHash);
+    expect(secondDossier.dossierHash).not.toBe(firstDossier.dossierHash);
   });
 });
 

@@ -117,7 +117,9 @@ function createMatchedClause(
   projectText: string,
   evidenceItems: EvidenceItem[]
 ): MatchedRegulatoryClause {
-  const evidenceRequestStatuses = clause.evidenceRequests.map((request) => createEvidenceRequestStatus(request, evidenceItems));
+  const evidenceRequestStatuses = clause.evidenceRequests.map((request) =>
+    createEvidenceRequestStatus(clause, request, evidenceItems)
+  );
   const coveredEvidenceCount = evidenceRequestStatuses.filter((request) => request.status === "covered").length;
   const totalEvidenceRequestCount = evidenceRequestStatuses.length;
   const matchedEvidenceLabels = unique(evidenceRequestStatuses.flatMap((request) => request.matchedEvidenceLabels));
@@ -153,10 +155,11 @@ function createMatchedClause(
 }
 
 function createEvidenceRequestStatus(
+  clause: RegulatoryClause,
   request: RegulatoryEvidenceRequest,
   evidenceItems: EvidenceItem[]
 ): RegulatoryEvidenceRequestStatus {
-  const matchedItems = evidenceItems.filter((item) => evidenceMatchesRequest(item, request));
+  const matchedItems = createCandidateEvidenceItems(clause, evidenceItems).filter((item) => evidenceMatchesRequest(item, request));
   const coveredItems = matchedItems.filter((item) => item.status === "received" || item.status === "verified");
 
   return {
@@ -235,6 +238,23 @@ function matchesClause(clause: RegulatoryClause, activeFlagIds: Set<string>, pro
 function evidenceMatchesRequest(item: EvidenceItem, request: RegulatoryEvidenceRequest): boolean {
   const text = normalize(stripMachineControlIds([item.label, item.kind, item.source, item.content].filter(Boolean).join(" ")));
   return request.keywords.some((keyword) => keywordMatchesEvidenceText(keyword, text));
+}
+
+function createCandidateEvidenceItems(clause: RegulatoryClause, evidenceItems: EvidenceItem[]): EvidenceItem[] {
+  const clauseControlId = `control-${clause.id}`;
+  const explicitlyLinkedItems = evidenceItems.filter((item) => extractRegulatoryControlIds(item).includes(clauseControlId));
+
+  if (explicitlyLinkedItems.length > 0) {
+    return explicitlyLinkedItems;
+  }
+
+  return evidenceItems.filter((item) => extractRegulatoryControlIds(item).length === 0);
+}
+
+function extractRegulatoryControlIds(item: EvidenceItem): string[] {
+  const text = [item.source, item.content].filter(Boolean).join(" ");
+  const matches = Array.from(text.matchAll(/\bcontrol-[a-z0-9-]+\b/gi)).map((match) => match[0].toLowerCase());
+  return unique(matches);
 }
 
 function normalizeProjectText(project: ProjectProfile): string {

@@ -137,6 +137,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "eu-mica-stablecoin-issuer-source-path",
+    projectName: "EuroMint MiCA Stablecoin Review",
+    title: "EU MiCA ART/EMT stablecoin review",
+    summary:
+      "EU MiCA asset-referenced token and e-money token issuer review for classification, authorisation or notification route, white paper, reserve, redemption, recovery, custody, and counsel handoff evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect EU MiCA ART/EMT stablecoin source controls",
+      "Review issuer authorisation, white paper, and public-offer evidence gaps",
+      "Check reserve, redemption, recovery, custody, and no-raw-customer-record evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["European Union", "MiCA", "ART", "EMT", "Stablecoin"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "singapore-dpt-custody-source-path",
     projectName: "HarborKey DPT Custody Review",
     title: "Singapore DPT custody review",

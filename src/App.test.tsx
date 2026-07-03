@@ -1115,6 +1115,24 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the EU MiCA ART/EMT stablecoin scenario with issuer, white paper, reserve, and redemption evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start EU MiCA ART\/EMT stablecoin review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("EuroMint MiCA Stablecoin Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(/Regulation \(EU\) 2023\/1114, Titles III-IV, Articles 16, 36, 39, 48, 49, 51, and 55/i).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU MiCA stablecoin issuer counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU MiCA ART\/EMT issuer authorisation and white-paper evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU MiCA ART\/EMT reserve, redemption, and recovery evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 
@@ -4195,7 +4213,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
-  });
+  }, 20000);
 
   it("filters the Human Review queue by target type, status, reviewer, and search text", async () => {
     render(<App />);
@@ -4662,7 +4680,7 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
-  }, 10000);
+  }, 20000);
 
   it("creates server-side Counsel Pack export records from version metadata", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {

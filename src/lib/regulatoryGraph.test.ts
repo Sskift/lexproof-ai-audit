@@ -389,6 +389,89 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches EU MiCA ART/EMT stablecoin issuer controls without legal conclusions", () => {
+    const euStablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-mica-stablecoin",
+      projectName: "EuroMint MiCA Stablecoin Review",
+      jurisdictions: ["European Union"],
+      entityType: "ART / EMT stablecoin issuer",
+      assetModel:
+        "EU MiCA stablecoin issuer pilot assessing asset-referenced token and e-money token classification, white paper, reserve assets, redemption, and recovery-plan assumptions",
+      userType: "EU retail users, treasury partners, compliance reviewers, and EU MiCA stablecoin counsel",
+      custodyModel:
+        "Issuer coordinates mint, burn, reserve custody, reserve segregation, liquidity management, redemption workflow, and holder communications through metadata-only controls",
+      dataSensitivity: "Holder-risk metadata, reserve attestations, redemption summaries, and customer records excluded",
+      aiUsage: "AI drafts MiCA ART EMT issuer evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-notification EU MiCA ART EMT stablecoin issuer review before counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(euStablecoinProject);
+    const graph = createRegulatoryGraph(euStablecoinProject, audit, euStablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["eu-mica-art-emt-stablecoin-issuer-regime"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-art-emt-stablecoin-issuer-regime")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union / EBA / ESMA",
+      sourceUrl: "https://www.eba.europa.eu/regulation-and-policy/asset-referenced-and-e-money-tokens-mica",
+      citation: "Regulation (EU) 2023/1114, Titles III-IV, Articles 16, 36, 39, 48, 49, 51, and 55",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "EU MiCA stablecoin issuer counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "EU MiCA ART/EMT issuer authorisation and white-paper evidence",
+        "EU MiCA ART/EMT reserve, redemption, and recovery evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).toContain("Not legal advice");
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks EU MiCA ART/EMT stablecoin controls covered when RWA stablecoin template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `eu-mica-stablecoin-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const euStablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-mica-stablecoin-covered",
+      projectName: "EuroMint MiCA Stablecoin Review",
+      jurisdictions: ["European Union"],
+      entityType: "ART / EMT stablecoin issuer",
+      assetModel:
+        "EU MiCA stablecoin issuer with asset-referenced token, e-money token, white paper, reserve assets, redemption, and recovery-plan review",
+      userType: "EU retail users, treasury partners, compliance reviewers, and EU local counsel",
+      custodyModel: "Issuer coordinates reserve custody, reserve segregation, redemption workflow, and holder communications",
+      dataSensitivity: "Holder-risk metadata and redemption summaries excluded from exported demo evidence",
+      aiUsage: "AI drafts MiCA ART EMT stablecoin evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-notification EU MiCA ART EMT stablecoin issuer review before counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(euStablecoinProject);
+    const graph = createRegulatoryGraph(euStablecoinProject, audit, euStablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-art-emt-stablecoin-issuer-regime")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "EU MiCA ART EMT issuer authorisation and white paper register",
+        "EU MiCA stablecoin reserve redemption and recovery register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "eu-mica-art-emt-stablecoin-issuer-regime" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches Germany BaFin MiCAR CASP custody source controls without legal conclusions", () => {
     const deProject: ProjectProfile = {
       ...baseProject,

@@ -153,6 +153,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(stablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded EU MiCA ART/EMT stablecoin path for stablecoin issuer source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const stablecoinScenario = findDemoScenarioById(demoScenarios, "eu-mica-stablecoin-issuer-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(stablecoinScenario).toEqual(
+      expect.objectContaining({
+        title: "EU MiCA ART/EMT stablecoin review",
+        projectName: "EuroMint MiCA Stablecoin Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["European Union", "MiCA", "ART", "EMT", "Stablecoin"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(stablecoinScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect EU MiCA ART/EMT stablecoin source controls",
+        "Review issuer authorisation, white paper, and public-offer evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(stablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Brazil VASP path for jurisdiction source graph demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const brazilScenario = findDemoScenarioById(demoScenarios, "brazil-vasp-source-path");

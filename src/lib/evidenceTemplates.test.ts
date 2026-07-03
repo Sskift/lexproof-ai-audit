@@ -108,6 +108,8 @@ describe("evidence templates", () => {
         "Canada CTP PRU custody and investor-protection register",
         "Australia digital asset financial services and VASP AML register",
         "Korea VASP user protection and AML reporting register",
+        "EU MiCA ART EMT issuer authorisation and white paper register",
+        "EU MiCA stablecoin reserve redemption and recovery register",
         "India VDA SP FIU-IND registration and AML reporting register",
         "US FinCEN CVC MSB and BSA transfer control register",
         "New York NYDFS BitLicense and custody customer-protection register",
@@ -135,6 +137,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-stablecoin-guidance-06-2024");
+    expect(serializedSources).toContain("regulatory control: control-eu-mica-art-emt-stablecoin-issuer-regime");
     expect(serializedSources).toContain("regulatory control: control-hk-hkma-stablecoin-issuer-regime");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-compliance-risk-management");

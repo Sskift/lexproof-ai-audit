@@ -210,6 +210,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "EU MiCA ART EMT issuer authorisation and white paper register",
+        kind: "Register",
+        content:
+          "Requested: summarize EU asset-referenced token or e-money token classification, issuer type, home Member State, competent authority, authorisation or notification route, public offer or admission to trading assumptions, white paper owner, management statement, host Member State language assumptions, reviewer owner, and no raw customer records, credentials, wallet secrets, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-art-emt-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "EU MiCA stablecoin reserve redemption and recovery register",
+        kind: "Register",
+        content:
+          "Requested: summarize MiCA ART EMT reserve composition, reserve segregation, reserve custody, liquidity management, redemption rights, par-value redemption, recovery plan, redemption plan, reserve audit owner, holder communication owner, and no raw customer records, credentials, wallet secrets, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-mica-art-emt-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "India VDA SP FIU-IND registration and AML reporting register",
         kind: "Register",
         content:

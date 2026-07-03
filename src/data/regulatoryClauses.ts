@@ -594,6 +594,82 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-mica-art-emt-stablecoin-issuer-regime",
+    jurisdiction: "European Union",
+    regulator: "European Union / EBA / ESMA",
+    sourceName: "MiCA asset-referenced token and e-money token issuer requirements",
+    sourceUrl: "https://www.eba.europa.eu/regulation-and-policy/asset-referenced-and-e-money-tokens-mica",
+    citation: "Regulation (EU) 2023/1114, Titles III-IV, Articles 16, 36, 39, 48, 49, 51, and 55",
+    topic: "activity-scope",
+    summary:
+      "Prepare ART/EMT classification, issuer authorisation, white-paper notification, reserve, custody, redemption, recovery, and competent-authority handoff evidence for EU MiCA stablecoin counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "asset-referenced token",
+      "asset referenced token",
+      "art issuer",
+      "e-money token",
+      "electronic money token",
+      "emt issuer",
+      "euro stablecoin",
+      "eur stablecoin",
+      "mica stablecoin",
+      "stablecoin issuer",
+      "stablecoin reserve",
+      "stablecoin redemption"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-mica-art-emt-authorisation-white-paper",
+        title: "EU MiCA ART/EMT issuer authorisation and white-paper evidence",
+        reason:
+          "EU stablecoin issuer review needs ART/EMT classification, issuer type, home Member State, competent-authority notification, white-paper, management statement, and public-offer/admission-to-trading assumptions before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "asset-referenced token",
+          "e-money token",
+          "art issuer",
+          "emt issuer",
+          "home member state",
+          "competent authority",
+          "white paper",
+          "authorisation",
+          "admission to trading",
+          "public offer"
+        ]
+      },
+      {
+        id: "eu-mica-art-emt-reserve-redemption-recovery",
+        title: "EU MiCA ART/EMT reserve, redemption, and recovery evidence",
+        reason:
+          "Counsel needs metadata-only reserve composition, operational segregation, custody, liquidity, redemption-right, par-value redemption, recovery-plan, redemption-plan, and no-raw-customer-record evidence for MiCA stablecoin issuer handoff.",
+        priority: "P0",
+        keywords: [
+          "reserve assets",
+          "reserve composition",
+          "operational segregation",
+          "custody of reserve assets",
+          "redemption",
+          "par value",
+          "recovery plan",
+          "redemption plan",
+          "liquidity management",
+          "no raw customer records"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which ART, EMT, issuer-authorisation, home Member State, white-paper, public-offer, or trading-admission assumptions should EU MiCA stablecoin counsel review?",
+      "What reserve, custody, redemption, recovery, liquidity, and holder-rights evidence can be prepared without raw customer records, credentials, wallet secrets, or personal data?"
+    ],
+    localCounselRole: "EU MiCA stablecoin issuer counsel",
+    effectiveAsOf: "2024-06-30",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against EBA ART/EMT MiCA materials and ESMA MiCA single rulebook entries for Articles 16, 36, 39, 48, 49, 51, and 55; route interpretation to EU MiCA stablecoin issuer counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-ftc-endorsement-advertising-guides",
     jurisdiction: "United States",
     regulator: "Federal Trade Commission",

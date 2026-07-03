@@ -154,6 +154,37 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "EuroMint MiCA Stablecoin Review",
+    entityType: "ART / EMT stablecoin issuer",
+    jurisdictions: ["European Union"],
+    assetModel:
+      "EU MiCA stablecoin issuer pilot assessing asset-referenced token and e-money token classification, white paper, reserve assets, redemption, and recovery-plan assumptions",
+    userType: "EU retail users, treasury partners, compliance reviewers, and EU MiCA stablecoin counsel",
+    custodyModel:
+      "Issuer coordinates mint, burn, reserve custody, reserve segregation, liquidity management, redemption workflow, and holder communications through metadata-only controls",
+    dataSensitivity: "Holder-risk metadata, reserve attestations, redemption summaries, and customer records excluded from default exports",
+    aiUsage: "AI drafts MiCA ART/EMT issuer evidence summaries for human review and EU counsel routing",
+    blockchainUse: "Simulated manifest anchor for metadata-only EU stablecoin counsel handoff",
+    operatingStage: "Pre-notification EU MiCA ART/EMT stablecoin issuer review before counsel signoff",
+    evidenceItems: [
+      {
+        label: "Official-source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Operating scope note",
+        kind: "Markdown",
+        content: "Synthetic operating assumptions, review owner, and counsel handoff timing; control evidence still requested."
+      },
+      {
+        label: "Counsel evidence backlog",
+        kind: "Checklist",
+        content: "Synthetic pending evidence owners and intake timing without customer records."
+      }
+    ]
+  },
+  {
     projectName: "HarborKey DPT Custody Review",
     entityType: "Digital payment token service provider",
     jurisdictions: ["Singapore"],

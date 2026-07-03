@@ -59,6 +59,22 @@ describe("Counsel Pack export templates", () => {
     expect(markdown).toContain("## Evidence Manifest");
     expect(markdown).toContain("- No evidence items have been added yet.");
   });
+
+  it("keeps tokenized private credit projects on the RWA template when custody controls are in scope", () => {
+    const project: ProjectProfile = {
+      ...baseProject,
+      assetModel: "Tokenized private credit note with yield, New York resident access, and BitLicense planning assumptions",
+      userType: "Retail users, New York residents, and accredited investors",
+      custodyModel:
+        "Platform controls omnibus wallet custody for customer virtual currency with internal ledger reconciliation, sub-custody planning, and no proprietary use controls"
+    };
+    const audit = analyzeAuditProfile(project);
+
+    const recommendation = recommendCounselPackTemplate(project, audit);
+
+    expect(recommendation.id).toBe("rwa-tokenized-asset");
+    expect(recommendation.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
 });
 
 function projectForTemplate(templateId: CounselPackTemplateId): ProjectProfile {

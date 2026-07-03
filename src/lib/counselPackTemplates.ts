@@ -132,6 +132,7 @@ export function getCounselPackTemplateById(id: CounselPackTemplateId): CounselPa
 }
 
 export function recommendCounselPackTemplate(project: ProjectProfile, _audit: AuditResult): CounselPackTemplate {
+  const rwaTerms = ["rwa", "tokenized", "tokenised", "private credit", "yield", "note", "redemption"];
   const projectText = [
     project.assetModel,
     project.userType,
@@ -145,12 +146,16 @@ export function recommendCounselPackTemplate(project: ProjectProfile, _audit: Au
     .toLowerCase();
   const hasNoCustody = /\b(no custody|non-custodial|self-custody only)\b/.test(projectText);
   const hasNoAi = /\b(no ai|no model|without ai)\b/.test(project.aiUsage.toLowerCase());
+  const assetModelText = project.assetModel.toLowerCase();
+  const rwaPrimaryAssetBoost = score(assetModelText, rwaTerms) > 0 ? 4 : 0;
+  const rwaScore = score(projectText, rwaTerms) + rwaPrimaryAssetBoost;
+  const custodyScore = hasNoCustody ? 0 : score(projectText, ["custody", "wallet", "omnibus", "multisig", "treasury", "signer"], 2);
 
   const scores: Record<CounselPackTemplateId, number> = {
     "launch-review": score(projectText, ["launch", "planned", "beta", "production", "go-live"]),
-    "rwa-tokenized-asset": score(projectText, ["rwa", "tokenized", "tokenised", "private credit", "yield", "note", "redemption"]),
+    "rwa-tokenized-asset": rwaScore,
     "ai-governance": hasNoAi ? 0 : score(projectText, ["ai ", "model", "redaction", "data class", "model output", "provider"], 2),
-    "custody-controls": hasNoCustody ? 0 : score(projectText, ["custody", "wallet", "omnibus", "multisig", "treasury", "signer"], 2),
+    "custody-controls": custodyScore,
     "marketing-claims": score(projectText, ["marketing", "promotional", "promotion", "campaign", "claim", "testimonial", "social"], 3)
   };
 

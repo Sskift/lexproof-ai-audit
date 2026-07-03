@@ -5,9 +5,10 @@ export const sampleProfiles: AuditProfile[] = [
     projectName: "YieldPassport",
     entityType: "Startup issuer",
     jurisdictions: ["United States", "European Union"],
-    assetModel: "Tokenized private credit note with yield",
-    userType: "Retail and accredited investors",
-    custodyModel: "Platform controls omnibus wallet",
+    assetModel: "Tokenized private credit note with yield, New York resident access, and BitLicense planning assumptions",
+    userType: "Retail users, New York residents, and accredited investors",
+    custodyModel:
+      "Platform controls omnibus wallet custody for customer virtual currency with internal ledger reconciliation, sub-custody planning, and no proprietary use controls",
     dataSensitivity: "KYC, investor accreditation, transaction history",
     aiUsage: "AI drafts suitability memo and flags restricted investors",
     blockchainUse: "Ethereum evidence anchor and investor status registry",

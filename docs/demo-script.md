@@ -35,6 +35,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 0. **Start from a seeded scenario**
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
+   - Inspect the New York NYDFS BitLicense and custody customer-protection evidence gaps, then continue through US FinCEN/BSA, EU DLT Pilot, EU TFR, and EU DORA review triggers.
    - Optional DAO source path: click **Start DAO proposal review** to load `ClauseGuard DAO`, open Human Review, then inspect US SEC DAO Report / US CFTC Ooki DAO / UK Law Commission DAO source controls in Risk Audit.
    - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, US NIST AI RMF / NIST AI 600-1 Generative AI Profile, EU AI Act, UK ICO AI data protection source controls, and counsel export.
    - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
@@ -97,6 +98,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional DAO path screenshot after **Start DAO proposal review**: `docs/assets/screenshots/dao-governance-source-graph.png`.
    - Optional RWA Regulation D screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/us-reg-d-rwa-source-control.png`.
    - Optional RWA OFAC virtual-currency sanctions screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/us-ofac-rwa-source-control.png`.
+   - Optional RWA NYDFS BitLicense/custody screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/nydfs-rwa-source-control.png`.
    - Optional RWA custody screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/eu-mica-casp-custody-source-graph.png`.
    - Optional RWA EU DLT Pilot Regime screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/eu-dlt-pilot-rwa-source-control.png`.
    - Optional AI path screenshot after **Start AI legal workflow review**: `docs/assets/screenshots/ai-workflow-regulatory-source-controls.png`.

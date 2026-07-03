@@ -105,6 +105,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(daoScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps the seeded high-risk RWA path connected to NYDFS custody source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const rwaScenario = findDemoScenarioById(demoScenarios, "yieldpassport-judge-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(rwaScenario).toEqual(
+      expect.objectContaining({
+        title: "High-risk RWA launch",
+        projectName: "YieldPassport",
+        recommendedStartTab: "risk",
+        focusTags: expect.arrayContaining(["RWA", "NYDFS BitLicense", "US FinCEN/BSA", "EU DLT Pilot", "EU TFR", "EU DORA"]),
+        expectedArtifacts: expect.arrayContaining(["Evidence Manifest", "GRC Ticket Export", "Counsel Pack Markdown"])
+      })
+    );
+    expect(rwaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect NYDFS BitLicense and custody customer-protection gaps",
+        "Inspect US FinCEN/BSA CVC transfer gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(rwaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Brazil VASP path for jurisdiction source graph demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const brazilScenario = findDemoScenarioById(demoScenarios, "brazil-vasp-source-path");

@@ -8,13 +8,14 @@ export const demoScenarios: DemoScenario[] = [
     projectName: "YieldPassport",
     title: "High-risk RWA launch",
     summary:
-      "Tokenized private credit, custody, US FinCEN/BSA, EU DLT Pilot, EU TFR transfer controls, EU DORA operational resilience, retail exposure, AI review, and manifest handoff.",
+      "Tokenized private credit, New York resident access, custody, NYDFS BitLicense/custody review, US FinCEN/BSA, EU DLT Pilot, EU TFR transfer controls, EU DORA operational resilience, retail exposure, AI review, and manifest handoff.",
     estimatedMinutes: 8,
     recommendedStartTab: "risk",
     judgePath: [
       "Validate model",
       "Add evidence",
       "Run risk audit",
+      "Inspect NYDFS BitLicense and custody customer-protection gaps",
       "Inspect US FinCEN/BSA CVC transfer gaps",
       "Inspect EU DLT Pilot market infrastructure perimeter gaps",
       "Inspect EU TFR Travel Rule transfer gaps",
@@ -23,7 +24,7 @@ export const demoScenarios: DemoScenario[] = [
       "Export counsel pack"
     ],
     expectedArtifacts: ["Evidence Manifest", "GRC Ticket Export", "Counsel Pack Markdown"],
-    focusTags: ["RWA", "US FinCEN/BSA", "EU DLT Pilot", "EU TFR", "EU DORA", "AI governance", "Evidence vault"],
+    focusTags: ["RWA", "NYDFS BitLicense", "US FinCEN/BSA", "EU DLT Pilot", "EU TFR", "EU DORA", "AI governance", "Evidence vault"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {

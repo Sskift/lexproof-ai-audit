@@ -805,6 +805,9 @@ describe("App", () => {
     expect(screen.getByLabelText(/Project name/i)).toHaveValue("YieldPassport");
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
     expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/23 NYCRR Part 200; NYDFS Updated Guidance on Custodial Structures, September 30, 2025/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/New York NYDFS virtual-currency business activity and license-route evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/New York NYDFS custody segregation, beneficial-interest, and disclosure evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Regulation \(EU\) 2022\/2554, DORA Articles 5-16, 17-23, and 28/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EU DORA ICT risk management and incident-response evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Regulation \(EU\) 2023\/1113; EBA Travel Rule Guidelines under Regulation \(EU\) 2023\/1113/i).length).toBeGreaterThan(0);

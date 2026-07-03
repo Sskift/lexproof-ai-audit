@@ -1104,21 +1104,9 @@ describe("App", () => {
     const revokeObjectUrl = vi.fn();
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     const capturedBlobs: Blob[] = [];
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn(async (url: RequestInfo | URL) =>
       new Response(
-        JSON.stringify({
-          status: "ok",
-          service: "lexproof-secure-review-workspace-api",
-          version: "lexproof-phase-2-backend-v1",
-          capabilities: {
-            modelGateway: "mock-run-ready",
-            evidenceVault: "metadata-versioning-ready",
-            humanReview: "repository-ready",
-            exports: "metadata-records-ready",
-            auditLog: "repository-ready"
-          },
-          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
-        }),
+        JSON.stringify(createDemoApiMockPayload(String(url))),
         { status: 200, headers: { "Content-Type": "application/json" } }
       )
     );
@@ -1157,6 +1145,9 @@ describe("App", () => {
       expect(readiness.getAllByText(/lexproof-phase-2-backend-v1/i).length).toBeGreaterThan(0);
       expect(readiness.getByText(/modelGateway: mock-run-ready/i)).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/reviews/queue", {
+        method: "GET"
+      });
 
       await act(async () => {
         fireEvent.click(smokeChecklist.getByRole("button", { name: /Download Demo Smoke Checklist JSON/i }));
@@ -4803,6 +4794,56 @@ function createAppAuditLogRecord(overrides: Record<string, string>) {
     notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata.",
     ...overrides
   };
+}
+
+function createDemoApiMockPayload(url: string): unknown {
+  if (url.endsWith("/api/health")) {
+    return {
+      status: "ok",
+      service: "lexproof-secure-review-workspace-api",
+      version: "lexproof-phase-2-backend-v1",
+      capabilities: {
+        modelGateway: "mock-run-ready",
+        evidenceVault: "metadata-versioning-ready",
+        humanReview: "repository-ready",
+        exports: "metadata-records-ready",
+        auditLog: "repository-ready"
+      },
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    };
+  }
+  if (url.endsWith("/api/model-gateway/adapters")) {
+    return [];
+  }
+  if (url.endsWith("/api/model-gateway/provider-policy")) {
+    return {
+      reportVersion: "lexproof-model-gateway-provider-policy-v1",
+      notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/evidence-manifest")) {
+    return {
+      manifestVersion: "lexproof-evidence-vault-manifest-v1",
+      workspaceId: "demo-smoke-preflight",
+      notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/queue")) {
+    return {
+      queueVersion: "lexproof-server-human-review-queue-v1",
+      workspaceId: "demo-smoke-preflight",
+      notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+    };
+  }
+  if (
+    url.endsWith("/api/workspaces/demo-smoke-preflight/exports") ||
+    url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log") ||
+    url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations")
+  ) {
+    return [];
+  }
+
+  return {};
 }
 
 function readAppBlobText(blob: Blob): Promise<string> {

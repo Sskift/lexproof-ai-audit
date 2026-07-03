@@ -13,6 +13,7 @@ export type DemoApiPreflight =
       service: string;
       version: string;
       capabilities: string[];
+      routeChecks: DemoApiRouteCheck[];
       checkedAt: string;
       notLegalAdviceBoundary: string;
     }
@@ -23,6 +24,21 @@ export type DemoApiPreflight =
       checkedAt: string;
       notLegalAdviceBoundary: string;
     };
+
+export type DemoApiRouteCheck = {
+  id:
+    | "model-gateway-adapters"
+    | "model-gateway-provider-policy"
+    | "evidence-vault-manifest"
+    | "human-review-queue"
+    | "counsel-pack-exports"
+    | "audit-log"
+    | "integration-policy-evaluations";
+  label: string;
+  status: "ready" | "failed";
+  url: string;
+  detail: string;
+};
 
 export type DemoReadinessCheck = {
   id: "scenario-library" | "clean-clone-commands" | "private-credentials" | "screenshot-set" | "phase-2-api-preflight";
@@ -118,6 +134,64 @@ const SMOKE_CHECKLIST_BOUNDARY = "Not legal advice. Demo smoke checklists are au
 const API_PREFLIGHT_RECOVERY = "Start the Phase 2 API, confirm /api/health is reachable, and retry the demo preflight.";
 const SCREENSHOT_RECOVERY = "Fix missing, duplicate, or unsafe screenshot references under docs/assets/screenshots before judging.";
 const capabilityOrder = ["modelGateway", "evidenceVault", "humanReview", "exports", "auditLog"];
+const demoPreflightWorkspaceId = "demo-smoke-preflight";
+const apiRoutePreflightSpecs: Array<{
+  id: DemoApiRouteCheck["id"];
+  label: string;
+  path: string;
+  validate: (payload: unknown) => boolean;
+  readyDetail: string;
+}> = [
+  {
+    id: "model-gateway-adapters",
+    label: "Model Gateway adapters",
+    path: "/api/model-gateway/adapters",
+    validate: Array.isArray,
+    readyDetail: "Model Gateway adapter registry is reachable."
+  },
+  {
+    id: "model-gateway-provider-policy",
+    label: "Model Gateway provider policy",
+    path: "/api/model-gateway/provider-policy",
+    validate: (payload) => isRecord(payload) && payload.reportVersion === "lexproof-model-gateway-provider-policy-v1",
+    readyDetail: "Model Gateway provider policy report is reachable."
+  },
+  {
+    id: "evidence-vault-manifest",
+    label: "Evidence Vault manifest",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/evidence-manifest`,
+    validate: (payload) => isRecord(payload) && payload.manifestVersion === "lexproof-evidence-vault-manifest-v1",
+    readyDetail: "Evidence Vault manifest route is reachable for an empty demo workspace."
+  },
+  {
+    id: "human-review-queue",
+    label: "Human Review queue",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/queue`,
+    validate: (payload) => isRecord(payload) && payload.queueVersion === "lexproof-server-human-review-queue-v1",
+    readyDetail: "Human Review queue route is reachable for an empty demo workspace."
+  },
+  {
+    id: "counsel-pack-exports",
+    label: "Counsel Pack exports",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/exports`,
+    validate: Array.isArray,
+    readyDetail: "Counsel Pack export record route is reachable."
+  },
+  {
+    id: "audit-log",
+    label: "Audit Log",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/audit-log`,
+    validate: Array.isArray,
+    readyDetail: "Audit Log route is reachable."
+  },
+  {
+    id: "integration-policy-evaluations",
+    label: "Integration Policy Evaluation receipts",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/integration-policy-evaluations`,
+    validate: Array.isArray,
+    readyDetail: "Integration Policy Evaluation receipt route is reachable."
+  }
+];
 const screenshotPathPrefix = "docs/assets/screenshots/";
 const screenshotExtensionPattern = /\.(png|jpe?g|webp)$/i;
 
@@ -290,6 +364,16 @@ export async function checkDemoApiPreflight(input: DemoApiPreflightInput = {}): 
       return createFailedPreflight("Phase 2 API health response is missing required readiness metadata.", checkedAt);
     }
 
+    const routeChecks = await checkDemoApiRouteFamilies({
+      apiBaseUrl: input.apiBaseUrl,
+      fetcher
+    });
+    const failedRoute = routeChecks.find((check) => check.status === "failed");
+
+    if (failedRoute) {
+      return createFailedPreflight(`${failedRoute.label}: ${failedRoute.detail}`, checkedAt);
+    }
+
     return {
       status: "ready",
       service: sanitize(payload.service),
@@ -297,12 +381,72 @@ export async function checkDemoApiPreflight(input: DemoApiPreflightInput = {}): 
       capabilities: capabilityOrder
         .filter((key) => payload.capabilities[key])
         .map((key) => sanitize(`${key}: ${payload.capabilities?.[key]}`)),
+      routeChecks,
       checkedAt,
       notLegalAdviceBoundary: sanitize(payload.notLegalAdviceBoundary)
     };
   } catch (error) {
     return createFailedPreflight(error instanceof Error ? error.message : "Phase 2 API health check failed.", checkedAt);
   }
+}
+
+async function checkDemoApiRouteFamilies({
+  apiBaseUrl,
+  fetcher
+}: {
+  apiBaseUrl: string | undefined;
+  fetcher: typeof fetch;
+}): Promise<DemoApiRouteCheck[]> {
+  const routeChecks: DemoApiRouteCheck[] = [];
+
+  for (const spec of apiRoutePreflightSpecs) {
+    const url = buildApiUrl(apiBaseUrl, spec.path);
+
+    try {
+      const response = await fetcher(url, { method: "GET" });
+      const payload = await readJson(response);
+
+      if (!response.ok) {
+        routeChecks.push({
+          id: spec.id,
+          label: spec.label,
+          status: "failed",
+          url,
+          detail: sanitize(`${spec.label} returned ${response.status}: ${readErrorMessage(payload, "unknown route error")}.`)
+        });
+        continue;
+      }
+
+      if (!spec.validate(payload)) {
+        routeChecks.push({
+          id: spec.id,
+          label: spec.label,
+          status: "failed",
+          url,
+          detail: sanitize(`${spec.label} response is missing expected metadata.`)
+        });
+        continue;
+      }
+
+      routeChecks.push({
+        id: spec.id,
+        label: spec.label,
+        status: "ready",
+        url,
+        detail: spec.readyDetail
+      });
+    } catch (error) {
+      routeChecks.push({
+        id: spec.id,
+        label: spec.label,
+        status: "failed",
+        url,
+        detail: sanitize(`${spec.label} route check failed: ${error instanceof Error ? error.message : "unknown error"}.`)
+      });
+    }
+  }
+
+  return routeChecks;
 }
 
 function createScenarioCheck(validation: DemoScenarioValidationResult, scenarioCount: number): DemoReadinessCheck {
@@ -357,11 +501,12 @@ function createScreenshotCheck(inventory: DemoScreenshotInventory): DemoReadines
 
 function createApiPreflightCheck(apiPreflight: DemoApiPreflight): DemoReadinessCheck {
   if (apiPreflight.status === "ready") {
+    const readyRouteCount = apiPreflight.routeChecks.filter((check) => check.status === "ready").length;
     return {
       id: "phase-2-api-preflight",
       label: "Phase 2 API preflight",
       status: "ready",
-      detail: `${apiPreflight.service} ${apiPreflight.version} is reachable with ${apiPreflight.capabilities.length} capabilities.`,
+      detail: `${apiPreflight.service} ${apiPreflight.version} is reachable with ${apiPreflight.capabilities.length} capabilities and ${readyRouteCount}/${apiPreflight.routeChecks.length} safe route checks.`,
       recoveryAction: "Keep the API process running while judges run the secure review path."
     };
   }
@@ -485,9 +630,12 @@ function readErrorMessage(payload: unknown, fallback: string): string {
 }
 
 function buildHealthUrl(apiBaseUrl: string | undefined): string {
-  const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
+  return buildApiUrl(apiBaseUrl, "/api/health");
+}
 
-  return `${base}/api/health`;
+function buildApiUrl(apiBaseUrl: string | undefined, path: string): string {
+  const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function normalizeScreenshotRef(value: string): string {

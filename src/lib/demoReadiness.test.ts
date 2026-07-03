@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
+import { createServer } from "node:http";
 import { resolve } from "node:path";
+import { promisify } from "node:util";
 import { demoReadinessScreenshotRefs } from "../data/demoReadiness";
 import type { DemoScenarioValidationResult } from "./demoScenarioLibrary";
 import {
@@ -17,6 +19,7 @@ const validScenarioValidation: DemoScenarioValidationResult = {
   valid: true,
   errors: []
 };
+const execFileAsync = promisify(execFile);
 
 const healthResponse = {
   status: "ok",
@@ -104,6 +107,15 @@ describe("demo readiness", () => {
         service: healthResponse.service,
         version: healthResponse.version,
         capabilities: ["modelGateway: mock-run-ready"],
+        routeChecks: [
+          {
+            id: "model-gateway-adapters",
+            label: "Model Gateway adapters",
+            status: "ready",
+            url: "http://127.0.0.1:8787/api/model-gateway/adapters",
+            detail: "Model Gateway adapter registry is reachable."
+          }
+        ],
         checkedAt: "2026-07-01T00:00:00.000Z",
         notLegalAdviceBoundary: healthResponse.notLegalAdviceBoundary
       }
@@ -142,6 +154,15 @@ describe("demo readiness", () => {
         service: healthResponse.service,
         version: healthResponse.version,
         capabilities: ["modelGateway: mock-run-ready"],
+        routeChecks: [
+          {
+            id: "model-gateway-adapters",
+            label: "Model Gateway adapters",
+            status: "ready",
+            url: "http://127.0.0.1:8787/api/model-gateway/adapters",
+            detail: "Model Gateway adapter registry is reachable."
+          }
+        ],
         checkedAt: "2026-07-01T00:00:00.000Z",
         notLegalAdviceBoundary: healthResponse.notLegalAdviceBoundary
       }
@@ -210,8 +231,50 @@ describe("demo readiness", () => {
     expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
   });
 
-  it("checks the Phase 2 API health endpoint and returns capability evidence", async () => {
-    const fetcher = vi.fn(async () => createJsonResponse(healthResponse, 200)) as unknown as typeof fetch;
+  it("runs the clean-clone demo smoke CLI against safe Phase 2 route families", async () => {
+    const server = createServer((request, response) => {
+      const payload = createDemoApiPayload(`http://127.0.0.1${request.url ?? "/"}`);
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify(payload));
+    });
+    await new Promise<void>((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Demo smoke test API did not bind to a port.");
+    }
+
+    try {
+      const result = await execFileAsync(process.execPath, ["scripts/demo-smoke.mjs", "--json"], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          DEMO_API_BASE_URL: `http://127.0.0.1:${address.port}`
+        }
+      });
+      const report = JSON.parse(result.stdout);
+      const apiCheck = report.checks.find((check: { id: string }) => check.id === "phase-2-api-health");
+
+      expect(report.status).toBe("ready");
+      expect(apiCheck).toEqual(
+        expect.objectContaining({
+          status: "ready",
+          routeChecks: expect.arrayContaining([
+            expect.objectContaining({ id: "evidence-vault-manifest", status: "ready" }),
+            expect.objectContaining({ id: "integration-policy-evaluations", status: "ready" })
+          ])
+        })
+      );
+      expect(apiCheck.routeChecks).toHaveLength(7);
+      expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+    } finally {
+      await new Promise<void>((resolveClose, rejectClose) =>
+        server.close((error) => (error ? rejectClose(error) : resolveClose()))
+      );
+    }
+  });
+
+  it("checks the Phase 2 API health endpoint and safe route families", async () => {
+    const fetcher = vi.fn(async (url: RequestInfo | URL) => createJsonResponse(createDemoApiPayload(String(url)), 200)) as unknown as typeof fetch;
 
     const preflight = await checkDemoApiPreflight({
       apiBaseUrl: "http://127.0.0.1:8787",
@@ -220,6 +283,10 @@ describe("demo readiness", () => {
     });
 
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/model-gateway/adapters", { method: "GET" });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-manifest", {
+      method: "GET"
+    });
     expect(preflight).toEqual({
       status: "ready",
       service: "lexproof-secure-review-workspace-api",
@@ -231,9 +298,44 @@ describe("demo readiness", () => {
         "exports: metadata-records-ready",
         "auditLog: repository-ready"
       ],
+      routeChecks: expect.arrayContaining([
+        expect.objectContaining({
+          id: "model-gateway-adapters",
+          status: "ready"
+        }),
+        expect.objectContaining({
+          id: "integration-policy-evaluations",
+          status: "ready"
+        })
+      ]),
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(7);
+  });
+
+  it("fails API preflight when a safe route family is missing", async () => {
+    const fetcher = vi.fn(async (url: RequestInfo | URL) => {
+      const value = String(url);
+      if (value.endsWith("/api/workspaces/demo-smoke-preflight/reviews/queue")) {
+        return createJsonResponse({ error: "missing route with raw KYC sk-live-abcdef1234567890abcdef1234567890" }, 404);
+      }
+      return createJsonResponse(createDemoApiPayload(value), 200);
+    }) as unknown as typeof fetch;
+
+    const preflight = await checkDemoApiPreflight({
+      apiBaseUrl: "http://127.0.0.1:8787",
+      checkedAt: "2026-07-01T00:00:00.000Z",
+      fetcher
+    });
+
+    expect(preflight.status).toBe("failed");
+    if (preflight.status !== "failed") {
+      throw new Error("Expected failed API preflight.");
+    }
+    expect(preflight.error).toContain("Human Review queue");
+    expect(preflight.error).toContain("[redacted-api-key]");
+    expect(preflight.error).not.toContain("sk-live");
   });
 
   it("sanitizes failed API preflight errors without leaking credential material", async () => {
@@ -262,4 +364,42 @@ function createJsonResponse(payload: unknown, status: number): Response {
     status,
     headers: { "Content-Type": "application/json" }
   });
+}
+
+function createDemoApiPayload(url: string): unknown {
+  if (url.endsWith("/api/health")) {
+    return healthResponse;
+  }
+  if (url.endsWith("/api/model-gateway/adapters")) {
+    return [];
+  }
+  if (url.endsWith("/api/model-gateway/provider-policy")) {
+    return {
+      reportVersion: "lexproof-model-gateway-provider-policy-v1",
+      notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/evidence-manifest")) {
+    return {
+      manifestVersion: "lexproof-evidence-vault-manifest-v1",
+      workspaceId: "demo-smoke-preflight",
+      notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/queue")) {
+    return {
+      queueVersion: "lexproof-server-human-review-queue-v1",
+      workspaceId: "demo-smoke-preflight",
+      notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+    };
+  }
+  if (
+    url.endsWith("/api/workspaces/demo-smoke-preflight/exports") ||
+    url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log") ||
+    url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations")
+  ) {
+    return [];
+  }
+
+  return {};
 }

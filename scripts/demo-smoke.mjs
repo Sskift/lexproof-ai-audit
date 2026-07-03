@@ -8,6 +8,58 @@ const notLegalAdviceBoundary = "Not legal advice. Demo smoke checks are audit pr
 const requiredScripts = ["verify", "build:server", "start:api", "demo:smoke", "dev"];
 const requiredFiles = ["README.md", "src/data/demoReadiness.ts", "src/lib/demoReadiness.ts", "docs/demo-script.md"];
 const screenshotRefPattern = /["'](docs\/assets\/screenshots\/[^"']+\.(?:png|jpe?g|webp))["']/gi;
+const demoPreflightWorkspaceId = "demo-smoke-preflight";
+const apiRoutePreflightSpecs = [
+  {
+    id: "model-gateway-adapters",
+    label: "Model Gateway adapters",
+    path: "/api/model-gateway/adapters",
+    validate: Array.isArray,
+    readyDetail: "Model Gateway adapter registry is reachable."
+  },
+  {
+    id: "model-gateway-provider-policy",
+    label: "Model Gateway provider policy",
+    path: "/api/model-gateway/provider-policy",
+    validate: (payload) => Boolean(payload && payload.reportVersion === "lexproof-model-gateway-provider-policy-v1"),
+    readyDetail: "Model Gateway provider policy report is reachable."
+  },
+  {
+    id: "evidence-vault-manifest",
+    label: "Evidence Vault manifest",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/evidence-manifest`,
+    validate: (payload) => Boolean(payload && payload.manifestVersion === "lexproof-evidence-vault-manifest-v1"),
+    readyDetail: "Evidence Vault manifest route is reachable for an empty demo workspace."
+  },
+  {
+    id: "human-review-queue",
+    label: "Human Review queue",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/queue`,
+    validate: (payload) => Boolean(payload && payload.queueVersion === "lexproof-server-human-review-queue-v1"),
+    readyDetail: "Human Review queue route is reachable for an empty demo workspace."
+  },
+  {
+    id: "counsel-pack-exports",
+    label: "Counsel Pack exports",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/exports`,
+    validate: Array.isArray,
+    readyDetail: "Counsel Pack export record route is reachable."
+  },
+  {
+    id: "audit-log",
+    label: "Audit Log",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/audit-log`,
+    validate: Array.isArray,
+    readyDetail: "Audit Log route is reachable."
+  },
+  {
+    id: "integration-policy-evaluations",
+    label: "Integration Policy Evaluation receipts",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/integration-policy-evaluations`,
+    validate: Array.isArray,
+    readyDetail: "Integration Policy Evaluation receipt route is reachable."
+  }
+];
 
 const args = parseArgs(process.argv.slice(2));
 const apiBaseUrl = args.apiBaseUrl ?? process.env.DEMO_API_BASE_URL;
@@ -235,16 +287,33 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
       );
     }
 
+    const routeChecks = await checkApiRouteFamilies(apiBaseUrl);
+    const failedRoute = routeChecks.find((check) => check.status === "failed");
+
+    if (failedRoute) {
+      return createCheck(
+        "phase-2-api-health",
+        "Phase 2 API health",
+        "blocked",
+        `${failedRoute.label}: ${failedRoute.detail}`,
+        "Start the Phase 2 API, confirm route modules are registered, and rerun the smoke check.",
+        { routeChecks }
+      );
+    }
+
     return createCheck(
       "phase-2-api-health",
       "Phase 2 API health",
       "ready",
-      sanitize(`${payload.service} ${payload.version} responded with ${Object.keys(payload.capabilities).length} capabilities.`),
+      sanitize(
+        `${payload.service} ${payload.version} responded with ${Object.keys(payload.capabilities).length} capabilities and ${routeChecks.length}/${routeChecks.length} safe route checks.`
+      ),
       "Keep the API process running while judges use the secure review path.",
       {
         service: sanitize(payload.service),
         version: sanitize(payload.version),
         capabilities: Object.keys(payload.capabilities).sort(),
+        routeChecks,
         notLegalAdviceBoundary: sanitize(payload.notLegalAdviceBoundary)
       }
     );
@@ -260,7 +329,64 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
 }
 
 function buildHealthUrl(apiBaseUrl) {
-  return new URL("/api/health", `${apiBaseUrl.replace(/\/+$/, "")}/`).toString();
+  return buildApiUrl(apiBaseUrl, "/api/health");
+}
+
+async function checkApiRouteFamilies(apiBaseUrl) {
+  const routeChecks = [];
+
+  for (const spec of apiRoutePreflightSpecs) {
+    const url = buildApiUrl(apiBaseUrl, spec.path);
+
+    try {
+      const response = await fetch(url, { method: "GET" });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        routeChecks.push({
+          id: spec.id,
+          label: spec.label,
+          status: "failed",
+          url,
+          detail: sanitize(`${spec.label} returned ${response.status}: ${readErrorMessage(payload)}.`)
+        });
+        continue;
+      }
+
+      if (!spec.validate(payload)) {
+        routeChecks.push({
+          id: spec.id,
+          label: spec.label,
+          status: "failed",
+          url,
+          detail: sanitize(`${spec.label} response is missing expected metadata.`)
+        });
+        continue;
+      }
+
+      routeChecks.push({
+        id: spec.id,
+        label: spec.label,
+        status: "ready",
+        url,
+        detail: spec.readyDetail
+      });
+    } catch (error) {
+      routeChecks.push({
+        id: spec.id,
+        label: spec.label,
+        status: "failed",
+        url,
+        detail: sanitize(`${spec.label} route check failed: ${error instanceof Error ? error.message : "unknown error"}.`)
+      });
+    }
+  }
+
+  return routeChecks;
+}
+
+function buildApiUrl(apiBaseUrl, path) {
+  return new URL(path, `${apiBaseUrl.replace(/\/+$/, "")}/`).toString();
 }
 
 function readErrorMessage(payload) {

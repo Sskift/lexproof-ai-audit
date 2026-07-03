@@ -102,7 +102,7 @@ The Demo Scenario Library turns seeded synthetic profiles into runnable judging 
 
 ![Demo Scenario Library marketing claims path](docs/assets/screenshots/demo-scenario-library-marketing-claims.png)
 
-Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, the `npm run demo:smoke` CLI preflight, a downloadable Demo Smoke Checklist JSON, validated synthetic scenarios, no private credentials, current screenshot set, a `/api/health` preflight for the Phase 2 API, and a downloadable Demo Runbook JSON with a stable runbook hash. Not legal advice.
+Judge Demo Readiness keeps the clean-clone path visible on the first screen: required commands, the `npm run demo:smoke` CLI preflight, a downloadable Demo Smoke Checklist JSON, validated synthetic scenarios, no private credentials, current screenshot set, a Phase 2 API preflight covering `/api/health` plus safe GET route families, and a downloadable Demo Runbook JSON with a stable runbook hash. Not legal advice.
 
 ![Judge Demo Readiness](docs/assets/screenshots/judge-demo-readiness.png)
 
@@ -560,7 +560,7 @@ npm run build:server
 npm run start:api
 ```
 
-Once the API is running, the judge smoke CLI checks required npm scripts, demo files, screenshot assets, and `/api/health` without using private credentials:
+Once the API is running, the judge smoke CLI checks required npm scripts, demo files, screenshot assets, `/api/health`, and safe GET route families for Model Gateway, Evidence Vault manifest, Human Review queue, Counsel Pack exports, Audit Log, and Integration Policy Evaluation receipts without using private credentials:
 
 ```bash
 DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke

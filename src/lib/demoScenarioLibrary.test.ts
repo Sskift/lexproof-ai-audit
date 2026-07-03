@@ -177,6 +177,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(stablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded UK qualifying stablecoin path for issuer source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const stablecoinScenario = findDemoScenarioById(demoScenarios, "uk-stablecoin-issuer-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(stablecoinScenario).toEqual(
+      expect.objectContaining({
+        title: "UK qualifying stablecoin issuer review",
+        projectName: "SterlingMint Stablecoin Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["United Kingdom", "FCA", "Bank of England", "Stablecoin"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(stablecoinScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect UK qualifying stablecoin issuer source controls",
+        "Review issuer permission, admission, and disclosure evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(stablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Brazil VASP path for jurisdiction source graph demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const brazilScenario = findDemoScenarioById(demoScenarios, "brazil-vasp-source-path");

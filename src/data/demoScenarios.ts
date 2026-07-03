@@ -155,6 +155,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "uk-stablecoin-issuer-source-path",
+    projectName: "SterlingMint Stablecoin Review",
+    title: "UK qualifying stablecoin issuer review",
+    summary:
+      "UK qualifying stablecoin issuer review for UKQS issuer route, admission or distribution scope, disclosures, backing assets, safeguarding, redemption, recordkeeping, systemic-transition, and counsel handoff evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect UK qualifying stablecoin issuer source controls",
+      "Review issuer permission, admission, and disclosure evidence gaps",
+      "Check backing, safeguarding, redemption, systemic-transition, and no-raw-customer-record evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["United Kingdom", "FCA", "Bank of England", "Stablecoin"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "singapore-dpt-custody-source-path",
     projectName: "HarborKey DPT Custody Review",
     title: "Singapore DPT custody review",

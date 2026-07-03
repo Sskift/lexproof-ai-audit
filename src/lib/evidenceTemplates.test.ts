@@ -104,6 +104,8 @@ describe("evidence templates", () => {
         "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register",
         "Singapore DPT CDD and model handoff register",
         "UK FCA cryptoasset AML registration and Travel Rule register",
+        "UK qualifying stablecoin issuer permission and disclosure register",
+        "UK qualifying stablecoin backing safeguarding and redemption register",
         "Japan crypto-asset custody and leakage response register",
         "Canada CTP PRU custody and investor-protection register",
         "Australia digital asset financial services and VASP AML register",
@@ -128,6 +130,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-sg-mas-psn02-dpt-aml-cft");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-uk-fca-cryptoasset-aml-registration-travel-rule");
+    expect(serializedSources).toContain("regulatory control: control-uk-fca-qualifying-stablecoin-issuer-regime");
     expect(serializedSources).toContain("regulatory control: control-jp-fsa-crypto-asset-custody-user-protection");
     expect(serializedSources).toContain("regulatory control: control-ca-csa-ctp-pru-custody-investor-protection");
     expect(serializedSources).toContain("regulatory control: control-au-asic-austrac-digital-asset-financial-services");
@@ -153,6 +156,8 @@ describe("evidence templates", () => {
       expect.arrayContaining([
         "Swiss stablecoin issuer and bank guarantee perimeter memo",
         "Swiss stablecoin AML and sanctions transfer-risk register",
+        "UK qualifying stablecoin issuer permission and disclosure register",
+        "UK qualifying stablecoin backing safeguarding and redemption register",
         "Hong Kong HKMA stablecoin issuer licensing and scope register",
         "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register"
       ])

@@ -185,6 +185,37 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "SterlingMint Stablecoin Review",
+    entityType: "UK qualifying stablecoin issuer",
+    jurisdictions: ["United Kingdom"],
+    assetModel:
+      "UK-issued qualifying stablecoin pilot assessing sterling stablecoin issuance, issuer permissions, admission scope, backing assets, safeguarding, redemption, disclosure, and systemic-transition assumptions",
+    userType: "UK retail users, treasury partners, compliance reviewers, and UK stablecoin counsel",
+    custodyModel:
+      "Issuer coordinates mint, burn, backing-asset safeguarding, reconciliation, liquidity, redemption workflow, and holder communications through metadata-only controls",
+    dataSensitivity: "Holder-risk metadata, backing-asset attestations, redemption summaries, and customer records excluded from default exports",
+    aiUsage: "AI drafts UK qualifying stablecoin evidence summaries for human review and UK counsel routing",
+    blockchainUse: "Simulated manifest anchor for metadata-only UK stablecoin counsel handoff",
+    operatingStage: "Pre-application UK qualifying stablecoin issuer review before counsel signoff",
+    evidenceItems: [
+      {
+        label: "Official-source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Operating scope note",
+        kind: "Markdown",
+        content: "Synthetic operating assumptions, review owner, and counsel handoff timing; control evidence still requested."
+      },
+      {
+        label: "Counsel evidence backlog",
+        kind: "Checklist",
+        content: "Synthetic pending evidence owners and intake timing without customer records."
+      }
+    ]
+  },
+  {
     projectName: "HarborKey DPT Custody Review",
     entityType: "Digital payment token service provider",
     jurisdictions: ["Singapore"],

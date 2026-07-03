@@ -160,6 +160,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "UK qualifying stablecoin issuer permission and disclosure register",
+        kind: "Register",
+        content:
+          "Requested: summarize UK qualifying stablecoin, UKQS issuer, UK stablecoin issuer, regulated activity, admission to trading, distribution scope, disclosure owner, governance owner, FCA BoE handoff, systemic transition assumptions, reviewer owner, and no raw customer records, credentials, wallet secrets, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-uk-fca-qualifying-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "UK qualifying stablecoin backing safeguarding and redemption register",
+        kind: "Register",
+        content:
+          "Requested: summarize stablecoin backing assets, backing asset eligibility assumptions, safeguarding, reconciliation, redemption, liquidity, recordkeeping, joint regulation, systemic transition, holder communication owner, reviewer owner, and no raw customer records, credentials, wallet secrets, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-uk-fca-qualifying-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Japan crypto-asset custody and leakage response register",
         kind: "Register",
         content:

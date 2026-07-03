@@ -472,6 +472,89 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches UK qualifying stablecoin issuer controls without legal conclusions", () => {
+    const ukStablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-uk-stablecoin-issuer",
+      projectName: "SterlingMint Stablecoin Review",
+      jurisdictions: ["United Kingdom"],
+      entityType: "UK qualifying stablecoin issuer",
+      assetModel:
+        "UK-issued qualifying stablecoin pilot assessing sterling stablecoin issuance, UKQS issuer route, admission scope, backing assets, safeguarding, redemption, disclosure, and systemic-transition assumptions",
+      userType: "UK retail users, treasury partners, compliance reviewers, and UK stablecoin counsel",
+      custodyModel:
+        "Issuer coordinates mint, burn, backing-asset safeguarding, reconciliation, liquidity, redemption workflow, and holder communications through metadata-only controls",
+      dataSensitivity: "Holder-risk metadata, backing-asset attestations, redemption summaries, and customer records excluded",
+      aiUsage: "AI drafts UK qualifying stablecoin evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application UK qualifying stablecoin issuer review before counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(ukStablecoinProject);
+    const graph = createRegulatoryGraph(ukStablecoinProject, audit, ukStablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["uk-fca-qualifying-stablecoin-issuer-regime"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-fca-qualifying-stablecoin-issuer-regime")).toMatchObject({
+      jurisdiction: "United Kingdom",
+      regulator: "Financial Conduct Authority / Bank of England",
+      sourceUrl: "https://www.fca.org.uk/publication/policy/ps26-10.pdf",
+      citation: "FCA PS26/10 Stablecoin issuance, 30 June 2026; BoE/FCA joint approach to systemic stablecoin issuers, June 2026",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "UK qualifying stablecoin / FCA-BoE counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "UK qualifying stablecoin issuer permission, admission, and disclosure evidence",
+        "UK qualifying stablecoin backing, safeguarding, and redemption evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).toContain("Not legal advice");
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks UK qualifying stablecoin controls covered when RWA stablecoin template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `uk-stablecoin-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const ukStablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-uk-stablecoin-issuer-covered",
+      projectName: "SterlingMint Stablecoin Review",
+      jurisdictions: ["United Kingdom"],
+      entityType: "UK qualifying stablecoin issuer",
+      assetModel:
+        "UK qualifying stablecoin issuer with UKQS issuer route, admission scope, backing assets, safeguarding, redemption, disclosure, and systemic-transition review",
+      userType: "UK retail users, treasury partners, compliance reviewers, and UK stablecoin counsel",
+      custodyModel: "Issuer coordinates backing-asset safeguarding, reconciliation, liquidity, redemption, and holder communications",
+      dataSensitivity: "Holder-risk metadata and redemption summaries excluded from exported demo evidence",
+      aiUsage: "AI drafts UK qualifying stablecoin evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application UK qualifying stablecoin issuer review before counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(ukStablecoinProject);
+    const graph = createRegulatoryGraph(ukStablecoinProject, audit, ukStablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-fca-qualifying-stablecoin-issuer-regime")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "UK qualifying stablecoin issuer permission and disclosure register",
+        "UK qualifying stablecoin backing safeguarding and redemption register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "uk-fca-qualifying-stablecoin-issuer-regime" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches Germany BaFin MiCAR CASP custody source controls without legal conclusions", () => {
     const deProject: ProjectProfile = {
       ...baseProject,

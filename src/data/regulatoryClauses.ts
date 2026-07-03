@@ -1281,6 +1281,81 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "uk-fca-qualifying-stablecoin-issuer-regime",
+    jurisdiction: "United Kingdom",
+    regulator: "Financial Conduct Authority / Bank of England",
+    sourceName: "PS26/10 Stablecoin issuance and BoE/FCA joint systemic stablecoin approach",
+    sourceUrl: "https://www.fca.org.uk/publication/policy/ps26-10.pdf",
+    citation: "FCA PS26/10 Stablecoin issuance, 30 June 2026; BoE/FCA joint approach to systemic stablecoin issuers, June 2026",
+    topic: "activity-scope",
+    summary:
+      "Prepare UK-issued qualifying stablecoin issuer, admission, backing-asset, redemption, safeguarding, disclosure, and systemic-transition evidence for UK stablecoin counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "uk qualifying stablecoin",
+      "uk-issued qualifying stablecoin",
+      "uk issued qualifying stablecoin",
+      "qualifying stablecoin",
+      "sterling stablecoin",
+      "gbp stablecoin",
+      "uk stablecoin issuer",
+      "stablecoin issuance",
+      "stablecoin backing",
+      "stablecoin safeguarding",
+      "stablecoin redemption",
+      "systemic stablecoin issuer"
+    ],
+    evidenceRequests: [
+      {
+        id: "uk-stablecoin-issuer-permission-admission-disclosure",
+        title: "UK qualifying stablecoin issuer permission, admission, and disclosure evidence",
+        reason:
+          "UK stablecoin issuer review needs UKQS issuer route, regulated activity assumptions, trading-admission or distribution scope, disclosure owner, governance owner, and FCA/BoE handoff metadata before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "uk qualifying stablecoin",
+          "ukqs issuer",
+          "uk stablecoin issuer",
+          "regulated activity",
+          "admission to trading",
+          "distribution scope",
+          "disclosure owner",
+          "governance owner",
+          "fca boe handoff"
+        ]
+      },
+      {
+        id: "uk-stablecoin-backing-safeguarding-redemption",
+        title: "UK qualifying stablecoin backing, safeguarding, and redemption evidence",
+        reason:
+          "Counsel needs metadata-only backing-asset, safeguarding, reconciliation, redemption, liquidity, recordkeeping, systemic-transition, and no-raw-customer-record evidence for UK stablecoin issuer handoff.",
+        priority: "P0",
+        keywords: [
+          "stablecoin backing assets",
+          "backing asset",
+          "safeguarding",
+          "reconciliation",
+          "redemption",
+          "liquidity",
+          "recordkeeping",
+          "systemic transition",
+          "joint regulation",
+          "no raw customer records"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which UK-issued qualifying stablecoin issuer, permission, admission, disclosure, or distribution assumptions should UK stablecoin counsel review?",
+      "What backing-asset, safeguarding, redemption, reconciliation, recordkeeping, and systemic-transition evidence can be prepared without raw customer records, credentials, wallet secrets, or personal data?"
+    ],
+    localCounselRole: "UK qualifying stablecoin / FCA-BoE counsel",
+    effectiveAsOf: "2026-06-30",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against FCA PS26/10 for non-systemic UK-issued qualifying stablecoin issuance, backing assets, redemption, safeguarding, and disclosures, plus BoE/FCA joint approach materials for systemic stablecoin issuer transition and supervisory coordination; route interpretation to UK stablecoin counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uk-law-commission-dao-scoping-paper",
     jurisdiction: "United Kingdom",
     regulator: "Law Commission of England and Wales",

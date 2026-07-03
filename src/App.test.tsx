@@ -1133,6 +1133,25 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the UK qualifying stablecoin scenario with issuer, backing, safeguarding, and redemption evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start UK qualifying stablecoin issuer review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("SterlingMint Stablecoin Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(/FCA PS26\/10 Stablecoin issuance, 30 June 2026; BoE\/FCA joint approach to systemic stablecoin issuers, June 2026/i)
+        .length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK qualifying stablecoin \/ FCA-BoE counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK qualifying stablecoin issuer permission, admission, and disclosure evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/UK qualifying stablecoin backing, safeguarding, and redemption evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

@@ -198,6 +198,11 @@ import {
   type ModelIntakeSummary
 } from "./lib/modelIntake";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
+import {
+  assessProjectPersistenceSafety,
+  parseStoredProjectSnapshot,
+  type ProjectWorkspaceRecoveryNotice
+} from "./lib/projectPersistence";
 import { createRetentionPolicyReport } from "./lib/retentionPolicy";
 import type {
   CounselPackExportRecord,
@@ -349,7 +354,11 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof ClipboardList }> = [
 ];
 
 export default function App() {
-  const [project, setProject] = useState<ProjectProfile>(() => loadStoredProject() ?? projectFromAuditProfile(sampleProfiles[0]));
+  const [initialStoredProject] = useState(() => loadStoredProject());
+  const [project, setProject] = useState<ProjectProfile>(() => initialStoredProject.project ?? projectFromAuditProfile(sampleProfiles[0]));
+  const [workspaceRecoveryNotice, setWorkspaceRecoveryNotice] = useState<ProjectWorkspaceRecoveryNotice | null>(
+    initialStoredProject.notice
+  );
   const [activeTab, setActiveTab] = useState<TabId>("wizard");
   const [showValidation, setShowValidation] = useState(false);
   const [savedAt, setSavedAt] = useState("");
@@ -1368,9 +1377,18 @@ export default function App() {
   }, [currentAIEvents, modelIntakeProfile]);
 
   useEffect(() => {
-    if (validation.valid) {
-      safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(project));
+    const persistenceSafety = assessProjectPersistenceSafety(project);
+    if (!persistenceSafety.canPersist) {
+      setWorkspaceRecoveryNotice(persistenceSafety.notice);
+      return;
     }
+
+    if (!validation.valid) {
+      return;
+    }
+
+    safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(project));
+    setWorkspaceRecoveryNotice((current) => (current?.reason === "unsafe-autosave-blocked" ? null : current));
   }, [project, validation.valid]);
 
   useEffect(() => {
@@ -1428,6 +1446,10 @@ export default function App() {
     setProject({ ...nextProject, updatedAt: new Date().toISOString() });
   };
 
+  const clearWorkspaceRecoveryNotice = () => {
+    setWorkspaceRecoveryNotice(null);
+  };
+
   const resetModelConnectContext = () => {
     setModelConnectReceipt(null);
     setServerProviderPolicyReport(null);
@@ -1457,6 +1479,7 @@ export default function App() {
     setProject(projectFromAuditProfile(profile));
     setShowValidation(false);
     setSavedAt("");
+    clearWorkspaceRecoveryNotice();
     resetModelConnectContext();
     setActiveTab("wizard");
   };
@@ -1471,6 +1494,7 @@ export default function App() {
     setProject(projectFromAuditProfile(profile));
     setShowValidation(false);
     setSavedAt("");
+    clearWorkspaceRecoveryNotice();
     resetModelConnectContext();
     setActiveTab(scenario.recommendedStartTab);
   };
@@ -1479,6 +1503,7 @@ export default function App() {
     setProject(createBlankProject());
     setShowValidation(false);
     setSavedAt("");
+    clearWorkspaceRecoveryNotice();
     resetModelConnectContext();
     setActiveTab("wizard");
   };
@@ -1486,9 +1511,21 @@ export default function App() {
   const saveWorkspace = () => {
     setShowValidation(true);
     if (!validation.valid) {
+      const persistenceSafety = assessProjectPersistenceSafety(project);
+      if (!persistenceSafety.canPersist) {
+        setWorkspaceRecoveryNotice(persistenceSafety.notice);
+      }
       return;
     }
+
+    const persistenceSafety = assessProjectPersistenceSafety(project);
+    if (!persistenceSafety.canPersist) {
+      setWorkspaceRecoveryNotice(persistenceSafety.notice);
+      return;
+    }
+
     safeStorage()?.setItem(STORAGE_KEY, JSON.stringify(project));
+    clearWorkspaceRecoveryNotice();
     setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   };
 
@@ -2126,6 +2163,7 @@ export default function App() {
           validation={validation}
           showValidation={showValidation}
           savedAt={savedAt}
+          recoveryNotice={workspaceRecoveryNotice}
           onProjectChange={updateProject}
           onLoadSample={loadSample}
           onLoadDemoScenario={loadDemoScenario}
@@ -2615,22 +2653,15 @@ function createBlankProject(): ProjectProfile {
   };
 }
 
-function loadStoredProject(): ProjectProfile | null {
-  const raw = safeStorage()?.getItem(STORAGE_KEY);
-  if (!raw) {
-    return null;
+function loadStoredProject() {
+  const storage = safeStorage();
+  const result = parseStoredProjectSnapshot(storage?.getItem(STORAGE_KEY));
+
+  if (result.shouldClearStoredProject) {
+    storage?.removeItem(STORAGE_KEY);
   }
 
-  try {
-    const parsed = JSON.parse(raw) as ProjectProfile;
-    if (parsed && typeof parsed.id === "string" && Array.isArray(parsed.evidenceItems)) {
-      return parsed;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
+  return result;
 }
 
 function loadStoredModelSettings(): ModelSettings {

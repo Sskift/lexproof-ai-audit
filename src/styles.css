@@ -3775,6 +3775,30 @@ textarea {
   line-height: 1.45;
 }
 
+.workspace-recovery-notice {
+  align-items: flex-start;
+  margin: 12px 0;
+  border: 1px solid #e3b276;
+  background: #fff8ec;
+}
+
+.workspace-recovery-notice strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #172431;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.workspace-recovery-notice small {
+  display: block;
+  margin-top: 6px;
+  color: #5b6670;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .model-settings,
 .review-section {
   margin-bottom: 14px;

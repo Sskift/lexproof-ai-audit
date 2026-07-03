@@ -74,6 +74,69 @@ describe("App", () => {
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
   });
 
+  it("blocks an unsafe saved workspace snapshot and shows recovery guidance", async () => {
+    const { restore, storage } = installAppLocalStorage({
+      "lexproof.currentProject.v1": JSON.stringify({
+        id: "project-unsafe",
+        projectName: "Wallet owner jane.reviewer@example.com",
+        entityType: "Startup issuer",
+        jurisdictions: ["United States"],
+        assetModel: "Tokenized evidence review",
+        userType: "Compliance team",
+        custodyModel: "Non-custodial workflow",
+        dataSensitivity: "Policy metadata only",
+        aiUsage: "Use api_key=sk-live-abcdef1234567890abcdef1234567890 for model review.",
+        blockchainUse: "Simulated anchor only",
+        operatingStage: "Private pilot",
+        evidenceItems: []
+      })
+    });
+
+    try {
+      render(<App />);
+
+      const recovery = await screen.findByRole("status", { name: /Workspace persistence recovery/i });
+      expect(within(recovery).getByText(/Unsafe saved workspace was blocked/i)).toBeInTheDocument();
+      expect(within(recovery).getByText(/Not legal advice. Workspace persistence recovery/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Project name/i)).not.toHaveValue("Wallet owner jane.reviewer@example.com");
+
+      await waitFor(() => {
+        const stored = storage.getItem("lexproof.currentProject.v1") ?? "";
+        expect(stored).not.toContain("sk-live");
+        expect(stored).not.toContain("jane.reviewer@example.com");
+      });
+    } finally {
+      restore();
+    }
+  });
+
+  it("blocks workspace autosave when project metadata includes unsafe material", async () => {
+    const { restore, storage } = installAppLocalStorage();
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Unsafe Project Desk" } });
+      fireEvent.change(screen.getByLabelText(/AI usage/i), {
+        target: { value: "Route api_key=sk-live-abcdef1234567890abcdef1234567890 into model review." }
+      });
+
+      const recovery = await screen.findByRole("status", { name: /Workspace persistence recovery/i });
+      expect(within(recovery).getByText(/Workspace autosave blocked/i)).toBeInTheDocument();
+      expect(within(recovery).getByText(/Remove credentials, private keys, raw KYC/i)).toBeInTheDocument();
+      expect(within(recovery).getByText(/Not legal advice. Workspace persistence recovery/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        const stored = storage.getItem("lexproof.currentProject.v1") ?? "";
+        expect(stored).not.toContain("sk-live");
+        expect(stored).not.toContain("Unsafe Project Desk");
+      });
+    } finally {
+      restore();
+    }
+  });
+
   it("downloads a metadata-only Workspace Cockpit Handoff JSON from the command center", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
@@ -5036,6 +5099,43 @@ function createDemoApiMockPayload(url: string): unknown {
   }
 
   return {};
+}
+
+function installAppLocalStorage(initialValues: Record<string, string> = {}) {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(window, "localStorage");
+  const values = new Map(Object.entries(initialValues));
+  const storage = {
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, String(value));
+    }),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    clear: vi.fn(() => {
+      values.clear();
+    }),
+    key: vi.fn((index: number) => Array.from(values.keys())[index] ?? null),
+    get length() {
+      return values.size;
+    }
+  } as Storage;
+
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: storage
+  });
+
+  return {
+    storage,
+    restore: () => {
+      if (originalDescriptor) {
+        Object.defineProperty(window, "localStorage", originalDescriptor);
+      } else {
+        Reflect.deleteProperty(window, "localStorage");
+      }
+    }
+  };
 }
 
 function readAppBlobText(blob: Blob): Promise<string> {

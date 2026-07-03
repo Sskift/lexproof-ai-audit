@@ -1,7 +1,8 @@
-import { CirclePlus, Gavel, Layers3, Save } from "lucide-react";
+import { AlertTriangle, CirclePlus, Gavel, Layers3, Save } from "lucide-react";
 import type { AuditProfile, SubmissionFit } from "../lib/auditEngine";
 import type { DemoScenario, DemoScenarioValidationResult } from "../lib/demoScenarioLibrary";
 import type { DemoApiPreflight } from "../lib/demoReadiness";
+import type { ProjectWorkspaceRecoveryNotice } from "../lib/projectPersistence";
 import type { ProjectProfile, ProjectValidationResult } from "../lib/projectModel";
 import { DemoReadinessPanel } from "./DemoReadinessPanel";
 import { DemoScenarioLibrary } from "./DemoScenarioLibrary";
@@ -17,6 +18,7 @@ type ProjectWorkspaceProps = {
   validation: ProjectValidationResult;
   showValidation: boolean;
   savedAt: string;
+  recoveryNotice?: ProjectWorkspaceRecoveryNotice | null;
   onProjectChange: (project: ProjectProfile) => void;
   onLoadSample: (projectName: string) => void;
   onLoadDemoScenario: (scenarioId: string) => void;
@@ -36,6 +38,7 @@ export function ProjectWorkspace({
   validation,
   showValidation,
   savedAt,
+  recoveryNotice,
   onProjectChange,
   onLoadSample,
   onLoadDemoScenario,
@@ -65,6 +68,18 @@ export function ProjectWorkspace({
             Save workspace
           </button>
         </div>
+
+        {recoveryNotice ? (
+          <div className="notice-banner workspace-recovery-notice" role="status" aria-label="Workspace persistence recovery">
+            <AlertTriangle size={18} aria-hidden="true" />
+            <div>
+              <strong>{recoveryNotice.title}</strong>
+              <p>{recoveryNotice.message}</p>
+              <p>{recoveryNotice.recoveryAction}</p>
+              <small>{recoveryNotice.notLegalAdviceBoundary}</small>
+            </div>
+          </div>
+        ) : null}
 
         <label className="field-label" htmlFor="sample-profile">
           Load sample scenario

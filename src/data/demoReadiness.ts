@@ -30,6 +30,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/evidence-ledger-rejected-replacement.png",
   "docs/assets/screenshots/evidence-vault-manifest-download.png",
   "docs/assets/screenshots/evidence-vault-lineage-digest.png",
+  "docs/assets/screenshots/empty-evidence-chain-anchor-blocked.png",
   "docs/assets/screenshots/demo-smoke-checklist.png",
   "docs/assets/screenshots/demo-runbook-json.png",
   "docs/assets/screenshots/demo-01-model-connect.png",

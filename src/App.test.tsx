@@ -1559,6 +1559,27 @@ describe("App", () => {
     expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
   }, 15000);
 
+  it("blocks chain anchor readiness for an empty evidence workspace", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+
+    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+    const registryPanel = registryHeading.closest("section");
+    expect(registryPanel).not.toBeNull();
+    const registry = within(registryPanel as HTMLElement);
+
+    expect(await registry.findByText(/Chain anchor blocked/i)).toBeInTheDocument();
+    expect(registry.getByText(/No metadata-only evidence records are available for anchor review./i)).toBeInTheDocument();
+    expect(registry.getByText(/Add at least one metadata-only evidence item before chain anchor policy review./i)).toBeInTheDocument();
+    expect(
+      registry.getAllByText(/Add metadata-only evidence in the Evidence Ledger before enabling this adapter./i).length
+    ).toBeGreaterThan(0);
+    expect(
+      registry.getAllByText(/Not legal advice. Integration adapter readiness is audit preparation metadata only./i).length
+    ).toBeGreaterThan(0);
+  }, 15000);
+
   it("downloads an Integration Enablement Dossier without enabling external adapters", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

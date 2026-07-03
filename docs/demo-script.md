@@ -182,6 +182,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, the automatically queued Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
    - Integration dossier screenshot: `docs/assets/screenshots/integration-enablement-dossier.png`.
+   - Empty evidence chain-anchor recovery screenshot: `docs/assets/screenshots/empty-evidence-chain-anchor-blocked.png`.
    - Storage policy screenshot: `docs/assets/screenshots/object-storage-policy-evaluation.png`.
    - Parser policy screenshot: `docs/assets/screenshots/document-parser-policy-evaluation.png`.
    - Chain anchor policy screenshot: `docs/assets/screenshots/chain-anchor-policy-evaluation.png`.

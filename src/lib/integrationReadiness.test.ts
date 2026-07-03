@@ -167,4 +167,44 @@ describe("createIntegrationReadinessRegistry", () => {
     expect(JSON.stringify(registry)).not.toContain(privateKey);
     expect(JSON.stringify(registry)).not.toContain("raw KYC packet");
   });
+
+  it("blocks chain anchor readiness when the manifest exists but evidence is empty", () => {
+    const evidenceItems: EvidenceItem[] = [];
+    const securityReviewChecklist = createSecurityReviewChecklist({
+      modelConnectReceipt: mockReceipt,
+      retentionPolicyReport: createRetentionPolicyReport({
+        workspaceId: baseProject.id,
+        evidenceItems
+      }),
+      dataBoundaryReport: createDataBoundaryReport({
+        project: baseProject,
+        evidenceItems,
+        counselQuestions: [],
+        counselReviews: [],
+        aiEvents: []
+      }),
+      evidenceCount: evidenceItems.length,
+      manifestHash: "c".repeat(64)
+    });
+
+    const registry = createIntegrationReadinessRegistry({
+      securityReviewChecklist,
+      modelConnectReceipt: mockReceipt,
+      evidenceCount: evidenceItems.length,
+      manifestHash: "c".repeat(64),
+      remediationItemCount: 1,
+      counselPackVersionCount: 0
+    });
+
+    expect(registry.overallStatus).toBe("blocked");
+    expect(registry.adapters.find((adapter) => adapter.id === "chain-anchor")).toEqual(
+      expect.objectContaining({
+        status: "blocked",
+        readinessEvidence: "No metadata-only evidence records are available for anchor review.",
+        validationErrors: ["Add at least one metadata-only evidence item before chain anchor policy review."],
+        recoveryAction: "Add metadata-only evidence in the Evidence Ledger before enabling this adapter.",
+        notLegalAdviceBoundary: "Not legal advice. Integration adapter readiness is audit preparation metadata only."
+      })
+    );
+  });
 });

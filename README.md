@@ -300,9 +300,11 @@ Security Review Checklist turns Model Connect, retention, Export Safety Gate, ma
 
 ![Security Review Checklist](docs/assets/screenshots/security-review-checklist.png)
 
-Integration Readiness Registry maps those gates into adapter-level status for model providers, object storage, chain anchoring, OCR, and GRC ticket export without enabling external calls, raw uploads, or chain transactions. Not legal advice.
+Integration Readiness Registry maps those gates into adapter-level status for model providers, object storage, chain anchoring, OCR, and GRC ticket export without enabling external calls, raw uploads, or chain transactions. Empty evidence workspaces now keep chain anchoring blocked until at least one metadata-only evidence item exists, even if a local manifest hash can be calculated. Not legal advice.
 
 ![Integration Readiness Registry](docs/assets/screenshots/integration-readiness-registry.png)
+
+![Empty evidence Chain Anchor blocked state](docs/assets/screenshots/empty-evidence-chain-anchor-blocked.png)
 
 Integration Enablement Dossier consolidates the registry plus model provider, secret handling, object storage, document parser, chain anchor, and GRC destination policy reports into one hashed JSON handoff. It remains metadata-only and keeps all external adapters disabled until a separate enablement review. Not legal advice.
 

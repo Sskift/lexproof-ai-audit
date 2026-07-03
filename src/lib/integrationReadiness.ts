@@ -63,7 +63,7 @@ export function createIntegrationReadinessRegistry(input: IntegrationReadinessIn
   const adapters: IntegrationReadinessAdapter[] = [
     createServerModelProviderAdapter(modelItem, input.modelConnectReceipt),
     createObjectStorageAdapter(storageItem, input.evidenceCount),
-    createChainAnchorAdapter(anchorItem, input.manifestHash),
+    createChainAnchorAdapter(anchorItem, input.evidenceCount, input.manifestHash),
     createDocumentParserAdapter(storageItem),
     createGrcTicketExportAdapter(storageItem, input.remediationItemCount, input.counselPackVersionCount)
   ];
@@ -167,7 +167,24 @@ function createObjectStorageAdapter(storageItem: SecurityReviewChecklistItem, ev
   });
 }
 
-function createChainAnchorAdapter(anchorItem: SecurityReviewChecklistItem, manifestHash?: string): IntegrationReadinessAdapter {
+function createChainAnchorAdapter(
+  anchorItem: SecurityReviewChecklistItem,
+  evidenceCount: number,
+  manifestHash?: string
+): IntegrationReadinessAdapter {
+  if (evidenceCount <= 0) {
+    return createAdapter({
+      id: "chain-anchor",
+      label: "Chain anchor",
+      category: "anchor",
+      status: "blocked",
+      readinessEvidence: "No metadata-only evidence records are available for anchor review.",
+      validationErrors: ["Add at least one metadata-only evidence item before chain anchor policy review."],
+      recoveryAction: "Add metadata-only evidence in the Evidence Ledger before enabling this adapter.",
+      requiredPolicy: "Wallet signing controls, privacy review, transaction logging, and user consent."
+    });
+  }
+
   if (!manifestHash) {
     return createAdapter({
       id: "chain-anchor",

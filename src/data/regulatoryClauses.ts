@@ -917,7 +917,7 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     topic: "aml-cft",
     summary:
       "Prepare UK cryptoasset exchange provider or custodian wallet provider activity-scope, FCA MLR registration, business plan, AML/CTF/CPF framework, MLRO, BWRA/CRA, CDD/EDD, sanctions, transaction monitoring, SAR, Travel Rule originator/beneficiary data, outsourcing, record-retention, and no-raw-KYC evidence for UK financial-crime counsel review.",
-    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerFlagIds: [],
     triggerKeywords: [
       "united kingdom",
       "uk",
@@ -1200,10 +1200,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     topic: "custody",
     summary:
       "Prepare Hong Kong VATP client-asset custody, associated-entity trust holding, wallet segregation, reconciliation, cold-storage, key-control, monitoring, and compensation evidence for local counsel review.",
-    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerFlagIds: [],
     triggerKeywords: [
-      "hong kong",
-      "hk",
       "vatp",
       "virtual asset trading platform",
       "client virtual assets",
@@ -1259,6 +1257,98 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-07-01",
     reviewerNotes:
       "Source metadata reviewed against SFC VATP Guidelines Part X for client asset custody, associated-entity trust holding, segregation, cold-storage, reconciliation, monitoring, and compensation evidence routing; route interpretation to Hong Kong local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "hk-hkma-stablecoin-issuer-regime",
+    jurisdiction: "Hong Kong",
+    regulator: "Hong Kong Monetary Authority",
+    sourceName: "Regulatory Regime for Stablecoin Issuers",
+    sourceUrl: "https://www.hkma.gov.hk/eng/key-functions/international-financial-centre/stablecoin-issuers/",
+    citation:
+      "Stablecoins Ordinance (Cap. 656); HKMA Regulatory Regime for Stablecoin Issuers, 1 August 2025; HKMA Supervisory and AML/CFT Guidelines, August 2025",
+    topic: "activity-scope",
+    summary:
+      "Prepare fiat-referenced stablecoin issuance, HKMA licence, activity scope, reserve-asset backing, redemption, supervision, AML/CFT, and user-protection evidence for Hong Kong stablecoin issuer counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "stablecoin issuer",
+      "fiat-referenced stablecoin",
+      "frs issuer",
+      "specified stablecoin",
+      "stablecoins ordinance",
+      "hkma licence",
+      "hkma license",
+      "regulated stablecoin activity",
+      "reserve assets",
+      "redemption",
+      "stablecoin manager"
+    ],
+    evidenceRequests: [
+      {
+        id: "hk-hkma-stablecoin-licensing-activity-scope",
+        title: "Hong Kong HKMA stablecoin issuer licensing and activity-scope evidence",
+        reason:
+          "Hong Kong stablecoin issuer review needs fiat-referenced stablecoin scope, regulated stablecoin activity, HKMA licence or application route, principal-place-of-business, governance, controller, and responsible-person evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "stablecoin issuer",
+          "fiat-referenced stablecoin",
+          "stablecoins ordinance",
+          "hkma licence",
+          "hkma license",
+          "regulated stablecoin activity",
+          "licence application",
+          "license application",
+          "hong kong principal place"
+        ]
+      },
+      {
+        id: "hk-hkma-stablecoin-reserve-redemption-supervision",
+        title: "Hong Kong HKMA stablecoin reserve, redemption, and supervision evidence",
+        reason:
+          "Counsel needs reserve-asset management, full-backing, segregation, safekeeping, qualified custodian, redemption, attestation, reporting, incident, and business-continuity evidence for HKMA supervisory review.",
+        priority: "P1",
+        keywords: [
+          "reserve assets",
+          "full backing",
+          "redemption",
+          "segregation",
+          "safekeeping",
+          "qualified custodian",
+          "attestation",
+          "reporting",
+          "supervisory guideline"
+        ]
+      },
+      {
+        id: "hk-hkma-stablecoin-aml-cft-user-protection",
+        title: "Hong Kong HKMA stablecoin AML/CFT and user-protection evidence",
+        reason:
+          "AML/CFT review needs risk assessment, customer due diligence, blockchain analytics, unhosted-wallet handling, suspicious-transaction reporting, recordkeeping, complaints, and no-raw-KYC evidence for local counsel handoff.",
+        priority: "P1",
+        keywords: [
+          "aml cft",
+          "ml tf",
+          "customer due diligence",
+          "blockchain analytics",
+          "unhosted wallets",
+          "suspicious transaction",
+          "record keeping",
+          "complaints handling",
+          "no raw kyc"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which fiat-referenced stablecoin issuance, HKMA licence, application, controller, governance, or principal-place-of-business facts should Hong Kong stablecoin issuer counsel review?",
+      "What reserve-asset, full-backing, redemption, attestation, AML/CFT, suspicious-transaction, recordkeeping, and user-protection evidence can be prepared without raw KYC or personal data?"
+    ],
+    localCounselRole: "Hong Kong stablecoin issuer / HKMA counsel",
+    effectiveAsOf: "2025-08-01",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against HKMA stablecoin issuer regime page, Stablecoins Ordinance (Cap. 656) licensing note, HKMA supervisory guideline, HKMA AML/CFT guideline, and 2026 licensed-issuer press release for source-linked evidence routing; route interpretation to Hong Kong stablecoin issuer counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

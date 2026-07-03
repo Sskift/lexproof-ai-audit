@@ -853,6 +853,27 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Hong Kong HKMA stablecoin issuer scenario with licensing, reserve, and AML evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Hong Kong HKMA stablecoin issuer review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("HarborMint Stablecoin Issuer Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /Stablecoins Ordinance \(Cap\. 656\); HKMA Regulatory Regime for Stablecoin Issuers, 1 August 2025; HKMA Supervisory and AML\/CFT Guidelines, August 2025/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong HKMA stablecoin issuer licensing and activity-scope evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong HKMA stablecoin reserve, redemption, and supervision evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong HKMA stablecoin AML\/CFT and user-protection evidence/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/SFC Guidelines for Virtual Asset Trading Platform Operators, Part X/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the Japan crypto custody scenario with FSA custody evidence gaps", async () => {
     render(<App />);
 
@@ -984,7 +1005,6 @@ describe("App", () => {
         .length
     ).toBeGreaterThan(0);
     expect(screen.getAllByText(/Germany BaFin \/ MiCAR crypto custody counsel/i).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText(/Article 60 notification evidence/i)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/custody safeguarding and client-position evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });

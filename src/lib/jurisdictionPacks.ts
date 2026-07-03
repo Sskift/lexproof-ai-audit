@@ -261,6 +261,28 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "compensation arrangement",
           "custody and signer control"
         ]
+      },
+      {
+        id: "hk-hkma-stablecoin-issuer-control",
+        title: "HKMA stablecoin issuer licensing, reserve, and AML/CFT control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch", "sensitive-data"],
+        evidenceKeywords: [
+          "hong kong stablecoin issuer",
+          "fiat-referenced stablecoin",
+          "stablecoins ordinance",
+          "hkma licence",
+          "regulated stablecoin activity",
+          "reserve assets",
+          "full backing",
+          "redemption",
+          "aml cft",
+          "customer due diligence",
+          "blockchain analytics",
+          "suspicious transaction",
+          "record keeping"
+        ]
       }
     ]
   },

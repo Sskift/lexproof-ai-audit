@@ -151,6 +151,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "hong-kong-stablecoin-issuer-source-path",
+    projectName: "HarborMint Stablecoin Issuer Review",
+    title: "Hong Kong HKMA stablecoin issuer review",
+    summary:
+      "Hong Kong HKMA Stablecoins Ordinance issuer licensing, reserve-asset backing, redemption, AML/CFT, user-protection, and counsel handoff review.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect HKMA stablecoin issuer source controls",
+      "Review licensing and activity-scope evidence gaps",
+      "Check reserve, redemption, AML/CFT, and user-protection evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Hong Kong", "HKMA", "Stablecoin", "AML/CFT"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "japan-crypto-custody-source-path",
     projectName: "SakuraKey Crypto Custody Review",
     title: "Japan crypto custody review",

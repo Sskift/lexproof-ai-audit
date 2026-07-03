@@ -99,6 +99,8 @@ describe("evidence templates", () => {
         "EU DORA ICT resilience register",
         "EU TFR Travel Rule transfer information register",
         "Investor eligibility review",
+        "Hong Kong HKMA stablecoin issuer licensing and scope register",
+        "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register",
         "Singapore DPT CDD and model handoff register",
         "UK FCA cryptoasset AML registration and Travel Rule register",
         "Japan crypto-asset custody and leakage response register",
@@ -128,6 +130,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-stablecoin-guidance-06-2024");
+    expect(serializedSources).toContain("regulatory control: control-hk-hkma-stablecoin-issuer-regime");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-compliance-risk-management");
     expect(serializedSources).toContain("regulatory control: control-us-sec-reg-d-accredited-investor-verification");
@@ -139,7 +142,9 @@ describe("evidence templates", () => {
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
         "Swiss stablecoin issuer and bank guarantee perimeter memo",
-        "Swiss stablecoin AML and sanctions transfer-risk register"
+        "Swiss stablecoin AML and sanctions transfer-risk register",
+        "Hong Kong HKMA stablecoin issuer licensing and scope register",
+        "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register"
       ])
     );
   });

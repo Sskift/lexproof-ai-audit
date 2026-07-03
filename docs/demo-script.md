@@ -40,6 +40,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
    - Optional Singapore source path: click **Start Singapore DPT custody review** to load `HarborKey DPT Custody Review` and start in Jurisdiction Checklist for MAS PS-G03 customer-asset safeguard controls, custody evidence gaps, and counsel export.
    - Optional Hong Kong source path: click **Start Hong Kong VATP custody review** to load `HarborBridge VATP Custody Review` and start in Jurisdiction Checklist for SFC VATP client-asset custody controls, wallet governance evidence gaps, and counsel export.
+   - Optional Hong Kong stablecoin source path: click **Start Hong Kong HKMA stablecoin issuer review** to load `HarborMint Stablecoin Issuer Review` and start in Jurisdiction Checklist for HKMA Stablecoins Ordinance issuer licensing, reserve, redemption, AML/CFT, user-protection evidence gaps, and counsel export.
    - Optional Japan source path: click **Start Japan crypto custody review** to load `SakuraKey Crypto Custody Review` and start in Jurisdiction Checklist for FSA crypto-asset exchange custody controls, user-asset protection evidence gaps, cold-wallet/offline management, reconciliation, leakage-response review routing, and counsel export.
    - Optional Canada source path: click **Start Canada CTP custody review** to load `MapleVault CTP Custody Review` and start in Jurisdiction Checklist for CSA CTP PRU custody controls, registration and PRU evidence gaps, client-asset custody and segregation, acceptable third-party custodian assurance, no re-hypothecation, no leverage, VRCA consent, and counsel export.
    - Optional Australia source path: click **Start Australia digital asset review** to load `SouthernCross Digital Asset Review` and start in Jurisdiction Checklist for ASIC digital-asset financial-services controls, AUSTRAC VASP AML/CTF evidence gaps, CDD, travel-rule, reporting, recordkeeping, and counsel export.
@@ -57,6 +58,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - DAO source screenshot: `docs/assets/screenshots/dao-governance-source-graph.png`.
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
    - Singapore path screenshot: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
+   - Hong Kong HKMA stablecoin path screenshot: `docs/assets/screenshots/hong-kong-stablecoin-source-graph.png`.
    - Japan path screenshot: `docs/assets/screenshots/japan-crypto-custody-source-graph.png`.
    - Canada path screenshot: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Australia path screenshot: `docs/assets/screenshots/australia-digital-asset-source-graph.png`.
@@ -99,6 +101,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional Brazil path screenshot after **Start Brazil VASP source review**: `docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png`.
    - Optional Singapore path screenshot after **Start Singapore DPT custody review**: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Optional Hong Kong path screenshot after **Start Hong Kong VATP custody review**: `docs/assets/screenshots/hong-kong-vatp-source-graph.png`.
+   - Optional Hong Kong HKMA stablecoin path screenshot after **Start Hong Kong HKMA stablecoin issuer review**: `docs/assets/screenshots/hong-kong-stablecoin-source-graph.png`.
    - Optional Japan path screenshot after **Start Japan crypto custody review**: `docs/assets/screenshots/japan-crypto-custody-source-graph.png`.
    - Optional Canada path screenshot after **Start Canada CTP custody review**: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Optional Australia path screenshot after **Start Australia digital asset review**: `docs/assets/screenshots/australia-digital-asset-source-graph.png`.

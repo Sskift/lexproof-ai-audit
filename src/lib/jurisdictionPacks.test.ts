@@ -133,7 +133,11 @@ describe("createJurisdictionPacks", () => {
       }
     });
     expect(hongKongPack?.controls.map((control) => control.title)).toEqual(
-      expect.arrayContaining(["VATP client asset custody control", "Wallet governance and compensation arrangement control"])
+      expect.arrayContaining([
+        "VATP client asset custody control",
+        "Wallet governance and compensation arrangement control",
+        "HKMA stablecoin issuer licensing, reserve, and AML/CFT control"
+      ])
     );
 
     const japanPack = packs.find((pack) => pack.jurisdiction === "Japan");

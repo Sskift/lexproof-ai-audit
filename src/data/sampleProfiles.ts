@@ -180,6 +180,37 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "HarborMint Stablecoin Issuer Review",
+    entityType: "Fiat-referenced stablecoin issuer",
+    jurisdictions: ["Hong Kong"],
+    assetModel:
+      "Fiat-referenced stablecoin issuer with HKD and USD reference-currency assumptions, specified stablecoin issuance, reserve assets, redemption, and HKMA licence application planning",
+    userType: "Hong Kong treasury partners, distribution reviewers, compliance reviewers, and local counsel",
+    custodyModel:
+      "Reserve assets are planned for segregated safekeeping with qualified custodians; no exchange-platform customer wallet operations in this demo",
+    dataSensitivity: "CDD status summaries, AML/CFT alert summaries, complaints metadata, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts HKMA stablecoin issuer evidence summaries for human review and Hong Kong counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only HKMA stablecoin counsel handoff",
+    operatingStage: "Pre-application HKMA stablecoin issuer licensing and supervision review before local counsel signoff",
+    evidenceItems: [
+      {
+        label: "HKMA stablecoin source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Reference-currency scope note",
+        kind: "Markdown",
+        content: "Synthetic issuer scope, reference-currency assumptions, review owner, and counsel handoff timing; detailed control registers still requested."
+      },
+      {
+        label: "Counsel question backlog",
+        kind: "Checklist",
+        content: "Synthetic questions for Hong Kong local counsel routing and pending evidence owners."
+      }
+    ]
+  },
+  {
     projectName: "SakuraKey Crypto Custody Review",
     entityType: "Crypto-asset exchange custody operations team",
     jurisdictions: ["Japan"],

@@ -86,6 +86,50 @@ describe("createRegulatoryControlMatrix", () => {
     );
   });
 
+  it("keeps evidence request titles limited to open requests when a control is partially covered", () => {
+    const project: ProjectProfile = {
+      ...globalLaunchProject,
+      id: "project-hkma-partial-control-matrix",
+      projectName: "HarborMint Stablecoin Issuer Review",
+      jurisdictions: ["Hong Kong"],
+      entityType: "Fiat-referenced stablecoin issuer",
+      assetModel:
+        "Fiat-referenced stablecoin issuer with specified stablecoin issuance, reserve assets, redemption, and HKMA licence application planning",
+      userType: "Hong Kong treasury partners, compliance reviewers, and local counsel",
+      custodyModel: "Reserve assets are planned for segregated safekeeping with qualified custodians",
+      dataSensitivity: "CDD status summaries and alert metadata excluded from exported demo evidence",
+      aiUsage: "AI drafts HKMA stablecoin issuer evidence summaries for human review",
+      operatingStage: "Pre-application HKMA stablecoin issuer review before local counsel signoff",
+      evidenceItems: [
+        {
+          id: "hkma-licensing-scope",
+          label: "HKMA stablecoin issuer licensing scope note",
+          kind: "Memo",
+          content: "Hong Kong stablecoin issuer, fiat-referenced stablecoin, Stablecoins Ordinance, HKMA licence application, regulated stablecoin activity, and Hong Kong principal place evidence.",
+          status: "verified",
+          owner: "Counsel"
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, { asOf: "2026-07-15T00:00:00.000Z" });
+
+    const matrix = createRegulatoryControlMatrix({ graph, sourceReview });
+    const control = matrix.controls.find((item) => item.clauseId === "hk-hkma-stablecoin-issuer-regime");
+
+    expect(control).toMatchObject({
+      evidenceCoverageStatus: "partial",
+      coveredEvidenceCount: 1,
+      totalEvidenceRequestCount: 3,
+      openEvidenceRequestCount: 2,
+      evidenceRequestTitles: [
+        "Hong Kong HKMA stablecoin reserve, redemption, and supervision evidence",
+        "Hong Kong HKMA stablecoin AML/CFT and user-protection evidence"
+      ]
+    });
+  });
+
   it("routes stale sources to source review even when evidence is covered", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,

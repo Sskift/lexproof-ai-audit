@@ -16,7 +16,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
     title: "Tokenized Yield / RWA Issuance",
     shortLabel: "tokenized yield / RWA",
     description: "Disclosure, eligibility, custody, and anchor evidence requests for tokenized yield or RWA launch review.",
-    triggerKeywords: ["yield", "rwa", "tokenized", "private credit", "note", "custody", "retail"],
+    triggerKeywords: ["yield", "rwa", "tokenized", "private credit", "note", "stablecoin", "fiat-referenced", "custody", "retail"],
     notLegalAdviceBoundary: "Not legal advice. These are evidence requests for counsel and compliance audit preparation.",
     items: [
       {
@@ -106,6 +106,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: summarize Swiss stablecoin AML, money laundering, terrorist financing, sanctions circumvention, holder identification, anonymous transfer prevention, transfer risk, transaction monitoring, blocked-transfer escalation, reviewer owner, and no raw customer records, credentials, or wallet secrets.",
         source:
           "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ch-finma-stablecoin-guidance-06-2024",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Hong Kong HKMA stablecoin issuer licensing and scope register",
+        kind: "Register",
+        content:
+          "Requested: summarize Hong Kong stablecoin issuer, fiat-referenced stablecoin, specified stablecoin, Stablecoins Ordinance, HKMA licence, regulated stablecoin activity, licence application, Hong Kong principal place of business, controller, chief executive, stablecoin manager, governance owner, and counsel review owner.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-hk-hkma-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register",
+        kind: "Register",
+        content:
+          "Requested: summarize HKMA stablecoin reserve assets, full backing, redemption, reserve safekeeping, qualified custodian, attestation, reporting, supervisory guideline, AML CFT, ML TF risk assessment, customer due diligence, blockchain analytics, unhosted wallets, suspicious transaction reporting, record keeping, complaints handling, reviewer owner, and no raw KYC, credentials, wallet secrets, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-hk-hkma-stablecoin-issuer-regime",
         status: "requested",
         owner: "Compliance"
       },

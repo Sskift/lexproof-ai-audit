@@ -201,6 +201,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(hongKongScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Hong Kong HKMA stablecoin issuer path for licensing and reserve source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const hongKongStablecoinScenario = findDemoScenarioById(demoScenarios, "hong-kong-stablecoin-issuer-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(hongKongStablecoinScenario).toEqual(
+      expect.objectContaining({
+        title: "Hong Kong HKMA stablecoin issuer review",
+        projectName: "HarborMint Stablecoin Issuer Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Hong Kong", "HKMA", "Stablecoin", "AML/CFT"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(hongKongStablecoinScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect HKMA stablecoin issuer source controls",
+        "Review licensing and activity-scope evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(hongKongStablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Japan crypto custody path for FSA source demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const japanScenario = findDemoScenarioById(demoScenarios, "japan-crypto-custody-source-path");

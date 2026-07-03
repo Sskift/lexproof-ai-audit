@@ -1354,6 +1354,98 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
+  it("matches Hong Kong HKMA stablecoin issuer controls without pulling in VATP custody controls", () => {
+    const hongKongStablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-hk-stablecoin-issuer",
+      projectName: "HarborMint Stablecoin Issuer Review",
+      jurisdictions: ["Hong Kong"],
+      entityType: "Fiat-referenced stablecoin issuer",
+      assetModel:
+        "Fiat-referenced stablecoin issuer with HKD and USD reference-currency assumptions, specified stablecoin issuance, reserve assets, redemption, and HKMA licence application planning",
+      userType: "Hong Kong treasury partners, distribution reviewers, compliance reviewers, and local counsel",
+      custodyModel:
+        "Reserve assets are planned for segregated safekeeping with qualified custodians; no exchange-platform customer wallet operations in this demo",
+      dataSensitivity: "CDD status summaries, AML/CFT alert summaries, complaints metadata, and customer records excluded",
+      aiUsage: "AI drafts HKMA stablecoin issuer evidence summaries for human review and Hong Kong counsel routing",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application HKMA stablecoin issuer licensing and supervision review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(hongKongStablecoinProject);
+    const graph = createRegulatoryGraph(hongKongStablecoinProject, audit, hongKongStablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["hk-hkma-stablecoin-issuer-regime"])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["hk-sfc-vatp-client-asset-custody"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "hk-hkma-stablecoin-issuer-regime")).toMatchObject({
+      jurisdiction: "Hong Kong",
+      regulator: "Hong Kong Monetary Authority",
+      citation:
+        "Stablecoins Ordinance (Cap. 656); HKMA Regulatory Regime for Stablecoin Issuers, 1 August 2025; HKMA Supervisory and AML/CFT Guidelines, August 2025",
+      sourceUrl: "https://www.hkma.gov.hk/eng/key-functions/international-financial-centre/stablecoin-issuers/",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "Hong Kong stablecoin issuer / HKMA counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Hong Kong HKMA stablecoin issuer licensing and activity-scope evidence",
+        "Hong Kong HKMA stablecoin reserve, redemption, and supervision evidence",
+        "Hong Kong HKMA stablecoin AML/CFT and user-protection evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Hong Kong")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 3,
+      readiness: "evidence-gaps",
+      localCounselRole: "Hong Kong stablecoin issuer / HKMA counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Hong Kong HKMA stablecoin issuer controls covered when RWA stablecoin template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `hk-stablecoin-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const hongKongStablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-hk-stablecoin-issuer-covered",
+      jurisdictions: ["Hong Kong"],
+      entityType: "Fiat-referenced stablecoin issuer",
+      assetModel:
+        "Fiat-referenced stablecoin issuer with specified stablecoin issuance, reserve assets, redemption, and HKMA licence application planning",
+      userType: "Hong Kong treasury partners, compliance reviewers, and local counsel",
+      custodyModel: "Reserve assets are planned for segregated safekeeping with qualified custodians; no client virtual asset custody",
+      dataSensitivity: "CDD status summaries and AML/CFT alert summaries excluded from exported demo evidence",
+      aiUsage: "AI drafts HKMA stablecoin issuer evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application HKMA stablecoin issuer review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(hongKongStablecoinProject);
+    const graph = createRegulatoryGraph(hongKongStablecoinProject, audit, hongKongStablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "hk-hkma-stablecoin-issuer-regime")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 3,
+      totalEvidenceRequestCount: 3,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Hong Kong HKMA stablecoin issuer licensing and scope register",
+        "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "hk-hkma-stablecoin-issuer-regime" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks Singapore DPT safeguarding controls covered when RWA custody template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,

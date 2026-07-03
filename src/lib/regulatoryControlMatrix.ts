@@ -128,7 +128,7 @@ function createControl(
     totalEvidenceRequestCount: clause.totalEvidenceRequestCount,
     openEvidenceRequestCount: openEvidenceRequests.length,
     highestPriority,
-    evidenceRequestTitles: clause.evidenceRequestStatuses.map((request) => request.title),
+    evidenceRequestTitles: openEvidenceRequests.map((request) => request.title),
     matchedEvidenceLabels: clause.matchedEvidenceLabels,
     nextAction: createNextAction(status, clause, reviewItem, openEvidenceRequests),
     notLegalAdviceBoundary: controlBoundary

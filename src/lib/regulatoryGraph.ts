@@ -199,6 +199,7 @@ function createJurisdictionSummaries(
     const clauses = matchedClauses.filter((clause) => clause.jurisdiction === canonical);
     const missingEvidenceCount = evidenceGaps.filter((gap) => gap.jurisdiction === canonical).length;
     const coveredEvidenceCount = clauses.reduce((sum, clause) => sum + clause.coveredEvidenceCount, 0);
+    const packRole = packRoles.get(canonical);
 
     return {
       jurisdiction: canonical,
@@ -211,7 +212,10 @@ function createJurisdictionSummaries(
           : coveredEvidenceCount > 0
             ? "partial-evidence"
             : "evidence-gaps",
-      localCounselRole: packRoles.get(canonical) ?? clauses[0]?.localCounselRole ?? "Local counsel"
+      localCounselRole:
+        clauses.length === 1
+          ? (clauses[0]?.localCounselRole ?? packRole ?? "Local counsel")
+          : (packRole ?? clauses[0]?.localCounselRole ?? "Local counsel")
     };
   });
 }

@@ -6,6 +6,7 @@ import {
   exportCounselHandoffChecklistJson,
   type CounselHandoffChecklistInput
 } from "./counselHandoffChecklist";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { ExportSafetyInventory } from "./exportSafetyInventory";
@@ -118,6 +119,55 @@ describe("createCounselHandoffChecklist", () => {
       "Evidence Vault Control Coverage: Move linked vault evidence through Human Review before export reliance."
     );
     expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+  });
+
+  it("requires recertification recovery before handoff when reliance-ready evidence is stale", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      evidenceRecertificationQueue: recertificationQueue("needs-recertification"),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "evidence-recertification-queue");
+    const json = exportCounselHandoffChecklistJson(checklist);
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Evidence Recertification Queue",
+        status: "needs-action",
+        artifactHash: "e".repeat(64),
+        warningCount: 2,
+        recoveryAction: "Recertify stale or timestamp-missing reliance-ready evidence before final handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+      })
+    );
+    expect(item?.evidence).toContain("2 open recertification actions");
+    expect(item?.evidence).toContain("1 overdue");
+    expect(item?.evidence).toContain("1 source-linked");
+    expect(checklist.overallStatus).toBe("needs-action");
+    expect(checklist.handoffAllowed).toBe(false);
+    expect(checklist.nextActions).toContain(
+      "Evidence Recertification Queue: Recertify stale or timestamp-missing reliance-ready evidence before final handoff."
+    );
+    expect(json).toContain("Not legal advice");
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+  });
+
+  it("marks recertification ready when no reliance-ready evidence action is due", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      evidenceRecertificationQueue: recertificationQueue("ready"),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "evidence-recertification-queue");
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Evidence Recertification Queue",
+        status: "ready",
+        evidence: expect.stringContaining("0 open recertification actions"),
+        recoveryAction: "Keep the recertification queue hash with the final handoff packet."
+      })
+    );
   });
 
   it("marks Evidence Vault control coverage ready when all linked controls are ready for handoff", async () => {
@@ -240,6 +290,39 @@ function readyInventory(): ExportSafetyInventory {
     blockers: [],
     nextActions: ["Keep exports metadata-only and re-run inventory before external sharing."],
     notLegalAdviceBoundary: "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only."
+  };
+}
+
+function recertificationQueue(status: "ready" | "needs-recertification"): EvidenceRecertificationQueue {
+  const totalActionCount = status === "ready" ? 0 : 2;
+  const overdueCount = status === "ready" ? 0 : 1;
+  const expiringCount = status === "ready" ? 0 : 1;
+  const sourceLinkedCount = status === "ready" ? 0 : 1;
+  const missingTimestampCount = status === "ready" ? 0 : 1;
+
+  return {
+    queueVersion: "lexproof-evidence-recertification-queue-v1",
+    workspaceId: "handoff-project",
+    generatedAt: "2026-07-02T00:00:00.000Z",
+    status,
+    queueHash: "e".repeat(64),
+    policy: {
+      recertificationIntervalDays: 90,
+      warningWindowDays: 14
+    },
+    summary: {
+      totalActionCount,
+      overdueCount,
+      expiringCount,
+      sourceLinkedCount,
+      missingTimestampCount
+    },
+    items: [],
+    nextSteps:
+      status === "ready"
+        ? ["No recertification action is due for reliance-ready evidence."]
+        : ["Recertify stale evidence before counsel/export reliance."],
+    notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
   };
 }
 

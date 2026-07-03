@@ -1,6 +1,7 @@
 import type { CounselPackVersionRecord } from "./counselPackVersions";
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import { redactDataBoundaryText } from "./dataBoundary";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { ExportSafetyInventory, ExportSafetyInventoryStatus } from "./exportSafetyInventory";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
@@ -50,6 +51,7 @@ export type CounselHandoffChecklistInput = {
   submissionPackHash?: string;
   exportSafetyInventory: ExportSafetyInventory | null;
   evidenceVaultControlCoverage?: EvidenceVaultControlCoverage | null;
+  evidenceRecertificationQueue?: EvidenceRecertificationQueue | null;
   humanReviewQueue?: HumanReviewQueue | null;
   counselReviews: CounselReviewItem[];
   counselPackVersions: CounselPackVersionRecord[];
@@ -68,6 +70,7 @@ export async function createCounselHandoffChecklist({
   submissionPackHash,
   exportSafetyInventory,
   evidenceVaultControlCoverage,
+  evidenceRecertificationQueue,
   humanReviewQueue,
   counselReviews,
   counselPackVersions,
@@ -88,6 +91,7 @@ export async function createCounselHandoffChecklist({
       recoveryAction: "Add metadata-only evidence and wait for the Evidence Manifest bundle hash.",
       notLegalAdviceBoundary: "Not legal advice. Evidence manifests are audit preparation hash metadata only."
     }),
+    ...(evidenceRecertificationQueue ? [createEvidenceRecertificationQueueItem(evidenceRecertificationQueue)] : []),
     ...(evidenceVaultControlCoverage ? [createEvidenceVaultControlCoverageItem(evidenceVaultControlCoverage)] : []),
     createExportSafetyInventoryItem(exportSafetyInventory),
     createHashItem({
@@ -237,6 +241,34 @@ function createCounselReviewStatusItem(counselReviews: CounselReviewItem[]): Cou
             ? "Route ready and not-started review rows through counsel or compliance review before final handoff."
             : "Keep review status metadata with the final handoff packet.",
     notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow metadata only."
+  });
+}
+
+function createEvidenceRecertificationQueueItem(
+  queue: EvidenceRecertificationQueue
+): CounselHandoffChecklistItem {
+  const status: CounselHandoffChecklistItemStatus =
+    queue.status === "needs-recertification" ? "needs-action" : queue.status === "monitoring" ? "needs-review" : "ready";
+
+  return createItem({
+    id: "evidence-recertification-queue",
+    label: "Evidence Recertification Queue",
+    status,
+    evidence: [
+      `Queue ${shortHash(queue.queueHash)} reports ${queue.summary.totalActionCount} open recertification action${
+        queue.summary.totalActionCount === 1 ? "" : "s"
+      }.`,
+      `${queue.summary.overdueCount} overdue, ${queue.summary.expiringCount} due soon, ${queue.summary.sourceLinkedCount} source-linked, ${queue.summary.missingTimestampCount} missing timestamp.`
+    ].join(" "),
+    artifactHash: queue.queueHash,
+    warningCount: queue.summary.totalActionCount,
+    recoveryAction:
+      queue.status === "needs-recertification"
+        ? "Recertify stale or timestamp-missing reliance-ready evidence before final handoff."
+        : queue.status === "monitoring"
+          ? "Schedule due-soon evidence recertification before the next external handoff."
+          : "Keep the recertification queue hash with the final handoff packet.",
+    notLegalAdviceBoundary: queue.notLegalAdviceBoundary
   });
 }
 

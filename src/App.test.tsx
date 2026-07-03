@@ -3940,6 +3940,13 @@ describe("App", () => {
       expect(checklist.getAllByText(/Counsel Pack Version/i).length).toBeGreaterThan(0);
       expect(checklist.getAllByText(/Export Safety Inventory/i).length).toBeGreaterThan(0);
       expect(checklist.getAllByText(/Evidence Manifest/i).length).toBeGreaterThan(0);
+      await waitFor(() =>
+        expect(
+          within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i })).getByText(
+            /Evidence Recertification Queue/i
+          )
+        ).toBeInTheDocument()
+      );
 
       await act(async () => {
         fireEvent.click(checklist.getByRole("button", { name: /Download Handoff Checklist JSON/i }));
@@ -3962,6 +3969,16 @@ describe("App", () => {
       );
       expect(parsed.checklistHash).toMatch(/^[a-f0-9]{64}$/);
       expect(parsed.items.length).toBeGreaterThanOrEqual(6);
+      expect(parsed.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "evidence-recertification-queue",
+            label: "Evidence Recertification Queue",
+            artifactHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+            notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+          })
+        ])
+      );
       expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-handoff-checklist");
       expect(click).toHaveBeenCalledTimes(1);

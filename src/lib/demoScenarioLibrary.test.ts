@@ -65,7 +65,15 @@ describe("validateDemoScenarioLibrary", () => {
         title: "AI legal workflow review",
         projectName: "LexAssist Evidence Desk",
         recommendedStartTab: "model",
-        focusTags: expect.arrayContaining(["AI legal workflow", "US NIST AI RMF", "EU AI Act", "UK ICO", "Model governance", "Counsel handoff"]),
+        focusTags: expect.arrayContaining([
+          "AI legal workflow",
+          "ABA Formal Opinion 512",
+          "US NIST AI RMF",
+          "EU AI Act",
+          "UK ICO",
+          "Model governance",
+          "Counsel handoff"
+        ]),
         expectedArtifacts: expect.arrayContaining(["Model Intake JSON", "Human Review Timeline", "Counsel Pack Markdown"])
       })
     );
@@ -74,7 +82,7 @@ describe("validateDemoScenarioLibrary", () => {
         "Connect model",
         "Register AI event",
         "Route human review",
-        "Inspect US NIST / EU AI Act / UK ICO source review",
+        "Inspect ABA Formal Opinion 512 / US NIST / EU AI Act / UK ICO source review",
         "Export counsel pack"
       ])
     );

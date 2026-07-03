@@ -402,9 +402,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "AI system use policy",
         kind: "Policy",
         content:
-          "Requested: define AI system use policy, permitted model use, prohibited inputs, review owner, human review, escalation, non-advice output boundary, NIST AI RMF use-case context, AI risk owner, risk measurement, model use limits, and manage-monitor evidence.",
+          "Requested: define AI system use policy, permitted model use, prohibited inputs, review owner, human review, escalation, non-advice output boundary, NIST AI RMF use-case context, AI risk owner, risk measurement, model use limits, manage-monitor evidence, ABA Formal Opinion 512 GAI tool capability notes, confidentiality controls, and client information exclusion.",
         source:
-          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance; regulatory control: control-us-nist-ai-rmf-governance",
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance; regulatory control: control-us-nist-ai-rmf-governance; regulatory control: control-us-aba-formal-opinion-512-generative-ai-law-practice",
         status: "requested",
         owner: "Product"
       },
@@ -412,9 +412,9 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Human review approval log",
         kind: "Log",
         content:
-          "Requested: summarize reviewer role, approval status, human review decision log, escalation path, issue override process, and review notes.",
+          "Requested: summarize reviewer role, approval status, human review decision log, escalation path, issue override process, client communication trigger, supervisory review, tribunal candor check, fee treatment, and review notes.",
         source:
-          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance; regulatory control: control-uk-ico-ai-data-protection-governance",
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-ai-literacy-governance; regulatory control: control-us-aba-formal-opinion-512-generative-ai-law-practice; regulatory control: control-uk-ico-ai-data-protection-governance",
         status: "requested",
         owner: "Counsel"
       },
@@ -437,6 +437,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-nist-ai-rmf-governance",
         status: "requested",
         owner: "Compliance"
+      },
+      {
+        label: "US legal AI ethics and professional responsibility register",
+        kind: "Register",
+        content:
+          "Requested: document ABA Formal Opinion 512, GAI tool capability, model limitations, confidentiality controls, prohibited inputs, client information exclusion, verification owner, reviewer training, client communication trigger, supervisory review, outside provider oversight, tribunal candor, fee treatment, expense treatment, and no confidential matter text.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-aba-formal-opinion-512-generative-ai-law-practice",
+        status: "requested",
+        owner: "Counsel"
       },
       {
         label: "Model payload redaction checklist",

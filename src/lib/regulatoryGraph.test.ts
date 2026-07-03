@@ -942,18 +942,29 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches US, EU, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, EU, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
       expect.arrayContaining([
+        "us-aba-formal-opinion-512-generative-ai-law-practice",
         "us-nist-ai-rmf-governance",
         "eu-ai-act-ai-literacy-governance",
         "uk-ico-ai-data-protection-governance"
       ])
     );
 
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-aba-formal-opinion-512-generative-ai-law-practice")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "American Bar Association",
+      sourceUrl:
+        "https://www.americanbar.org/content/dam/aba/administrative/professional_responsibility/ethics-opinions/aba-formal-opinion-512.pdf",
+      citation: "ABA Formal Opinion 512, Generative Artificial Intelligence Tools, July 29, 2024",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "US legal AI professional responsibility counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nist-ai-rmf-governance")).toMatchObject({
       jurisdiction: "United States",
       regulator: "National Institute of Standards and Technology",
@@ -979,6 +990,8 @@ describe("createRegulatoryGraph", () => {
     });
     expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
       expect.arrayContaining([
+        "US legal AI competence and confidentiality evidence",
+        "US legal AI communication, supervision, candor, and fee evidence",
         "US NIST AI RMF govern-map-measure-manage evidence",
         "US NIST GenAI output review and provenance evidence",
         "EU AI use policy and human oversight evidence",
@@ -1003,6 +1016,16 @@ describe("createRegulatoryGraph", () => {
     const audit = analyzeAuditProfile(project);
     const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
 
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-aba-formal-opinion-512-generative-ai-law-practice")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "AI system use policy",
+        "Human review approval log",
+        "US legal AI ethics and professional responsibility register"
+      ])
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-ai-literacy-governance")).toMatchObject({
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
@@ -1024,6 +1047,7 @@ describe("createRegulatoryGraph", () => {
     });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
+        expect.objectContaining({ clauseId: "us-aba-formal-opinion-512-generative-ai-law-practice" }),
         expect.objectContaining({ clauseId: "us-nist-ai-rmf-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })

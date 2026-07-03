@@ -164,7 +164,7 @@ describe("evidence templates", () => {
     );
   });
 
-  it("recommends AI workflow evidence with US, EU, and UK regulatory control links", () => {
+  it("recommends AI workflow evidence with ABA, US NIST, EU, and UK regulatory control links", () => {
     const recommended = recommendEvidenceTemplates(aiLegalWorkflowProject);
     const items = createEvidenceItemsFromTemplate("ai-compliance-workflow");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
@@ -174,8 +174,13 @@ describe("evidence templates", () => {
       title: "AI Legal / Compliance Workflow"
     });
     expect(items.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["AI system use policy", "NIST GenAI output review and provenance register"])
+      expect.arrayContaining([
+        "AI system use policy",
+        "NIST GenAI output review and provenance register",
+        "US legal AI ethics and professional responsibility register"
+      ])
     );
+    expect(serializedSources).toContain("regulatory control: control-us-aba-formal-opinion-512-generative-ai-law-practice");
     expect(serializedSources).toContain("regulatory control: control-us-nist-ai-rmf-governance");
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");
     expect(serializedSources).toContain("regulatory control: control-uk-ico-ai-data-protection-governance");

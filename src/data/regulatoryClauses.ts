@@ -1234,6 +1234,75 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-aba-formal-opinion-512-generative-ai-law-practice",
+    jurisdiction: "United States",
+    regulator: "American Bar Association",
+    sourceName: "Formal Opinion 512: Generative Artificial Intelligence Tools",
+    sourceUrl:
+      "https://www.americanbar.org/content/dam/aba/administrative/professional_responsibility/ethics-opinions/aba-formal-opinion-512.pdf",
+    citation: "ABA Formal Opinion 512, Generative Artificial Intelligence Tools, July 29, 2024",
+    topic: "ai-governance",
+    summary:
+      "Prepare legal-AI professional-responsibility evidence for competence, confidentiality, client communication, supervisory review, candor, and fee treatment before lawyer or counsel reliance.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "legal operations ai workflow",
+      "ai-assisted matter intake",
+      "legal workflow",
+      "generative ai",
+      "drafts issue-spotting",
+      "source-linked counsel questions",
+      "outside counsel",
+      "lawyer",
+      "client representation"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-aba-gai-competence-confidentiality-evidence",
+        title: "US legal AI competence and confidentiality evidence",
+        reason:
+          "Legal AI workflow review needs GAI tool capability/limit notes, prohibited-input rules, confidentiality controls, client-information exclusion, verification owner, and reviewer training evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "aba formal opinion 512",
+          "gai tool capability",
+          "model limitations",
+          "confidentiality controls",
+          "prohibited inputs",
+          "client information exclusion",
+          "verification owner",
+          "reviewer training"
+        ]
+      },
+      {
+        id: "us-aba-gai-communication-supervision-candor-fee-evidence",
+        title: "US legal AI communication, supervision, candor, and fee evidence",
+        reason:
+          "Counsel needs client-communication trigger, supervisory-review owner, outside-provider oversight, tribunal-candor check, fee/expense treatment, and no-confidential-matter-text evidence for legal AI handoff.",
+        priority: "P1",
+        keywords: [
+          "client communication trigger",
+          "supervisory review",
+          "outside provider oversight",
+          "tribunal candor",
+          "fee treatment",
+          "expense treatment",
+          "no confidential matter text"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which competence, confidentiality, communication, supervision, candor, and fee assumptions should US professional-responsibility counsel review for this legal AI workflow?",
+      "What metadata-only evidence shows GAI outputs stay draft audit preparation, confidential matter text is excluded, and reviewers verify outputs before lawyer or counsel reliance?"
+    ],
+    localCounselRole: "US legal AI professional responsibility counsel",
+    effectiveAsOf: "2024-07-29",
+    lastReviewedAt: "2026-07-04",
+    reviewerNotes:
+      "Source metadata reviewed against ABA Formal Opinion 512 for generative-AI competence, confidentiality, communication, supervision, candor, fee, and evidence-routing metadata; route interpretation to US professional-responsibility counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "uk-fca-crypto-financial-promotions",
     jurisdiction: "United Kingdom",
     regulator: "Financial Conduct Authority",

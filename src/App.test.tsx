@@ -862,6 +862,8 @@ describe("App", () => {
     expect(
       (await screen.findAllByText(/NIST AI RMF 1\.0 and NIST AI 600-1 Generative AI Profile/i)).length
     ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ABA Formal Opinion 512, Generative Artificial Intelligence Tools, July 29, 2024/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US legal AI professional responsibility counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US AI governance \/ model risk counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US NIST GenAI output review and provenance evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
@@ -2983,10 +2985,11 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Apply AI compliance workflow template/i }));
       fireEvent.click(await screen.findByRole("button", { name: /Sync Evidence Vault/i }));
 
-      expect(await screen.findByText(/Evidence Vault synced 5 records/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Evidence Vault synced 6 records/i)).toBeInTheDocument();
       const coverage = within(screen.getByRole("region", { name: /Evidence Vault Control Coverage/i }));
       expect(coverage.getByRole("heading", { name: /Evidence Vault Control Coverage/i })).toBeInTheDocument();
-      expect(coverage.getByText(/3 controls linked across 5 vault records and 5 manifest items/i)).toBeInTheDocument();
+      expect(coverage.getByText(/4 controls linked across 6 vault records and 6 manifest items/i)).toBeInTheDocument();
+      expect(coverage.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-nist-ai-rmf-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-eu-ai-act-ai-literacy-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-uk-ico-ai-data-protection-governance/i)).toBeInTheDocument();
@@ -2997,14 +3000,15 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
 
       expect(await screen.findByText(/## Evidence Vault Control Coverage/i)).toBeInTheDocument();
+      expect(screen.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-us-nist-ai-rmf-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-eu-ai-act-ai-literacy-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
       const checklist = within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i }));
       expect(checklist.getByText(/Evidence Vault Control Coverage/i)).toBeInTheDocument();
-      expect(checklist.getByText(/0\/3 controls ready for handoff/i)).toBeInTheDocument();
-      expect(checklist.getByText(/needs review: 3/i)).toBeInTheDocument();
+      expect(checklist.getByText(/0\/4 controls ready for handoff/i)).toBeInTheDocument();
+      expect(checklist.getByText(/needs review: 4/i)).toBeInTheDocument();
       expect(checklist.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();

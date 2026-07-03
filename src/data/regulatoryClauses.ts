@@ -762,6 +762,81 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-dlt-pilot-regime-market-infrastructure",
+    jurisdiction: "European Union",
+    regulator: "European Union / ESMA",
+    sourceName: "Regulation (EU) 2022/858 DLT Pilot Regime",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2022/858/oj/eng",
+    citation: "Regulation (EU) 2022/858, Articles 2, 4, 5, 6, 7, 8, and 9",
+    topic: "activity-scope",
+    summary:
+      "Prepare DLT financial-instrument perimeter, DLT market infrastructure permission or exemption, admitted-instrument, settlement, safekeeping, and liability-safeguard evidence for EU counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "dlt financial instrument",
+      "dlt market infrastructure",
+      "dlt mtf",
+      "dlt tss",
+      "dlt ss",
+      "tokenized financial instrument",
+      "tokenised financial instrument",
+      "tokenized securities",
+      "tokenised securities",
+      "settlement",
+      "market infrastructure",
+      "private credit note"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-dlt-financial-instrument-perimeter",
+        title: "EU DLT financial-instrument and market-infrastructure perimeter evidence",
+        reason:
+          "Counsel needs tokenized financial-instrument assumptions, DLT MTF/TSS/SS role, operator entity, competent authority route, and permission or exemption owner before external reliance.",
+        priority: "P0",
+        keywords: [
+          "dlt pilot",
+          "dlt financial instrument",
+          "tokenized financial instrument",
+          "tokenised financial instrument",
+          "dlt mtf",
+          "dlt tss",
+          "dlt ss",
+          "market infrastructure",
+          "competent authority",
+          "permission exemption"
+        ]
+      },
+      {
+        id: "eu-dlt-safeguards-settlement-liability",
+        title: "EU DLT settlement, safekeeping, and liability safeguard evidence",
+        reason:
+          "Reviewers need settlement workflow, admitted-instrument perimeter, safekeeping controls, operational safeguards, liability chain, client disclosure, and ESMA or competent-authority handoff metadata without raw investor records.",
+        priority: "P1",
+        keywords: [
+          "dlt settlement",
+          "settlement workflow",
+          "admitted instrument",
+          "safekeeping",
+          "liability",
+          "operational safeguard",
+          "client disclosure",
+          "esma",
+          "no raw investor records"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which tokenized financial-instrument, DLT MTF/TSS/SS, permission, or exemption assumptions should EU financial-instruments counsel review?",
+      "What settlement, safekeeping, operational-safeguard, admitted-instrument, client-disclosure, and liability-chain evidence should be packaged without raw investor records?"
+    ],
+    localCounselRole: "EU DLT market infrastructure / financial instruments counsel",
+    effectiveAsOf: "2023-03-23",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against Regulation (EU) 2022/858 for DLT financial-instrument, DLT market infrastructure status, permission or exemption, settlement, safekeeping, and liability safeguard evidence routing; route interpretation to EU local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-ai-act-ai-literacy-governance",
     jurisdiction: "European Union",
     regulator: "European Union",

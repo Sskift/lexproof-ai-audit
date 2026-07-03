@@ -60,6 +60,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "EU DLT Pilot Regime market infrastructure perimeter register",
+        kind: "Register",
+        content:
+          "Requested: summarize EU DLT Pilot Regime, Regulation EU 2022/858, DLT financial instrument, tokenized financial instrument, DLT market infrastructure, DLT MTF, DLT TSS, DLT SS, competent authority permission or exemption route, admitted instrument perimeter, settlement workflow, safekeeping controls, liability chain, client disclosure, ESMA handoff, reviewer owner, and no raw investor records, raw KYC, credentials, wallet secrets, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-eu-dlt-pilot-regime-market-infrastructure",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
         label: "Investor eligibility review",
         kind: "Checklist",
         content:

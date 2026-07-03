@@ -64,6 +64,7 @@ describe("createRegulatoryGraph", () => {
         "eu-mica-title-ii-white-paper",
         "eu-dora-ict-operational-resilience",
         "eu-tfr-crypto-asset-transfer-information",
+        "eu-dlt-pilot-regime-market-infrastructure",
         "uk-fca-crypto-financial-promotions",
         "uk-fca-cryptoasset-aml-registration-travel-rule",
         "sg-mas-psn02-dpt-aml-cft",
@@ -83,8 +84,8 @@ describe("createRegulatoryGraph", () => {
     });
 
     expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "European Union")).toMatchObject({
-      matchedClauseCount: 5,
-      missingEvidenceCount: 10,
+      matchedClauseCount: 6,
+      missingEvidenceCount: 12,
       readiness: "evidence-gaps",
       localCounselRole: "EU crypto-asset / data protection counsel"
     });
@@ -529,7 +530,7 @@ describe("createRegulatoryGraph", () => {
     );
   });
 
-  it("marks US crypto asset and EU MiCA issuance controls covered when RWA template evidence is verified", () => {
+  it("marks US crypto asset, EU MiCA issuance, and EU DLT Pilot controls covered when RWA template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `rwa-issuance-template-${index + 1}`,
@@ -555,10 +556,55 @@ describe("createRegulatoryGraph", () => {
       totalEvidenceRequestCount: 2,
       matchedEvidenceLabels: expect.arrayContaining(["RWA disclosure assumptions memo", "Evidence anchor procedure"])
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-dlt-pilot-regime-market-infrastructure")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["EU DLT Pilot Regime market infrastructure perimeter register"]
+    });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "us-sec-cftc-crypto-asset-interpretation" }),
-        expect.objectContaining({ clauseId: "eu-mica-title-ii-white-paper" })
+        expect.objectContaining({ clauseId: "eu-mica-title-ii-white-paper" }),
+        expect.objectContaining({ clauseId: "eu-dlt-pilot-regime-market-infrastructure" })
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("matches EU DLT Pilot Regime market-infrastructure review for tokenized financial-instrument facts", () => {
+    const dltProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-dlt-pilot",
+      projectName: "EuroPilot DLT Market Review",
+      jurisdictions: ["European Union"],
+      entityType: "DLT market infrastructure pilot operator",
+      assetModel:
+        "Tokenized financial instrument and DLT market infrastructure pilot for private credit note settlement review",
+      userType: "EU professional participants and counsel reviewers",
+      custodyModel: "DLT TSS settlement workflow with safekeeping controls and admitted instrument perimeter review",
+      dataSensitivity: "Metadata-only participant summaries with raw investor records excluded",
+      aiUsage: "AI drafts DLT Pilot evidence requests for human review",
+      blockchainUse: "Simulated DLT settlement receipt and manifest anchor",
+      operatingStage: "Pilot before competent authority and ESMA handoff review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(dltProject);
+    const graph = createRegulatoryGraph(dltProject, audit, dltProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-dlt-pilot-regime-market-infrastructure")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union / ESMA",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2022/858/oj/eng",
+      citation: "Regulation (EU) 2022/858, Articles 2, 4, 5, 6, 7, 8, and 9",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "EU DLT market infrastructure / financial instruments counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "EU DLT financial-instrument and market-infrastructure perimeter evidence",
+        "EU DLT settlement, safekeeping, and liability safeguard evidence"
       ])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);

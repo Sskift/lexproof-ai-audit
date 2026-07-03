@@ -53,6 +53,7 @@ describe("createRegulatoryControlMatrix", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
+      assetModel: "Crypto-asset public communication and white paper disclosure review",
       custodyModel: "No custody; issuer only prepares metadata summaries for counsel review",
       dataSensitivity: "Public disclosure metadata and source-lineage notes for this review fixture",
       aiUsage: "Manual evidence summary only",
@@ -134,6 +135,7 @@ describe("createRegulatoryControlMatrix", () => {
     const project: ProjectProfile = {
       ...globalLaunchProject,
       jurisdictions: ["European Union"],
+      assetModel: "Crypto-asset public communication and white paper disclosure review",
       custodyModel: "No custody; issuer only prepares metadata summaries for counsel review",
       dataSensitivity: "Public disclosure metadata and source-lineage notes for this review fixture",
       aiUsage: "Manual evidence summary only",

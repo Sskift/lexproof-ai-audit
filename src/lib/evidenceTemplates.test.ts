@@ -98,6 +98,7 @@ describe("evidence templates", () => {
         "Custody and signer control runbook",
         "EU DORA ICT resilience register",
         "EU TFR Travel Rule transfer information register",
+        "EU DLT Pilot Regime market infrastructure perimeter register",
         "Investor eligibility review",
         "Hong Kong HKMA stablecoin issuer licensing and scope register",
         "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register",
@@ -118,6 +119,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");
     expect(serializedSources).toContain("regulatory control: control-eu-dora-ict-operational-resilience");
     expect(serializedSources).toContain("regulatory control: control-eu-tfr-crypto-asset-transfer-information");
+    expect(serializedSources).toContain("regulatory control: control-eu-dlt-pilot-regime-market-infrastructure");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-psn02-dpt-aml-cft");
     expect(serializedSources).toContain("regulatory control: control-sg-mas-dpt-customer-asset-safeguards");
     expect(serializedSources).toContain("regulatory control: control-uk-fca-cryptoasset-aml-registration-travel-rule");

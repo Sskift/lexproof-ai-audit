@@ -183,14 +183,15 @@ describe("createSourceEvidenceGapTriage", () => {
     const graph = createRegulatoryGraph(project, analyzeAuditProfile(project), project.evidenceItems);
     const triage = await createSourceEvidenceGapTriage({
       graph,
-      maxItems: 6,
+      maxItems: graph.evidenceGaps.length,
       generatedAt: "2026-07-02T00:00:00.000Z"
     });
-    const first = triage.items[0];
-    const sameControlDifferentGap = triage.items.find((item) => item.clauseId === first.clauseId && item.id !== first.id);
+    const first = triage.items.find((item) => item.clauseId === "eu-dlt-pilot-regime-market-infrastructure");
+    expect(first).toBeDefined();
+    const sameControlDifferentGap = triage.items.find((item) => item.clauseId === first!.clauseId && item.id !== first!.id);
     expect(sameControlDifferentGap).toBeDefined();
 
-    const firstRequest = createEvidenceRequestOperationFromSourceGapTriageItem([], first).evidenceItem;
+    const firstRequest = createEvidenceRequestOperationFromSourceGapTriageItem([], first!).evidenceItem;
     const secondOperation = createEvidenceRequestOperationFromSourceGapTriageItem([firstRequest], sameControlDifferentGap!);
 
     expect(secondOperation.operation).toBe("create");

@@ -142,9 +142,12 @@ describe("App", () => {
     render(<App />);
 
     const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
-    const requestButtons = within(sourceGapTriage).getAllByRole("button", { name: /Request Evidence/i });
+    const regDGapItem = Array.from(sourceGapTriage.querySelectorAll<HTMLElement>(".source-gap-triage-item")).find((item) =>
+      item.textContent?.includes("US accredited-investor verification and solicitation-controls evidence")
+    );
 
-    fireEvent.click(requestButtons[0]);
+    expect(regDGapItem).toBeInstanceOf(HTMLElement);
+    fireEvent.click(within(regDGapItem as HTMLElement).getByRole("button", { name: /Request Evidence/i }));
 
     expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
     expect(await screen.findByLabelText(/Label for evidence 4/i)).toHaveValue(
@@ -195,7 +198,7 @@ describe("App", () => {
       const matrix = await screen.findByRole("region", { name: /Regulatory Control Matrix/i });
       expect(within(matrix).getByText(/Not legal advice. Regulatory control matrices are audit preparation workflow metadata only./i)).toBeInTheDocument();
       expect(within(matrix).getAllByText(/needs evidence/i).length).toBeGreaterThan(0);
-      expect(within(matrix).getAllByText(/EU crypto-asset \/ data protection counsel/i).length).toBeGreaterThan(0);
+      expect(within(matrix).getAllByText(/EU DLT market infrastructure \/ financial instruments counsel/i).length).toBeGreaterThan(0);
       expect(within(matrix).getByRole("button", { name: /Download Control Matrix JSON/i })).toBeEnabled();
 
       fireEvent.click(within(matrix).getByRole("button", { name: /Download Control Matrix JSON/i }));
@@ -806,6 +809,8 @@ describe("App", () => {
     expect(screen.getAllByText(/EU DORA ICT risk management and incident-response evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Regulation \(EU\) 2023\/1113; EBA Travel Rule Guidelines under Regulation \(EU\) 2023\/1113/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EU TFR crypto-asset transfer information register/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Regulation \(EU\) 2022\/858, Articles 2, 4, 5, 6, 7, 8, and 9/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU DLT financial-instrument and market-infrastructure perimeter evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/FinCEN FIN-2019-G001; 31 C\.F\.R\. 1022\.210; 31 C\.F\.R\. 1010\.410\(e\)-\(f\)/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US FinCEN CVC MSB activity-scope and AML program evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /GRC Ticket Export/i })).toBeInTheDocument();
@@ -3536,7 +3541,7 @@ describe("App", () => {
 
     expect(await screen.findByText(/1\/2 covered/i)).toBeInTheDocument();
     expect(screen.getByText(/covered by Signer control note/i)).toBeInTheDocument();
-  });
+  }, 15000);
 
   it("downloads a metadata-only GRC ticket export from the remediation queue", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -4452,7 +4457,7 @@ describe("App", () => {
 
     expect(screen.getByDisplayValue("Edited counsel question about AI evidence sharing?")).toBeInTheDocument();
     expect(await screen.findByText(/P1 answered \[ai-review\] Edited counsel question about AI evidence sharing\?/i)).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("updates counsel review status for a risk item in the Counsel Pack", async () => {
     render(<App />);

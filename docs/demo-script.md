@@ -36,7 +36,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - In **Project Workspace**, find **Demo Scenario Library**.
    - Click **Start High-risk RWA launch** to load the `YieldPassport` synthetic profile and jump into the Risk Audit surface.
    - Inspect the New York NYDFS BitLicense and custody customer-protection evidence gaps, then continue through US FinCEN/BSA, EU DLT Pilot, EU TFR, and EU DORA review triggers.
-   - Optional DAO source path: click **Start DAO proposal review** to load `ClauseGuard DAO`, open Human Review, then inspect US SEC DAO Report / US CFTC Ooki DAO / UK Law Commission DAO source controls in Risk Audit.
+   - Optional DAO source path: click **Start DAO proposal review** to load `ClauseGuard DAO`, open Human Review, then inspect US SEC DAO Report / US CFTC Ooki DAO / EU MiCA DAO perimeter / UK Law Commission DAO source controls in Risk Audit.
    - Optional alternate judge path: click **Start AI legal workflow review** to load `LexAssist Evidence Desk` and start in Model Intake for model governance, human review, US NIST AI RMF / NIST AI 600-1 Generative AI Profile, EU AI Act, UK ICO AI data protection source controls, and counsel export.
    - Optional Brazil source path: click **Start Brazil VASP source review** to load `Brazil VASP Launch Review` and start in Jurisdiction Checklist for Banco Central/CVM source controls, authorization evidence gaps, AML/CFT review routing, and counsel export.
    - Optional Singapore source path: click **Start Singapore DPT custody review** to load `HarborKey DPT Custody Review` and start in Jurisdiction Checklist for MAS PS-G03 customer-asset safeguard controls, custody evidence gaps, and counsel export.

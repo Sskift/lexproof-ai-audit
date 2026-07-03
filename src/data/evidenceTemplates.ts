@@ -333,29 +333,41 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Governance proposal record",
         kind: "Markdown",
         content:
-          "Requested: summarize proposal scope, quorum, voting window, affected contracts, protocol purpose, trading-interface exclusions, and review assumptions.",
+          "Requested: summarize proposal scope, quorum, voting window, affected contracts, protocol purpose, EU MiCA decentralisation claims, trading-interface exclusions, and review assumptions.",
         source:
-          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-uk-law-commission-dao-scoping-paper",
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-eu-mica-decentralised-casp-perimeter; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Product"
       },
       {
         label: "Multisig signer authority matrix",
         kind: "Policy",
-        content: "Requested: document signer roles, quorum, emergency authority, replacement process, and approval evidence.",
+        content:
+          "Requested: document signer roles, quorum, emergency authority, admin keys, operator control, replacement process, and approval evidence.",
         source:
-          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-uk-law-commission-dao-scoping-paper",
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-eu-mica-decentralised-casp-perimeter; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Engineering"
       },
       {
         label: "Vote and execution receipt",
         kind: "JSON",
-        content: "Requested: summarize proposal hash, vote result, execution status, block reference, and verification owner.",
+        content:
+          "Requested: summarize proposal hash, vote result, governance votes, protocol upgrades, execution status, block reference, and verification owner.",
         source:
-          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-uk-law-commission-dao-scoping-paper",
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-us-sec-dao-report-governance-token-review; regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform; regulatory control: control-eu-mica-decentralised-casp-perimeter; regulatory control: control-uk-law-commission-dao-scoping-paper",
         status: "requested",
         owner: "Engineering"
+      },
+      {
+        label: "EU MiCA decentralisation and CASP perimeter register",
+        kind: "Register",
+        content:
+          "Requested: summarize EU MiCA decentralisation claims, fully decentralised service assumptions, intermediary, operator control, front-end control, admin keys, protocol upgrades, governance votes, EU user access, crypto-asset service perimeter, CASP perimeter, custody service exclusions, trading service exclusions, exchange service exclusions, advice service exclusions, marketing owner, responsible owner, and no raw customer records, credentials, KYC files, wallet secrets, or personal data.",
+        source:
+          "LexProof template: DAO Governance / Multisig Execution; regulatory control: control-eu-mica-decentralised-casp-perimeter",
+        status: "requested",
+        owner: "Counsel"
       },
       {
         label: "DAO derivatives platform boundary and BSA/CIP review register",

@@ -594,6 +594,80 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-mica-decentralised-casp-perimeter",
+    jurisdiction: "European Union",
+    regulator: "European Union / ESMA",
+    sourceName: "Regulation (EU) 2023/1114 on markets in crypto-assets - decentralised services and CASP perimeter",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+    citation: "Regulation (EU) 2023/1114, Recital 22 and Article 2(1)",
+    topic: "governance",
+    summary:
+      "Prepare DAO decentralisation, intermediary-control, operator, front-end, admin-key, EU user-access, and crypto-asset service perimeter evidence for EU MiCA counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "dao",
+      "decentralized autonomous",
+      "decentralised autonomous",
+      "decentralised",
+      "decentralized",
+      "governance workflow",
+      "governance token",
+      "protocol contributors",
+      "front-end",
+      "admin key",
+      "crypto-asset service"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-mica-dao-decentralisation-intermediary-evidence",
+        title: "EU MiCA DAO decentralisation and intermediary evidence",
+        reason:
+          "EU MiCA DAO review needs decentralisation claims, intermediary, operator, front-end, admin-key, upgrade, governance, and control-owner evidence before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "decentralisation claims",
+          "decentralization claims",
+          "fully decentralised",
+          "fully decentralized",
+          "intermediary",
+          "operator control",
+          "front-end control",
+          "admin keys",
+          "protocol upgrades",
+          "governance votes"
+        ]
+      },
+      {
+        id: "eu-mica-dao-casp-service-perimeter-evidence",
+        title: "EU MiCA DAO crypto-asset service perimeter evidence",
+        reason:
+          "Counsel needs EU user access, crypto-asset service perimeter, custody, trading, exchange, advice, marketing, and responsible-owner evidence without raw customer records.",
+        priority: "P1",
+        keywords: [
+          "eu user access",
+          "crypto-asset service perimeter",
+          "casp perimeter",
+          "custody service",
+          "trading service",
+          "exchange service",
+          "advice service",
+          "marketing owner",
+          "no raw customer records"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which DAO decentralisation, intermediary-control, operator, front-end, admin-key, governance, or upgrade facts should EU MiCA counsel review?",
+      "What EU user-access, crypto-asset service perimeter, custody, trading, exchange, advice, marketing, and responsible-owner evidence can be prepared without raw customer records or implying legal approval?"
+    ],
+    localCounselRole: "EU MiCA DAO / CASP perimeter counsel",
+    effectiveAsOf: "2024-12-30",
+    lastReviewedAt: "2026-07-04",
+    reviewerNotes:
+      "Source metadata reviewed against Regulation (EU) 2023/1114 Recital 22 and Article 2(1) for DAO decentralisation, intermediary-control, crypto-asset service perimeter, and evidence-request routing; route interpretation to EU MiCA counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-art-emt-stablecoin-issuer-regime",
     jurisdiction: "European Union",
     regulator: "European Union / EBA / ESMA",

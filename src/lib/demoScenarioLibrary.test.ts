@@ -91,13 +91,20 @@ describe("validateDemoScenarioLibrary", () => {
         title: "DAO proposal review",
         projectName: "ClauseGuard DAO",
         recommendedStartTab: "review",
-        focusTags: expect.arrayContaining(["DAO governance", "US SEC DAO Report", "US CFTC Ooki DAO", "UK Law Commission", "Human review"]),
+        focusTags: expect.arrayContaining([
+          "DAO governance",
+          "US SEC DAO Report",
+          "US CFTC Ooki DAO",
+          "EU MiCA DAO perimeter",
+          "UK Law Commission",
+          "Human review"
+        ]),
         expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Human Review Timeline", "Counsel Pack Version"])
       })
     );
     expect(daoScenario?.judgePath).toEqual(
       expect.arrayContaining([
-        "Inspect DAO governance and CFTC derivatives-platform source controls",
+        "Inspect DAO governance, CFTC derivatives-platform, EU MiCA DAO perimeter, and UK DAO source controls",
         "Return evidence for support",
         "Download review timeline"
       ])

@@ -22,19 +22,30 @@ export const sampleProfiles: AuditProfile[] = [
   {
     projectName: "ClauseGuard DAO",
     entityType: "DAO tooling company",
-    jurisdictions: ["United States", "United Kingdom"],
+    jurisdictions: ["United States", "European Union", "United Kingdom"],
     assetModel:
-      "Governance workflow with optional token-gated access and a proposed DeFi trading module with leveraged or margined access assumptions held for counsel review",
-    userType: "Protocol contributors and foundation counsel",
-    custodyModel: "Non-custodial multisig review workflow",
+      "Governance workflow with optional token-gated access, EU user-access assumptions, decentralisation claims, and a proposed DeFi trading module with leveraged or margined access assumptions held for counsel review",
+    userType: "Protocol contributors, EU token holders, and foundation counsel",
+    custodyModel: "Non-custodial multisig review workflow with front-end operator and admin-key assumptions documented for review",
     dataSensitivity: "Private contributor agreements and governance votes",
     aiUsage: "AI summarizes proposals, creates issue lineage, and drafts review comments",
     blockchainUse: "Hash of approved proposal versions and execution receipts",
     operatingStage: "Private beta with foundation partners",
     evidenceItems: [
-      { label: "DAO proposal", kind: "Markdown", content: "Protocol upgrade, quorum, signers, voting window, and derivatives-module review boundary" },
+      {
+        label: "DAO proposal",
+        kind: "Markdown",
+        content:
+          "Protocol upgrade, quorum, signers, voting window, EU MiCA decentralisation assumptions, and derivatives-module review boundary"
+      },
       { label: "Contributor agreement", kind: "Contract", content: "IP assignment, confidentiality, compensation terms" },
       { label: "Governance receipt", kind: "JSON", content: "Proposal hash, vote result, execution state" },
+      {
+        label: "EU MiCA perimeter note",
+        kind: "Memo",
+        content:
+          "Synthetic decentralisation and CASP perimeter note with EU user-access assumptions, front-end operator boundary, admin-key review, no raw customer records, and no legal conclusion."
+      },
       {
         label: "DAO derivatives module boundary note",
         kind: "Memo",

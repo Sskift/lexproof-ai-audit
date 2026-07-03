@@ -38,11 +38,11 @@ const daoGovernanceProject: ProjectProfile = {
   id: "project-dao-governance",
   projectName: "ClauseGuard DAO",
   entityType: "DAO tooling company",
-  jurisdictions: ["United States", "United Kingdom"],
+  jurisdictions: ["United States", "European Union", "United Kingdom"],
   assetModel:
-    "Governance workflow with optional token-gated access and a proposed DeFi trading module with leveraged or margined access assumptions held for counsel review",
-  userType: "Protocol contributors and foundation counsel",
-  custodyModel: "Non-custodial multisig review workflow",
+    "Governance workflow with optional token-gated access, EU user-access assumptions, decentralisation claims, and a proposed DeFi trading module with leveraged or margined access assumptions held for counsel review",
+  userType: "Protocol contributors, EU token holders, and foundation counsel",
+  custodyModel: "Non-custodial multisig review workflow with front-end operator and admin-key assumptions documented for review",
   dataSensitivity: "Private contributor agreements and governance votes",
   aiUsage: "AI summarizes proposals, creates issue lineage, and drafts review comments",
   blockchainUse: "Hash of approved proposal versions and execution receipts",
@@ -2368,7 +2368,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches US CFTC, US SEC, and UK DAO governance source controls without legal conclusions", () => {
+  it("matches US CFTC, US SEC, EU MiCA, and UK DAO governance source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(daoGovernanceProject);
     const graph = createRegulatoryGraph(daoGovernanceProject, audit, daoGovernanceProject.evidenceItems);
 
@@ -2376,6 +2376,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "us-sec-dao-report-governance-token-review",
         "us-cftc-ooki-dao-defi-derivatives-platform",
+        "eu-mica-decentralised-casp-perimeter",
         "uk-law-commission-dao-scoping-paper"
       ])
     );
@@ -2397,6 +2398,15 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "US commodities / DAO derivatives counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-decentralised-casp-perimeter")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union / ESMA",
+      citation: "Regulation (EU) 2023/1114, Recital 22 and Article 2(1)",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng",
+      topic: "governance",
+      coverageStatus: "missing",
+      localCounselRole: "EU MiCA DAO / CASP perimeter counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-law-commission-dao-scoping-paper")).toMatchObject({
       jurisdiction: "United Kingdom",
       regulator: "Law Commission of England and Wales",
@@ -2412,6 +2422,8 @@ describe("createRegulatoryGraph", () => {
         "US DAO voting and execution-control evidence",
         "US CFTC DAO derivatives-platform scope evidence",
         "US CFTC DAO BSA/CIP and governance-control evidence",
+        "EU MiCA DAO decentralisation and intermediary evidence",
+        "EU MiCA DAO crypto-asset service perimeter evidence",
         "UK DAO structure and participant-liability evidence",
         "UK DAO governance rules and asset-control evidence"
       ])
@@ -2447,12 +2459,20 @@ describe("createRegulatoryGraph", () => {
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-mica-decentralised-casp-perimeter")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining(["EU MiCA decentralisation and CASP perimeter register"])
+    });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "us-sec-dao-report-governance-token-review" }),
         expect.objectContaining({ clauseId: "us-cftc-ooki-dao-defi-derivatives-platform" }),
+        expect.objectContaining({ clauseId: "eu-mica-decentralised-casp-perimeter" }),
         expect.objectContaining({ clauseId: "uk-law-commission-dao-scoping-paper" })
       ])
     );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

@@ -879,6 +879,8 @@ describe("App", () => {
     expect(screen.getAllByText(/SEC Release No\. 81207, The DAO Report, July 25, 2017/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/CFTC Release No\. 8590-22; CFTC v\. Ooki DAO default judgment, June 8, 2023/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/CFTC bZeroX \/ Ooki DAO enforcement action and default judgment/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Regulation \(EU\) 2023\/1114, Recital 22 and Article 2\(1\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU MiCA DAO \/ CASP perimeter counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Law Commission DAO scoping paper, 11 July 2024/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });

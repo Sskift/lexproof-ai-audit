@@ -51,7 +51,7 @@ const daoGovernanceProject: ProjectProfile = {
   id: "template-dao-governance",
   projectName: "ClauseGuard DAO",
   entityType: "DAO foundation governance committee",
-  jurisdictions: ["United States", "United Kingdom"],
+  jurisdictions: ["United States", "European Union", "United Kingdom"],
   assetModel: "Governance token and multisig execution workflow for protocol upgrades",
   userType: "DAO token holders, protocol contributors, and multisig signers",
   custodyModel: "DAO treasury controlled by multisig signer quorum",
@@ -213,7 +213,7 @@ describe("evidence templates", () => {
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");
   });
 
-  it("recommends DAO governance evidence with US CFTC, US SEC, and UK regulatory control links", () => {
+  it("recommends DAO governance evidence with US CFTC, US SEC, EU MiCA, and UK regulatory control links", () => {
     const recommended = recommendEvidenceTemplates(daoGovernanceProject);
     const items = createEvidenceItemsFromTemplate("dao-governance-multisig");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
@@ -227,12 +227,14 @@ describe("evidence templates", () => {
         "Governance proposal record",
         "Multisig signer authority matrix",
         "Vote and execution receipt",
+        "EU MiCA decentralisation and CASP perimeter register",
         "DAO derivatives platform boundary and BSA/CIP review register",
         "Contributor agreement summary"
       ])
     );
     expect(serializedSources).toContain("regulatory control: control-us-sec-dao-report-governance-token-review");
     expect(serializedSources).toContain("regulatory control: control-us-cftc-ooki-dao-defi-derivatives-platform");
+    expect(serializedSources).toContain("regulatory control: control-eu-mica-decentralised-casp-perimeter");
     expect(serializedSources).toContain("regulatory control: control-uk-law-commission-dao-scoping-paper");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");

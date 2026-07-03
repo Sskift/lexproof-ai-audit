@@ -27,6 +27,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/workspace-action-source-approval-focus.png",
   "docs/assets/screenshots/regulatory-control-matrix.png",
   "docs/assets/screenshots/jurisdiction-readiness-digest.png",
+  "docs/assets/screenshots/regulatory-source-coverage.png",
   "docs/assets/screenshots/evidence-retention-remediation-queue.png",
   "docs/assets/screenshots/evidence-ledger-review-stage-statuses.png",
   "docs/assets/screenshots/evidence-ledger-rejected-replacement.png",

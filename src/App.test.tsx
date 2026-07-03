@@ -429,6 +429,61 @@ describe("App", () => {
     }
   });
 
+  it("shows and downloads regulatory source coverage without legal conclusions", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:regulatory-source-coverage");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const coverage = await screen.findByRole("region", { name: /Regulatory Source Coverage/i });
+      expect(
+        within(coverage).getByText(/Not legal advice. Regulatory source coverage is audit preparation metadata only./i)
+      ).toBeInTheDocument();
+      expect(within(coverage).getByText(/Report hash/i)).toBeInTheDocument();
+      expect(within(coverage).getAllByText(/needs evidence/i).length).toBeGreaterThan(0);
+      expect(within(coverage).getByRole("button", { name: /Download Source Coverage JSON/i })).toBeEnabled();
+
+      fireEvent.click(within(coverage).getByRole("button", { name: /Download Source Coverage JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:regulatory-source-coverage");
+      const payloadBlob = capturedBlobs[0];
+      expect(payloadBlob).toBeInstanceOf(Blob);
+      if (!payloadBlob) {
+        throw new Error("Expected Regulatory Source Coverage JSON blob to be created.");
+      }
+      const payload = await readAppBlobText(payloadBlob);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          reportVersion: "lexproof-regulatory-source-coverage-v1",
+          status: "needs-evidence",
+          notLegalAdviceBoundary: "Not legal advice. Regulatory source coverage is audit preparation metadata only."
+        })
+      );
+      expect(parsed.reportHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.jurisdictions.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("shows and downloads a source freshness board without legal conclusions", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));

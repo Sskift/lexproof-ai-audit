@@ -1512,6 +1512,128 @@ textarea {
   line-height: 1.35;
 }
 
+.reg-source-coverage {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid #cfdce5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.reg-source-coverage.metadata-missing,
+.reg-source-coverage.no-source-coverage {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.reg-source-coverage.needs-source-review,
+.reg-source-coverage.needs-evidence {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.reg-source-coverage.ready-for-counsel {
+  border-color: #b9d9ca;
+  background: #f7fcf9;
+}
+
+.reg-source-coverage > p {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.source-coverage-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.source-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.source-coverage-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  padding: 10px;
+}
+
+.source-coverage-card.metadata-missing,
+.source-coverage-card.no-source-coverage {
+  border-color: #e7a097;
+  background: #fff7f6;
+}
+
+.source-coverage-card.needs-source-review,
+.source-coverage-card.needs-evidence {
+  border-color: #e9bd87;
+  background: #fffaf2;
+}
+
+.source-coverage-card.ready-for-counsel {
+  border-color: #b9d9ca;
+  background: #f7fcf9;
+}
+
+.source-coverage-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.source-coverage-card header span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #f6e1c1;
+  color: #7a3f15;
+  padding: 3px 7px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.source-coverage-card.metadata-missing header span,
+.source-coverage-card.no-source-coverage header span {
+  background: #f3d3cf;
+  color: #86362b;
+}
+
+.source-coverage-card.ready-for-counsel header span {
+  background: #dcefe5;
+  color: #176b52;
+}
+
+.source-coverage-card strong,
+.source-coverage-card p,
+.source-coverage-card small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-coverage-card strong {
+  color: #172431;
+  font-size: 0.86rem;
+}
+
+.source-coverage-card p,
+.source-coverage-card small {
+  margin: 0;
+  color: #53616f;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 .jurisdiction-map-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

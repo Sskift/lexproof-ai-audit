@@ -132,6 +132,10 @@ The Regulatory Command Center turns project facts into a first-screen Workspace 
 
 ![Workspace Journey](docs/assets/screenshots/workspace-journey.png)
 
+Regulatory Source Coverage summarizes jurisdiction-level source coverage, source-review freshness, open evidence requests, local-counsel roles, and a stable coverage hash so reviewers can see which regional source packs are ready for audit preparation handoff. It is metadata-only and not legal advice.
+
+![Regulatory Source Coverage](docs/assets/screenshots/regulatory-source-coverage.png)
+
 The Local Counsel Routing Plan turns matched source clauses into jurisdiction + counsel-role work queues with priority, evidence gaps, source-review state, and a stable plan hash. It is metadata-only audit preparation material, not legal advice.
 
 ![Local Counsel Routing Plan](docs/assets/screenshots/local-counsel-routing-plan.png)

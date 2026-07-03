@@ -238,6 +238,10 @@ import {
   createRegulatorySourceReviewPacket,
   type RegulatorySourceReviewPacket
 } from "./lib/regulatorySourceReviewPacket";
+import {
+  createRegulatorySourceCoverageReport,
+  type RegulatorySourceCoverageReport
+} from "./lib/regulatorySourceCoverage";
 import { createRegulatorySourceReview } from "./lib/regulatorySourceReview";
 import {
   createSourceFreshnessBoard,
@@ -457,6 +461,8 @@ export default function App() {
   const [jurisdictionEvidenceMap, setJurisdictionEvidenceMap] = useState<JurisdictionEvidenceMap | null>(null);
   const [jurisdictionReadinessDigest, setJurisdictionReadinessDigest] = useState<JurisdictionReadinessDigest | null>(null);
   const [sourceFreshnessBoard, setSourceFreshnessBoard] = useState<SourceFreshnessBoard | null>(null);
+  const [regulatorySourceCoverageReport, setRegulatorySourceCoverageReport] =
+    useState<RegulatorySourceCoverageReport | null>(null);
   const [selectedCounselPackTemplateId, setSelectedCounselPackTemplateId] =
     useState<CounselPackTemplateId>("rwa-tokenized-asset");
 
@@ -488,6 +494,23 @@ export default function App() {
     () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
     [regulatoryGraph, regulatorySourceReview]
   );
+  useEffect(() => {
+    let active = true;
+    setRegulatorySourceCoverageReport(null);
+
+    createRegulatorySourceCoverageReport({
+      graph: regulatoryGraph,
+      sourceReview: regulatorySourceReview
+    }).then((nextReport) => {
+      if (active) {
+        setRegulatorySourceCoverageReport(nextReport);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [regulatoryGraph, regulatorySourceReview]);
   useEffect(() => {
     let active = true;
 
@@ -2198,6 +2221,7 @@ export default function App() {
             jurisdictionEvidenceMap={jurisdictionEvidenceMap}
             jurisdictionReadinessDigest={jurisdictionReadinessDigest}
             sourceFreshnessBoard={sourceFreshnessBoard}
+            sourceCoverageReport={regulatorySourceCoverageReport}
             localCounselRoutingPlan={localCounselRoutingPlan}
             actionQueue={workspaceActionQueue}
             cockpitBrief={workspaceCockpitBrief}

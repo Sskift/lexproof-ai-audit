@@ -21,6 +21,11 @@ import {
   type RegulatorySourceReviewPacket
 } from "../lib/regulatorySourceReviewPacket";
 import {
+  downloadRegulatorySourceCoverageJson,
+  type RegulatorySourceCoverageReport,
+  type RegulatorySourceCoverageStatus
+} from "../lib/regulatorySourceCoverage";
+import {
   downloadRegulatorySourceApprovalQueueJson,
   type RegulatorySourceApprovalQueue,
   type RegulatorySourceApprovalStatus
@@ -75,6 +80,7 @@ type RegulatoryCommandCenterProps = {
   jurisdictionEvidenceMap: JurisdictionEvidenceMap | null;
   jurisdictionReadinessDigest: JurisdictionReadinessDigest | null;
   sourceFreshnessBoard: SourceFreshnessBoard | null;
+  sourceCoverageReport: RegulatorySourceCoverageReport | null;
   localCounselRoutingPlan: LocalCounselRoutingPlan | null;
   actionQueue: WorkspaceActionQueue;
   cockpitBrief: WorkspaceCockpitBrief;
@@ -120,6 +126,7 @@ export function RegulatoryCommandCenter({
   jurisdictionEvidenceMap,
   jurisdictionReadinessDigest,
   sourceFreshnessBoard,
+  sourceCoverageReport,
   localCounselRoutingPlan,
   actionQueue,
   cockpitBrief,
@@ -470,6 +477,61 @@ export function RegulatoryCommandCenter({
                 <small>
                   {item.controlCount} controls · {item.openEvidenceRequestCount} evidence requests ·{" "}
                   {item.sourceFreshnessBlockerCount} source blockers
+                </small>
+                <small>{item.localCounselRoles.join(", ") || "Local counsel route pending"}</small>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {sourceCoverageReport ? (
+        <section className={`reg-source-coverage ${sourceCoverageReport.status}`} aria-label="Regulatory Source Coverage">
+          <div className="reg-source-review-header">
+            <div className="reg-section-title">
+              <FileSearch size={17} aria-hidden="true" />
+              <h3>Regulatory Source Coverage</h3>
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                downloadRegulatorySourceCoverageJson(
+                  `lexproof-${project.id}-regulatory-source-coverage.json`,
+                  sourceCoverageReport
+                )
+              }
+            >
+              <Download size={15} aria-hidden="true" />
+              Download Source Coverage JSON
+            </button>
+          </div>
+          <div className="reg-source-review-summary source-coverage-summary">
+            <Metric
+              label="Jurisdictions"
+              value={sourceCoverageReport.jurisdictionCount}
+              helper={formatCoverageStatus(sourceCoverageReport.status)}
+            />
+            <Metric label="Sources" value={sourceCoverageReport.sourceCount} helper={`${sourceCoverageReport.currentSourceCount} current`} />
+            <Metric
+              label="Open evidence"
+              value={sourceCoverageReport.openEvidenceRequestCount}
+              helper={`${sourceCoverageReport.coveredEvidenceRequestCount}/${sourceCoverageReport.totalEvidenceRequestCount} covered`}
+            />
+            <Metric label="Report hash" value={sourceCoverageReport.reportHash.slice(0, 12)} helper="metadata-only" />
+          </div>
+          <p>{sourceCoverageReport.notLegalAdviceBoundary}</p>
+          <div className="source-coverage-grid">
+            {sourceCoverageReport.jurisdictions.slice(0, 6).map((item) => (
+              <article key={item.jurisdiction} className={`source-coverage-card ${item.status}`}>
+                <header>
+                  <span>{item.priority}</span>
+                  <strong>{item.jurisdiction}</strong>
+                </header>
+                <p>{item.nextAction}</p>
+                <small>
+                  {formatCoverageStatus(item.status)} · {item.sourceCount} source{item.sourceCount === 1 ? "" : "s"} ·{" "}
+                  {item.openEvidenceRequestCount} open evidence request{item.openEvidenceRequestCount === 1 ? "" : "s"}
                 </small>
                 <small>{item.localCounselRoles.join(", ") || "Local counsel route pending"}</small>
               </article>
@@ -911,6 +973,22 @@ function formatDigestStatus(status: JurisdictionReadinessDigestStatus): string {
     return "metadata missing";
   }
   return "no jurisdictions";
+}
+
+function formatCoverageStatus(status: RegulatorySourceCoverageStatus): string {
+  if (status === "ready-for-counsel") {
+    return "ready for counsel";
+  }
+  if (status === "needs-evidence") {
+    return "needs evidence";
+  }
+  if (status === "needs-source-review") {
+    return "needs source review";
+  }
+  if (status === "metadata-missing") {
+    return "metadata missing";
+  }
+  return "no source coverage";
 }
 
 function formatJourneyStatus(status: WorkspaceJourneyStatus): string {

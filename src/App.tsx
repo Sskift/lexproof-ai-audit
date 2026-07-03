@@ -97,6 +97,7 @@ import { createDemoRunbook, type DemoRunbook } from "./lib/demoRunbook";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import type { EvidenceVaultControlCoverage } from "./lib/evidenceVaultControlCoverage";
+import type { EvidenceVaultLineageDigest } from "./lib/evidenceVaultLineageDigest";
 import {
   createEvidenceRecertificationQueue,
   type EvidenceRecertificationQueue
@@ -354,6 +355,7 @@ export default function App() {
   const [savedAt, setSavedAt] = useState("");
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [evidenceVaultControlCoverage, setEvidenceVaultControlCoverage] = useState<EvidenceVaultControlCoverage | null>(null);
+  const [evidenceVaultLineageDigest, setEvidenceVaultLineageDigest] = useState<EvidenceVaultLineageDigest | null>(null);
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
@@ -982,6 +984,7 @@ export default function App() {
 
   useEffect(() => {
     setEvidenceVaultControlCoverage(null);
+    setEvidenceVaultLineageDigest(null);
   }, [project.id]);
 
   useEffect(() => {
@@ -1310,6 +1313,7 @@ export default function App() {
       submissionPackHash: submissionPack?.packHash,
       exportSafetyInventory,
       evidenceVaultControlCoverage,
+      evidenceVaultLineageDigest,
       evidenceRecertificationQueue,
       humanReviewQueue,
       counselReviews: currentCounselReviews,
@@ -1330,6 +1334,7 @@ export default function App() {
     currentCounselReviews,
     evidenceRecertificationQueue,
     evidenceVaultControlCoverage,
+    evidenceVaultLineageDigest,
     exportSafetyInventory,
     humanReviewQueue,
     manifest?.bundleHash,
@@ -2324,6 +2329,7 @@ export default function App() {
               onUpdateEvidence={updateEvidence}
               onRemoveEvidence={removeEvidence}
               onVaultControlCoverageChange={setEvidenceVaultControlCoverage}
+              onVaultLineageDigestChange={setEvidenceVaultLineageDigest}
             />
           ) : null}
           {activeTab === "counsel" ? (

@@ -3,6 +3,7 @@ import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
+import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ExportSafetyInventory, ExportSafetyInventoryStatus } from "./exportSafetyInventory";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { CounselPackExportRecord } from "./phase2Types";
@@ -51,6 +52,7 @@ export type CounselHandoffChecklistInput = {
   submissionPackHash?: string;
   exportSafetyInventory: ExportSafetyInventory | null;
   evidenceVaultControlCoverage?: EvidenceVaultControlCoverage | null;
+  evidenceVaultLineageDigest?: EvidenceVaultLineageDigest | null;
   evidenceRecertificationQueue?: EvidenceRecertificationQueue | null;
   humanReviewQueue?: HumanReviewQueue | null;
   counselReviews: CounselReviewItem[];
@@ -70,6 +72,7 @@ export async function createCounselHandoffChecklist({
   submissionPackHash,
   exportSafetyInventory,
   evidenceVaultControlCoverage,
+  evidenceVaultLineageDigest,
   evidenceRecertificationQueue,
   humanReviewQueue,
   counselReviews,
@@ -92,6 +95,7 @@ export async function createCounselHandoffChecklist({
       notLegalAdviceBoundary: "Not legal advice. Evidence manifests are audit preparation hash metadata only."
     }),
     ...(evidenceRecertificationQueue ? [createEvidenceRecertificationQueueItem(evidenceRecertificationQueue)] : []),
+    ...(evidenceVaultLineageDigest ? [createEvidenceVaultLineageDigestItem(evidenceVaultLineageDigest)] : []),
     ...(evidenceVaultControlCoverage ? [createEvidenceVaultControlCoverageItem(evidenceVaultControlCoverage)] : []),
     createExportSafetyInventoryItem(exportSafetyInventory),
     createHashItem({
@@ -269,6 +273,38 @@ function createEvidenceRecertificationQueueItem(
           ? "Schedule due-soon evidence recertification before the next external handoff."
           : "Keep the recertification queue hash with the final handoff packet.",
     notLegalAdviceBoundary: queue.notLegalAdviceBoundary
+  });
+}
+
+function createEvidenceVaultLineageDigestItem(
+  digest: EvidenceVaultLineageDigest
+): CounselHandoffChecklistItem {
+  const status: CounselHandoffChecklistItemStatus =
+    digest.readinessStatus === "ready" ? "ready" : "needs-action";
+  const needsActionCount =
+    digest.readinessStatus === "ready"
+      ? 0
+      : Math.max(1, digest.lineageCounts.openRejectedRecords + (digest.manifestHash ? 0 : 1));
+
+  return createItem({
+    id: "evidence-vault-lineage-digest",
+    label: "Evidence Vault Lineage Digest",
+    status,
+    evidence: [
+      `Digest ${shortHash(digest.digestHash)} reports ${digest.lineageCounts.activeRecords} active, ${digest.lineageCounts.replacedRecords} replaced, ${digest.lineageCounts.openRejectedRecords} open rejected, and ${digest.lineageCounts.lineageLinkCount} lineage links.`,
+      `Manifest hash: ${digest.manifestHash ? shortHash(digest.manifestHash) : "missing"}.`
+    ].join(" "),
+    artifactHash: digest.digestHash,
+    warningCount: needsActionCount,
+    recoveryAction:
+      digest.readinessStatus === "ready"
+        ? "Keep the Evidence Vault Lineage Digest hash with the final handoff packet."
+        : digest.readinessStatus === "needs-replacement"
+          ? "Create metadata-only replacement records for rejected vault evidence before final handoff."
+          : digest.readinessStatus === "needs-manifest"
+            ? "Refresh the Evidence Vault Manifest so lineage metadata is tied to a stable bundle hash."
+            : "Sync metadata-only Evidence Vault records before final handoff.",
+    notLegalAdviceBoundary: digest.notLegalAdviceBoundary
   });
 }
 

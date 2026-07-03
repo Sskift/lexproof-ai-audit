@@ -9,6 +9,7 @@ import {
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
+import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ExportSafetyInventory } from "./exportSafetyInventory";
 import type { CounselPackExportRecord } from "./phase2Types";
 
@@ -119,6 +120,53 @@ describe("createCounselHandoffChecklist", () => {
       "Evidence Vault Control Coverage: Move linked vault evidence through Human Review before export reliance."
     );
     expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+  });
+
+  it("adds Evidence Vault lineage digest recovery when rejected vault records remain open", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      evidenceVaultLineageDigest: evidenceVaultLineageDigest("needs-replacement"),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "evidence-vault-lineage-digest");
+    const json = exportCounselHandoffChecklistJson(checklist);
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Evidence Vault Lineage Digest",
+        status: "needs-action",
+        artifactHash: "f".repeat(64),
+        warningCount: 1,
+        recoveryAction: "Create metadata-only replacement records for rejected vault evidence before final handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+      })
+    );
+    expect(item?.evidence).toContain("2 active");
+    expect(item?.evidence).toContain("1 open rejected");
+    expect(item?.evidence).toContain("1 lineage links");
+    expect(checklist.nextActions).toContain(
+      "Evidence Vault Lineage Digest: Create metadata-only replacement records for rejected vault evidence before final handoff."
+    );
+    expect(json).toContain("Not legal advice");
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+  });
+
+  it("marks Evidence Vault lineage digest ready when active vault lineage is tied to a manifest hash", async () => {
+    const checklist = await createCounselHandoffChecklist({
+      ...baseInput(),
+      evidenceVaultLineageDigest: evidenceVaultLineageDigest("ready"),
+      generatedAt: "2026-07-02T01:00:00.000Z"
+    });
+    const item = checklist.items.find((candidate) => candidate.id === "evidence-vault-lineage-digest");
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        label: "Evidence Vault Lineage Digest",
+        status: "ready",
+        evidence: expect.stringContaining("0 open rejected"),
+        recoveryAction: "Keep the Evidence Vault Lineage Digest hash with the final handoff packet."
+      })
+    );
   });
 
   it("requires recertification recovery before handoff when reliance-ready evidence is stale", async () => {
@@ -290,6 +338,49 @@ function readyInventory(): ExportSafetyInventory {
     blockers: [],
     nextActions: ["Keep exports metadata-only and re-run inventory before external sharing."],
     notLegalAdviceBoundary: "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only."
+  };
+}
+
+function evidenceVaultLineageDigest(status: "ready" | "needs-replacement"): EvidenceVaultLineageDigest {
+  return {
+    digestVersion: "lexproof-evidence-vault-lineage-digest-v1",
+    workspaceId: "handoff-project",
+    generatedAt: "2026-07-02T00:00:00.000Z",
+    readinessStatus: status,
+    manifestHash: "a".repeat(64),
+    itemCount: status === "ready" ? 2 : 3,
+    statusCounts: status === "ready" ? { verified: 2 } : { verified: 2, rejected: 1 },
+    lineageCounts: {
+      activeRecords: 2,
+      replacedRecords: status === "ready" ? 0 : 1,
+      openRejectedRecords: status === "ready" ? 0 : 1,
+      lineageLinkCount: status === "ready" ? 0 : 1,
+      linkedControlCount: 1,
+      linkedRiskFlagCount: 1
+    },
+    lineageLinks:
+      status === "ready"
+        ? []
+        : [
+            {
+              parentEvidenceId: "vault-rejected",
+              replacementEvidenceId: "vault-replacement",
+              parentStatus: "rejected",
+              replacementStatus: "verified",
+              replacementVersion: 2,
+              replacementReasonHash: "b".repeat(64)
+            }
+          ],
+    activeEvidenceIds: ["vault-active-1", "vault-active-2"],
+    openRejectedEvidenceIds: status === "ready" ? [] : ["vault-rejected"],
+    linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
+    linkedRiskFlagIds: ["governance-approval"],
+    nextActions:
+      status === "ready"
+        ? ["Keep the active replacement evidence linked to the final Evidence Manifest and Counsel Pack handoff."]
+        : ["Create metadata-only replacement records for rejected evidence before final counsel handoff."],
+    digestHash: "f".repeat(64),
+    notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
   };
 }
 

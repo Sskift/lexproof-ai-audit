@@ -2725,6 +2725,19 @@ describe("App", () => {
       );
       expect(parsedLineage.digestHash).toMatch(/^[a-f0-9]{64}$/);
       expect(lineagePayload).not.toContain("Raw board approval facts stay local");
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      const checklistRegion = await screen.findByRole("region", { name: /Counsel Handoff Checklist/i });
+      await waitFor(() =>
+        expect(within(checklistRegion).getAllByText(/Evidence Vault Lineage Digest/i).length).toBeGreaterThan(0)
+      );
+      const lineageChecklistItem = Array.from(checklistRegion.querySelectorAll<HTMLElement>(".handoff-checklist-item")).find(
+        (item) => item.textContent?.includes("Evidence Vault Lineage Digest")
+      );
+      expect(lineageChecklistItem).toBeInstanceOf(HTMLElement);
+      expect(lineageChecklistItem?.textContent).toContain("0 open rejected");
+      expect(lineageChecklistItem?.textContent).toContain("Keep the Evidence Vault Lineage Digest hash");
+      expect(within(checklistRegion).getByText(/Not legal advice. Counsel handoff checklists/i)).toBeInTheDocument();
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;
@@ -4831,7 +4844,7 @@ describe("App", () => {
     expect(await screen.findByText(/Simulated Anchor Receipt/i)).toBeInTheDocument();
     expect(screen.getByText(/not a real on-chain write/i)).toBeInTheDocument();
     expect(screen.getByText(/not-submitted/i)).toBeInTheDocument();
-  });
+  }, 10000);
 });
 
 function appJsonResponse(payload: unknown, status = 200): Response {

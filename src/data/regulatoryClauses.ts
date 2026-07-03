@@ -480,6 +480,79 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-genius-payment-stablecoin-issuer-regime",
+    jurisdiction: "United States",
+    regulator: "U.S. Department of the Treasury / OCC / primary Federal payment stablecoin regulators",
+    sourceName: "GENIUS Act payment stablecoin issuer framework and Treasury implementation rulemaking",
+    sourceUrl: "https://home.treasury.gov/news/press-releases/sb0435",
+    citation:
+      "GENIUS Act, Pub. L. 119-27, 12 U.S.C. 5901 et seq.; Treasury GENIUS Act implementation NPRMs, 2026; OCC Bulletin 2026-3",
+    topic: "activity-scope",
+    summary:
+      "Prepare payment stablecoin issuer, permitted-issuer route, reserve, redemption, BSA/AML, sanctions, state-or-federal oversight, custody, disclosure, and insolvency-priority evidence for US stablecoin counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "payment stablecoin",
+      "genius act",
+      "permitted payment stablecoin issuer",
+      "stablecoin issuer",
+      "state qualified payment stablecoin issuer",
+      "payment stablecoin issuance",
+      "stablecoin reserve",
+      "stablecoin redemption"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-genius-permitted-issuer-route-reserve-redemption",
+        title: "US GENIUS Act permitted-issuer, reserve, and redemption evidence",
+        reason:
+          "US payment stablecoin review needs issuer status, federal or state route, payment-stablecoin definition, reserve-asset, redemption, monthly disclosure, custody, and insolvency-priority evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "genius act",
+          "payment stablecoin",
+          "permitted payment stablecoin issuer",
+          "state qualified payment stablecoin issuer",
+          "federal payment stablecoin regulator",
+          "reserve assets",
+          "redemption",
+          "monthly disclosure",
+          "custody",
+          "insolvency priority"
+        ]
+      },
+      {
+        id: "us-genius-bsa-aml-sanctions-program",
+        title: "US GENIUS Act BSA/AML and sanctions program evidence",
+        reason:
+          "Treasury implementation review needs metadata-only AML, sanctions, transaction-monitoring, suspicious-activity, compliance-owner, and no-raw-KYC evidence for permitted payment stablecoin issuer handoff.",
+        priority: "P0",
+        keywords: [
+          "bsa",
+          "aml",
+          "sanctions compliance",
+          "permitted payment stablecoin issuer",
+          "transaction monitoring",
+          "suspicious activity",
+          "compliance officer",
+          "no raw kyc",
+          "ofac",
+          "fincen"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which payment stablecoin issuance, permitted-issuer, federal or state oversight, reserve, redemption, or disclosure facts should US stablecoin counsel review?",
+      "What BSA/AML, sanctions, transaction-monitoring, custody, and insolvency-priority evidence can be prepared without raw KYC, customer records, credentials, wallet secrets, or personal data?"
+    ],
+    localCounselRole: "US payment stablecoin / GENIUS Act counsel",
+    effectiveAsOf: "2025-07-18",
+    lastReviewedAt: "2026-07-03",
+    reviewerNotes:
+      "Source metadata reviewed against Treasury GENIUS Act implementation releases, Treasury state-similarity NPRM materials, and OCC Bulletin 2026-3 for payment stablecoin issuer, permitted-issuer route, reserve, redemption, BSA/AML, sanctions, custody, state/federal oversight, and evidence-routing metadata; route interpretation to US payment stablecoin counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-title-ii-white-paper",
     jurisdiction: "European Union",
     regulator: "European Union",

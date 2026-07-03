@@ -301,6 +301,94 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches US GENIUS Act payment stablecoin issuer controls without legal conclusions", () => {
+    const stablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-us-genius-stablecoin",
+      projectName: "LibertyDollar Stablecoin Review",
+      jurisdictions: ["United States"],
+      entityType: "Payment stablecoin issuer",
+      assetModel:
+        "US payment stablecoin issuer pilot with GENIUS Act permitted payment stablecoin issuer route, reserve assets, redemption, and monthly disclosure assumptions",
+      userType: "US retail users, treasury partners, compliance reviewers, and US stablecoin counsel",
+      custodyModel:
+        "Issuer coordinates mint, burn, wallet operations, reserve safekeeping, custody handoff, redemption workflow, and sanctions escalation through metadata-only controls",
+      dataSensitivity: "Customer-risk metadata, AML alert summaries, sanctions-screening status, and customer records excluded",
+      aiUsage: "AI drafts GENIUS Act stablecoin evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application US payment stablecoin issuer review before counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(stablecoinProject);
+    const graph = createRegulatoryGraph(stablecoinProject, audit, stablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["us-genius-payment-stablecoin-issuer-regime"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-genius-payment-stablecoin-issuer-regime")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "U.S. Department of the Treasury / OCC / primary Federal payment stablecoin regulators",
+      sourceUrl: "https://home.treasury.gov/news/press-releases/sb0435",
+      citation:
+        "GENIUS Act, Pub. L. 119-27, 12 U.S.C. 5901 et seq.; Treasury GENIUS Act implementation NPRMs, 2026; OCC Bulletin 2026-3",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "US payment stablecoin / GENIUS Act counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US GENIUS Act permitted-issuer, reserve, and redemption evidence",
+        "US GENIUS Act BSA/AML and sanctions program evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "United States")).toMatchObject({
+      readiness: "evidence-gaps",
+      localCounselRole: "US securities / fintech counsel"
+    });
+    expect(JSON.stringify(graph)).toContain("Not legal advice");
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks US GENIUS Act stablecoin controls covered when RWA stablecoin template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-genius-stablecoin-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const stablecoinProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-us-genius-stablecoin-covered",
+      projectName: "LibertyDollar Stablecoin Review",
+      jurisdictions: ["United States"],
+      entityType: "Payment stablecoin issuer",
+      assetModel:
+        "US payment stablecoin issuer with GENIUS Act permitted issuer route, reserve assets, redemption, and monthly disclosure review",
+      userType: "US retail users, treasury partners, compliance reviewers, and local counsel",
+      custodyModel: "Issuer coordinates stablecoin mint, burn, reserve safekeeping, custody, redemption, and sanctions review",
+      dataSensitivity: "Customer-risk metadata and AML alert summaries excluded from exported demo evidence",
+      aiUsage: "AI drafts GENIUS Act stablecoin evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-application US payment stablecoin issuer review before counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(stablecoinProject);
+    const graph = createRegulatoryGraph(stablecoinProject, audit, stablecoinProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-genius-payment-stablecoin-issuer-regime")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "US GENIUS Act permitted issuer and reserve register",
+        "US GENIUS Act BSA AML and sanctions program register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "us-genius-payment-stablecoin-issuer-regime" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches Germany BaFin MiCAR CASP custody source controls without legal conclusions", () => {
     const deProject: ProjectProfile = {
       ...baseProject,

@@ -240,6 +240,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "US GENIUS Act permitted issuer and reserve register",
+        kind: "Register",
+        content:
+          "Requested: summarize US payment stablecoin issuer, GENIUS Act payment stablecoin definition, permitted payment stablecoin issuer route, federal or state qualified issuer route, primary regulator handoff, reserve assets, redemption, monthly disclosure, custody, insolvency-priority evidence, reviewer owner, and no raw KYC, credentials, wallet secrets, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-genius-payment-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "US GENIUS Act BSA AML and sanctions program register",
+        kind: "Register",
+        content:
+          "Requested: summarize permitted payment stablecoin issuer BSA AML program, sanctions compliance program, FinCEN and OFAC implementation review, compliance officer, transaction monitoring, suspicious activity escalation, customer-risk metadata boundary, training, independent review, reviewer owner, and no raw KYC, credentials, wallet secrets, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-genius-payment-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Wallet sanctions screening and escalation controls",
         kind: "Policy",
         content:

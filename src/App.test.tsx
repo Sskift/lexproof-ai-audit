@@ -1095,6 +1095,26 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the US GENIUS Act stablecoin scenario with issuer, reserve, AML, and sanctions evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start US GENIUS Act stablecoin review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("LibertyDollar Stablecoin Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /GENIUS Act, Pub\. L\. 119-27, 12 U\.S\.C\. 5901 et seq\.; Treasury GENIUS Act implementation NPRMs, 2026; OCC Bulletin 2026-3/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US payment stablecoin \/ GENIUS Act counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US GENIUS Act permitted-issuer, reserve, and redemption evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US GENIUS Act BSA\/AML and sanctions program evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the marketing claims scenario with promotion source gaps and the marketing counsel template", async () => {
     render(<App />);
 

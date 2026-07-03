@@ -123,6 +123,37 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "LibertyDollar Stablecoin Review",
+    entityType: "Payment stablecoin issuer",
+    jurisdictions: ["United States"],
+    assetModel:
+      "US payment stablecoin issuer pilot with GENIUS Act permitted payment stablecoin issuer route, reserve assets, redemption, and monthly disclosure assumptions",
+    userType: "US retail users, treasury partners, compliance reviewers, and US stablecoin counsel",
+    custodyModel:
+      "Issuer coordinates mint, burn, wallet operations, reserve safekeeping, custody handoff, redemption workflow, and sanctions escalation through metadata-only controls",
+    dataSensitivity: "Customer-risk metadata, AML alert summaries, sanctions-screening status, and customer records excluded from default exports",
+    aiUsage: "AI drafts GENIUS Act stablecoin evidence summaries for human review and US counsel routing",
+    blockchainUse: "Simulated manifest anchor for metadata-only US stablecoin counsel handoff",
+    operatingStage: "Pre-application US payment stablecoin issuer review before counsel signoff",
+    evidenceItems: [
+      {
+        label: "Official-source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Operating scope note",
+        kind: "Markdown",
+        content: "Synthetic operating assumptions, review owner, and counsel handoff timing; control evidence still requested."
+      },
+      {
+        label: "Counsel evidence backlog",
+        kind: "Checklist",
+        content: "Synthetic pending evidence owners and intake timing without customer records."
+      }
+    ]
+  },
+  {
     projectName: "HarborKey DPT Custody Review",
     entityType: "Digital payment token service provider",
     jurisdictions: ["Singapore"],

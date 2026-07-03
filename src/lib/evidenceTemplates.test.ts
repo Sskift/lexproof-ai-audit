@@ -111,6 +111,8 @@ describe("evidence templates", () => {
         "India VDA SP FIU-IND registration and AML reporting register",
         "US FinCEN CVC MSB and BSA transfer control register",
         "New York NYDFS BitLicense and custody customer-protection register",
+        "US GENIUS Act permitted issuer and reserve register",
+        "US GENIUS Act BSA AML and sanctions program register",
         "Wallet sanctions screening and escalation controls"
       ])
     );
@@ -140,6 +142,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-us-ofac-virtual-currency-sanctions-compliance");
     expect(serializedSources).toContain("regulatory control: control-us-fincen-cvc-msb-bsa-travel-rule");
     expect(serializedSources).toContain("regulatory control: control-us-nydfs-bitlicense-custody-customer-protection");
+    expect(serializedSources).toContain("regulatory control: control-us-genius-payment-stablecoin-issuer-regime");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("api key");

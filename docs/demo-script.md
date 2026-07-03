@@ -50,6 +50,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional UK source path: click **Start UK cryptoasset AML review** to load `Thames Cryptoasset AML Review` and start in Jurisdiction Checklist for FCA cryptoasset AML/CTF, MLR registration, MLRO, BWRA/CRA, sanctions, SAR, transaction-monitoring, Travel Rule, record-retrieval evidence gaps, and counsel export.
    - Optional Germany source path: click **Start Germany MiCAR custody review** to load `RhineVault MiCAR Custody Review` and start in Jurisdiction Checklist for BaFin/MiCAR CASP service-scope, Article 60/62, Article 75 custody, client-position, segregation, return-process, means-of-access, and local-counsel evidence gaps.
    - Optional Swiss source path: click **Start Swiss FINMA stablecoin review** to load `Helvetia Stablecoin Review` and start in Jurisdiction Checklist for FINMA ICO token-classification, FINMA Guidance 06/2024 stablecoin issuer, bank-guarantee, AML, sanctions, transfer-risk evidence gaps, and counsel export.
+   - Optional US stablecoin source path: click **Start US GENIUS Act stablecoin review** to load `LibertyDollar Stablecoin Review` and start in Jurisdiction Checklist for GENIUS Act permitted-issuer route, reserve, redemption, BSA/AML, sanctions, custody, and no-raw-KYC evidence gaps.
    - Optional UAE source path: click **Start UAE VARA operating review** to load `Dubai VARA Operating Review` and start in Jurisdiction Checklist for VARA activity-scope, licensing, compliance management, AML/CFT, client virtual asset custody, proof-of-reserves, reconciliation evidence gaps, and counsel export.
    - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / EU MiCA / UK FCA / UAE VARA 2024 promotion, marketing-communication, risk-warning, KOL/incentive, and recordkeeping source gaps.
    - On the marketing path, show the first-screen **Workspace Action Queue** item **Recertify stale evidence** for the stale source-linked `Claims inventory` record, then click it to route into Evidence Ledger. Not legal advice.
@@ -60,6 +61,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.
    - Singapore path screenshot: `docs/assets/screenshots/singapore-dpt-custody-source-graph.png`.
    - Hong Kong HKMA stablecoin path screenshot: `docs/assets/screenshots/hong-kong-stablecoin-source-graph.png`.
+   - US GENIUS Act stablecoin path screenshot: `docs/assets/screenshots/us-genius-stablecoin-source-graph.png`.
    - Japan path screenshot: `docs/assets/screenshots/japan-crypto-custody-source-graph.png`.
    - Canada path screenshot: `docs/assets/screenshots/canada-ctp-custody-source-graph.png`.
    - Australia path screenshot: `docs/assets/screenshots/australia-digital-asset-source-graph.png`.
@@ -115,6 +117,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional UK path screenshot after **Start UK cryptoasset AML review**: `docs/assets/screenshots/uk-cryptoasset-aml-source-graph.png`.
    - Optional Germany path screenshot after **Start Germany MiCAR custody review**: `docs/assets/screenshots/germany-micar-custody-source-graph.png`.
    - Optional Swiss path screenshot after **Start Swiss FINMA stablecoin review**: `docs/assets/screenshots/swiss-finma-stablecoin-source-graph.png`.
+   - Optional US GENIUS Act stablecoin path screenshot after **Start US GENIUS Act stablecoin review**: `docs/assets/screenshots/us-genius-stablecoin-source-graph.png`.
    - Optional marketing path screenshot after **Start Marketing claims review**: `docs/assets/screenshots/demo-scenario-library-marketing-claims.png`.
    - Optional VARA 2024 marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - Optional EU MiCA marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/eu-mica-marketing-source-graph.png`.

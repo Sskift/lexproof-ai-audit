@@ -119,6 +119,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "us-genius-stablecoin-source-path",
+    projectName: "LibertyDollar Stablecoin Review",
+    title: "US GENIUS Act stablecoin review",
+    summary:
+      "US payment stablecoin issuer review for GENIUS Act permitted-issuer route, reserve, redemption, monthly disclosure, BSA/AML, sanctions, custody, and counsel handoff evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect US GENIUS Act stablecoin source controls",
+      "Review permitted-issuer, reserve, redemption, and disclosure evidence gaps",
+      "Check BSA/AML, sanctions, custody, and no-raw-KYC evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["United States", "GENIUS Act", "Stablecoin", "BSA/AML", "Sanctions"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "singapore-dpt-custody-source-path",
     projectName: "HarborKey DPT Custody Review",
     title: "Singapore DPT custody review",

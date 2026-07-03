@@ -129,6 +129,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(rwaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded US GENIUS Act stablecoin path for payment stablecoin source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const stablecoinScenario = findDemoScenarioById(demoScenarios, "us-genius-stablecoin-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(stablecoinScenario).toEqual(
+      expect.objectContaining({
+        title: "US GENIUS Act stablecoin review",
+        projectName: "LibertyDollar Stablecoin Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["United States", "GENIUS Act", "Stablecoin", "BSA/AML", "Sanctions"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(stablecoinScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect US GENIUS Act stablecoin source controls",
+        "Review permitted-issuer, reserve, redemption, and disclosure evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(stablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Brazil VASP path for jurisdiction source graph demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const brazilScenario = findDemoScenarioById(demoScenarios, "brazil-vasp-source-path");

@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { execFile, execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { demoReadinessScreenshotRefs } from "../data/demoReadiness";
 import type { DemoScenarioValidationResult } from "./demoScenarioLibrary";
@@ -229,6 +230,58 @@ describe("demo readiness", () => {
     expect(report.nextActions).toEqual(["Demo smoke checks are ready for the clean-clone judge path."]);
     expect(JSON.stringify(report)).toContain("Not legal advice");
     expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+  });
+
+  it("blocks the demo smoke CLI when screenshot refs are unsafe, duplicated, or unsupported", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "lexproof-demo-smoke-"));
+    const registryPath = join(tempDir, "demoReadiness.ts");
+    writeFileSync(
+      registryPath,
+      [
+        "export const demoReadinessScreenshotRefs = [",
+        '  "docs/assets/screenshots/demo-01-model-connect.png",',
+        '  "docs/assets/screenshots/demo-01-model-connect.png",',
+        '  "docs/assets/screenshots/unsupported-demo.gif",',
+        '  "../secrets/sk-live-abcdef1234567890abcdef1234567890.png"',
+        "];"
+      ].join("\n")
+    );
+
+    try {
+      execFileSync(
+        process.execPath,
+        ["scripts/demo-smoke.mjs", "--skip-api", "--json", "--screenshot-registry", registryPath],
+        {
+          cwd: process.cwd(),
+          encoding: "utf8"
+        }
+      );
+      throw new Error("Expected demo smoke CLI to block unsafe screenshot refs.");
+    } catch (error) {
+      const output = error instanceof Error && "stdout" in error ? String(error.stdout) : "";
+      const report = JSON.parse(output);
+      const screenshotCheck = report.checks.find((check: { id: string }) => check.id === "screenshot-assets");
+
+      expect(report.status).toBe("blocked");
+      expect(screenshotCheck).toEqual(
+        expect.objectContaining({
+          status: "blocked",
+          registeredCount: 1,
+          missingCount: 0,
+          duplicateCount: 1,
+          unsafeCount: 1,
+          unsupportedCount: 1,
+          recoveryAction: "Fix missing, duplicate, unsafe, or unsupported screenshot references before judging."
+        })
+      );
+      expect(screenshotCheck.detail).toContain("1 duplicate");
+      expect(screenshotCheck.detail).toContain("1 unsafe");
+      expect(screenshotCheck.detail).toContain("1 unsupported");
+      expect(JSON.stringify(report)).not.toContain("sk-live");
+      expect(JSON.stringify(report)).toContain("Not legal advice");
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   it("runs the clean-clone demo smoke CLI against safe Phase 2 route families", async () => {

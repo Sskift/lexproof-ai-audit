@@ -7,7 +7,9 @@ const reportVersion = "lexproof-demo-smoke-cli-v1";
 const notLegalAdviceBoundary = "Not legal advice. Demo smoke checks are audit preparation readiness metadata only.";
 const requiredScripts = ["verify", "build:server", "start:api", "demo:smoke", "dev"];
 const requiredFiles = ["README.md", "src/data/demoReadiness.ts", "src/lib/demoReadiness.ts", "docs/demo-script.md"];
-const screenshotRefPattern = /["'](docs\/assets\/screenshots\/[^"']+\.(?:png|jpe?g|webp))["']/gi;
+const screenshotRefPattern = /["']([^"']+)["']/g;
+const screenshotPathPrefix = "docs/assets/screenshots/";
+const screenshotExtensionPattern = /\.(?:png|jpe?g|webp)$/i;
 const demoPreflightWorkspaceId = "demo-smoke-preflight";
 const apiRoutePreflightSpecs = [
   {
@@ -93,7 +95,8 @@ function parseArgs(argv) {
   const parsed = {
     json: false,
     skipApi: false,
-    apiBaseUrl: undefined
+    apiBaseUrl: undefined,
+    screenshotRegistry: undefined
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -117,6 +120,17 @@ function parseArgs(argv) {
 
     if (arg.startsWith("--api-base-url=")) {
       parsed.apiBaseUrl = arg.slice("--api-base-url=".length);
+      continue;
+    }
+
+    if (arg === "--screenshot-registry") {
+      parsed.screenshotRegistry = argv[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--screenshot-registry=")) {
+      parsed.screenshotRegistry = arg.slice("--screenshot-registry=".length);
     }
   }
 
@@ -192,7 +206,7 @@ function checkRequiredFiles() {
 }
 
 function checkScreenshotAssets() {
-  const demoReadinessPath = resolve(process.cwd(), "src/data/demoReadiness.ts");
+  const demoReadinessPath = resolve(process.cwd(), args.screenshotRegistry ?? "src/data/demoReadiness.ts");
 
   if (!existsSync(demoReadinessPath)) {
     return createCheck(
@@ -205,9 +219,12 @@ function checkScreenshotAssets() {
   }
 
   const source = readFileSync(demoReadinessPath, "utf8");
-  const refs = [...source.matchAll(screenshotRefPattern)].map((match) => match[1]);
-  const uniqueRefs = [...new Set(refs)];
-  const duplicateCount = refs.length - uniqueRefs.length;
+  const refs = [...source.matchAll(screenshotRefPattern)].map((match) => normalizeScreenshotRef(match[1])).filter(Boolean);
+  const safeSupportedRefs = refs.filter(isSafeSupportedScreenshotRef);
+  const uniqueRefs = [...new Set(safeSupportedRefs)];
+  const unsafeCount = refs.filter((ref) => !isSafeScreenshotRef(ref)).length;
+  const unsupportedCount = refs.filter((ref) => isSafeScreenshotRef(ref) && !screenshotExtensionPattern.test(ref)).length;
+  const duplicateCount = safeSupportedRefs.length - uniqueRefs.length;
   const missingRefs = uniqueRefs.filter((ref) => !existsSync(resolve(process.cwd(), ref)));
 
   if (uniqueRefs.length === 0) {
@@ -215,19 +232,21 @@ function checkScreenshotAssets() {
       "screenshot-assets",
       "Screenshot assets",
       "blocked",
-      "No demo screenshot references are registered.",
-      "Capture current judge-visible screenshots under docs/assets/screenshots."
+      refs.length === 0
+        ? "No demo screenshot references are registered."
+        : `${refs.length} screenshot-like references were found, but none passed path and extension checks.`,
+      "Capture current judge-visible png, jpg, jpeg, or webp screenshots under docs/assets/screenshots."
     );
   }
 
-  if (missingRefs.length > 0 || duplicateCount > 0) {
+  if (missingRefs.length > 0 || duplicateCount > 0 || unsafeCount > 0 || unsupportedCount > 0) {
     return createCheck(
       "screenshot-assets",
       "Screenshot assets",
       "blocked",
-      `${uniqueRefs.length} screenshot refs registered; ${missingRefs.length} missing; ${duplicateCount} duplicate.`,
-      "Fix missing or duplicate screenshot references before judging.",
-      { registeredCount: uniqueRefs.length, missingCount: missingRefs.length, duplicateCount }
+      `${uniqueRefs.length} screenshot refs registered; ${missingRefs.length} missing; ${duplicateCount} duplicate; ${unsafeCount} unsafe; ${unsupportedCount} unsupported.`,
+      "Fix missing, duplicate, unsafe, or unsupported screenshot references before judging.",
+      { registeredCount: uniqueRefs.length, missingCount: missingRefs.length, duplicateCount, unsafeCount, unsupportedCount }
     );
   }
 
@@ -237,8 +256,20 @@ function checkScreenshotAssets() {
     "ready",
     `${uniqueRefs.length} registered demo screenshots exist on disk.`,
     "Refresh screenshots after visible UI changes.",
-    { registeredCount: uniqueRefs.length, missingCount: 0, duplicateCount: 0 }
+    { registeredCount: uniqueRefs.length, missingCount: 0, duplicateCount: 0, unsafeCount: 0, unsupportedCount: 0 }
   );
+}
+
+function normalizeScreenshotRef(value) {
+  return String(value).replace(/\\/g, "/").replace(/^\.\//, "").trim();
+}
+
+function isSafeScreenshotRef(ref) {
+  return ref.startsWith(screenshotPathPrefix) && !ref.includes("..") && !ref.includes("\0");
+}
+
+function isSafeSupportedScreenshotRef(ref) {
+  return isSafeScreenshotRef(ref) && screenshotExtensionPattern.test(ref);
 }
 
 async function checkApiHealth({ apiBaseUrl, skipApi }) {

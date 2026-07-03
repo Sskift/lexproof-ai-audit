@@ -120,7 +120,7 @@ Judge Demo Readiness keeps the clean-clone path visible on the first screen: req
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 
-The Regulatory Command Center turns project facts into a first-screen Workspace Cockpit, Workspace Journey, Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, source update approval gates, evidence gaps, and local counsel handoff status without making legal conclusions. The Workspace Cockpit Handoff JSON exports the cockpit status, facts, journey steps, action queue, manifest/export state, and a stable handoff hash as metadata-only audit preparation material. The Workspace Journey shows the audit-prep path from project facts through model/evidence intake, risk/source graph, human review, vault/manifest, and counsel export with a next-action button. Source gap actions now focus the Source Evidence Gap Triage panel directly so users can request the missing metadata-only evidence without hunting through tabs.
+The Regulatory Command Center turns project facts into a first-screen Workspace Cockpit, Workspace Journey, Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, source update approval gates, evidence gaps, and local counsel handoff status without making legal conclusions. The Workspace Cockpit Handoff JSON exports the cockpit status, facts, journey steps, action queue, manifest/export state, and a stable handoff hash as metadata-only audit preparation material. The Workspace Journey shows the audit-prep path from project facts through model/evidence intake, risk/source graph, human review, vault/manifest, and counsel export with a next-action button. Source gap actions focus the Source Evidence Gap Triage panel directly, and source update approval actions focus the Source Update Approval Queue when the source review as-of date makes refreshed metadata review due.
 
 ![Regulatory Command Center](docs/assets/screenshots/regulatory-command-center.png)
 
@@ -236,6 +236,8 @@ The marketing claims scenario routes `SignalBridge Marketing Review` into US FTC
 
 ![Workspace action source gap focus](docs/assets/screenshots/workspace-action-source-gap-focus.png)
 
+![Workspace action source approval focus](docs/assets/screenshots/workspace-action-source-approval-focus.png)
+
 ![Regulatory Control Matrix](docs/assets/screenshots/regulatory-control-matrix.png)
 
 The Jurisdiction Evidence Map groups the control matrix by jurisdiction so reviewers can see open evidence requests, source topics, local counsel routes, and a stable map hash without turning those signals into legal conclusions. Not legal advice.
@@ -254,7 +256,7 @@ The Source Freshness Board turns Source Review Ledger dates into an operating bo
 
 ![Source Update Approval Queue](docs/assets/screenshots/source-update-approval-queue.png)
 
-The Source Update Approval Queue can sync metadata-only approval records to the Phase 2 API and refresh persisted records back into the command center through `GET /api/workspaces/:workspaceId/source-approvals`. Matching behavior stays unchanged until counsel or compliance review records refreshed source metadata. Not legal advice.
+The Source Review Ledger has a source review as-of date field so reviewers can test planned counsel handoff dates and surface due source update approvals before export. The Source Update Approval Queue can sync metadata-only approval records to the Phase 2 API and refresh persisted records back into the command center through `GET /api/workspaces/:workspaceId/source-approvals`. Matching behavior stays unchanged until counsel or compliance review records refreshed source metadata. Not legal advice.
 
 ![Source Approval persisted record refresh](docs/assets/screenshots/source-approval-record-refresh.png)
 

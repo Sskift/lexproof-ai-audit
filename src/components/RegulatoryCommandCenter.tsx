@@ -55,6 +55,7 @@ type RegulatoryCommandCenterProps = {
   audit: AuditResult;
   graph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
+  sourceReviewAsOf: string;
   sourceReviewApiBaseUrl: string;
   sourceReviewSyncResult: RegulatorySourceReviewSyncResult | null;
   sourceReviewSyncStatus: "idle" | "syncing" | "synced" | "error";
@@ -85,6 +86,7 @@ type RegulatoryCommandCenterProps = {
   humanReviewOpenCount: number;
   humanReviewBlockedCount: number;
   onSourceReviewApiBaseUrlChange: (value: string) => void;
+  onSourceReviewAsOfChange: (value: string) => void;
   onSyncSourceReviewLedger: () => Promise<void> | void;
   onSourceApprovalApiBaseUrlChange: (value: string) => void;
   onSyncSourceApprovalQueue: () => Promise<void> | void;
@@ -98,6 +100,7 @@ export function RegulatoryCommandCenter({
   audit,
   graph,
   sourceReview,
+  sourceReviewAsOf,
   sourceReviewApiBaseUrl,
   sourceReviewSyncResult,
   sourceReviewSyncStatus,
@@ -128,6 +131,7 @@ export function RegulatoryCommandCenter({
   humanReviewOpenCount,
   humanReviewBlockedCount,
   onSourceReviewApiBaseUrlChange,
+  onSourceReviewAsOfChange,
   onSyncSourceReviewLedger,
   onSourceApprovalApiBaseUrlChange,
   onSyncSourceApprovalQueue,
@@ -146,6 +150,7 @@ export function RegulatoryCommandCenter({
   const [cockpitHandoff, setCockpitHandoff] = useState<WorkspaceCockpitHandoff | null>(null);
   const [buildingCockpitHandoff, setBuildingCockpitHandoff] = useState(false);
   const sourceGapTriageRef = useRef<HTMLElement | null>(null);
+  const sourceApprovalQueueRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,6 +171,12 @@ export function RegulatoryCommandCenter({
       setFocusedActionId(item.id);
       sourceGapTriageRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
       sourceGapTriageRef.current?.focus?.({ preventScroll: true });
+      return;
+    }
+    if (item.focusTarget === "source-approval-queue") {
+      setFocusedActionId(item.id);
+      sourceApprovalQueueRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      sourceApprovalQueueRef.current?.focus?.({ preventScroll: true });
       return;
     }
 
@@ -550,6 +561,16 @@ export function RegulatoryCommandCenter({
               onChange={(event) => onSourceReviewApiBaseUrlChange(event.target.value)}
             />
           </label>
+          <label className="editor-field">
+            <span>Source review as-of date</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="YYYY-MM-DD"
+              value={sourceReviewAsOf}
+              onChange={(event) => onSourceReviewAsOfChange(event.target.value)}
+            />
+          </label>
           <button
             type="button"
             className="secondary"
@@ -598,7 +619,14 @@ export function RegulatoryCommandCenter({
         </div>
       </section>
 
-      <section className={`source-approval-queue ${sourceApprovalQueue.status}`} aria-label="Source Update Approval Queue">
+      <section
+        ref={sourceApprovalQueueRef}
+        tabIndex={-1}
+        className={`source-approval-queue ${sourceApprovalQueue.status} ${
+          focusedActionId === "approve-source-updates" ? "action-focus" : ""
+        }`}
+        aria-label="Source Update Approval Queue"
+      >
         <div className="reg-source-review-header">
           <div className="reg-section-title">
             <ShieldCheck size={17} aria-hidden="true" />

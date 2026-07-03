@@ -3,6 +3,7 @@ import type { DataBoundaryReport } from "./dataBoundary";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
+import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
 import type { SecurityReviewChecklistReport } from "./securityReviewChecklist";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
@@ -69,6 +70,44 @@ describe("createWorkspaceActionQueue", () => {
       })
     );
     expect(queue.items.every((item) => item.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
+  });
+
+  it("surfaces source update approval gates as command-center recovery actions", () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({ evidenceGaps: [] }),
+      sourceReview: sourceReview({ actionCount: 0 }),
+      sourceApprovalQueue: sourceApprovalQueue({ metadataRequiredCount: 1, approvalRequiredCount: 2 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 0, blockedCount: 0 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "ready", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 2,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 1
+    });
+
+    expect(queue.summary).toEqual(
+      expect.objectContaining({
+        totalCount: 2,
+        p0Count: 1,
+        nextTarget: "review"
+      })
+    );
+    expect(queue.items[0]).toEqual(
+      expect.objectContaining({
+        id: "approve-source-updates",
+        priority: "P0",
+        target: "review",
+        title: "Review source update approvals",
+        cta: "Open source approval queue",
+        focusTarget: "source-approval-queue",
+        notLegalAdviceBoundary: "Not legal advice. Workspace actions are audit preparation workflow prompts only."
+      })
+    );
+    expect(queue.items[0].summary).toContain("1 metadata gate");
+    expect(queue.items[0].summary).toContain("2 approval gates");
+    expect(queue.items[0].summary).toContain("Matching behavior remains unchanged");
+    expect(JSON.stringify(queue)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
   });
 
   it("surfaces a ready export action when blockers are cleared and the first pack version exists", () => {
@@ -340,5 +379,26 @@ function recertificationQueue(): EvidenceRecertificationQueue {
     nextSteps: ["Refresh P0/P1 evidence metadata before counsel/export reliance."],
     notLegalAdviceBoundary:
       "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+  };
+}
+
+function sourceApprovalQueue({
+  metadataRequiredCount,
+  approvalRequiredCount
+}: {
+  metadataRequiredCount: number;
+  approvalRequiredCount: number;
+}): RegulatorySourceApprovalQueue {
+  const totalItemCount = metadataRequiredCount + approvalRequiredCount;
+
+  return {
+    queueVersion: "lexproof-regulatory-source-approval-queue-v1",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    status: metadataRequiredCount > 0 ? "needs-metadata" : approvalRequiredCount > 0 ? "needs-approval" : "empty",
+    totalItemCount,
+    approvalRequiredCount,
+    metadataRequiredCount,
+    items: [],
+    notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
   };
 }

@@ -90,7 +90,8 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Download Source Freshness Board JSON** to show metadata-missing, overdue, due-soon, and scheduled source review lanes with a board hash and no legal conclusion.
    - Show the **Local Counsel Routing Plan**, then click **Download Local Counsel Routing JSON** to show jurisdiction + counsel-role routes, route priority, evidence gaps, source-review state, plan hash, and the Not legal advice boundary.
    - Click **Download Source Review Packet JSON** to show the metadata-only source refresh action queue, clause-match targets, packet hash, and Not legal advice boundary.
-   - If source review is due, show the **Source Update Approval Queue** and click **Download Source Approval Queue JSON** to show that source updates cannot affect matching behavior until counsel or compliance review records refreshed source metadata.
+   - To demo source freshness at a planned handoff date, set **Source review as-of date** to a future ISO date such as `2026-10-02`; then click the **Workspace Action Queue** item **Open source approval queue** to focus the **Source Update Approval Queue**. Click **Download Source Approval Queue JSON** to show that source updates cannot affect matching behavior until counsel or compliance review records refreshed source metadata.
+   - Screenshot: `docs/assets/screenshots/workspace-action-source-approval-focus.png`.
    - When the Phase 2 API is running, enter `http://127.0.0.1:8787` in **Source Approval API base URL** and click **Sync Source Approval Queue** to persist metadata-only source approval records while confirming matching behavior is unchanged.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
    - Screenshot: `docs/assets/screenshots/workspace-cockpit-handoff.png`.

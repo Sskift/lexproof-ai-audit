@@ -138,6 +138,34 @@ describe("App", () => {
     }
   });
 
+  it("routes source approval action queue items to the source update approval queue", async () => {
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(<App />);
+      fireEvent.change(screen.getByLabelText(/Source review as-of date/i), {
+        target: { value: "2026-10-01" }
+      });
+
+      const approvalQueue = screen.getByRole("region", { name: /Source Update Approval Queue/i });
+      const actionQueue = within(screen.getByRole("region", { name: /Workspace Action Queue/i }));
+
+      expect(await actionQueue.findByText(/Review source update approvals/i)).toBeInTheDocument();
+      expect(actionQueue.getByText(/Matching behavior remains unchanged/i)).toBeInTheDocument();
+      fireEvent.click(actionQueue.getByRole("button", { name: /Open source approval queue/i }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+      expect(approvalQueue).toHaveClass("action-focus");
+      expect(within(approvalQueue).getAllByText(/Source updates cannot change matching behavior/i).length).toBeGreaterThan(0);
+      expect(within(approvalQueue).getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
+      expect(screen.queryByRole("heading", { name: /^Human Review$/i })).not.toBeInTheDocument();
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
   it("requests a source evidence gap into the Evidence Ledger from the command center", async () => {
     render(<App />);
 

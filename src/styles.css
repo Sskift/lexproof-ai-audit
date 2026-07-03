@@ -2270,6 +2270,15 @@ textarea {
   background: #fff7f6;
 }
 
+.source-approval-queue.action-focus {
+  border-color: #2f6f8f;
+  box-shadow: 0 0 0 3px rgba(47, 111, 143, 0.16);
+}
+
+.source-approval-queue:focus {
+  outline: none;
+}
+
 .source-approval-queue > p {
   margin: 0;
   color: #53616f;

@@ -3,6 +3,7 @@ import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { HumanReviewQueue, HumanReviewQueueItem } from "./humanReviewWorkflow";
 import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
+import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
 import type { SecurityReviewChecklistReport } from "./securityReviewChecklist";
 
@@ -17,7 +18,7 @@ export type WorkspaceActionTarget =
   | "counsel"
   | "sources";
 
-export type WorkspaceActionFocusTarget = "source-gap-triage";
+export type WorkspaceActionFocusTarget = "source-gap-triage" | "source-approval-queue";
 
 export type WorkspaceActionPriority = "P0" | "P1" | "P2" | "P3";
 
@@ -49,6 +50,7 @@ export type CreateWorkspaceActionQueueInput = {
   validation: ProjectValidationResult;
   regulatoryGraph: RegulatoryGraph;
   sourceReview: RegulatorySourceReview;
+  sourceApprovalQueue?: RegulatorySourceApprovalQueue;
   humanReviewQueue: HumanReviewQueue;
   securityReviewChecklist: SecurityReviewChecklistReport;
   dataBoundaryReport: DataBoundaryReport;
@@ -69,6 +71,7 @@ export function createWorkspaceActionQueue(input: CreateWorkspaceActionQueueInpu
     createExportSafetyAction(input.dataBoundaryReport),
     createEvidenceRecertificationAction(input.evidenceRecertificationQueue),
     createSourceRefreshAction(input.sourceReview),
+    createSourceApprovalAction(input.sourceApprovalQueue),
     createHumanReviewOpenAction(input.humanReviewQueue, input.evaluatedAt),
     createSecurityReadinessAction(input.securityReviewChecklist),
     createCounselPackVersionAction(input),
@@ -184,6 +187,31 @@ function createSourceRefreshAction(sourceReview: RegulatorySourceReview): Worksp
     title: "Refresh source review metadata",
     summary: `${sourceReview.actions.length} source refresh action${sourceReview.actions.length === 1 ? "" : "s"} due. First: ${sourceReview.actions[0].action}`,
     cta: "Open review queue"
+  });
+}
+
+function createSourceApprovalAction(queue: RegulatorySourceApprovalQueue | undefined): WorkspaceActionItem | null {
+  if (!queue || queue.totalItemCount === 0 || queue.status === "empty") {
+    return null;
+  }
+
+  const metadataLabel =
+    queue.metadataRequiredCount > 0
+      ? `${queue.metadataRequiredCount} metadata gate${queue.metadataRequiredCount === 1 ? "" : "s"}`
+      : "no metadata gates";
+  const approvalLabel =
+    queue.approvalRequiredCount > 0
+      ? `${queue.approvalRequiredCount} approval gate${queue.approvalRequiredCount === 1 ? "" : "s"}`
+      : "no approval gates";
+
+  return createAction({
+    id: "approve-source-updates",
+    priority: queue.metadataRequiredCount > 0 ? "P0" : "P1",
+    target: "review",
+    title: "Review source update approvals",
+    summary: `${queue.totalItemCount} source update approval gate${queue.totalItemCount === 1 ? "" : "s"} open: ${metadataLabel} and ${approvalLabel}. Matching behavior remains unchanged until review records refreshed metadata.`,
+    cta: "Open source approval queue",
+    focusTarget: "source-approval-queue"
   });
 }
 
@@ -308,6 +336,7 @@ function actionOrder(id: string): number {
     "clear-export-safety-gate",
     "recertify-stale-evidence",
     "refresh-source-review",
+    "approve-source-updates",
     "complete-human-review",
     "validate-security-readiness",
     "save-counsel-pack-version",

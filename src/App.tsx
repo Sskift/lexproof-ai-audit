@@ -440,6 +440,7 @@ export default function App() {
   const [sourceApprovalRecordRefreshError, setSourceApprovalRecordRefreshError] = useState("");
   const [sourceApprovalRecordRefreshRecoveryAction, setSourceApprovalRecordRefreshRecoveryAction] = useState("");
   const [sourceReviewApiBaseUrl, setSourceReviewApiBaseUrl] = useState("");
+  const [sourceReviewAsOf, setSourceReviewAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [sourceReviewSyncResult, setSourceReviewSyncResult] = useState<RegulatorySourceReviewSyncResult | null>(null);
   const [sourceReviewSyncStatus, setSourceReviewSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [sourceReviewSyncError, setSourceReviewSyncError] = useState("");
@@ -458,7 +459,14 @@ export default function App() {
   );
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
-  const regulatorySourceReview = useMemo(() => createRegulatorySourceReview(regulatoryGraph), [regulatoryGraph]);
+  const normalizedSourceReviewAsOf = sourceReviewAsOf.trim();
+  const activeSourceReviewAsOf = /^\d{4}-\d{2}-\d{2}$/.test(normalizedSourceReviewAsOf)
+    ? normalizedSourceReviewAsOf
+    : new Date().toISOString().slice(0, 10);
+  const regulatorySourceReview = useMemo(
+    () => createRegulatorySourceReview(regulatoryGraph, { asOf: activeSourceReviewAsOf }),
+    [activeSourceReviewAsOf, regulatoryGraph]
+  );
   const regulatorySourceApprovalQueue = useMemo(
     () => createRegulatorySourceApprovalQueue(regulatorySourceReview),
     [regulatorySourceReview]
@@ -837,6 +845,7 @@ export default function App() {
         validation,
         regulatoryGraph,
         sourceReview: regulatorySourceReview,
+        sourceApprovalQueue: regulatorySourceApprovalQueue,
         humanReviewQueue,
         securityReviewChecklist,
         dataBoundaryReport,
@@ -853,6 +862,7 @@ export default function App() {
       manifest?.bundleHash,
       project.evidenceItems.length,
       regulatoryGraph,
+      regulatorySourceApprovalQueue,
       regulatorySourceReview,
       securityReviewChecklist,
       validation
@@ -2130,6 +2140,7 @@ export default function App() {
             audit={audit}
             graph={regulatoryGraph}
             sourceReview={regulatorySourceReview}
+            sourceReviewAsOf={sourceReviewAsOf}
             sourceReviewApiBaseUrl={sourceReviewApiBaseUrl}
             sourceReviewSyncResult={sourceReviewSyncResult}
             sourceReviewSyncStatus={sourceReviewSyncStatus}
@@ -2160,6 +2171,7 @@ export default function App() {
             humanReviewOpenCount={humanReviewQueue.summary.openCount}
             humanReviewBlockedCount={humanReviewQueue.summary.blockedCount}
             onSourceReviewApiBaseUrlChange={setSourceReviewApiBaseUrl}
+            onSourceReviewAsOfChange={setSourceReviewAsOf}
             onSyncSourceReviewLedger={syncSourceReviewLedger}
             onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}
             onSyncSourceApprovalQueue={syncSourceApprovalQueue}

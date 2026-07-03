@@ -125,6 +125,21 @@ Use this order to pull up the right level of verification without adding useless
 
 Do not widen the test suite just to make a docs-only or copy-only change look more substantial. The repository stays healthier when tests prove real contracts.
 
+## Quick Launch Matrix
+
+Use this matrix to pick the concrete pull-up path. Start at the lowest row that can prove the slice, then run `npm run verify` before pushing.
+
+| Slice | Start command | Add when needed | Commit proof |
+| --- | --- | --- | --- |
+| Docs or governance only | Inspect changed links, commands, and cross-references | None unless docs describe a changed UI/API path | `npm run verify` |
+| Pure `src/lib` behavior | `npm test -- src/lib/<feature>.test.ts` | Related lib tests when the helper feeds another artifact | `npm run verify` |
+| Data/source/template behavior | `npm test -- src/lib/<matching-or-template>.test.ts` | Screenshot if a new source/control is judge-visible | `npm run verify` |
+| React workflow | `npm test -- src/App.test.tsx` | `npm run dev -- --port 5173` and screenshot for durable UI state | `npm run verify` |
+| Server route/service | `npm test -- server/<feature>.test.ts` | `npm run build:server` | `npm run verify` |
+| Full secure review journey | `npm run build:server`, `DATABASE_URL=file:./demo-review-workspace.db npm run start:api`, `npm run dev -- --port 5173` | `DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke`, browser screenshot | `npm run verify` |
+
+Do not commit the disposable SQLite database, server build output, Vite build output, downloaded JSON/Markdown exports, or throwaway screenshots created while using these recipes.
+
 ### Verification Tiers
 
 | Tier | Use when | Command |

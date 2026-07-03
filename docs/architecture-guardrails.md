@@ -75,6 +75,21 @@ Use this protocol before creating or moving files:
 
 If a slice needs more than one new domain module, one new route family, and one new panel, split it unless the pieces are inseparable for a runnable journey.
 
+## Feature Shape Decision
+
+Choose exactly one primary shape for each slice before editing files. This keeps new capability from spreading into every layer without a reason.
+
+| Slice shape | When to use it | Allowed owners | Required proof |
+| --- | --- | --- | --- |
+| Local-first domain slice | Pure validation, hashing, matching, export building, status calculation, or privacy rule | `src/lib`, nearest `src/lib/*.test.ts`, docs if user-visible | Focused domain test, full verify |
+| Static data/source slice | Reviewed clause metadata, synthetic scenario, demo readiness entry, or evidence template | `src/data`, matching `src/lib` tests when behavior changes, docs/screenshot when visible | Data validation or matching test |
+| UI workflow slice | User can click into a new state, empty state, error state, recovery action, or export action | Existing `src/components` owner, `src/App.tsx` wiring, domain helper first | App/component workflow test and screenshot when judge-visible |
+| Server metadata slice | Durability, audit log, route validation, model/evidence/review/export persistence, or policy receipt | `server/*Routes.ts`, `server/*Service.ts`, repository, shared `src/lib` contract/client | Route/service tests, `npm run build:server`, full verify |
+| External integration readiness slice | A future provider/storage/parser/GRC/chain adapter needs policy and failure states | Policy module, policy route/client, readiness UI, no real side effects | Policy tests, route tests, disabled-state UI proof |
+| Documentation constraint slice | Scope, architecture, workflow, demo path, or governance rules change | `docs`, `README.md`, `WORKFLOW.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md` | Link/command inspection, full verify before push |
+
+Only widen the shape when the user journey cannot run without it. For example, a server metadata slice may need a small UI state to prove the route is usable, but it should not also add a new regulatory source unless that source is the reason for the route.
+
 ## Architecture Registration Checklist
 
 Before implementing a non-trivial feature, write down this placement record in the issue, agent prompt, or implementation note:

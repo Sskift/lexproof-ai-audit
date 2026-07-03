@@ -63,6 +63,20 @@ Build in this order unless the user narrows a smaller urgent slice:
 
 Rejected direction remains explicit: no legal advice chatbot, no real KYC processor, no private-key custody tool, no source-free legal classifier, no simulated-chain-proof marketing, and no generic GRC clone that loses the AI/Web3 evidence focus.
 
+## Near-Term Build Direction
+
+Use this stack when choosing the next agent slice. It turns the full work universe into concrete near-term direction without making every task a new plan document.
+
+| Priority | Build direction | Good slice shape | Required proof | Stop line |
+| --- | --- | --- | --- | --- |
+| P0 | Keep the full judge journey trustworthy | Improve one broken or unclear step in project -> model/evidence -> risk/source -> review -> vault -> export | Targeted test, full `npm run verify`, screenshot if visible | Do not add a parallel demo path |
+| P1 | Deepen source-backed jurisdiction review | Add one reviewed source/control/template path with evidence gaps and counsel routing | Clause matching and coverage tests, screenshot for new command-center state | Do not write legal conclusions |
+| P2 | Harden evidence, model, review, vault, and export recovery | Add one failure, empty, duplicate, rejected, returned, or blocked state with actionable recovery | Domain or route test plus UI workflow test when clickable | Do not persist raw evidence, KYC, secrets, or keys |
+| P3 | Make integrations policy-real before adapter-real | Add metadata-only policy, receipt, disabled state, and audit log for one adapter class | Policy validator tests and route tests | Do not make real external calls by default |
+| P4 | Prepare pilots only after the single-user flow is stable | Add auth, roles, sharing, raw document intake, or real storage only behind written boundaries | Permission, retention, and route tests | Do not start multi-tenant infrastructure as a demo shortcut |
+
+Each slice should leave the repository closer to one continuous audit-prep operating system. If a proposed change does not improve a named journey step or one of the priorities above, park it outside the implementation queue.
+
 ## Product Direction
 
 LexProof should become an AI and Web3 regulatory evidence operating system:
@@ -141,6 +155,28 @@ This is the canonical inventory for future work. Every feature, frontend change,
 | W10 Demo and judge readiness | Clean-clone script, screenshot set, demo scenarios, API preflight, known limitations, hackathon submission materials | Demo Scenario Library, Demo Readiness, README, docs | `src/lib/demoScenarioLibrary.ts`, `src/lib/demoReadiness.ts`, docs | Scenario/readiness tests, `npm run verify`, documented smoke path | Make judging reproducible without credentials or private data |
 | W11 Pilot operations | Accounts, orgs, roles, reviewer permissions, matter sharing, workspace activity, durable settings | Future admin/workspace surfaces only after W1-W10 are stable | Future auth/RBAC service and repository tables | Permission model tests, route tests, threat-model review | Defer until single-user secure review flow is stable |
 | W12 Production readiness | Observability, background jobs, migration discipline, deployment, enterprise reporting, custom controls | Future ops/admin surfaces | Future worker/deploy modules, server metrics, policy packs | Build/deploy smoke, migration tests, operational runbook | Defer until pilot workflows prove demand |
+
+## Work Item Intake Record
+
+Use this compact record before adding or delegating any new task. It prevents vague feature requests from drifting across UI, backend, data, and test layers.
+
+```text
+Workstream:
+Priority: P0/P1/P2/P3/P4 from Near-Term Build Direction
+User journey:
+User-visible outcome:
+Frontend files:
+Domain files:
+Backend files:
+Data/docs files:
+Privacy boundary:
+Not legal advice wording:
+Targeted verification:
+Screenshot required: yes/no
+Commit scope:
+```
+
+Reject or narrow the task if the record cannot name a workstream, user journey, owner files, boundary, and proof path.
 
 ## Build Order And Direction
 

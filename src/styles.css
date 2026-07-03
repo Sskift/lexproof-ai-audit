@@ -952,7 +952,24 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-.workspace-cockpit-brief > button {
+.cockpit-handoff-actions {
+  align-self: center;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  min-width: 0;
+}
+
+.cockpit-handoff-actions small {
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.cockpit-handoff-actions button {
   align-self: center;
   white-space: nowrap;
 }
@@ -8006,8 +8023,14 @@ textarea {
     text-align: left;
   }
 
-  .workspace-cockpit-brief > button {
+  .cockpit-handoff-actions {
     justify-self: start;
+    justify-items: start;
+    width: 100%;
+  }
+
+  .cockpit-handoff-actions small {
+    text-align: left;
   }
 
   .main-stage {

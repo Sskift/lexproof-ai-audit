@@ -2148,6 +2148,10 @@ export default function App() {
             journey={workspaceJourney}
             sourceReviewPacket={regulatorySourceReviewPacket}
             manifestHash={manifest?.bundleHash}
+            exportAllowed={dataBoundaryReport.exportAllowed}
+            counselPackVersionCount={currentCounselPackVersions.length}
+            humanReviewOpenCount={humanReviewQueue.summary.openCount}
+            humanReviewBlockedCount={humanReviewQueue.summary.blockedCount}
             onSourceReviewApiBaseUrlChange={setSourceReviewApiBaseUrl}
             onSyncSourceReviewLedger={syncSourceReviewLedger}
             onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}

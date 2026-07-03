@@ -17,6 +17,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/uae-vara-operating-source-graph.png",
   "docs/assets/screenshots/demo-scenario-library-marketing-claims.png",
   "docs/assets/screenshots/counsel-pack-marketing-claims-template.png",
+  "docs/assets/screenshots/workspace-cockpit-handoff.png",
   "docs/assets/screenshots/regulatory-control-matrix.png",
   "docs/assets/screenshots/jurisdiction-readiness-digest.png",
   "docs/assets/screenshots/evidence-retention-remediation-queue.png",

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createWorkspaceCockpitBrief } from "./workspaceCockpitBrief";
+import {
+  createWorkspaceCockpitBrief,
+  createWorkspaceCockpitHandoff,
+  exportWorkspaceCockpitHandoffJson
+} from "./workspaceCockpitBrief";
 import type { WorkspaceActionQueue } from "./workspaceActionQueue";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "./workspaceJourney";
 
@@ -110,6 +114,82 @@ describe("createWorkspaceCockpitBrief", () => {
       status: "ready"
     });
     expect(JSON.stringify(brief)).toContain("Not legal advice");
+  });
+
+  it("exports a stable metadata-only cockpit handoff without leaking credential-like project names", async () => {
+    const sharedJourney = journey(["ready", "ready", "needs-review", "ready", "ready", "needs-review"]);
+    const sharedActionQueue = actionQueue([
+      {
+        id: "complete-human-review",
+        priority: "P1",
+        target: "review",
+        title: "Complete human review queue",
+        cta: "Open review queue"
+      }
+    ]);
+    const brief = createWorkspaceCockpitBrief({
+      projectName: "Gateway sk-live-1234567890abcdef audit",
+      riskLevel: "moderate",
+      riskScore: 48,
+      evidenceCount: 4,
+      humanReviewOpenCount: 1,
+      humanReviewBlockedCount: 0,
+      manifestHash: "a".repeat(64),
+      exportAllowed: true,
+      counselPackVersionCount: 1,
+      journey: sharedJourney,
+      actionQueue: sharedActionQueue
+    });
+
+    const first = await createWorkspaceCockpitHandoff({
+      projectId: "project-cockpit",
+      projectName: "Gateway sk-live-1234567890abcdef audit",
+      riskLevel: "moderate",
+      riskScore: 48,
+      evidenceCount: 4,
+      humanReviewOpenCount: 1,
+      humanReviewBlockedCount: 0,
+      manifestHash: "a".repeat(64),
+      exportAllowed: true,
+      counselPackVersionCount: 1,
+      journey: sharedJourney,
+      actionQueue: sharedActionQueue,
+      cockpitBrief: brief,
+      generatedAt: "2026-07-01T00:00:00.000Z"
+    });
+    const second = await createWorkspaceCockpitHandoff({
+      projectId: "project-cockpit",
+      projectName: "Gateway sk-live-1234567890abcdef audit",
+      riskLevel: "moderate",
+      riskScore: 48,
+      evidenceCount: 4,
+      humanReviewOpenCount: 1,
+      humanReviewBlockedCount: 0,
+      manifestHash: "a".repeat(64),
+      exportAllowed: true,
+      counselPackVersionCount: 1,
+      journey: sharedJourney,
+      actionQueue: sharedActionQueue,
+      cockpitBrief: brief,
+      generatedAt: "2026-07-02T00:00:00.000Z"
+    });
+    const exported = exportWorkspaceCockpitHandoffJson(first);
+
+    expect(first.handoffVersion).toBe("lexproof-workspace-cockpit-handoff-v1");
+    expect(first.handoffHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(second.handoffHash).toBe(first.handoffHash);
+    expect(first.projectName).toContain("[redacted-api-key]");
+    expect(exported).not.toContain("sk-live-1234567890abcdef");
+    expect(exported).toContain("Not legal advice. Workspace cockpit handoffs are audit preparation workflow metadata only.");
+    expect(exported).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
+    expect(first.openActions[0]).toEqual(
+      expect.objectContaining({
+        id: "complete-human-review",
+        priority: "P1",
+        target: "review",
+        title: "Complete human review queue"
+      })
+    );
   });
 });
 

@@ -32,6 +32,7 @@ describe("App", () => {
     expect(
       cockpit.getByText(/Not legal advice. Workspace cockpit status is audit preparation workflow metadata only./i)
     ).toBeInTheDocument();
+    expect(cockpit.getByRole("button", { name: /Download Cockpit Handoff JSON/i })).toBeEnabled();
     expect(cockpit.getAllByText(/Journey/i).length).toBeGreaterThan(0);
     expect(cockpit.getByText(/Human review/i)).toBeInTheDocument();
     const journey = within(screen.getByRole("region", { name: /Workspace Journey/i }));
@@ -71,6 +72,47 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Evidence Ledger$/i }));
 
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
+  });
+
+  it("downloads a metadata-only Workspace Cockpit Handoff JSON from the command center", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const revokeObjectUrl = vi.fn();
+    const capturedBlobs: Blob[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:workspace-cockpit-handoff";
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const cockpit = within(screen.getByRole("region", { name: /Workspace Cockpit Brief/i }));
+      fireEvent.click(cockpit.getByRole("button", { name: /Download Cockpit Handoff JSON/i }));
+
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      const handoff = JSON.parse(payload);
+
+      expect(handoff.handoffVersion).toBe("lexproof-workspace-cockpit-handoff-v1");
+      expect(handoff.handoffHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(handoff.notLegalAdviceBoundary).toBe(
+        "Not legal advice. Workspace cockpit handoffs are audit preparation workflow metadata only."
+      );
+      expect(handoff.journeySteps.length).toBeGreaterThan(0);
+      expect(handoff.openActions.length).toBeGreaterThan(0);
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
+      await waitFor(() => expect(cockpit.getByText(/Cockpit handoff hash/i)).toBeInTheDocument());
+    } finally {
+      click.mockRestore();
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+    }
   });
 
   it("routes the source gap action queue item to the command-center triage panel", async () => {

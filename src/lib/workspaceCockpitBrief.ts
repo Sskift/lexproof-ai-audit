@@ -1,4 +1,5 @@
 import type { RiskLevel } from "./auditEngine";
+import { redactDataBoundaryText } from "./dataBoundary";
 import type { WorkspaceActionPriority, WorkspaceActionQueue, WorkspaceActionTarget } from "./workspaceActionQueue";
 import type { WorkspaceJourney } from "./workspaceJourney";
 
@@ -30,6 +31,41 @@ export type WorkspaceCockpitBrief = {
   notLegalAdviceBoundary: "Not legal advice. Workspace cockpit status is audit preparation workflow metadata only.";
 };
 
+export type WorkspaceCockpitHandoffAction = {
+  id: string;
+  priority: WorkspaceActionPriority;
+  target: WorkspaceActionTarget;
+  title: string;
+  cta: string;
+  summary: string;
+};
+
+export type WorkspaceCockpitHandoff = {
+  handoffVersion: "lexproof-workspace-cockpit-handoff-v1";
+  projectId: string;
+  projectName: string;
+  generatedAt: string;
+  cockpitStatus: WorkspaceCockpitBriefStatus;
+  riskLevel: RiskLevel;
+  riskScore: number;
+  evidenceCount: number;
+  humanReviewOpenCount: number;
+  humanReviewBlockedCount: number;
+  manifestHash: string;
+  exportAllowed: boolean;
+  counselPackVersionCount: number;
+  headline: string;
+  summary: string;
+  nextAction: WorkspaceCockpitNextAction | null;
+  facts: WorkspaceCockpitFact[];
+  journeySummary: WorkspaceJourney["summary"];
+  journeySteps: WorkspaceJourney["steps"];
+  actionSummary: WorkspaceActionQueue["summary"];
+  openActions: WorkspaceCockpitHandoffAction[];
+  handoffHash: string;
+  notLegalAdviceBoundary: "Not legal advice. Workspace cockpit handoffs are audit preparation workflow metadata only.";
+};
+
 export type CreateWorkspaceCockpitBriefInput = {
   projectName: string;
   riskLevel: RiskLevel;
@@ -44,7 +80,14 @@ export type CreateWorkspaceCockpitBriefInput = {
   actionQueue: WorkspaceActionQueue;
 };
 
+export type CreateWorkspaceCockpitHandoffInput = CreateWorkspaceCockpitBriefInput & {
+  projectId: string;
+  cockpitBrief: WorkspaceCockpitBrief;
+  generatedAt?: string;
+};
+
 const NOT_LEGAL_ADVICE = "Not legal advice. Workspace cockpit status is audit preparation workflow metadata only.";
+const HANDOFF_BOUNDARY = "Not legal advice. Workspace cockpit handoffs are audit preparation workflow metadata only." as const;
 
 export function createWorkspaceCockpitBrief(input: CreateWorkspaceCockpitBriefInput): WorkspaceCockpitBrief {
   const status = createBriefStatus(input);
@@ -59,6 +102,58 @@ export function createWorkspaceCockpitBrief(input: CreateWorkspaceCockpitBriefIn
     facts: createFacts(input),
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE
   };
+}
+
+export async function createWorkspaceCockpitHandoff(input: CreateWorkspaceCockpitHandoffInput): Promise<WorkspaceCockpitHandoff> {
+  const projectId = sanitize(input.projectId);
+  const projectName = sanitize(input.projectName || "Untitled workspace");
+  const manifestHash = sanitize(input.manifestHash ?? "");
+  const handoffPayload: Omit<WorkspaceCockpitHandoff, "generatedAt" | "handoffHash"> = {
+    handoffVersion: "lexproof-workspace-cockpit-handoff-v1",
+    projectId,
+    projectName,
+    cockpitStatus: input.cockpitBrief.status,
+    riskLevel: input.riskLevel,
+    riskScore: input.riskScore,
+    evidenceCount: input.evidenceCount,
+    humanReviewOpenCount: input.humanReviewOpenCount,
+    humanReviewBlockedCount: input.humanReviewBlockedCount,
+    manifestHash,
+    exportAllowed: input.exportAllowed,
+    counselPackVersionCount: input.counselPackVersionCount,
+    headline: sanitize(input.cockpitBrief.headline),
+    summary: sanitize(input.cockpitBrief.summary),
+    nextAction: input.cockpitBrief.nextAction ? createHandoffNextAction(input.cockpitBrief.nextAction) : null,
+    facts: input.cockpitBrief.facts.map(createHandoffFact),
+    journeySummary: input.journey.summary,
+    journeySteps: input.journey.steps,
+    actionSummary: input.actionQueue.summary,
+    openActions: input.actionQueue.items.map(createHandoffAction),
+    notLegalAdviceBoundary: HANDOFF_BOUNDARY
+  };
+
+  return {
+    ...handoffPayload,
+    generatedAt: input.generatedAt ?? new Date().toISOString(),
+    handoffHash: await sha256Hex(stableStringify(handoffPayload))
+  };
+}
+
+export function exportWorkspaceCockpitHandoffJson(handoff: WorkspaceCockpitHandoff): string {
+  return `${JSON.stringify(handoff, null, 2)}\n`;
+}
+
+export function downloadWorkspaceCockpitHandoffJson(filename: string, handoff: WorkspaceCockpitHandoff): void {
+  const blob = new Blob([exportWorkspaceCockpitHandoffJson(handoff)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function createBriefStatus(input: CreateWorkspaceCockpitBriefInput): WorkspaceCockpitBriefStatus {
@@ -188,4 +283,61 @@ function formatHash(hash: string | undefined): string {
 
 function normalizeProjectName(projectName: string): string {
   return projectName.trim() || "This workspace";
+}
+
+function createHandoffNextAction(action: WorkspaceCockpitNextAction): WorkspaceCockpitNextAction {
+  return {
+    target: action.target,
+    priority: action.priority,
+    title: sanitize(action.title),
+    cta: sanitize(action.cta)
+  };
+}
+
+function createHandoffFact(fact: WorkspaceCockpitFact): WorkspaceCockpitFact {
+  return {
+    label: sanitize(fact.label),
+    value: sanitize(fact.value),
+    helper: sanitize(fact.helper),
+    status: fact.status
+  };
+}
+
+function createHandoffAction(item: WorkspaceActionQueue["items"][number]): WorkspaceCockpitHandoffAction {
+  return {
+    id: sanitize(item.id),
+    priority: item.priority,
+    target: item.target,
+    title: sanitize(item.title),
+    cta: sanitize(item.cta),
+    summary: sanitize(item.summary)
+  };
+}
+
+async function sha256Hex(payload: string): Promise<string> {
+  const encoded = new TextEncoder().encode(payload);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", encoded);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function sanitize(value: string): string {
+  return redactDataBoundaryText(value.trim());
 }

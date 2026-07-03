@@ -41,7 +41,13 @@ import type {
   RegulatorySourceReviewSyncResult
 } from "../lib/phase2Types";
 import type { WorkspaceActionItem, WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
-import type { WorkspaceCockpitBrief, WorkspaceCockpitBriefStatus } from "../lib/workspaceCockpitBrief";
+import {
+  createWorkspaceCockpitHandoff,
+  downloadWorkspaceCockpitHandoffJson,
+  type WorkspaceCockpitBrief,
+  type WorkspaceCockpitBriefStatus,
+  type WorkspaceCockpitHandoff
+} from "../lib/workspaceCockpitBrief";
 import type { WorkspaceJourney, WorkspaceJourneyStatus } from "../lib/workspaceJourney";
 
 type RegulatoryCommandCenterProps = {
@@ -74,6 +80,10 @@ type RegulatoryCommandCenterProps = {
   journey: WorkspaceJourney;
   sourceReviewPacket: RegulatorySourceReviewPacket | null;
   manifestHash?: string;
+  exportAllowed: boolean;
+  counselPackVersionCount: number;
+  humanReviewOpenCount: number;
+  humanReviewBlockedCount: number;
   onSourceReviewApiBaseUrlChange: (value: string) => void;
   onSyncSourceReviewLedger: () => Promise<void> | void;
   onSourceApprovalApiBaseUrlChange: (value: string) => void;
@@ -113,6 +123,10 @@ export function RegulatoryCommandCenter({
   journey,
   sourceReviewPacket,
   manifestHash,
+  exportAllowed,
+  counselPackVersionCount,
+  humanReviewOpenCount,
+  humanReviewBlockedCount,
   onSourceReviewApiBaseUrlChange,
   onSyncSourceReviewLedger,
   onSourceApprovalApiBaseUrlChange,
@@ -129,6 +143,8 @@ export function RegulatoryCommandCenter({
   const nextJourneyTarget = journey.summary.nextTarget === "none" ? undefined : journey.summary.nextTarget;
   const [sourceGapTriage, setSourceGapTriage] = useState<SourceEvidenceGapTriage | null>(null);
   const [focusedActionId, setFocusedActionId] = useState<string | null>(null);
+  const [cockpitHandoff, setCockpitHandoff] = useState<WorkspaceCockpitHandoff | null>(null);
+  const [buildingCockpitHandoff, setBuildingCockpitHandoff] = useState(false);
   const sourceGapTriageRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -154,6 +170,32 @@ export function RegulatoryCommandCenter({
     }
 
     onNavigate(item.target);
+  };
+
+  const downloadCockpitHandoff = async () => {
+    setBuildingCockpitHandoff(true);
+
+    try {
+      const handoff = await createWorkspaceCockpitHandoff({
+        projectId: project.id,
+        projectName: project.projectName,
+        riskLevel: audit.riskLevel,
+        riskScore: audit.score,
+        evidenceCount: project.evidenceItems.length,
+        humanReviewOpenCount,
+        humanReviewBlockedCount,
+        manifestHash,
+        exportAllowed,
+        counselPackVersionCount,
+        journey,
+        actionQueue,
+        cockpitBrief
+      });
+      setCockpitHandoff(handoff);
+      downloadWorkspaceCockpitHandoffJson(`lexproof-${project.id}-workspace-cockpit-handoff.json`, handoff);
+    } finally {
+      setBuildingCockpitHandoff(false);
+    }
   };
 
   return (
@@ -194,17 +236,24 @@ export function RegulatoryCommandCenter({
             </div>
           ))}
         </div>
-        {cockpitBrief.nextAction ? (
-          <button
-            type="button"
-            className="secondary"
-            title={cockpitBrief.nextAction.title}
-            onClick={() => onNavigate(cockpitBrief.nextAction!.target)}
-          >
-            <ListChecks size={14} aria-hidden="true" />
-            Open next action
+        <div className="cockpit-handoff-actions">
+          {cockpitHandoff ? <small>Cockpit handoff hash {cockpitHandoff.handoffHash.slice(0, 12)}...</small> : null}
+          {cockpitBrief.nextAction ? (
+            <button
+              type="button"
+              className="secondary"
+              title={cockpitBrief.nextAction.title}
+              onClick={() => onNavigate(cockpitBrief.nextAction!.target)}
+            >
+              <ListChecks size={14} aria-hidden="true" />
+              Open next action
+            </button>
+          ) : null}
+          <button type="button" className="secondary" disabled={buildingCockpitHandoff} onClick={() => void downloadCockpitHandoff()}>
+            <Download size={14} aria-hidden="true" />
+            {buildingCockpitHandoff ? "Building Handoff" : "Download Cockpit Handoff JSON"}
           </button>
-        ) : null}
+        </div>
       </section>
 
       <section className="workspace-journey" aria-label="Workspace Journey">

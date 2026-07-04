@@ -597,6 +597,46 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Manila VASP Custody Review",
+    entityType: "Virtual asset service provider and custody operations team",
+    jurisdictions: ["Philippines"],
+    assetModel:
+      "Philippines VASP, CASP counterparty, virtual asset exchange, transfer, safekeeping, VA custodian, and retail-access review assumptions with BSP counsel routing",
+    userType: "Philippine retail users, compliance reviewers, operations owners, partner banks, and local counsel",
+    custodyModel:
+      "Platform coordinates VA exchange, transfer, hosted custody, wallet security, proof-of-registration checks, transaction monitoring, and recordkeeping placeholders",
+    dataSensitivity:
+      "CDD status summaries, STR workflow metadata, counterparty-risk summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts Philippines BSP VASP/CASP risk-management, custody, AML/CFT, and reporting evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only BSP VASP handoff",
+    operatingStage: "Planned Philippines VASP custody and AML/CFT review before counsel signoff",
+    evidenceItems: [
+      {
+        label: "Philippines BSP source inventory",
+        kind: "CSV",
+        content: "Official-source citation metadata, review date, reviewer notes, and next review date; operational proof remains requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Philippines VASP operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service narrative, reviewer role, partner-bank handoff timing, and counsel routing; detailed registers remain requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Philippines AML/CFT evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic backlog placeholders for compliance reviewers without identity files, wallet secrets, payment records, or customer records.",
+        status: "requested",
+        owner: "Compliance"
+      }
+    ]
+  },
+  {
     projectName: "Thames Cryptoasset AML Review",
     entityType: "Cryptoasset exchange and custody operations team",
     jurisdictions: ["United Kingdom"],

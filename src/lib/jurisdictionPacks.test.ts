@@ -21,6 +21,7 @@ const project: ProjectProfile = {
     "Thailand",
     "ID",
     "Malaysia",
+    "PH",
     "Switzerland",
     "Germany",
     "United Arab Emirates",
@@ -68,6 +69,16 @@ const project: ProjectProfile = {
         "Malaysia digital asset exchange, digital broker, RMO-DAX, DAX operator, Digital Asset Custodian, DAC registration route, IEO assumptions, SC Malaysia regulated-player source mapping, official app and website channels, tradeable asset, Shariah review assumptions, custody safeguarding, Bank Negara Malaysia, BNM digital currency exchanger, reporting institution, AML CFT, customer identification, CDD EDD, beneficial ownership, STR, compliance officer, recordkeeping, transparency, no raw KYC.",
       status: "verified",
       owner: "Compliance"
+    },
+    {
+      id: "philippines-register",
+      label: "Philippines BSP VASP custody and AML/CFT risk-management register",
+      kind: "Register",
+      content:
+        "Philippines VASP, Philippine VASP, Bangko Sentral, BSP, Certificate of Authority, money service business, virtual asset service provider, crypto asset service provider, CASP, VA exchange, VA transfer, VA custodian, safekeeping, wallet security, retail access, Philippines AML CFT, BSP AML, risk assessment, due diligence, EDD, proof of registration, adverse media, FATF Recommendation 16, payment transparency, transaction monitoring, suspicious transaction report, STR, recordkeeping, staff training, no raw KYC.",
+      source: "regulatory control: control-ph-bsp-vasp-casp-risk-management-aml",
+      status: "verified",
+      owner: "Compliance"
     }
   ]
 };
@@ -92,6 +103,7 @@ describe("createJurisdictionPacks", () => {
         "Thailand",
         "Indonesia",
         "Malaysia",
+        "Philippines",
         "Switzerland",
         "Germany",
         "United Arab Emirates",
@@ -297,6 +309,28 @@ describe("createJurisdictionPacks", () => {
           title: "BNM digital currency AML/CFT reporting-institution control",
           status: "evidence-ready",
           evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+        })
+      ])
+    );
+
+    const philippinesPack = packs.find((pack) => pack.jurisdiction === "Philippines");
+    expect(philippinesPack).toMatchObject({
+      jurisdiction: "Philippines",
+      localCounselRoute: {
+        recommendedRole: "Philippines virtual asset / AML counsel"
+      }
+    });
+    expect(philippinesPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "BSP VASP registration, activity, and custody-scope control",
+          status: "evidence-ready",
+          evidenceLabels: expect.arrayContaining(["Philippines BSP VASP custody and AML/CFT risk-management register"])
+        }),
+        expect.objectContaining({
+          title: "BSP AML/CFT due-diligence, monitoring, and STR control",
+          status: "evidence-ready",
+          evidenceLabels: expect.arrayContaining(["Philippines BSP VASP custody and AML/CFT risk-management register"])
         })
       ])
     );

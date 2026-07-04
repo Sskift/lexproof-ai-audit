@@ -290,6 +290,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "Philippines BSP VASP custody and AML/CFT risk-management register",
+        kind: "Register",
+        content:
+          "Requested: summarize Philippines VASP, Philippine VASP, Bangko Sentral, BSP, Certificate of Authority, money service business route, virtual asset service provider, crypto asset service provider, CASP, VA exchange, VA transfer, VA custodian, safekeeping, wallet security, offshore VASP, retail access, Philippines AML CFT, BSP AML, MTP program, AML/CFT/CTPF risk assessment, due diligence, EDD, proof of registration, adverse media, FATF Recommendation 16 payment transparency, transaction monitoring, suspicious transaction report, STR, recordkeeping, staff training, reviewer owner, and no raw KYC, wallet secrets, credentials, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-ph-bsp-vasp-casp-risk-management-aml",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "US FinCEN CVC MSB and BSA transfer control register",
         kind: "Register",
         content:

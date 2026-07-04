@@ -116,6 +116,7 @@ describe("evidence templates", () => {
         "Thailand digital asset custody and AML/CDD register",
         "Indonesia OJK digital financial asset trading and whitelist register",
         "Malaysia digital asset exchange custody and AML/CFT register",
+        "Philippines BSP VASP custody and AML/CFT risk-management register",
         "US FinCEN CVC MSB and BSA transfer control register",
         "New York NYDFS BitLicense and custody customer-protection register",
         "US GENIUS Act permitted issuer and reserve register",
@@ -142,6 +143,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-th-sec-digital-asset-business-custody-aml");
     expect(serializedSources).toContain("regulatory control: control-id-ojk-digital-financial-asset-crypto-trading");
     expect(serializedSources).toContain("regulatory control: control-my-sc-bnm-digital-asset-exchange-custody-aml");
+    expect(serializedSources).toContain("regulatory control: control-ph-bsp-vasp-casp-risk-management-aml");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");

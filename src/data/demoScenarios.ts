@@ -370,6 +370,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "philippines-vasp-custody-source-path",
+    projectName: "Manila VASP Custody Review",
+    title: "Philippines VASP custody review",
+    summary:
+      "Philippines BSP VASP/CASP risk-management review with registration, Certificate of Authority, VA exchange, transfer, safekeeping, wallet security, AML/CFT, due-diligence, transaction-monitoring, STR, recordkeeping, retail-access, and no-raw-KYC evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Philippines BSP source graph",
+      "Review VASP registration, activity, custody, and wallet-security evidence gaps",
+      "Check AML/CFT, due-diligence, monitoring, STR, recordkeeping, and no-raw-KYC evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Philippines", "BSP", "VASP", "AML/CFT"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "uk-cryptoasset-aml-source-path",
     projectName: "Thames Cryptoasset AML Review",
     title: "UK cryptoasset AML review",

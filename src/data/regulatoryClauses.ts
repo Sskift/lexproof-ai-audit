@@ -2520,6 +2520,100 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "ph-bsp-vasp-casp-risk-management-aml",
+    jurisdiction: "Philippines",
+    regulator: "Bangko Sentral ng Pilipinas",
+    sourceName: "Circular No. 1108 Guidelines for Virtual Asset Service Providers and Memorandum No. M-2026-003",
+    sourceUrl: "https://www.bsp.gov.ph/Regulations/Issuances/2026/M-2026-003.pdf",
+    citation:
+      "Bangko Sentral ng Pilipinas Circular No. 1108, Guidelines for Virtual Asset Service Providers, 26 January 2021; BSP Memorandum No. M-2026-003, Reminders on Sound Risk Management Practices when Dealing with Virtual Asset Service Providers, 2026",
+    topic: "activity-scope",
+    summary:
+      "Prepare Philippines VASP, CASP counterparty, BSP registration or Certificate of Authority, VA exchange, transfer, safekeeping, VA custodian, wallet security, AML/CFT, risk assessment, due diligence, transaction monitoring, STR, recordkeeping, retail access, and no-raw-KYC evidence for Philippines counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "philippines",
+      "philippine",
+      "bangko sentral",
+      "bsp",
+      "virtual asset service provider",
+      "vasp",
+      "crypto asset service provider",
+      "casp",
+      "certificate of authority",
+      "money service business",
+      "va custodian",
+      "safekeeping",
+      "aml/cft",
+      "str",
+      "offshore vasp"
+    ],
+    evidenceRequests: [
+      {
+        id: "ph-bsp-vasp-registration-activity-custody-scope",
+        title: "Philippines BSP VASP registration, activity, and custody-scope evidence",
+        reason:
+          "Philippines virtual asset review needs BSP registration or Certificate of Authority route, VASP/CASP counterparty status, VA exchange, transfer, safekeeping or administration scope, VA custodian assumptions, wallet security owner, capital and operational-control handoff, and retail/offshore access controls before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "philippines vasp",
+          "philippine vasp",
+          "bangko sentral",
+          "bsp",
+          "certificate of authority",
+          "money service business",
+          "virtual asset service provider",
+          "crypto asset service provider",
+          "casp",
+          "va exchange",
+          "va transfer",
+          "va custodian",
+          "safekeeping",
+          "wallet security",
+          "offshore vasp",
+          "retail access"
+        ]
+      },
+      {
+        id: "ph-bsp-aml-cft-due-diligence-monitoring",
+        title: "Philippines BSP AML/CFT due-diligence, monitoring, and STR controls",
+        reason:
+          "Counsel and compliance review need VASP counterparty risk assessment, AML/CFT/CTPF process mapping, standard due diligence or EDD, proof-of-registration validation, adverse-media scan, FATF Recommendation 16/payment transparency, transaction monitoring, STR workflow, recordkeeping, staff training, and no-raw-KYC evidence.",
+        priority: "P1",
+        keywords: [
+          "philippines aml cft",
+          "bsp aml",
+          "mtp program",
+          "aml cft ctpf",
+          "risk assessment",
+          "due diligence",
+          "edd",
+          "proof of registration",
+          "adverse media",
+          "fatf recommendation 16",
+          "payment transparency",
+          "transaction monitoring",
+          "suspicious transaction report",
+          "str",
+          "record keeping",
+          "recordkeeping",
+          "staff training",
+          "no raw kyc"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Philippines VASP, CASP counterparty, BSP registration or Certificate of Authority, VA exchange, transfer, safekeeping, VA custodian, wallet-security, retail-access, or offshore-VASP assumptions need Philippines counsel review?",
+      "What AML/CFT/CTPF, due-diligence, EDD, proof-of-registration, adverse-media, payment-transparency, transaction-monitoring, STR, recordkeeping, staff-training, and no-raw-KYC evidence should be prepared before counsel or compliance handoff?"
+    ],
+    localCounselRole: "Philippines virtual asset / AML counsel",
+    effectiveAsOf: "2026-01-01",
+    lastReviewedAt: "2026-07-04",
+    reviewerNotes:
+      "Source metadata reviewed against BSP Circular No. 1108 for VASP activities, Certificate of Authority/MSB route, safekeeping and VA custodian scope, wallet security, internal control, AML, consumer-protection, and risk-management evidence routing, plus BSP Memorandum No. M-2026-003 for BSFI dealings with authorized VASPs/CASPs, proof-of-registration validation, retail/offshore VASP access, due diligence/EDD, payment transparency, transaction monitoring, STR, recordkeeping, and staff-training metadata; route interpretation to Philippines local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

@@ -48,6 +48,7 @@ type PackTemplate = {
     | "Thailand"
     | "Indonesia"
     | "Malaysia"
+    | "Philippines"
     | "Switzerland"
     | "Germany"
     | "United Arab Emirates"
@@ -655,6 +656,64 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "compliance officer",
           "recordkeeping",
           "transparency"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Philippines",
+    aliases: ["philippines", "philippine", "ph"],
+    summary:
+      "Prepare BSP VASP registration, CASP counterparty, VA exchange/transfer/safekeeping, VA custodian, wallet security, AML/CFT, due-diligence, transaction-monitoring, STR, recordkeeping, and no-raw-KYC handoff controls for the Philippines.",
+    recommendedRole: "Philippines virtual asset / AML counsel",
+    controls: [
+      {
+        id: "ph-bsp-vasp-registration-custody-control",
+        title: "BSP VASP registration, activity, and custody-scope control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "control-ph-bsp-vasp-casp-risk-management-aml",
+          "philippines vasp",
+          "philippine vasp",
+          "bangko sentral",
+          "bsp",
+          "certificate of authority",
+          "money service business",
+          "virtual asset service provider",
+          "crypto asset service provider",
+          "casp",
+          "va exchange",
+          "va transfer",
+          "va custodian",
+          "safekeeping",
+          "wallet security",
+          "retail access"
+        ]
+      },
+      {
+        id: "ph-bsp-aml-cft-monitoring-control",
+        title: "BSP AML/CFT due-diligence, monitoring, and STR control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "control-ph-bsp-vasp-casp-risk-management-aml",
+          "philippines aml cft",
+          "bsp aml",
+          "risk assessment",
+          "due diligence",
+          "edd",
+          "proof of registration",
+          "adverse media",
+          "fatf recommendation 16",
+          "payment transparency",
+          "transaction monitoring",
+          "suspicious transaction report",
+          "str",
+          "recordkeeping",
+          "staff training"
         ]
       }
     ]

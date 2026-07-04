@@ -456,11 +456,12 @@ describe("validateDemoScenarioLibrary", () => {
     expect(indiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
-  it("keeps seeded Thailand, Indonesia, and Malaysia source paths for APAC digital asset demos", () => {
+  it("keeps seeded Thailand, Indonesia, Malaysia, and Philippines source paths for APAC digital asset demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const thailandScenario = findDemoScenarioById(demoScenarios, "thailand-digital-asset-custody-source-path");
     const indonesiaScenario = findDemoScenarioById(demoScenarios, "indonesia-ojk-crypto-trading-source-path");
     const malaysiaScenario = findDemoScenarioById(demoScenarios, "malaysia-digital-asset-exchange-source-path");
+    const philippinesScenario = findDemoScenarioById(demoScenarios, "philippines-vasp-custody-source-path");
 
     expect(result).toEqual({ valid: true, errors: [] });
     expect(thailandScenario).toEqual(
@@ -516,6 +517,24 @@ describe("validateDemoScenarioLibrary", () => {
       ])
     );
     expect(malaysiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+
+    expect(philippinesScenario).toEqual(
+      expect.objectContaining({
+        title: "Philippines VASP custody review",
+        projectName: "Manila VASP Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Philippines", "BSP", "VASP", "AML/CFT"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(philippinesScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Philippines BSP source graph",
+        "Review VASP registration, activity, custody, and wallet-security evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(philippinesScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
   it("keeps a seeded UK cryptoasset AML path for FCA source demos", () => {

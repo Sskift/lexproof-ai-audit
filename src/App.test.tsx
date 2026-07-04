@@ -1224,6 +1224,22 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Philippines VASP custody scenario with BSP evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Philippines VASP custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Manila VASP Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/Circular No\. 1108, Guidelines for Virtual Asset Service Providers/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Philippines virtual asset \/ AML counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Philippines BSP VASP registration, activity, and custody-scope evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Philippines BSP AML\/CFT due-diligence, monitoring, and STR controls/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the UK cryptoasset AML scenario with FCA registration and Travel Rule gaps", async () => {
     render(<App />);
 

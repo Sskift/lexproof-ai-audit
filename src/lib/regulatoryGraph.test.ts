@@ -2774,4 +2774,82 @@ describe("createRegulatoryGraph", () => {
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
+
+  it("matches Philippines BSP VASP source controls through the PH jurisdiction alias without legal conclusions", () => {
+    const project: ProjectProfile = {
+      ...baseProject,
+      id: "project-ph-vasp",
+      projectName: "Manila VASP Custody Review",
+      jurisdictions: ["PH"],
+      assetModel: "Philippines VASP, CASP counterparty, VA exchange, transfer, safekeeping, and VA custodian review",
+      userType: "Philippine retail users and compliance reviewers",
+      custodyModel: "Platform controls hosted wallets, VA transfer approval, wallet security, and custody operations",
+      dataSensitivity: "CDD status summaries, STR workflow metadata, and customer records excluded",
+      aiUsage: "AI drafts BSP VASP/CASP evidence summaries for human review",
+      operatingStage: "Planned Philippines public launch before counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ph-bsp-vasp-casp-risk-management-aml")).toMatchObject({
+      jurisdiction: "Philippines",
+      regulator: "Bangko Sentral ng Pilipinas",
+      citation:
+        "Bangko Sentral ng Pilipinas Circular No. 1108, Guidelines for Virtual Asset Service Providers, 26 January 2021; BSP Memorandum No. M-2026-003, Reminders on Sound Risk Management Practices when Dealing with Virtual Asset Service Providers, 2026",
+      sourceUrl: "https://www.bsp.gov.ph/Regulations/Issuances/2026/M-2026-003.pdf",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "Philippines virtual asset / AML counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Philippines BSP VASP registration, activity, and custody-scope evidence",
+        "Philippines BSP AML/CFT due-diligence, monitoring, and STR controls"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Philippines")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Philippines virtual asset / AML counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Philippines BSP VASP source controls covered when template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `ph-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...baseProject,
+      id: "project-ph-vasp-covered",
+      projectName: "Manila VASP Custody Review",
+      jurisdictions: ["Philippines"],
+      assetModel: "Philippines VASP, CASP counterparty, VA exchange, transfer, safekeeping, and VA custodian review",
+      userType: "Philippine retail users and compliance reviewers",
+      custodyModel: "Platform controls hosted wallets, VA transfer approval, wallet security, and custody operations",
+      dataSensitivity: "CDD status summaries, STR workflow metadata, and customer records excluded",
+      aiUsage: "AI drafts BSP VASP/CASP evidence summaries for human review",
+      operatingStage: "Planned Philippines public launch before counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "ph-bsp-vasp-casp-risk-management-aml")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Philippines BSP VASP custody and AML/CFT risk-management register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "ph-bsp-vasp-casp-risk-management-aml" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
 });

@@ -2,11 +2,13 @@ import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
+import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type ExportSafetyArtifactCategory =
   | "evidence"
   | "counsel-export"
+  | "model-governance"
   | "source-lineage"
   | "review-workflow"
   | "integration-readiness"
@@ -225,6 +227,29 @@ export function createEvidenceVaultLineageDigestExportArtifact(
   };
 }
 
+export function createModelGatewayEvaluationExportArtifact(
+  evaluation: ModelGatewayEvaluationRecord | null | undefined
+): ExportSafetyArtifactInput {
+  const hasEvaluation = Boolean(evaluation?.runId);
+
+  return {
+    id: "model-gateway-evaluation",
+    label: "Model Gateway Evaluation JSON",
+    category: "model-governance",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasEvaluation,
+    artifactHash: selectModelGatewayEvaluationHash(evaluation),
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings: createModelGatewayEvaluationWarnings(evaluation),
+    recoveryAction: createModelGatewayEvaluationRecoveryAction(evaluation),
+    notLegalAdviceBoundary:
+      evaluation?.notLegalAdviceBoundary ??
+      "Not legal advice. Model Gateway evaluation records are audit preparation metadata only."
+  };
+}
+
 export function createDemoRunbookExportArtifact(
   summary: ExportSafetyDemoRunbookSummary | null | undefined
 ): ExportSafetyArtifactInput {
@@ -255,6 +280,51 @@ export function createDemoRunbookExportArtifact(
     notLegalAdviceBoundary:
       summary?.notLegalAdviceBoundary ?? "Not legal advice. Demo runbooks are audit preparation demo metadata only."
   };
+}
+
+function createModelGatewayEvaluationWarnings(
+  evaluation: ModelGatewayEvaluationRecord | null | undefined
+): string[] {
+  if (!evaluation) {
+    return [];
+  }
+
+  return [
+    evaluation.status !== "completed"
+      ? `Model Gateway Evaluation status is ${evaluation.status}; resolve remediation before model-output reliance.`
+      : "",
+    evaluation.humanReviewStatus !== "reviewed"
+      ? `Model Gateway Evaluation human review status is ${evaluation.humanReviewStatus}; route through Human Review before export reliance.`
+      : ""
+  ].filter(Boolean);
+}
+
+function createModelGatewayEvaluationRecoveryAction(
+  evaluation: ModelGatewayEvaluationRecord | null | undefined
+): string {
+  if (!evaluation) {
+    return "Run Secure Review Journey to create a metadata-only Model Gateway Evaluation before relying on model output.";
+  }
+
+  if (evaluation.status === "blocked" || evaluation.status === "failed") {
+    return "Resolve Model Gateway remediation before treating model output as review material.";
+  }
+
+  if (evaluation.humanReviewStatus !== "reviewed") {
+    return "Route Model Gateway Evaluation through Human Review before relying on model output.";
+  }
+
+  return "Keep Model Gateway Evaluation JSON with the final model receipt handoff.";
+}
+
+function selectModelGatewayEvaluationHash(
+  evaluation: ModelGatewayEvaluationRecord | null | undefined
+): string | undefined {
+  if (!evaluation) {
+    return undefined;
+  }
+
+  return isSha256(evaluation.hashes.responseHash) ? evaluation.hashes.responseHash : evaluation.hashes.payloadHash;
 }
 
 function normalizeArtifact(
@@ -383,6 +453,10 @@ function sanitizeHash(value?: string): string | undefined {
 
   const redacted = sanitize(value ?? "").toLowerCase();
   return /^[a-f0-9]{8,128}$/.test(redacted) ? redacted : undefined;
+}
+
+function isSha256(value: string): boolean {
+  return /^[a-f0-9]{64}$/i.test(value.trim());
 }
 
 function unique(values: string[]): string[] {

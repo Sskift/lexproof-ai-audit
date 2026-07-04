@@ -3624,6 +3624,13 @@ describe("App", () => {
       expect(modelEvaluation.getByText(/Source evidence eeeeeeeeeeee/i)).toBeInTheDocument();
       expect(modelEvaluation.getByText(/Human review needs-review/i)).toBeInTheDocument();
       expect(modelEvaluation.getByRole("button", { name: /Download Model Evaluation JSON/i })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+      const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
+      await waitFor(() => {
+        expect(exportInventory.getByText(/Model Gateway Evaluation JSON/i)).toBeInTheDocument();
+        expect(exportInventory.getByText(/Route Model Gateway Evaluation through Human Review before relying on model output/i)).toBeInTheDocument();
+      });
+      expect(exportInventory.getAllByText(/Hash dddddddddddd/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     } finally {
       vi.unstubAllGlobals();

@@ -211,7 +211,8 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show **Judge Handoff Bundle** with one bundle hash plus Submission Pack JSON, Demo Runbook JSON, Export Safety Inventory JSON, and Counsel Handoff Checklist JSON artifact hashes/statuses.
    - If the bundle is not ready, click **Open Counsel Pack** or **Open Judge Demo Readiness** from the recovery actions to show the handoff blocker routes to a real workspace surface. Not legal advice.
    - Click **Download Judge Handoff Bundle JSON** to show a single metadata-only packet for evaluator handoff. Not legal advice.
-   - Show **Export Safety Inventory** with inventory hash, boundary status, export handoff allowed/blocked state, artifact statuses, Demo Runbook JSON hash/status, Evidence Vault Lineage Digest hash/status after vault sync, Source Freshness Board hash/status when available, and the Not legal advice boundary.
+   - Show **Export Safety Inventory** with inventory hash, boundary status, export handoff allowed/blocked state, artifact statuses, Model Gateway Evaluation hash/status after Secure Review Journey, Demo Runbook JSON hash/status, Evidence Vault Lineage Digest hash/status after vault sync, Source Freshness Board hash/status when available, and the Not legal advice boundary.
+   - Model evaluation inventory screenshot: `docs/assets/screenshots/export-safety-model-gateway-evaluation.jpg`.
    - Vault lineage artifact screenshot: `docs/assets/screenshots/export-safety-vault-lineage-digest.png`.
    - Click **Download Export Inventory JSON** to show the metadata-only redacted handoff inventory.
    - Show the generated **Submission Pack** with pack hash, manifest hash, Regulatory Source Pack hash, Regulatory Source Coverage hash/status, Demo Runbook hash, export safety summary, demo readiness, required assets, hackathon mapping, and known limitations.

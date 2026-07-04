@@ -106,6 +106,7 @@ import {
   createDemoRunbookExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
+  createModelGatewayEvaluationExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   type ExportSafetyArtifactInput,
   type ExportSafetyInventory
@@ -141,6 +142,7 @@ import {
   defaultModelGatewayProviderAdapters,
   type ModelGatewayProviderPolicyReport
 } from "./lib/modelGatewayProviderPolicy";
+import type { ModelGatewayEvaluationRecord } from "./lib/modelGatewayEvaluation";
 import {
   createModelGatewaySecretPolicyReport,
   type ModelGatewaySecretPolicyDraft,
@@ -384,6 +386,7 @@ export default function App() {
   const [demoRunbook, setDemoRunbook] = useState<DemoRunbook | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
+  const [modelGatewayEvaluation, setModelGatewayEvaluation] = useState<ModelGatewayEvaluationRecord | null>(null);
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
   const [aiEvents, setAIEvents] = useState<AIEventRecord[]>(() => loadStoredAIEvents());
   const [modelIntakeSummary, setModelIntakeSummary] = useState<ModelIntakeSummary | null>(null);
@@ -491,6 +494,9 @@ export default function App() {
     () => sourceApprovalRecords.filter((record) => record.workspaceId === project.id),
     [project.id, sourceApprovalRecords]
   );
+  useEffect(() => {
+    setModelGatewayEvaluation(null);
+  }, [project.id]);
   const regulatoryControlMatrix = useMemo(
     () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
     [regulatoryGraph, regulatorySourceReview]
@@ -1230,6 +1236,7 @@ export default function App() {
         recoveryAction: "Use the command center Source Review Packet export when source refresh actions need handoff.",
         notLegalAdviceBoundary: "Not legal advice. Source review packets are audit preparation source-lineage metadata only."
       },
+      createModelGatewayEvaluationExportArtifact(modelGatewayEvaluation),
       createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard),
       {
         id: "local-counsel-routing",
@@ -1297,6 +1304,7 @@ export default function App() {
     integrationEnablementDossier,
     localCounselRoutingPlan,
     manifest?.bundleHash,
+    modelGatewayEvaluation,
     regulatorySourcePack,
     regulatorySourceReviewPacket,
     sourceFreshnessBoard,
@@ -2258,6 +2266,7 @@ export default function App() {
             humanReviewOwner={modelIntakeProfile.humanReviewOwner}
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
+            onModelGatewayEvaluationChange={setModelGatewayEvaluation}
           />
 
           <SecurityReviewChecklistPanel report={securityReviewChecklist} onNavigate={setActiveTab} />

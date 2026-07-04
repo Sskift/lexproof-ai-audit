@@ -5,10 +5,12 @@ import {
   createDemoRunbookExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createSourceFreshnessBoardExportArtifact,
+  createModelGatewayEvaluationExportArtifact,
   exportSafetyInventoryJson,
   type ExportSafetyArtifactInput
 } from "./exportSafetyInventory";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
+import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
@@ -198,6 +200,43 @@ describe("createExportSafetyInventory", () => {
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key|source-note body/i);
   });
 
+  it("adds Model Gateway Evaluation as a metadata-only governance artifact that surfaces human review state", async () => {
+    const evaluation = modelGatewayEvaluation();
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-model-governance",
+      projectName: "Model Governance Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createModelGatewayEvaluationExportArtifact(evaluation)],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "model-gateway-evaluation");
+    const json = exportSafetyInventoryJson(inventory);
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Model Gateway Evaluation JSON",
+        category: "model-governance",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: evaluation.hashes.responseHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Route Model Gateway Evaluation through Human Review before relying on model output.",
+        notLegalAdviceBoundary: "Not legal advice. Model Gateway evaluation records are audit preparation metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Model Gateway Evaluation human review status is needs-review; route through Human Review before export reliance."
+    ]);
+    expect(inventory.exportHandoffAllowed).toBe(true);
+    expect(json).toContain("Model Gateway Evaluation JSON");
+    expect(json).toContain("Not legal advice");
+    expect(json).not.toMatch(/\braw model payload\b|\blegal approval\b/i);
+  });
+
   it("adds Demo Runbook as a metadata-only required submission artifact with runbook hash", async () => {
     const inventory = await createExportSafetyInventory({
       workspaceId: "workspace-demo-runbook",
@@ -367,6 +406,40 @@ function evidenceVaultLineageDigest(): EvidenceVaultLineageDigest {
     nextActions: ["Create metadata-only replacement records for rejected vault evidence before final handoff."],
     digestHash: "6".repeat(64),
     notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+  };
+}
+
+function modelGatewayEvaluation(overrides: Partial<ModelGatewayEvaluationRecord> = {}): ModelGatewayEvaluationRecord {
+  return {
+    evaluationVersion: "lexproof-model-gateway-evaluation-v1",
+    runId: "model-gateway-run-export",
+    workspaceId: "workspace-model-governance",
+    status: "completed",
+    provider: "mock",
+    providerLabel: "Traceable mock reviewer",
+    model: "lexproof-mock",
+    purpose: "Create audit-prep model receipt metadata. Not legal advice.",
+    adapterMode: "local-mock",
+    credentialPolicy: "no credentials accepted",
+    secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
+    allowedDataClasses: ["audit-prep metadata", "evidence hashes"],
+    redactionStatus: "clean",
+    humanReviewStatus: "needs-review",
+    requiresHumanReview: true,
+    retryState: "not-needed",
+    attempt: 1,
+    maxAttempts: 1,
+    hashes: {
+      payloadHash: "a".repeat(64),
+      responseHash: "b".repeat(64),
+      sourceEvidenceHash: "c".repeat(64)
+    },
+    remediationSteps: [],
+    reviewerAction: "send-to-human-review",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    completedAt: "2026-07-01T00:00:01.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Model Gateway evaluation records are audit preparation metadata only.",
+    ...overrides
   };
 }
 

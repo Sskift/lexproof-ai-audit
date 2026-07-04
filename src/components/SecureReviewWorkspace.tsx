@@ -32,6 +32,7 @@ type SecureReviewWorkspaceProps = {
   humanReviewOwner: string;
   manifestHash?: string;
   onNavigate: (target: "wizard" | "ai" | "model" | "review" | "evidence" | "counsel") => void;
+  onModelGatewayEvaluationChange?: (evaluation: ModelGatewayEvaluationRecord | null) => void;
 };
 
 type SecureJourneyErrorState = {
@@ -54,7 +55,8 @@ export function SecureReviewWorkspace({
   humanReviewOpenCount,
   humanReviewOwner,
   manifestHash,
-  onNavigate
+  onNavigate,
+  onModelGatewayEvaluationChange
 }: SecureReviewWorkspaceProps) {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [journeyStatus, setJourneyStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
@@ -68,6 +70,7 @@ export function SecureReviewWorkspace({
     setJourneyStatus("running");
     setJourneyError(null);
     setJourneyResult(null);
+    onModelGatewayEvaluationChange?.(null);
 
     try {
       const result = await runSecureReviewJourney({
@@ -79,10 +82,12 @@ export function SecureReviewWorkspace({
         humanReviewOwner
       });
       setJourneyResult(result);
+      onModelGatewayEvaluationChange?.(createModelGatewayEvaluationRecord(result.modelGatewayRun));
       setJourneyStatus("complete");
     } catch (error) {
       setJourneyStatus("error");
       setJourneyError(toSecureJourneyErrorState(error));
+      onModelGatewayEvaluationChange?.(null);
     }
   };
 

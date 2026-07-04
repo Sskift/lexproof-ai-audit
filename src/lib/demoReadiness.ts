@@ -27,6 +27,7 @@ export type DemoApiPreflight =
 
 export type DemoApiRouteCheck = {
   id:
+    | "api-preflight-report"
     | "model-gateway-adapters"
     | "model-gateway-provider-policy"
     | "evidence-vault-manifest"
@@ -142,6 +143,18 @@ const apiRoutePreflightSpecs: Array<{
   validate: (payload: unknown) => boolean;
   readyDetail: string;
 }> = [
+  {
+    id: "api-preflight-report",
+    label: "API Preflight report",
+    path: "/api/preflight",
+    validate: (payload) =>
+      isRecord(payload) &&
+      payload.reportVersion === "lexproof-api-preflight-v1" &&
+      payload.status === "ready" &&
+      payload.externalSideEffectsAllowed === false &&
+      typeof payload.reportHash === "string",
+    readyDetail: "API preflight report is reachable with a stable metadata hash."
+  },
   {
     id: "model-gateway-adapters",
     label: "Model Gateway adapters",

@@ -13,6 +13,20 @@ const screenshotExtensionPattern = /\.(?:png|jpe?g|webp)$/i;
 const demoPreflightWorkspaceId = "demo-smoke-preflight";
 const apiRoutePreflightSpecs = [
   {
+    id: "api-preflight-report",
+    label: "API Preflight report",
+    path: "/api/preflight",
+    validate: (payload) =>
+      Boolean(
+        payload &&
+          payload.reportVersion === "lexproof-api-preflight-v1" &&
+          payload.status === "ready" &&
+          payload.externalSideEffectsAllowed === false &&
+          typeof payload.reportHash === "string"
+      ),
+    readyDetail: "API preflight report is reachable with a stable metadata hash."
+  },
+  {
     id: "model-gateway-adapters",
     label: "Model Gateway adapters",
     path: "/api/model-gateway/adapters",

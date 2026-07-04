@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { createApiPreflightReport, type ApiPreflightReport } from "../src/lib/apiPreflight.js";
 
 export type HealthResponse = {
   status: "ok";
@@ -30,4 +31,6 @@ export function registerSystemRoutes(server: FastifyInstance): void {
     },
     notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
   }));
+
+  server.get("/api/preflight", async (): Promise<ApiPreflightReport> => createApiPreflightReport());
 }

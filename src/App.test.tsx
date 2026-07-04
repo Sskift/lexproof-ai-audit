@@ -1405,6 +1405,7 @@ describe("App", () => {
       expect(readiness.getAllByText(/lexproof-phase-2-backend-v1/i).length).toBeGreaterThan(0);
       expect(readiness.getByText(/modelGateway: mock-run-ready/i)).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/preflight", { method: "GET" });
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/reviews/queue", {
         method: "GET"
       });
@@ -5238,6 +5239,19 @@ function createDemoApiMockPayload(url: string): unknown {
         auditLog: "repository-ready"
       },
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    };
+  }
+  if (url.endsWith("/api/preflight")) {
+    return {
+      reportVersion: "lexproof-api-preflight-v1",
+      status: "ready",
+      routeFamilyCount: 7,
+      routeFamilies: [],
+      implementedRouteCount: 24,
+      implementedRoutes: [],
+      externalSideEffectsAllowed: false,
+      reportHash: "a".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. API preflight reports are audit preparation readiness metadata only."
     };
   }
   if (url.endsWith("/api/model-gateway/adapters")) {

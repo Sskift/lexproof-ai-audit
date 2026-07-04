@@ -312,12 +312,13 @@ describe("demo readiness", () => {
         expect.objectContaining({
           status: "ready",
           routeChecks: expect.arrayContaining([
+            expect.objectContaining({ id: "api-preflight-report", status: "ready" }),
             expect.objectContaining({ id: "evidence-vault-manifest", status: "ready" }),
             expect.objectContaining({ id: "integration-policy-evaluations", status: "ready" })
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(7);
+      expect(apiCheck.routeChecks).toHaveLength(8);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -336,6 +337,7 @@ describe("demo readiness", () => {
     });
 
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/preflight", { method: "GET" });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/model-gateway/adapters", { method: "GET" });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-manifest", {
       method: "GET"
@@ -353,6 +355,10 @@ describe("demo readiness", () => {
       ],
       routeChecks: expect.arrayContaining([
         expect.objectContaining({
+          id: "api-preflight-report",
+          status: "ready"
+        }),
+        expect.objectContaining({
           id: "model-gateway-adapters",
           status: "ready"
         }),
@@ -364,7 +370,7 @@ describe("demo readiness", () => {
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(7);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(8);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -422,6 +428,19 @@ function createJsonResponse(payload: unknown, status: number): Response {
 function createDemoApiPayload(url: string): unknown {
   if (url.endsWith("/api/health")) {
     return healthResponse;
+  }
+  if (url.endsWith("/api/preflight")) {
+    return {
+      reportVersion: "lexproof-api-preflight-v1",
+      status: "ready",
+      routeFamilyCount: 7,
+      routeFamilies: [],
+      implementedRouteCount: 24,
+      implementedRoutes: [],
+      externalSideEffectsAllowed: false,
+      reportHash: "a".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. API preflight reports are audit preparation readiness metadata only."
+    };
   }
   if (url.endsWith("/api/model-gateway/adapters")) {
     return [];

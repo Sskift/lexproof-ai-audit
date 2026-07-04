@@ -21,6 +21,10 @@ import {
 } from "../lib/counselPackVersions";
 import type { CounselPackTemplate, CounselPackTemplateId } from "../lib/counselPackTemplates";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
+import {
+  createCounselPackExportRecordReceipt,
+  downloadCounselPackExportRecordReceiptJson
+} from "../lib/counselPackExportRecordReceipt";
 import type { CounselQuestion } from "../lib/counselQuestions";
 import type { DataBoundaryReport } from "../lib/dataBoundary";
 import type { SubmissionFit } from "../lib/auditEngine";
@@ -239,6 +243,7 @@ export function CounselPackPanel({
 
       <CounselPackVersionsPanel projectName={projectName} versions={counselPackVersions} />
       <ServerExportRecordsPanel
+        projectName={projectName}
         apiBaseUrl={serverExportApiBaseUrl}
         error={serverExportError}
         isCreating={isCreatingServerExport}
@@ -505,6 +510,7 @@ function TemplateList({ title, items }: { title: string; items: string[] }) {
 }
 
 function ServerExportRecordsPanel({
+  projectName,
   apiBaseUrl,
   error,
   isCreating,
@@ -514,6 +520,7 @@ function ServerExportRecordsPanel({
   onApiBaseUrlChange,
   onCreate
 }: {
+  projectName: string;
   apiBaseUrl: string;
   error: ServerExportErrorState | null;
   isCreating: boolean;
@@ -523,6 +530,14 @@ function ServerExportRecordsPanel({
   onApiBaseUrlChange: (value: string) => void;
   onCreate: () => Promise<void> | void;
 }) {
+  const downloadReceipt = async (record: CounselPackExportRecord) => {
+    const receipt = await createCounselPackExportRecordReceipt(record);
+    downloadCounselPackExportRecordReceiptJson(
+      `${slug(projectName)}-server-export-v${record.version}-receipt.json`,
+      receipt
+    );
+  };
+
   return (
     <section className="server-export-panel">
       <div className="panel-title compact-title">
@@ -580,6 +595,10 @@ function ServerExportRecordsPanel({
                 <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
               </div>
               <small>{record.notLegalAdviceBoundary}</small>
+              <button type="button" className="secondary" onClick={() => void downloadReceipt(record)}>
+                <Download size={16} aria-hidden="true" />
+                Download Server Export Receipt JSON
+              </button>
             </article>
           ))}
         </div>

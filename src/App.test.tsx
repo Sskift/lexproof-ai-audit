@@ -4967,6 +4967,19 @@ describe("App", () => {
   }, 20000);
 
   it("creates server-side Counsel Pack export records from version metadata", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:counsel-pack-export-receipt";
+    });
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
       expect(path).toMatch(/https:\/\/api\.lexproof\.test\/api\/workspaces\/.+\/exports\/counsel-pack$/);
@@ -5036,7 +5049,20 @@ describe("App", () => {
         screen.getByText(/Not legal advice. Counsel Pack export records are audit preparation metadata only./i)
       ).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole("button", { name: /Download Server Export Receipt JSON/i }));
+      await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-export-receipt");
+      const receiptPayload = await readAppBlobText(capturedBlobs[0]);
+      expect(receiptPayload).toContain("lexproof-counsel-pack-export-record-receipt-v1");
+      expect(receiptPayload).toContain("receiptHash");
+      expect(receiptPayload).toContain("Not legal advice");
+      expect(receiptPayload).not.toContain("# Counsel Pack");
     } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
       vi.unstubAllGlobals();
     }
   }, 10000);

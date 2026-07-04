@@ -19,6 +19,7 @@ import { CounselPackPanel } from "./components/CounselPackPanel";
 import { EvidenceLedger } from "./components/EvidenceLedger";
 import { ExportSafetyInventoryPanel } from "./components/ExportSafetyInventoryPanel";
 import { GrcTicketExportPanel } from "./components/GrcTicketExportPanel";
+import { HandoffRecoveryPlaybookPanel } from "./components/HandoffRecoveryPlaybookPanel";
 import { HumanReviewPanel } from "./components/HumanReviewPanel";
 import { IntegrationReadinessPanel } from "./components/IntegrationReadinessPanel";
 import { JudgeHandoffBundlePanel } from "./components/JudgeHandoffBundlePanel";
@@ -137,6 +138,10 @@ import {
   IntegrationPolicyEvaluationClientError
 } from "./lib/integrationPolicyEvaluationClient";
 import { createJudgeHandoffBundle, type JudgeHandoffBundle } from "./lib/judgeHandoffBundle";
+import {
+  createHandoffRecoveryPlaybook,
+  type HandoffRecoveryPlaybook
+} from "./lib/handoffRecoveryPlaybook";
 import { createIntegrationReadinessRegistry } from "./lib/integrationReadiness";
 import {
   createModelGatewayProviderPolicyReport,
@@ -384,6 +389,7 @@ export default function App() {
   const [exportSafetyInventory, setExportSafetyInventory] = useState<ExportSafetyInventory | null>(null);
   const [judgeHandoffBundle, setJudgeHandoffBundle] = useState<JudgeHandoffBundle | null>(null);
   const [counselHandoffChecklist, setCounselHandoffChecklist] = useState<CounselHandoffChecklist | null>(null);
+  const [handoffRecoveryPlaybook, setHandoffRecoveryPlaybook] = useState<HandoffRecoveryPlaybook | null>(null);
   const [regulatorySourcePack, setRegulatorySourcePack] = useState<RegulatorySourcePack | null>(null);
   const [regulatorySourceReviewPacket, setRegulatorySourceReviewPacket] = useState<RegulatorySourceReviewPacket | null>(null);
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
@@ -1465,6 +1471,27 @@ export default function App() {
 
   useEffect(() => {
     let live = true;
+    setHandoffRecoveryPlaybook(null);
+
+    createHandoffRecoveryPlaybook({
+      workspaceId: project.id,
+      projectName: project.projectName,
+      exportSafetyInventory,
+      judgeHandoffBundle,
+      counselHandoffChecklist
+    }).then((nextPlaybook) => {
+      if (live) {
+        setHandoffRecoveryPlaybook(nextPlaybook);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [counselHandoffChecklist, exportSafetyInventory, judgeHandoffBundle, project.id, project.projectName]);
+
+  useEffect(() => {
+    let live = true;
     setModelIntakeSummary(null);
     buildModelIntakeSummary(modelIntakeProfile, currentAIEvents).then((nextSummary) => {
       if (live) {
@@ -2519,6 +2546,7 @@ export default function App() {
               audit={audit}
               demoRunbook={demoRunbook}
               exportSafetyInventory={exportSafetyInventory}
+              handoffRecoveryPlaybook={handoffRecoveryPlaybook}
               judgeHandoffBundle={judgeHandoffBundle}
               onNavigate={setActiveTab}
               submissionPack={submissionPack}
@@ -2592,6 +2620,7 @@ function SourcesPanel({
   audit,
   demoRunbook,
   exportSafetyInventory,
+  handoffRecoveryPlaybook,
   judgeHandoffBundle,
   onNavigate,
   submissionPack
@@ -2599,6 +2628,7 @@ function SourcesPanel({
   audit: ReturnType<typeof analyzeAuditProfile>;
   demoRunbook: DemoRunbook | null;
   exportSafetyInventory: ExportSafetyInventory | null;
+  handoffRecoveryPlaybook: HandoffRecoveryPlaybook | null;
   judgeHandoffBundle: JudgeHandoffBundle | null;
   onNavigate: (target: WorkspaceActionTarget) => void;
   submissionPack: SubmissionPack | null;
@@ -2620,6 +2650,7 @@ function SourcesPanel({
         <p>Submission package expects a public GitHub repository, README, demo video, and DoraHacks BUIDL entry.</p>
       </div>
       <JudgeHandoffBundlePanel bundle={judgeHandoffBundle} onNavigate={onNavigate} />
+      <HandoffRecoveryPlaybookPanel playbook={handoffRecoveryPlaybook} onNavigate={onNavigate} />
       <ExportSafetyInventoryPanel inventory={exportSafetyInventory} />
       <SubmissionPackPanel pack={submissionPack} demoRunbook={demoRunbook} />
     </section>

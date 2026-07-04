@@ -4168,6 +4168,73 @@ describe("App", () => {
     expect(screen.getByRole("region", { name: /Judge Demo Readiness/i })).toBeInTheDocument();
   });
 
+  it("shows and downloads a Handoff Recovery Playbook from Sources", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn(() => "blob:handoff-recovery-playbook");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+
+      const playbookPanel = await screen.findByRole("region", { name: /Handoff Recovery Playbook/i });
+      await waitFor(() => {
+        expect(within(playbookPanel).getByText(/Handoff recovery active/i)).toBeInTheDocument();
+        expect(within(playbookPanel).getByText(/Recover Manifest Drift Guard/i)).toBeInTheDocument();
+      });
+      expect(
+        within(playbookPanel).getByText(/Not legal advice. Handoff Recovery Playbooks are audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+      const openEvidenceButtons = within(playbookPanel).getAllByRole("button", { name: /Open Evidence Ledger/i });
+      expect(openEvidenceButtons.length).toBeGreaterThan(0);
+
+      fireEvent.click(within(playbookPanel).getByRole("button", { name: /Download Recovery Playbook JSON/i }));
+
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:handoff-recovery-playbook");
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      const parsed = JSON.parse(payload);
+
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          playbookVersion: "lexproof-handoff-recovery-playbook-v1",
+          exportHandoffAllowed: false,
+          notLegalAdviceBoundary: "Not legal advice. Handoff Recovery Playbooks are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsed.playbookHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.steps).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            sourceArtifactId: "manifest-drift-report",
+            targetSurface: "evidence",
+            notLegalAdviceBoundary: "Not legal advice. Handoff recovery steps are audit preparation workflow metadata only."
+          })
+        ])
+      );
+      expect(payload).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+
+      fireEvent.click(openEvidenceButtons[0]);
+      expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("downloads an Export Safety Inventory that blocks unsafe handoff without leaking secrets", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;

@@ -231,6 +231,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Show **Judge Handoff Bundle** with one bundle hash plus Submission Pack JSON, Demo Runbook JSON, Export Safety Inventory JSON, and Counsel Handoff Checklist JSON artifact hashes/statuses.
    - If the bundle is not ready, click **Open Counsel Pack** or **Open Judge Demo Readiness** from the recovery actions to show the handoff blocker routes to a real workspace surface. Not legal advice.
    - Click **Download Judge Handoff Bundle JSON** to show a single metadata-only packet for evaluator handoff. Not legal advice.
+   - Show **Handoff Recovery Playbook** with the playbook hash, ordered recovery steps, target workbench tabs, redacted reasons, and **Download Recovery Playbook JSON**. Click **Open Evidence Ledger** on a Manifest Drift Guard step if the current demo still needs a fresh vault/export target. Not legal advice.
    - Show **Export Safety Inventory** with inventory hash, boundary status, export handoff allowed/blocked state, artifact statuses, Model Gateway Evaluation hash/status after Secure Review Journey, Demo Runbook JSON hash/status, Evidence Vault Lineage Digest hash/status after vault sync, Source Freshness Board hash/status when available, and the Not legal advice boundary.
    - Model evaluation inventory screenshot: `docs/assets/screenshots/export-safety-model-gateway-evaluation.jpg`.
    - Vault lineage artifact screenshot: `docs/assets/screenshots/export-safety-vault-lineage-digest.png`.
@@ -240,6 +241,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Download Demo Runbook JSON** from the same Sources handoff area to show the clean-clone path is exportable without returning to Project Workspace.
    - Confirm the boundary: Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only.
    - Screenshot: `docs/assets/screenshots/judge-handoff-bundle.png`.
+   - Screenshot: `docs/assets/screenshots/handoff-recovery-playbook.png`.
    - Screenshot: `docs/assets/screenshots/export-safety-inventory.png`.
    - Screenshot: `docs/assets/screenshots/sources-demo-runbook-handoff.png`.
    - Screenshot: `docs/assets/screenshots/submission-pack.png`.

@@ -90,6 +90,7 @@ Key evidence:
 - Demo Smoke Checklist JSON and `npm run demo:smoke` CLI preflight from Judge Demo Readiness, plus Demo Runbook JSON from Judge Demo Readiness and Sources with clean-clone commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash for hackathon judges. Not legal advice.
 - Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Manifest Drift Guard hash/status, Model Gateway Evaluation hash/status when available, Demo Runbook JSON, Source Freshness Board hash/status, Evidence Vault Lineage Digest hash/status when available, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Judge Handoff Bundle JSON from Sources that consolidates Submission Pack, Demo Runbook, Export Safety Inventory, and Counsel Handoff Checklist hashes/statuses into one metadata-only judge packet with a stable bundle hash and Not legal advice boundary.
+- Handoff Recovery Playbook in Sources that orders blocked, missing, stale, or review-needed handoff artifacts into clickable recovery steps, carries a stable playbook hash, downloads metadata-only JSON, and repeats the Not legal advice boundary.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
 ## Product Screenshots
@@ -504,6 +505,10 @@ The Judge Handoff Bundle gives evaluators one Sources-level JSON packet that lis
 
 ![Judge Handoff Bundle](docs/assets/screenshots/judge-handoff-bundle.png)
 
+The Handoff Recovery Playbook turns Judge Handoff Bundle, Export Safety Inventory, and Counsel Handoff Checklist blockers into ordered recovery steps with target workbench tabs, artifact hashes, redacted reasons, a stable playbook hash, and metadata-only JSON download. Not legal advice.
+
+![Handoff Recovery Playbook](docs/assets/screenshots/handoff-recovery-playbook.png)
+
 ![Sources Demo Runbook Handoff](docs/assets/screenshots/sources-demo-runbook-handoff.png)
 
 ## Hackathon Demo Runbook
@@ -532,7 +537,7 @@ npm run dev
 6. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
 7. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
 8. Counsel Pack template selection, Manifest Drift Guard, Source Review Ledger API sync, Source Update Approval Queue preview, Counsel Handoff Checklist JSON, version save with Regulatory Source Pack hash, server export record creation, server export receipt JSON, Markdown export, Manifest JSON, and simulated anchor receipt.
-9. Sources tab Judge Handoff Bundle, Export Safety Inventory, Submission Pack JSON, Demo Runbook JSON, Manifest Drift Guard artifact status, and Counsel Handoff Checklist artifact status with bundle/inventory/pack/runbook/checklist hashes, Evidence Vault Lineage Digest readiness when available, export safety summary, known limitations, demo readiness, and hackathon mapping.
+9. Sources tab Judge Handoff Bundle, Handoff Recovery Playbook, Export Safety Inventory, Submission Pack JSON, Demo Runbook JSON, Manifest Drift Guard artifact status, and Counsel Handoff Checklist artifact status with bundle/playbook/inventory/pack/runbook/checklist hashes, Evidence Vault Lineage Digest readiness when available, export safety summary, known limitations, demo readiness, and hackathon mapping.
 
 Screenshots for the exact demo path:
 
@@ -541,6 +546,8 @@ Screenshots for the exact demo path:
 ![Demo step 2: Evidence Ledger](docs/assets/screenshots/demo-02-evidence-ledger.png)
 
 ![Manifest Drift Guard stale version](docs/assets/screenshots/manifest-drift-guard-stale-version.png)
+
+![Handoff Recovery Playbook](docs/assets/screenshots/handoff-recovery-playbook.png)
 
 ![Demo step 3: Risk Audit](docs/assets/screenshots/demo-03-risk-audit.png)
 

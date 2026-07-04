@@ -902,12 +902,14 @@ export default function App() {
         evidenceCount: project.evidenceItems.length,
         manifestHash: manifest?.bundleHash,
         counselPackVersionCount: currentCounselPackVersions.length,
-        evidenceRecertificationQueue: evidenceRecertificationQueue ?? undefined
+        evidenceRecertificationQueue: evidenceRecertificationQueue ?? undefined,
+        handoffRecoveryPlaybook
       }),
     [
       currentCounselPackVersions.length,
       dataBoundaryReport,
       evidenceRecertificationQueue,
+      handoffRecoveryPlaybook,
       humanReviewQueue,
       manifest?.bundleHash,
       project.evidenceItems.length,
@@ -1401,7 +1403,7 @@ export default function App() {
   useEffect(() => {
     let live = true;
 
-    if (activeTab !== "sources" || !submissionPack || !demoRunbook || !exportSafetyInventory) {
+    if (!submissionPack || !demoRunbook || !exportSafetyInventory) {
       setJudgeHandoffBundle(null);
       return () => {
         live = false;
@@ -1423,7 +1425,7 @@ export default function App() {
     return () => {
       live = false;
     };
-  }, [activeTab, counselHandoffChecklist, demoRunbook, exportSafetyInventory, project.projectName, submissionPack]);
+  }, [counselHandoffChecklist, demoRunbook, exportSafetyInventory, project.projectName, submissionPack]);
 
   useEffect(() => {
     let live = true;

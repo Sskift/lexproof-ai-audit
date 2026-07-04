@@ -231,6 +231,25 @@ describe("App", () => {
     }
   });
 
+  it("routes final handoff recovery from the command center to Sources", async () => {
+    render(<App />);
+
+    const actionQueue = within(screen.getByRole("region", { name: /Workspace Action Queue/i }));
+
+    expect(await actionQueue.findByText(/Recover final handoff packet/i, {}, { timeout: 10000 })).toBeInTheDocument();
+    expect(actionQueue.getByText(/Playbook/i)).toBeInTheDocument();
+    expect(actionQueue.getByText(/Not legal advice/i)).toBeInTheDocument();
+
+    fireEvent.click(actionQueue.getByRole("button", { name: /Open handoff recovery/i }));
+
+    const playbookPanel = await screen.findByRole("region", { name: /Handoff Recovery Playbook/i }, { timeout: 10000 });
+    expect(
+      within(playbookPanel).getByText(/Not legal advice. Handoff Recovery Playbooks are audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
+    expect(within(playbookPanel).getByText(/Playbook hash/i)).toBeInTheDocument();
+    expect(within(playbookPanel).getByRole("button", { name: /Download Recovery Playbook JSON/i })).toBeEnabled();
+  }, 20000);
+
   it("requests a source evidence gap into the Evidence Ledger from the command center", async () => {
     render(<App />);
 

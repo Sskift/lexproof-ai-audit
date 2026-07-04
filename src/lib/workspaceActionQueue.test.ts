@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DataBoundaryReport } from "./dataBoundary";
+import type { HandoffRecoveryPlaybook } from "./handoffRecoveryPlaybook";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
 import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
@@ -161,6 +162,36 @@ describe("createWorkspaceActionQueue", () => {
     expect(queue.items[0].summary).toContain("Claims inventory");
     expect(queue.items[0].summary).toContain("2026-04-01");
     expect(queue.items[0].notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
+  it("routes final handoff recovery playbooks back to Sources", () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({ evidenceGaps: [] }),
+      sourceReview: sourceReview({ actionCount: 0 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 0, blockedCount: 0 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "ready", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 2,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 1,
+      handoffRecoveryPlaybook: handoffRecoveryPlaybook()
+    });
+
+    expect(queue.items[0]).toEqual(
+      expect.objectContaining({
+        id: "recover-final-handoff",
+        priority: "P0",
+        target: "sources",
+        title: "Recover final handoff packet",
+        cta: "Open handoff recovery"
+      })
+    );
+    expect(queue.items[0].summary).toContain("Manifest Drift Guard");
+    expect(queue.items[0].summary).toContain("blocked");
+    expect(queue.items[0].summary).toContain("feedfacecafe");
+    expect(queue.items[0].notLegalAdviceBoundary).toContain("Not legal advice");
+    expect(JSON.stringify(queue)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
   });
 
   it("escalates overdue human review work to a P0 command-center action", () => {
@@ -379,6 +410,41 @@ function recertificationQueue(): EvidenceRecertificationQueue {
     nextSteps: ["Refresh P0/P1 evidence metadata before counsel/export reliance."],
     notLegalAdviceBoundary:
       "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+  };
+}
+
+function handoffRecoveryPlaybook(): HandoffRecoveryPlaybook {
+  return {
+    playbookVersion: "lexproof-handoff-recovery-playbook-v1",
+    workspaceId: "project-action-queue",
+    projectName: "Action Queue Test",
+    generatedAt: "2026-07-05T00:00:00.000Z",
+    playbookHash: "feedfacecafebeef1234567890abcdef1234567890abcdef1234567890abcd",
+    status: "blocked",
+    exportHandoffAllowed: false,
+    stepCount: 1,
+    blockedCount: 1,
+    needsActionCount: 0,
+    needsReviewCount: 0,
+    nextActions: ["Manifest Drift Guard: refresh stale export hashes before handoff."],
+    steps: [
+      {
+        stepVersion: "lexproof-handoff-recovery-step-v1",
+        id: "export-manifest-drift-report",
+        rank: 1,
+        severity: "blocked",
+        targetSurface: "evidence",
+        source: "export-safety-inventory",
+        sourceArtifactId: "manifest-drift-report",
+        sourceLabel: "Manifest Drift Guard JSON",
+        title: "Recover Manifest Drift Guard JSON",
+        reason: "Manifest Drift Guard is blocked for the current export handoff.",
+        recoveryAction: "Refresh stale manifest hashes before judge handoff.",
+        artifactHash: "abc123def4567890",
+        notLegalAdviceBoundary: "Not legal advice. Handoff recovery steps are audit preparation workflow metadata only."
+      }
+    ],
+    notLegalAdviceBoundary: "Not legal advice. Handoff Recovery Playbooks are audit preparation workflow metadata only."
   };
 }
 

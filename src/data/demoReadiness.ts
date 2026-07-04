@@ -25,6 +25,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/counsel-pack-marketing-claims-template.png",
   "docs/assets/screenshots/workspace-persistence-recovery.png",
   "docs/assets/screenshots/workspace-cockpit-handoff.png",
+  "docs/assets/screenshots/workspace-action-handoff-recovery.png",
   "docs/assets/screenshots/workspace-action-source-approval-focus.png",
   "docs/assets/screenshots/regulatory-control-matrix.png",
   "docs/assets/screenshots/jurisdiction-readiness-digest.png",

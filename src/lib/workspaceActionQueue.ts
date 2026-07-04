@@ -1,5 +1,6 @@
 import type { DataBoundaryReport } from "./dataBoundary";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
+import type { HandoffRecoveryPlaybook } from "./handoffRecoveryPlaybook";
 import type { HumanReviewQueue, HumanReviewQueueItem } from "./humanReviewWorkflow";
 import type { ProjectValidationResult } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
@@ -58,6 +59,7 @@ export type CreateWorkspaceActionQueueInput = {
   manifestHash?: string;
   counselPackVersionCount: number;
   evidenceRecertificationQueue?: EvidenceRecertificationQueue;
+  handoffRecoveryPlaybook?: HandoffRecoveryPlaybook | null;
   evaluatedAt?: string;
 };
 
@@ -73,6 +75,7 @@ export function createWorkspaceActionQueue(input: CreateWorkspaceActionQueueInpu
     createSourceRefreshAction(input.sourceReview),
     createSourceApprovalAction(input.sourceApprovalQueue),
     createHumanReviewOpenAction(input.humanReviewQueue, input.evaluatedAt),
+    createHandoffRecoveryAction(input.handoffRecoveryPlaybook),
     createSecurityReadinessAction(input.securityReviewChecklist),
     createCounselPackVersionAction(input),
     createCounselPackExportAction(input)
@@ -265,6 +268,32 @@ function getOverdueHumanReviewItems(queue: HumanReviewQueue, evaluatedAt: string
     );
 }
 
+function createHandoffRecoveryAction(playbook: HandoffRecoveryPlaybook | null | undefined): WorkspaceActionItem | null {
+  if (!playbook || playbook.status === "ready" || playbook.status === "calculating" || playbook.stepCount === 0) {
+    return null;
+  }
+
+  const firstStep = playbook.steps[0];
+  const priority = playbook.status === "blocked" ? "P0" : playbook.status === "needs-action" ? "P1" : "P2";
+  const blockerLabel =
+    playbook.blockedCount > 0
+      ? `${playbook.blockedCount} blocked`
+      : playbook.needsActionCount > 0
+        ? `${playbook.needsActionCount} needs action`
+        : `${playbook.needsReviewCount} needs review`;
+
+  return createAction({
+    id: "recover-final-handoff",
+    priority,
+    target: "sources",
+    title: "Recover final handoff packet",
+    summary: `${playbook.stepCount} handoff recovery step${playbook.stepCount === 1 ? "" : "s"} open; ${blockerLabel}. First: ${
+      firstStep?.title ?? playbook.nextActions[0] ?? "Open Sources and review handoff recovery."
+    }. Playbook ${playbook.playbookHash.slice(0, 12)}.`,
+    cta: "Open handoff recovery"
+  });
+}
+
 function createSecurityReadinessAction(report: SecurityReviewChecklistReport): WorkspaceActionItem | null {
   if (report.overallStatus === "ready") {
     return null;
@@ -338,6 +367,7 @@ function actionOrder(id: string): number {
     "refresh-source-review",
     "approve-source-updates",
     "complete-human-review",
+    "recover-final-handoff",
     "validate-security-readiness",
     "save-counsel-pack-version",
     "download-counsel-pack"

@@ -537,6 +537,30 @@ describe("validateDemoScenarioLibrary", () => {
     expect(philippinesScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded South Africa CASP Travel Rule path for Africa digital asset demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const southAfricaScenario = findDemoScenarioById(demoScenarios, "south-africa-casp-travel-rule-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(southAfricaScenario).toEqual(
+      expect.objectContaining({
+        title: "South Africa CASP Travel Rule review",
+        projectName: "Cape Town CASP Travel Rule Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["South Africa", "FSCA", "FIC", "Travel Rule"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(southAfricaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect South Africa FSCA/FIC source graph",
+        "Review CASP/FSP licensing and activity-scope evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(southAfricaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded UK cryptoasset AML path for FCA source demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const ukScenario = findDemoScenarioById(demoScenarios, "uk-cryptoasset-aml-source-path");

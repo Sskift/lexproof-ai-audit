@@ -2614,6 +2614,99 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "za-fsca-fic-casp-licensing-travel-rule",
+    jurisdiction: "South Africa",
+    regulator: "Financial Sector Conduct Authority / Financial Intelligence Centre",
+    sourceName: "FSCA crypto asset financial-product declaration and FIC Directive 9 Travel Rule",
+    sourceUrl: "https://www.fic.gov.za/wp-content/uploads/2024/11/Directive-9-Travel-rule-relating-to-crypto-asset-transfers.pdf",
+    citation:
+      "FSCA General Notice 1350 of 2022, Declaration of a crypto asset as a financial product under the Financial Advisory and Intermediary Services Act, 19 October 2022; FSCA New Financial Services Providers page; FIC Directive 9 concerning the implementation of the Travel Rule relating to crypto asset transfers, 15 November 2024, effective 30 April 2025",
+    topic: "activity-scope",
+    summary:
+      "Prepare South Africa CASP, crypto-asset financial-product, FSCA FSP licence, advice/intermediary/investment-management scope, FIC accountable-institution, Travel Rule, ordering/intermediary/recipient CASP, RMCP, counterparty due diligence, unhosted-wallet, secure transmission, recordkeeping, and no-raw-KYC evidence for South Africa counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "south africa",
+      "south african",
+      "za",
+      "rsa",
+      "fsca",
+      "fic",
+      "crypto asset service provider",
+      "casp",
+      "financial product",
+      "fais",
+      "fsp licence",
+      "travel rule",
+      "directive 9",
+      "risk management and compliance programme",
+      "rmcp",
+      "unhosted wallet"
+    ],
+    evidenceRequests: [
+      {
+        id: "za-fsca-casp-fsp-licensing-scope",
+        title: "South Africa FSCA CASP/FSP licensing and activity-scope evidence",
+        reason:
+          "South Africa crypto asset review needs crypto-asset financial-product assumptions, CASP/FSP licence route, advice/intermediary/investment-management activity scope, business model, operational ability, fit-and-proper owner, and no-raw-KYC evidence before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "south africa casp",
+          "south african casp",
+          "za casp",
+          "fsca",
+          "crypto asset service provider",
+          "financial product",
+          "fais",
+          "fsp licence",
+          "fsp license",
+          "financial services provider",
+          "advice",
+          "intermediary",
+          "investment management",
+          "business model",
+          "operational ability",
+          "fit and proper"
+        ]
+      },
+      {
+        id: "za-fic-travel-rule-rmcp-transfer-controls",
+        title: "South Africa FIC Travel Rule, RMCP, and transfer-control evidence",
+        reason:
+          "Counsel and compliance review need ordering/intermediary/recipient CASP role mapping, originator and beneficiary information handling as metadata, counterparty CASP due diligence, secure transmission, incomplete-transfer suspend/return workflow, unhosted-wallet policy, RMCP owner, recordkeeping, and no-raw-KYC evidence.",
+        priority: "P1",
+        keywords: [
+          "fic directive 9",
+          "south africa travel rule",
+          "travel rule",
+          "ordering crypto asset service provider",
+          "intermediary crypto asset service provider",
+          "recipient crypto asset service provider",
+          "originator",
+          "beneficiary",
+          "counterparty casp",
+          "due diligence",
+          "secure transmission",
+          "recordkeeping",
+          "risk management and compliance programme",
+          "rmcp",
+          "unhosted wallet",
+          "no raw kyc"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which South Africa CASP, crypto-asset financial-product, FAIS/FSP licence, advice, intermediary, investment-management, business-model, or operational-ability assumptions need South Africa counsel review?",
+      "What FIC Directive 9 Travel Rule, ordering/intermediary/recipient CASP, counterparty due-diligence, secure transmission, incomplete-transfer, unhosted-wallet, RMCP, recordkeeping, and no-raw-KYC evidence should be prepared before counsel or compliance handoff?"
+    ],
+    localCounselRole: "South Africa financial services / AML counsel",
+    effectiveAsOf: "2025-04-30",
+    lastReviewedAt: "2026-07-05",
+    reviewerNotes:
+      "Source metadata reviewed against the FSCA crypto asset financial-product declaration for crypto-asset definition and FAIS financial-product treatment, the FSCA New Financial Services Providers page for CASP licence routing, and FIC Directive 9 for Travel Rule scope, ordering/intermediary/recipient CASP obligations, counterparty due diligence, secure transmission, RMCP, unhosted-wallet, recordkeeping, and effective-date metadata; route interpretation to South Africa local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

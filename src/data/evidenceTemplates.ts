@@ -300,6 +300,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "South Africa CASP licensing and Travel Rule RMCP register",
+        kind: "Register",
+        content:
+          "Requested: summarize South Africa CASP, South African CASP, ZA CASP, FSCA, crypto asset financial product, FAIS, FSP licence route, financial services provider, advice, intermediary services, investment management, business model, operational ability, fit-and-proper owner, Financial Intelligence Centre, FIC Directive 9, Travel Rule, ordering crypto asset service provider, intermediary crypto asset service provider, recipient crypto asset service provider, originator beneficiary metadata handling, counterparty CASP due diligence, secure transmission, incomplete transfer suspend or return workflow, unhosted wallet policy, Risk Management and Compliance Programme, RMCP, recordkeeping, reviewer owner, and no raw KYC, wallet secrets, credentials, customer records, originator data, beneficiary data, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-za-fsca-fic-casp-licensing-travel-rule",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "US FinCEN CVC MSB and BSA transfer control register",
         kind: "Register",
         content:

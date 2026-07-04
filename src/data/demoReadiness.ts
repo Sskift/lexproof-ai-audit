@@ -13,6 +13,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/australia-digital-asset-source-graph.png",
   "docs/assets/screenshots/korea-vasp-user-protection-source-graph.png",
   "docs/assets/screenshots/india-vda-pmla-source-graph.png",
+  "docs/assets/screenshots/south-africa-casp-travel-rule-source-graph.png",
   "docs/assets/screenshots/uk-cryptoasset-aml-source-graph.png",
   "docs/assets/screenshots/germany-micar-custody-source-graph.png",
   "docs/assets/screenshots/swiss-finma-stablecoin-source-graph.png",

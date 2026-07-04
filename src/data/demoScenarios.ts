@@ -388,6 +388,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "south-africa-casp-travel-rule-source-path",
+    projectName: "Cape Town CASP Travel Rule Review",
+    title: "South Africa CASP Travel Rule review",
+    summary:
+      "South Africa FSCA/FIC CASP review with crypto-asset financial-product, FAIS/FSP licence, advice/intermediary/investment-management scope, Travel Rule, ordering/intermediary/recipient CASP roles, RMCP, counterparty due-diligence, unhosted-wallet, recordkeeping, and no-raw-KYC evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect South Africa FSCA/FIC source graph",
+      "Review CASP/FSP licensing and activity-scope evidence gaps",
+      "Check Travel Rule, RMCP, counterparty due-diligence, unhosted-wallet, recordkeeping, and no-raw-KYC evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["South Africa", "FSCA", "FIC", "Travel Rule"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "uk-cryptoasset-aml-source-path",
     projectName: "Thames Cryptoasset AML Review",
     title: "UK cryptoasset AML review",

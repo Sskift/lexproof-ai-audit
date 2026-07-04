@@ -2852,4 +2852,80 @@ describe("createRegulatoryGraph", () => {
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
+
+  it("matches South Africa FSCA/FIC CASP source controls through the ZA jurisdiction alias without legal conclusions", () => {
+    const project: ProjectProfile = {
+      ...baseProject,
+      id: "project-za-casp",
+      projectName: "Cape Town CASP Travel Rule Review",
+      jurisdictions: ["ZA"],
+      assetModel: "South Africa CASP, crypto asset financial product, FAIS/FSP licence, transfer, and custody review",
+      userType: "South African retail users and compliance reviewers",
+      custodyModel: "Platform controls hosted crypto asset transfers, counterparty CASP checks, and unhosted wallet review",
+      dataSensitivity: "Originator and beneficiary metadata summaries, RMCP notes, and customer records excluded",
+      aiUsage: "AI drafts FSCA/FIC CASP evidence summaries for human review",
+      operatingStage: "Planned South Africa public launch before counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "za-fsca-fic-casp-licensing-travel-rule")).toMatchObject({
+      jurisdiction: "South Africa",
+      regulator: "Financial Sector Conduct Authority / Financial Intelligence Centre",
+      citation:
+        "FSCA General Notice 1350 of 2022, Declaration of a crypto asset as a financial product under the Financial Advisory and Intermediary Services Act, 19 October 2022; FSCA New Financial Services Providers page; FIC Directive 9 concerning the implementation of the Travel Rule relating to crypto asset transfers, 15 November 2024, effective 30 April 2025",
+      sourceUrl: "https://www.fic.gov.za/wp-content/uploads/2024/11/Directive-9-Travel-rule-relating-to-crypto-asset-transfers.pdf",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "South Africa financial services / AML counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "South Africa FSCA CASP/FSP licensing and activity-scope evidence",
+        "South Africa FIC Travel Rule, RMCP, and transfer-control evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "South Africa")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "South Africa financial services / AML counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks South Africa FSCA/FIC CASP source controls covered when template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `za-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...baseProject,
+      id: "project-za-casp-covered",
+      projectName: "Cape Town CASP Travel Rule Review",
+      jurisdictions: ["South Africa"],
+      assetModel: "South Africa CASP, crypto asset financial product, FAIS/FSP licence, transfer, and custody review",
+      userType: "South African retail users and compliance reviewers",
+      custodyModel: "Platform controls hosted crypto asset transfers, counterparty CASP checks, and unhosted wallet review",
+      dataSensitivity: "Originator and beneficiary metadata summaries, RMCP notes, and customer records excluded",
+      aiUsage: "AI drafts FSCA/FIC CASP evidence summaries for human review",
+      operatingStage: "Planned South Africa public launch before counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "za-fsca-fic-casp-licensing-travel-rule")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining(["South Africa CASP licensing and Travel Rule RMCP register"])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "za-fsca-fic-casp-licensing-travel-rule" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
 });

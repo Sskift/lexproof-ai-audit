@@ -49,6 +49,7 @@ type PackTemplate = {
     | "Indonesia"
     | "Malaysia"
     | "Philippines"
+    | "South Africa"
     | "Switzerland"
     | "Germany"
     | "United Arab Emirates"
@@ -714,6 +715,67 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "str",
           "recordkeeping",
           "staff training"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "South Africa",
+    aliases: ["south africa", "south african", "za", "rsa"],
+    summary:
+      "Prepare FSCA CASP/FSP licensing, crypto-asset financial-product, FIC Travel Rule, RMCP, counterparty due-diligence, transfer-control, unhosted-wallet, recordkeeping, and no-raw-KYC handoff controls for South Africa.",
+    recommendedRole: "South Africa financial services / AML counsel",
+    controls: [
+      {
+        id: "za-fsca-casp-fsp-licensing-control",
+        title: "FSCA CASP/FSP licensing and activity-scope control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "control-za-fsca-fic-casp-licensing-travel-rule",
+          "south africa casp",
+          "south african casp",
+          "za casp",
+          "fsca",
+          "crypto asset service provider",
+          "financial product",
+          "fais",
+          "fsp licence",
+          "fsp license",
+          "financial services provider",
+          "advice",
+          "intermediary",
+          "investment management",
+          "business model",
+          "operational ability",
+          "fit and proper"
+        ]
+      },
+      {
+        id: "za-fic-travel-rule-rmcp-control",
+        title: "FIC Travel Rule, RMCP, and transfer-control evidence",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "control-za-fsca-fic-casp-licensing-travel-rule",
+          "fic directive 9",
+          "south africa travel rule",
+          "travel rule",
+          "ordering crypto asset service provider",
+          "intermediary crypto asset service provider",
+          "recipient crypto asset service provider",
+          "originator",
+          "beneficiary",
+          "counterparty casp",
+          "due diligence",
+          "secure transmission",
+          "recordkeeping",
+          "risk management and compliance programme",
+          "rmcp",
+          "unhosted wallet",
+          "no raw kyc"
         ]
       }
     ]

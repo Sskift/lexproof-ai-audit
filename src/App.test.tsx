@@ -1240,6 +1240,23 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the South Africa CASP Travel Rule scenario with FSCA and FIC evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start South Africa CASP Travel Rule review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Cape Town CASP Travel Rule Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/Declaration of a crypto asset as a financial product/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/FIC Directive 9 concerning the implementation of the Travel Rule/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/South Africa financial services \/ AML counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/South Africa FSCA CASP\/FSP licensing and activity-scope evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/South Africa FIC Travel Rule, RMCP, and transfer-control evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the UK cryptoasset AML scenario with FCA registration and Travel Rule gaps", async () => {
     render(<App />);
 

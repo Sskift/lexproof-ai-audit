@@ -637,6 +637,47 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Cape Town CASP Travel Rule Review",
+    entityType: "Crypto asset service provider and transfer operations team",
+    jurisdictions: ["South Africa"],
+    assetModel:
+      "South Africa CASP, crypto asset financial-product, FAIS/FSP licence, advice, intermediary, investment-management, transfer, custody, and retail-access review assumptions with FSCA/FIC counsel routing",
+    userType: "South African retail users, compliance reviewers, operations owners, counterparty CASPs, and local counsel",
+    custodyModel:
+      "Platform coordinates hosted crypto asset transfers, counterparty CASP due-diligence, secure Travel Rule transmission, unhosted-wallet review, and metadata-only recordkeeping placeholders",
+    dataSensitivity:
+      "Originator/beneficiary metadata summaries, RMCP owner notes, transfer-control workflow summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts South Africa FSCA/FIC CASP licensing, Travel Rule, RMCP, and transfer-control evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only FSCA/FIC CASP handoff",
+    operatingStage: "Planned South Africa CASP licensing and Travel Rule review before counsel signoff",
+    evidenceItems: [
+      {
+        label: "South Africa FSCA/FIC source inventory",
+        kind: "CSV",
+        content:
+          "Official-source citation metadata, review date, reviewer notes, and next review date; operational proof remains requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "South Africa CASP operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service narrative, CASP/FSP licence route assumptions, reviewer role, counterparty CASP handoff timing, and counsel routing; detailed registers remain requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "South Africa Travel Rule RMCP evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic backlog placeholders for compliance reviewers without identity files, wallet secrets, originator or beneficiary records, transfer records, or customer records.",
+        status: "requested",
+        owner: "Compliance"
+      }
+    ]
+  },
+  {
     projectName: "Thames Cryptoasset AML Review",
     entityType: "Cryptoasset exchange and custody operations team",
     jurisdictions: ["United Kingdom"],

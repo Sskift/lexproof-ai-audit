@@ -22,6 +22,7 @@ const project: ProjectProfile = {
     "ID",
     "Malaysia",
     "PH",
+    "ZA",
     "Switzerland",
     "Germany",
     "United Arab Emirates",
@@ -79,6 +80,16 @@ const project: ProjectProfile = {
       source: "regulatory control: control-ph-bsp-vasp-casp-risk-management-aml",
       status: "verified",
       owner: "Compliance"
+    },
+    {
+      id: "south-africa-register",
+      label: "South Africa CASP licensing and Travel Rule RMCP register",
+      kind: "Register",
+      content:
+        "South Africa CASP, South African CASP, ZA CASP, FSCA, crypto asset financial product, FAIS, FSP licence, financial services provider, advice, intermediary services, investment management, business model, operational ability, fit and proper owner, Financial Intelligence Centre, FIC Directive 9, Travel Rule, ordering crypto asset service provider, intermediary crypto asset service provider, recipient crypto asset service provider, originator beneficiary metadata handling, counterparty CASP due diligence, secure transmission, incomplete transfer suspend return workflow, unhosted wallet policy, Risk Management and Compliance Programme, RMCP, recordkeeping, no raw KYC.",
+      source: "regulatory control: control-za-fsca-fic-casp-licensing-travel-rule",
+      status: "verified",
+      owner: "Compliance"
     }
   ]
 };
@@ -104,6 +115,7 @@ describe("createJurisdictionPacks", () => {
         "Indonesia",
         "Malaysia",
         "Philippines",
+        "South Africa",
         "Switzerland",
         "Germany",
         "United Arab Emirates",
@@ -331,6 +343,28 @@ describe("createJurisdictionPacks", () => {
           title: "BSP AML/CFT due-diligence, monitoring, and STR control",
           status: "evidence-ready",
           evidenceLabels: expect.arrayContaining(["Philippines BSP VASP custody and AML/CFT risk-management register"])
+        })
+      ])
+    );
+
+    const southAfricaPack = packs.find((pack) => pack.jurisdiction === "South Africa");
+    expect(southAfricaPack).toMatchObject({
+      jurisdiction: "South Africa",
+      localCounselRoute: {
+        recommendedRole: "South Africa financial services / AML counsel"
+      }
+    });
+    expect(southAfricaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "FSCA CASP/FSP licensing and activity-scope control",
+          status: "evidence-ready",
+          evidenceLabels: expect.arrayContaining(["South Africa CASP licensing and Travel Rule RMCP register"])
+        }),
+        expect.objectContaining({
+          title: "FIC Travel Rule, RMCP, and transfer-control evidence",
+          status: "evidence-ready",
+          evidenceLabels: expect.arrayContaining(["South Africa CASP licensing and Travel Rule RMCP register"])
         })
       ])
     );

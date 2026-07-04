@@ -2340,6 +2340,92 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "id-ojk-digital-financial-asset-crypto-trading",
+    jurisdiction: "Indonesia",
+    regulator: "Indonesia Financial Services Authority (OJK)",
+    sourceName: "Digital Financial Asset and Crypto Asset Trading licensing, regulations, and whitelist",
+    sourceUrl: "https://ojk.go.id/en/fungsi-utama/itsk/perizinan-itsk-aset-keuangan-digital-aset-kripto/default.aspx",
+    citation:
+      "OJK POJK Number 27 of 2024, as amended by POJK Number 23 of 2025; SEOJK Number 20/SEOJK.07/2024; OJK whitelist press release, 19 December 2025; POJK Number 16 of 2025",
+    topic: "activity-scope",
+    summary:
+      "Prepare Indonesia digital financial asset and crypto asset trading operator licensing, PAKD/CPAKD whitelist, trading activity, product or instrument registration, reporting, governance, main-party competence, and consumer-protection evidence for Indonesia counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "indonesia",
+      "indonesian",
+      "ojk",
+      "digital financial asset",
+      "digital financial assets",
+      "crypto asset trading",
+      "crypto assets trading",
+      "aset kripto",
+      "aset keuangan digital",
+      "pakd",
+      "cpakd",
+      "whitelist",
+      "sprint",
+      "pojk",
+      "seojk",
+      "consumer protection"
+    ],
+    evidenceRequests: [
+      {
+        id: "id-ojk-dfa-crypto-licensing-whitelist",
+        title: "Indonesia OJK digital financial asset trading licensing and whitelist evidence",
+        reason:
+          "Indonesia digital financial asset review needs OJK transition scope, PAKD or CPAKD operator status, SPRINT licensing route, product or service channel, whitelist evidence, app or website mapping, consumer-protection owner, and unlicensed-promotion controls before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "indonesia digital financial asset",
+          "indonesia crypto asset trading",
+          "ojk",
+          "pakd",
+          "cpakd",
+          "whitelist",
+          "sprint",
+          "license",
+          "licensed registered",
+          "official channels",
+          "consumer protection"
+        ]
+      },
+      {
+        id: "id-ojk-dfa-crypto-governance-reporting",
+        title: "Indonesia OJK trading governance, product, and reporting controls",
+        reason:
+          "Counsel and compliance review need POJK/SEOJK source mapping, product or instrument registration assumptions, trading and derivative activity scope, daily or monthly reporting, business-plan owner, main-party competence and compliance assessment, governance, integrity, and no-raw-KYC evidence.",
+        priority: "P1",
+        keywords: [
+          "pojk 27",
+          "pojk 23",
+          "seojk 20",
+          "business plan",
+          "daily report",
+          "monthly report",
+          "product registration",
+          "instrument registration",
+          "main parties",
+          "competence",
+          "compliance assessment",
+          "governance",
+          "integrity",
+          "no raw kyc"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Indonesia digital financial asset or crypto asset trading activities, OJK licensing route, PAKD/CPAKD status, whitelist, app or website channel, or product/instrument assumptions need Indonesia counsel review?",
+      "What governance, reporting, business-plan, main-party competence, consumer-protection, and no-raw-KYC evidence should be prepared before counsel or compliance handoff?"
+    ],
+    localCounselRole: "Indonesia digital financial asset / crypto regulatory counsel",
+    effectiveAsOf: "2025-01-10",
+    lastReviewedAt: "2026-07-04",
+    reviewerNotes:
+      "Source metadata reviewed against OJK licensing page, the January 10 2025 Bappebti-to-OJK transfer notice, POJK 27/2024 and POJK 23/2025 regulatory pages, the December 19 2025 OJK whitelist press release, and POJK 16/2025 governance and main-party competence notice for licensing, whitelist, trading scope, reporting, governance, consumer-protection, and no-raw-KYC evidence routing; route interpretation to Indonesia local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

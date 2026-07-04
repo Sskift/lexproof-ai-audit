@@ -270,6 +270,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "Indonesia OJK digital financial asset trading and whitelist register",
+        kind: "Register",
+        content:
+          "Requested: summarize Indonesia digital financial asset trading, Indonesia crypto asset trading, OJK, PAKD, CPAKD, whitelist, SPRINT licensing route, licensed registered operator status, official app and website channels, consumer protection owner, unlicensed promotion controls, POJK 27, POJK 23, SEOJK 20, product registration, instrument registration, daily report, monthly report, business plan, main parties, competence, compliance assessment, governance, integrity, reviewer owner, and no raw KYC, wallet secrets, credentials, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-id-ojk-digital-financial-asset-crypto-trading",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "US FinCEN CVC MSB and BSA transfer control register",
         kind: "Register",
         content:

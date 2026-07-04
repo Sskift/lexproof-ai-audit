@@ -1665,6 +1665,96 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches Indonesia OJK digital financial asset trading controls without legal conclusions", () => {
+    const indonesiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-indonesia-dfa-crypto-trading",
+      projectName: "Jakarta Digital Financial Asset Review",
+      jurisdictions: ["Indonesia"],
+      entityType: "Digital financial asset and crypto asset trading operator",
+      assetModel:
+        "Indonesia digital financial asset trading platform with crypto asset trading, PAKD and CPAKD whitelist review, and product registration assumptions",
+      userType: "Indonesian retail users, compliance reviewers, and local counsel",
+      custodyModel: "Platform supports user crypto asset trading with official app and website channels and metadata-only custody boundary notes",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and customer records excluded from evidence handoff",
+      aiUsage: "AI drafts OJK licensing, whitelist, governance, and reporting evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Indonesia OJK digital financial asset and crypto asset trading review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(indonesiaProject);
+    const graph = createRegulatoryGraph(indonesiaProject, audit, indonesiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["id-ojk-digital-financial-asset-crypto-trading"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "id-ojk-digital-financial-asset-crypto-trading")).toMatchObject({
+      jurisdiction: "Indonesia",
+      regulator: "Indonesia Financial Services Authority (OJK)",
+      sourceUrl: "https://ojk.go.id/en/fungsi-utama/itsk/perizinan-itsk-aset-keuangan-digital-aset-kripto/default.aspx",
+      citation:
+        "OJK POJK Number 27 of 2024, as amended by POJK Number 23 of 2025; SEOJK Number 20/SEOJK.07/2024; OJK whitelist press release, 19 December 2025; POJK Number 16 of 2025",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "Indonesia digital financial asset / crypto regulatory counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Indonesia OJK digital financial asset trading licensing and whitelist evidence",
+        "Indonesia OJK trading governance, product, and reporting controls"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Indonesia")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Indonesia digital financial asset / crypto regulatory counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Indonesia OJK digital financial asset trading controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `indonesia-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const indonesiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-indonesia-dfa-crypto-trading-covered",
+      projectName: "Jakarta Digital Financial Asset Review",
+      jurisdictions: ["ID"],
+      entityType: "Digital financial asset and crypto asset trading operator",
+      assetModel:
+        "Indonesia digital financial asset trading platform with crypto asset trading, PAKD and CPAKD whitelist review, and product registration assumptions",
+      userType: "Indonesian retail users, compliance reviewers, and local counsel",
+      custodyModel: "Platform supports user crypto asset trading with official app and website channels and metadata-only custody boundary notes",
+      dataSensitivity: "CDD status summaries, wallet-risk metadata, and customer records excluded from evidence handoff",
+      aiUsage: "AI drafts OJK licensing, whitelist, governance, and reporting evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Indonesia OJK digital financial asset and crypto asset trading review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(indonesiaProject);
+    const graph = createRegulatoryGraph(indonesiaProject, audit, indonesiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "id-ojk-digital-financial-asset-crypto-trading")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+    });
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Indonesia")).toMatchObject({
+      readiness: "ready-for-counsel",
+      coveredEvidenceCount: 2,
+      missingEvidenceCount: 0
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "id-ojk-digital-financial-asset-crypto-trading" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

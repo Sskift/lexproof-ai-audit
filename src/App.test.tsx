@@ -1174,6 +1174,38 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Thailand digital asset custody scenario with SEC and AMLO evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Thailand digital asset custody review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Bangkok Digital Asset Custody Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/Emergency Decree on Digital Asset Businesses B\.E\. 2561 \(2018\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Thailand digital asset \/ AML counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Thailand digital asset business license, custody, and client-asset evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Thailand AMLO AML\/CDD and high-risk customer controls/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
+  it("starts the Indonesia OJK crypto trading scenario with licensing, whitelist, and governance gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Indonesia OJK crypto trading review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Jakarta OJK Crypto Trading Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/OJK POJK Number 27 of 2024, as amended by POJK Number 23 of 2025/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Indonesia digital financial asset \/ crypto regulatory counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Indonesia OJK digital financial asset trading licensing and whitelist evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Indonesia OJK trading governance, product, and reporting controls/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the UK cryptoasset AML scenario with FCA registration and Travel Rule gaps", async () => {
     render(<App />);
 

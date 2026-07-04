@@ -456,6 +456,49 @@ describe("validateDemoScenarioLibrary", () => {
     expect(indiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps seeded Thailand and Indonesia source paths for APAC digital asset demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const thailandScenario = findDemoScenarioById(demoScenarios, "thailand-digital-asset-custody-source-path");
+    const indonesiaScenario = findDemoScenarioById(demoScenarios, "indonesia-ojk-crypto-trading-source-path");
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(thailandScenario).toEqual(
+      expect.objectContaining({
+        title: "Thailand digital asset custody review",
+        projectName: "Bangkok Digital Asset Custody Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Thailand", "SEC", "AMLO", "Digital asset custody"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(thailandScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Thailand SEC and AMLO source graph",
+        "Review digital asset business license and custody evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(thailandScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+
+    expect(indonesiaScenario).toEqual(
+      expect.objectContaining({
+        title: "Indonesia OJK crypto trading review",
+        projectName: "Jakarta OJK Crypto Trading Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Indonesia", "OJK", "Crypto asset trading", "Consumer protection"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(indonesiaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Indonesia OJK source graph",
+        "Review digital financial asset licensing and whitelist evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(indonesiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded UK cryptoasset AML path for FCA source demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const ukScenario = findDemoScenarioById(demoScenarios, "uk-cryptoasset-aml-source-path");

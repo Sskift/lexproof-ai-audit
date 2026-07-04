@@ -477,6 +477,86 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Bangkok Digital Asset Custody Review",
+    entityType: "Digital asset business operator operations team",
+    jurisdictions: ["Thailand"],
+    assetModel:
+      "Thailand digital asset exchange, broker, dealer, and custodial wallet provider launch assumptions with tokenized yield access held for counsel review",
+    userType: "Thai retail users, compliance reviewers, operations owners, and local counsel",
+    custodyModel:
+      "Platform holds client digital assets through hosted wallets, client-asset records, withdrawal approvals, transfer controls, daily reconciliation, and no client-asset-use placeholders",
+    dataSensitivity:
+      "CDD status summaries, beneficial-owner review metadata, wallet-risk summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts Thailand digital asset custody and AML evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only SEC/AMLO handoff",
+    operatingStage: "Planned Thailand digital asset business launch before SEC and AMLO counsel review",
+    evidenceItems: [
+      {
+        label: "Thailand regulator source inventory",
+        kind: "CSV",
+        content: "Official-source citation metadata, review date, reviewer notes, and next review date; operational proof remains requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Thailand custody operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service narrative, reviewer role, product team contact, and counsel handoff timing; detailed registers remain requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Thailand AML evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic backlog placeholders for compliance reviewers without identity files, wallet secrets, or customer records.",
+        status: "requested",
+        owner: "Compliance"
+      }
+    ]
+  },
+  {
+    projectName: "Jakarta OJK Crypto Trading Review",
+    entityType: "Digital financial asset trading platform operations team",
+    jurisdictions: ["Indonesia"],
+    assetModel:
+      "Indonesia digital financial asset and crypto asset trading service with PAKD/CPAKD operator status, SPRINT licensing route, whitelist, and product or instrument registration assumptions",
+    userType: "Indonesian retail users, compliance reviewers, operations owners, and local counsel",
+    custodyModel:
+      "Platform coordinates trading, wallet transfer approvals, official app and website channels, consumer-protection workflow, and reporting placeholders",
+    dataSensitivity:
+      "CDD status summaries, consumer complaint metadata, wallet-risk summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts Indonesia OJK licensing, whitelist, governance, and reporting evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only OJK handoff",
+    operatingStage: "Planned Indonesia digital financial asset trading review before OJK counsel signoff",
+    evidenceItems: [
+      {
+        label: "Indonesia OJK source inventory",
+        kind: "CSV",
+        content: "Official-source citation metadata, review date, reviewer notes, and next review date; operational proof remains requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Indonesia trading operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service narrative, reviewer role, product team contact, and counsel handoff timing; detailed registers remain requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Indonesia governance evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic backlog placeholders for compliance reviewers without identity files, wallet secrets, or customer records.",
+        status: "requested",
+        owner: "Compliance"
+      }
+    ]
+  },
+  {
     projectName: "Thames Cryptoasset AML Review",
     entityType: "Cryptoasset exchange and custody operations team",
     jurisdictions: ["United Kingdom"],

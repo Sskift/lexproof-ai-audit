@@ -316,6 +316,42 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "thailand-digital-asset-custody-source-path",
+    projectName: "Bangkok Digital Asset Custody Review",
+    title: "Thailand digital asset custody review",
+    summary:
+      "Thailand SEC digital asset business license/custody review and AMLO AML/CDD review with client-asset records, transfer approvals, reconciliation, beneficial-owner, and high-risk customer evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Thailand SEC and AMLO source graph",
+      "Review digital asset business license and custody evidence gaps",
+      "Check AML/CDD, beneficial-owner, high-risk customer, and internal-control evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Thailand", "SEC", "AMLO", "Digital asset custody"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
+    id: "indonesia-ojk-crypto-trading-source-path",
+    projectName: "Jakarta OJK Crypto Trading Review",
+    title: "Indonesia OJK crypto trading review",
+    summary:
+      "Indonesia OJK digital financial asset and crypto asset trading review with PAKD/CPAKD status, SPRINT licensing, whitelist, product/instrument registration, reporting, governance, and consumer-protection evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Indonesia OJK source graph",
+      "Review digital financial asset licensing and whitelist evidence gaps",
+      "Check product registration, reporting, governance, and main-party competence evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Indonesia", "OJK", "Crypto asset trading", "Consumer protection"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "uk-cryptoasset-aml-source-path",
     projectName: "Thames Cryptoasset AML Review",
     title: "UK cryptoasset AML review",

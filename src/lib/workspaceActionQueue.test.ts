@@ -8,7 +8,11 @@ import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
 import type { SecurityReviewChecklistReport } from "./securityReviewChecklist";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
-import { createWorkspaceActionQueue } from "./workspaceActionQueue";
+import {
+  createWorkspaceActionQueue,
+  createWorkspaceActionQueueExport,
+  exportWorkspaceActionQueueJson
+} from "./workspaceActionQueue";
 
 describe("createWorkspaceActionQueue", () => {
   it("prioritizes recoverable workspace actions without making legal conclusions", () => {
@@ -239,6 +243,94 @@ describe("createWorkspaceActionQueue", () => {
     expect(queue.items[0].summary).toContain("2026-06-29");
     expect(queue.items[0].summary).toContain("AI governance reviewer");
     expect(queue.items[0].notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
+  it("exports a stable metadata-only queue hash independent of generatedAt", async () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({
+        evidenceGaps: [
+          {
+            id: "eu-mica-whitepaper",
+            clauseId: "eu-mica-title-ii-white-paper",
+            jurisdiction: "European Union",
+            citation: "Regulation (EU) 2023/1114, Title II",
+            title: "White paper disclosure evidence",
+            reason: "Confirm disclosure controls before counsel handoff.",
+            priority: "P0",
+            sourceUrl: "https://eur-lex.europa.eu/eli/reg/2023/1114/oj/eng"
+          }
+        ]
+      }),
+      sourceReview: sourceReview({ actionCount: 1 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 1, blockedCount: 0 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "needs-review", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 1,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 0
+    });
+
+    const first = await createWorkspaceActionQueueExport({
+      workspaceId: "workspace-action-queue",
+      projectName: "Action Queue Test",
+      queue,
+      generatedAt: "2026-07-05T00:00:00.000Z"
+    });
+    const second = await createWorkspaceActionQueueExport({
+      workspaceId: "workspace-action-queue",
+      projectName: "Action Queue Test",
+      queue,
+      generatedAt: "2026-07-06T00:00:00.000Z"
+    });
+    const payload = exportWorkspaceActionQueueJson(first);
+
+    expect(first.exportVersion).toBe("lexproof-workspace-action-queue-export-v1");
+    expect(first.queueHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(second.queueHash).toBe(first.queueHash);
+    expect(first.itemCount).toBe(queue.items.length);
+    expect(first.p0Count).toBe(queue.summary.p0Count);
+    expect(first.notLegalAdviceBoundary).toBe(
+      "Not legal advice. Workspace action queue exports are audit preparation workflow metadata only."
+    );
+    expect(payload).toContain("\"queueHash\"");
+    expect(payload).toContain("Not legal advice");
+    expect(payload).not.toMatch(/sk-live|private key|raw KYC|\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
+  });
+
+  it("changes the exported queue hash when action content changes", async () => {
+    const queue = createWorkspaceActionQueue({
+      validation: validation({ valid: true }),
+      regulatoryGraph: graph({ evidenceGaps: [] }),
+      sourceReview: sourceReview({ actionCount: 0 }),
+      humanReviewQueue: humanReviewQueue({ openCount: 0, blockedCount: 0 }),
+      securityReviewChecklist: securityChecklist({ overallStatus: "ready", blockerCount: 0 }),
+      dataBoundaryReport: dataBoundary({ exportAllowed: true, blockerCount: 0 }),
+      evidenceCount: 2,
+      manifestHash: "abc123def4567890",
+      counselPackVersionCount: 1
+    });
+    const changedQueue = {
+      ...queue,
+      items: queue.items.map((item) =>
+        item.id === "download-counsel-pack" ? { ...item, summary: `${item.summary} Verify export owner.` } : item
+      )
+    };
+
+    const baseline = await createWorkspaceActionQueueExport({
+      workspaceId: "workspace-action-queue",
+      projectName: "Action Queue Test",
+      queue,
+      generatedAt: "2026-07-05T00:00:00.000Z"
+    });
+    const changed = await createWorkspaceActionQueueExport({
+      workspaceId: "workspace-action-queue",
+      projectName: "Action Queue Test",
+      queue: changedQueue,
+      generatedAt: "2026-07-05T00:00:00.000Z"
+    });
+
+    expect(changed.queueHash).not.toBe(baseline.queueHash);
   });
 });
 

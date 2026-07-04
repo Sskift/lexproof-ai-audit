@@ -1,4 +1,5 @@
 import type { DataBoundaryReport } from "./dataBoundary";
+import { redactDataBoundaryText } from "./dataBoundary";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { HandoffRecoveryPlaybook } from "./handoffRecoveryPlaybook";
 import type { HumanReviewQueue, HumanReviewQueueItem } from "./humanReviewWorkflow";
@@ -47,6 +48,28 @@ export type WorkspaceActionQueue = {
   notLegalAdviceBoundary: "Not legal advice. Workspace actions are audit preparation workflow prompts only.";
 };
 
+export type WorkspaceActionQueueExport = {
+  exportVersion: "lexproof-workspace-action-queue-export-v1";
+  workspaceId: string;
+  projectName: string;
+  generatedAt: string;
+  queueHash: string;
+  queueVersion: WorkspaceActionQueue["queueVersion"];
+  queueSummary: WorkspaceActionQueue["summary"];
+  itemCount: number;
+  p0Count: number;
+  nextTarget: WorkspaceActionTarget | "none";
+  items: WorkspaceActionItem[];
+  notLegalAdviceBoundary: "Not legal advice. Workspace action queue exports are audit preparation workflow metadata only.";
+};
+
+export type CreateWorkspaceActionQueueExportInput = {
+  workspaceId: string;
+  projectName: string;
+  queue: WorkspaceActionQueue;
+  generatedAt?: string;
+};
+
 export type CreateWorkspaceActionQueueInput = {
   validation: ProjectValidationResult;
   regulatoryGraph: RegulatoryGraph;
@@ -63,7 +86,9 @@ export type CreateWorkspaceActionQueueInput = {
   evaluatedAt?: string;
 };
 
-const NOT_LEGAL_ADVICE = "Not legal advice. Workspace actions are audit preparation workflow prompts only.";
+const NOT_LEGAL_ADVICE = "Not legal advice. Workspace actions are audit preparation workflow prompts only." as const;
+const EXPORT_NOT_LEGAL_ADVICE =
+  "Not legal advice. Workspace action queue exports are audit preparation workflow metadata only." as const;
 
 export function createWorkspaceActionQueue(input: CreateWorkspaceActionQueueInput): WorkspaceActionQueue {
   const actions = [
@@ -93,6 +118,53 @@ export function createWorkspaceActionQueue(input: CreateWorkspaceActionQueueInpu
     },
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE
   };
+}
+
+export async function createWorkspaceActionQueueExport(
+  input: CreateWorkspaceActionQueueExportInput
+): Promise<WorkspaceActionQueueExport> {
+  const items = input.queue.items.map(createExportActionItem);
+  const queueSummary: WorkspaceActionQueue["summary"] = {
+    totalCount: items.length,
+    p0Count: items.filter((item) => item.priority === "P0").length,
+    nextTarget: items[0]?.target ?? "none",
+    notLegalAdviceBoundary: NOT_LEGAL_ADVICE
+  };
+  const hashPayload = {
+    exportVersion: "lexproof-workspace-action-queue-export-v1" as const,
+    workspaceId: sanitize(input.workspaceId || "local-workspace"),
+    projectName: sanitize(input.projectName || "Untitled workspace"),
+    queueVersion: input.queue.queueVersion,
+    queueSummary,
+    itemCount: items.length,
+    p0Count: queueSummary.p0Count,
+    nextTarget: queueSummary.nextTarget,
+    items,
+    notLegalAdviceBoundary: EXPORT_NOT_LEGAL_ADVICE
+  };
+
+  return {
+    ...hashPayload,
+    generatedAt: input.generatedAt ?? new Date().toISOString(),
+    queueHash: await sha256Hex(stableStringify(hashPayload))
+  };
+}
+
+export function exportWorkspaceActionQueueJson(queueExport: WorkspaceActionQueueExport): string {
+  return `${JSON.stringify(queueExport, null, 2)}\n`;
+}
+
+export function downloadWorkspaceActionQueueJson(filename: string, queueExport: WorkspaceActionQueueExport): void {
+  const blob = new Blob([exportWorkspaceActionQueueJson(queueExport)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function createProjectFactsAction(validation: ProjectValidationResult): WorkspaceActionItem | null {
@@ -372,4 +444,43 @@ function actionOrder(id: string): number {
     "save-counsel-pack-version",
     "download-counsel-pack"
   ].indexOf(id);
+}
+
+function createExportActionItem(item: WorkspaceActionItem): WorkspaceActionItem {
+  return {
+    ...item,
+    id: sanitize(item.id),
+    title: sanitize(item.title),
+    summary: sanitize(item.summary),
+    cta: sanitize(item.cta),
+    notLegalAdviceBoundary: NOT_LEGAL_ADVICE
+  };
+}
+
+async function sha256Hex(payload: string): Promise<string> {
+  const encoded = new TextEncoder().encode(payload);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", encoded);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function sanitize(value: string): string {
+  return redactDataBoundaryText(value.replace(/\s+/g, " ").trim());
 }

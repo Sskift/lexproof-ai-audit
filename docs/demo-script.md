@@ -92,6 +92,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 1. **Review command center**
    - Start on the **Regulatory Command Center** at the top of the workbench.
    - Click **Download Cockpit Handoff JSON** to show the first-screen status, journey steps, action queue, manifest/export state, handoff hash, and Not legal advice boundary.
+   - Click **Download Action Queue JSON** to show the ranked recovery work, queue hash, summary counts, and Not legal advice boundary as a separate metadata-only artifact.
    - Show the **Workspace Journey** from project facts -> model/evidence intake -> risk/source graph -> human review -> vault/manifest -> counsel export, including the current next action and the Not legal advice boundary.
    - Show jurisdiction readiness, official-source clause triggers, the Regulatory Control Matrix, Jurisdiction Evidence Map, Jurisdiction Readiness Digest, Source Freshness Board, evidence gap queue, manifest status, and the Not legal advice boundary.
    - Click **Download Control Matrix JSON** to show the metadata-only handoff with evidence coverage, source review status, local counsel route, next action, and no compliance conclusion.
@@ -108,6 +109,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - When the Phase 2 API is running, enter `http://127.0.0.1:8787` in **Source Approval API base URL** and click **Sync Source Approval Queue** to persist metadata-only source approval records while confirming matching behavior is unchanged.
    - Screenshot: `docs/assets/screenshots/regulatory-command-center.png`.
    - Screenshot: `docs/assets/screenshots/workspace-cockpit-handoff.png`.
+   - Screenshot: `docs/assets/screenshots/workspace-action-queue-export.png`.
    - Screenshot: `docs/assets/screenshots/workspace-journey.png`.
    - Screenshot: `docs/assets/screenshots/jurisdiction-evidence-map.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-source-coverage.png`.

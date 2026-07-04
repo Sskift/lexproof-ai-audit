@@ -180,6 +180,52 @@ describe("App", () => {
     }
   });
 
+  it("downloads a metadata-only Workspace Action Queue JSON from the command center", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const revokeObjectUrl = vi.fn();
+    const capturedBlobs: Blob[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:workspace-action-queue";
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      const actionQueue = within(screen.getByRole("region", { name: /Workspace Action Queue/i }));
+      fireEvent.click(actionQueue.getByRole("button", { name: /Download Action Queue JSON/i }));
+
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      const queueExport = JSON.parse(payload);
+
+      expect(queueExport.exportVersion).toBe("lexproof-workspace-action-queue-export-v1");
+      expect(queueExport.queueHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(queueExport.queueVersion).toBe("lexproof-workspace-action-queue-v1");
+      expect(queueExport.itemCount).toBe(queueExport.items.length);
+      expect(queueExport.queueSummary.totalCount).toBe(queueExport.items.length);
+      expect(queueExport.notLegalAdviceBoundary).toBe(
+        "Not legal advice. Workspace action queue exports are audit preparation workflow metadata only."
+      );
+      expect(queueExport.items.length).toBeGreaterThan(0);
+      expect(queueExport.items.every((item: { notLegalAdviceBoundary: string }) => item.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(
+        true
+      );
+      expect(payload).not.toMatch(/sk-live|private key|raw KYC|\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
+      await waitFor(() => expect(actionQueue.getByText(/Action queue hash/i)).toBeInTheDocument());
+    } finally {
+      click.mockRestore();
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+    }
+  });
+
   it("routes the source gap action queue item to the command-center triage panel", async () => {
     const scrollIntoView = vi.fn();
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;

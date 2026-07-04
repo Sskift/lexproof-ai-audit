@@ -45,7 +45,14 @@ import type {
   RegulatorySourceApprovalSyncResult,
   RegulatorySourceReviewSyncResult
 } from "../lib/phase2Types";
-import type { WorkspaceActionItem, WorkspaceActionQueue, WorkspaceActionTarget } from "../lib/workspaceActionQueue";
+import {
+  createWorkspaceActionQueueExport,
+  downloadWorkspaceActionQueueJson,
+  type WorkspaceActionItem,
+  type WorkspaceActionQueue,
+  type WorkspaceActionQueueExport,
+  type WorkspaceActionTarget
+} from "../lib/workspaceActionQueue";
 import {
   createWorkspaceCockpitHandoff,
   downloadWorkspaceCockpitHandoffJson,
@@ -156,6 +163,8 @@ export function RegulatoryCommandCenter({
   const [focusedActionId, setFocusedActionId] = useState<string | null>(null);
   const [cockpitHandoff, setCockpitHandoff] = useState<WorkspaceCockpitHandoff | null>(null);
   const [buildingCockpitHandoff, setBuildingCockpitHandoff] = useState(false);
+  const [actionQueueExport, setActionQueueExport] = useState<WorkspaceActionQueueExport | null>(null);
+  const [buildingActionQueueExport, setBuildingActionQueueExport] = useState(false);
   const sourceGapTriageRef = useRef<HTMLElement | null>(null);
   const sourceApprovalQueueRef = useRef<HTMLElement | null>(null);
 
@@ -213,6 +222,22 @@ export function RegulatoryCommandCenter({
       downloadWorkspaceCockpitHandoffJson(`lexproof-${project.id}-workspace-cockpit-handoff.json`, handoff);
     } finally {
       setBuildingCockpitHandoff(false);
+    }
+  };
+
+  const downloadActionQueueExport = async () => {
+    setBuildingActionQueueExport(true);
+
+    try {
+      const queueExport = await createWorkspaceActionQueueExport({
+        workspaceId: project.id,
+        projectName: project.projectName,
+        queue: actionQueue
+      });
+      setActionQueueExport(queueExport);
+      downloadWorkspaceActionQueueJson(`lexproof-${project.id}-workspace-action-queue.json`, queueExport);
+    } finally {
+      setBuildingActionQueueExport(false);
     }
   };
 
@@ -305,10 +330,19 @@ export function RegulatoryCommandCenter({
       </section>
 
       <section className="workspace-action-queue" aria-label="Workspace Action Queue">
-        <div className="reg-section-title">
-          <ListChecks size={17} aria-hidden="true" />
-          <h3>Workspace Action Queue</h3>
-          <span className="action-count">{actionQueue.summary.totalCount} open</span>
+        <div className="workspace-action-queue-header">
+          <div className="reg-section-title">
+            <ListChecks size={17} aria-hidden="true" />
+            <h3>Workspace Action Queue</h3>
+            <span className="action-count">{actionQueue.summary.totalCount} open</span>
+          </div>
+          <div className="workspace-action-queue-export">
+            {actionQueueExport ? <small>Action queue hash {actionQueueExport.queueHash.slice(0, 12)}...</small> : null}
+            <button type="button" className="secondary" onClick={downloadActionQueueExport} disabled={buildingActionQueueExport}>
+              <Download size={14} aria-hidden="true" />
+              {buildingActionQueueExport ? "Preparing Action Queue JSON" : "Download Action Queue JSON"}
+            </button>
+          </div>
         </div>
         <p>{actionQueue.notLegalAdviceBoundary}</p>
         <div className="workspace-action-list">

@@ -1849,6 +1849,34 @@ textarea {
   padding: 12px;
 }
 
+.workspace-action-queue-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.workspace-action-queue-export {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  min-width: 0;
+}
+
+.workspace-action-queue-export small {
+  color: #657382;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.workspace-action-queue-export button {
+  white-space: nowrap;
+}
+
 .workspace-action-queue > p {
   margin: 0;
   color: #53616f;
@@ -8487,6 +8515,7 @@ textarea {
   .reg-command-metrics,
   .workspace-cockpit-brief,
   .cockpit-brief-facts,
+  .workspace-action-queue-header,
   .reg-control-filters,
   .reg-control-summary,
   .jurisdiction-map-summary,
@@ -8572,6 +8601,14 @@ textarea {
   }
 
   .cockpit-handoff-actions small {
+    text-align: left;
+  }
+
+  .workspace-action-queue-export {
+    justify-items: start;
+  }
+
+  .workspace-action-queue-export small {
     text-align: left;
   }
 

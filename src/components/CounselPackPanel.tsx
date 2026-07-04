@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Anchor, CheckCircle2, ClipboardCheck, Download, FileText, History, Printer, Save, ServerCog, ShieldAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
+import { ManifestDriftGuardPanel } from "./ManifestDriftGuardPanel";
 import {
   createSimulatedAnchorReceipt,
   downloadAnchorReceiptJson,
@@ -29,6 +30,7 @@ import type { CounselQuestion } from "../lib/counselQuestions";
 import type { DataBoundaryReport } from "../lib/dataBoundary";
 import type { SubmissionFit } from "../lib/auditEngine";
 import { downloadManifestJson, type EvidenceManifest } from "../lib/evidenceManifest";
+import type { ManifestDriftReport } from "../lib/manifestDrift";
 import type { CounselPackExportRecord } from "../lib/phase2Types";
 import {
   downloadRegulatorySourcePackJson,
@@ -50,6 +52,7 @@ type CounselPackPanelProps = {
   selectedExportTemplate: CounselPackTemplate;
   recommendedExportTemplateId: CounselPackTemplateId;
   dataBoundaryReport: DataBoundaryReport;
+  manifestDriftReport: ManifestDriftReport | null;
   handoffChecklist: CounselHandoffChecklist | null;
   counselPackVersions: CounselPackVersionRecord[];
   serverExportRecords: CounselPackExportRecord[];
@@ -81,6 +84,7 @@ export function CounselPackPanel({
   selectedExportTemplate,
   recommendedExportTemplateId,
   dataBoundaryReport,
+  manifestDriftReport,
   handoffChecklist,
   counselPackVersions,
   serverExportRecords,
@@ -167,6 +171,8 @@ export function CounselPackPanel({
       />
 
       <ExportSafetyGatePanel report={dataBoundaryReport} />
+
+      <ManifestDriftGuardPanel projectName={projectName} report={manifestDriftReport} />
 
       <CounselHandoffChecklistPanel projectName={projectName} checklist={handoffChecklist} />
 

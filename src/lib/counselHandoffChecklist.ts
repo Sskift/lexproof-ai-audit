@@ -6,6 +6,7 @@ import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverag
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ExportSafetyInventory, ExportSafetyInventoryStatus } from "./exportSafetyInventory";
 import type { HumanReviewQueue } from "./humanReviewWorkflow";
+import type { ManifestDriftReport } from "./manifestDrift";
 import type { CounselPackExportRecord } from "./phase2Types";
 
 export type CounselHandoffChecklistItemStatus = "ready" | "needs-review" | "needs-action" | "blocked";
@@ -54,6 +55,7 @@ export type CounselHandoffChecklistInput = {
   evidenceVaultControlCoverage?: EvidenceVaultControlCoverage | null;
   evidenceVaultLineageDigest?: EvidenceVaultLineageDigest | null;
   evidenceRecertificationQueue?: EvidenceRecertificationQueue | null;
+  manifestDriftReport?: ManifestDriftReport | null;
   humanReviewQueue?: HumanReviewQueue | null;
   counselReviews: CounselReviewItem[];
   counselPackVersions: CounselPackVersionRecord[];
@@ -74,6 +76,7 @@ export async function createCounselHandoffChecklist({
   evidenceVaultControlCoverage,
   evidenceVaultLineageDigest,
   evidenceRecertificationQueue,
+  manifestDriftReport,
   humanReviewQueue,
   counselReviews,
   counselPackVersions,
@@ -97,6 +100,7 @@ export async function createCounselHandoffChecklist({
     ...(evidenceRecertificationQueue ? [createEvidenceRecertificationQueueItem(evidenceRecertificationQueue)] : []),
     ...(evidenceVaultLineageDigest ? [createEvidenceVaultLineageDigestItem(evidenceVaultLineageDigest)] : []),
     ...(evidenceVaultControlCoverage ? [createEvidenceVaultControlCoverageItem(evidenceVaultControlCoverage)] : []),
+    ...(manifestDriftReport ? [createManifestDriftReportItem(manifestDriftReport)] : []),
     createExportSafetyInventoryItem(exportSafetyInventory),
     createHashItem({
       id: "regulatory-source-pack",
@@ -273,6 +277,23 @@ function createEvidenceRecertificationQueueItem(
           ? "Schedule due-soon evidence recertification before the next external handoff."
           : "Keep the recertification queue hash with the final handoff packet.",
     notLegalAdviceBoundary: queue.notLegalAdviceBoundary
+  });
+}
+
+function createManifestDriftReportItem(report: ManifestDriftReport): CounselHandoffChecklistItem {
+  const status: CounselHandoffChecklistItemStatus =
+    report.status === "ready" ? "ready" : report.status === "needs-review" ? "needs-review" : "needs-action";
+
+  return createItem({
+    id: "manifest-drift-report",
+    label: "Manifest Drift Guard",
+    status,
+    evidence: `${report.freshCount}/${report.targetCount} export targets match the current Evidence Manifest; ${report.staleCount} stale and ${report.missingCount} missing.`,
+    artifactHash: report.reportHash,
+    warningCount: report.staleCount + report.missingCount,
+    recoveryAction:
+      report.status === "ready" ? "Keep the drift report with the final handoff packet." : report.nextActions[0],
+    notLegalAdviceBoundary: report.notLegalAdviceBoundary
   });
 }
 

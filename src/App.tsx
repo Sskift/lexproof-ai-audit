@@ -97,6 +97,7 @@ import { createDemoRunbook, type DemoRunbook } from "./lib/demoRunbook";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
 import type { EvidenceVaultControlCoverage } from "./lib/evidenceVaultControlCoverage";
+import type { EvidenceVaultManifestResponse, EvidenceVaultRecordResponse } from "./lib/evidenceVaultClient";
 import type { EvidenceVaultLineageDigest } from "./lib/evidenceVaultLineageDigest";
 import {
   createEvidenceRecertificationQueue,
@@ -190,6 +191,7 @@ import {
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
+import { createManifestDriftReport, type ManifestDriftReport } from "./lib/manifestDrift";
 import { createModelConnectReceipt, type ModelConnectReceipt } from "./lib/modelConnect";
 import {
   applyAIEventReviewUpdate,
@@ -372,7 +374,10 @@ export default function App() {
   const [manifest, setManifest] = useState<EvidenceManifest | null>(null);
   const [evidenceVaultControlCoverage, setEvidenceVaultControlCoverage] = useState<EvidenceVaultControlCoverage | null>(null);
   const [evidenceVaultLineageDigest, setEvidenceVaultLineageDigest] = useState<EvidenceVaultLineageDigest | null>(null);
+  const [evidenceVaultManifest, setEvidenceVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
+  const [evidenceVaultRecords, setEvidenceVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
+  const [manifestDriftReport, setManifestDriftReport] = useState<ManifestDriftReport | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
   const [integrationPolicyEvaluationRecords, setIntegrationPolicyEvaluationRecords] = useState<IntegrationPolicyEvaluationRecord[]>([]);
@@ -1034,6 +1039,8 @@ export default function App() {
   useEffect(() => {
     setEvidenceVaultControlCoverage(null);
     setEvidenceVaultLineageDigest(null);
+    setEvidenceVaultManifest(null);
+    setEvidenceVaultRecords([]);
   }, [project.id]);
 
   useEffect(() => {
@@ -1055,6 +1062,35 @@ export default function App() {
       live = false;
     };
   }, [audit, project]);
+
+  useEffect(() => {
+    let live = true;
+    setManifestDriftReport(null);
+
+    createManifestDriftReport({
+      projectId: project.id,
+      manifest,
+      latestCounselPackVersion: currentCounselPackVersions[0],
+      latestServerExportRecord: currentCounselPackServerExports[0],
+      vaultManifest: evidenceVaultManifest,
+      vaultRecords: evidenceVaultRecords
+    }).then((nextReport) => {
+      if (live) {
+        setManifestDriftReport(nextReport);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [
+    currentCounselPackServerExports,
+    currentCounselPackVersions,
+    evidenceVaultManifest,
+    evidenceVaultRecords,
+    manifest,
+    project.id
+  ]);
 
   useEffect(() => {
     let live = true;
@@ -1167,6 +1203,10 @@ export default function App() {
 
   const exportSafetyArtifacts = useMemo<ExportSafetyArtifactInput[]>(() => {
     const latestCounselPackVersion = currentCounselPackVersions[0];
+    const manifestDriftAvailable =
+      Boolean(manifestDriftReport?.reportHash) &&
+      manifestDriftReport?.status !== "needs-action" &&
+      manifestDriftReport?.status !== "empty";
 
     return [
       {
@@ -1181,6 +1221,27 @@ export default function App() {
         rawContentIncluded: false,
         recoveryAction: "Add metadata-only evidence and wait for the Evidence Manifest bundle hash.",
         notLegalAdviceBoundary: "Not legal advice. Evidence manifests are audit preparation hash metadata only."
+      },
+      {
+        id: "manifest-drift-report",
+        label: "Manifest Drift Guard JSON",
+        category: "evidence",
+        exportMode: "metadata-only-json",
+        required: true,
+        available: manifestDriftAvailable,
+        artifactHash: manifestDriftReport?.reportHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        warnings:
+          manifestDriftReport && manifestDriftReport.status !== "ready"
+            ? [`Manifest Drift Guard status is ${manifestDriftReport.status}; refresh stale or missing export targets before handoff.`]
+            : [],
+        recoveryAction:
+          manifestDriftReport?.nextActions[0] ??
+          "Wait for the Evidence Manifest and export metadata before evaluating manifest drift.",
+        notLegalAdviceBoundary:
+          manifestDriftReport?.notLegalAdviceBoundary ??
+          "Not legal advice. Manifest drift reports are audit preparation export-readiness metadata only."
       },
       createEvidenceVaultLineageDigestExportArtifact(evidenceVaultLineageDigest),
       {
@@ -1304,6 +1365,7 @@ export default function App() {
     integrationEnablementDossier,
     localCounselRoutingPlan,
     manifest?.bundleHash,
+    manifestDriftReport,
     modelGatewayEvaluation,
     regulatorySourcePack,
     regulatorySourceReviewPacket,
@@ -1370,6 +1432,7 @@ export default function App() {
       evidenceVaultControlCoverage,
       evidenceVaultLineageDigest,
       evidenceRecertificationQueue,
+      manifestDriftReport,
       humanReviewQueue,
       counselReviews: currentCounselReviews,
       counselPackVersions: currentCounselPackVersions,
@@ -1392,6 +1455,7 @@ export default function App() {
     evidenceVaultLineageDigest,
     exportSafetyInventory,
     humanReviewQueue,
+    manifestDriftReport,
     manifest?.bundleHash,
     project.id,
     project.projectName,
@@ -2406,6 +2470,7 @@ export default function App() {
           {activeTab === "evidence" ? (
             <EvidenceLedger
               projectId={project.id}
+              projectName={project.projectName}
               evidenceItems={project.evidenceItems}
               evidenceAuditEvents={currentEvidenceAuditEvents}
               manifest={manifest}
@@ -2416,8 +2481,11 @@ export default function App() {
               onApplyEvidenceTemplate={applyEvidenceTemplate}
               onUpdateEvidence={updateEvidence}
               onRemoveEvidence={removeEvidence}
+              manifestDriftReport={manifestDriftReport}
               onVaultControlCoverageChange={setEvidenceVaultControlCoverage}
               onVaultLineageDigestChange={setEvidenceVaultLineageDigest}
+              onVaultManifestChange={setEvidenceVaultManifest}
+              onVaultRecordsChange={setEvidenceVaultRecords}
             />
           ) : null}
           {activeTab === "counsel" ? (
@@ -2433,6 +2501,7 @@ export default function App() {
               selectedExportTemplate={selectedCounselPackTemplate}
               recommendedExportTemplateId={recommendedCounselPackTemplate.id}
               dataBoundaryReport={dataBoundaryReport}
+              manifestDriftReport={manifestDriftReport}
               handoffChecklist={counselHandoffChecklist}
               counselPackVersions={currentCounselPackVersions}
               serverExportRecords={currentCounselPackServerExports}

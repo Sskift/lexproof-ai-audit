@@ -164,6 +164,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Change one synthetic evidence item to `under-review`, then `rejected`, then click **Create replacement** to show the local ledger preserves the rejected record and opens a new metadata-only replacement request rather than treating rejection as legal approval or deletion. Not legal advice.
    - Show that local files are hashed as metadata and raw file bytes are not stored in the ledger.
    - Show **Evidence Retention Readiness** and confirm normal demo evidence is metadata-only or needs human confirmation before vault sync. Not legal advice.
+   - After at least one Pack Version has been saved, edit a synthetic evidence item and show **Manifest Drift Guard** in Evidence Ledger: the current manifest hash should differ from the saved Counsel Pack version or server export target, and **Download Manifest Drift JSON** should remain metadata-only. Not legal advice.
    - Optional marketing path: after **Start Marketing claims review**, open **Evidence Ledger** and show **Evidence Recertification Queue** flagging the stale source-linked `Claims inventory` record. Click **Mark Claims inventory recertified** to refresh the metadata timestamp and clear the queue. Download the Recertification Queue JSON if time allows. Not legal advice.
    - Screenshot: `docs/assets/screenshots/demo-02-evidence-ledger.png`.
    - Recertification screenshot: `docs/assets/screenshots/evidence-recertification-queue.png`.
@@ -172,6 +173,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Vault manifest screenshot: `docs/assets/screenshots/evidence-vault-manifest-download.png`.
    - Vault lineage digest screenshot: `docs/assets/screenshots/evidence-vault-lineage-digest.png`.
    - AI control-coverage screenshot: `docs/assets/screenshots/evidence-vault-control-coverage-ai.png`.
+   - Manifest drift screenshot: `docs/assets/screenshots/manifest-drift-guard-stale-version.png`.
 
 4. **Run risk audit**
    - Open **Risk Audit**.
@@ -211,7 +213,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **Counsel Pack**.
    - Show the recommended **Export template**, then switch to **AI Governance Review** or another template to show the Markdown agenda and evidence focus update without changing deterministic risk scoring.
    - Show **Export Safety Gate**. In the normal path, warnings are visible for human confirmation and blocked counts must be zero before handoff.
-   - Show **Counsel Handoff Checklist** with checklist hash, handoff allowed/blocked state, Evidence Manifest, Evidence Recertification Queue, Evidence Vault Lineage Digest, Regulatory Source Pack, Counsel Review Status, Counsel Pack Version, server export record, and Submission Pack readiness. Click **Download Handoff Checklist JSON** to show the metadata-only final handoff checklist. Not legal advice.
+   - Show **Manifest Drift Guard** and **Counsel Handoff Checklist** with checklist hash, handoff allowed/blocked state, Evidence Manifest, Manifest Drift Guard, Evidence Recertification Queue, Evidence Vault Lineage Digest, Regulatory Source Pack, Counsel Review Status, Counsel Pack Version, server export record, and Submission Pack readiness. Click **Download Handoff Checklist JSON** to show the metadata-only final handoff checklist. Not legal advice.
    - Show Regulatory Source Graph, Model Intake summary, AI event hashes if a model run was created, counsel review statuses, manifest hash, remediation queue, evidence recertification queue hash when stale evidence is open, source pack hash, source review status, Source Freshness Board hash/lanes, and any Source Update Approval Queue gates in the Markdown preview.
    - Click **Save Pack Version**, update one counsel review status, then click **Save Pack Version** again to show the export diff, **Download Version JSON**, and **Download Diff JSON** actions.
    - Open **Human Review**, filter **Target type** to **Counsel Pack**, and show the saved Pack Version queued for reviewer decision before external handoff. This review status is audit-prep workflow metadata only, not legal approval.
@@ -220,6 +222,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
    - Diff download screenshot: `docs/assets/screenshots/counsel-pack-diff-download.png`.
    - Handoff checklist screenshot: `docs/assets/screenshots/counsel-handoff-checklist.png`.
+   - Manifest drift screenshot: `docs/assets/screenshots/manifest-drift-guard-stale-version.png`.
    - Source freshness handoff screenshot: `docs/assets/screenshots/counsel-pack-source-freshness-board.png`.
    - Counsel Pack Human Review screenshot: `docs/assets/screenshots/human-review-counsel-pack-queue.png`.
 

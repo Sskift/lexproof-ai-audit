@@ -3022,7 +3022,8 @@ describe("App", () => {
       });
 
       expect(await screen.findByText(/Evidence Vault synced 1 records/i)).toBeInTheDocument();
-      expect(screen.getByText("a".repeat(64))).toBeInTheDocument();
+      const vaultBundleHash = screen.getByText(/Vault bundle SHA-256/i).closest(".vault-hash") as HTMLElement;
+      expect(within(vaultBundleHash).getByText("a".repeat(64))).toBeInTheDocument();
       const vaultRecords = within(screen.getByLabelText(/Evidence Vault records/i));
       expect(vaultRecords.getByText(/vault-approval-memo.metadata.json/i)).toBeInTheDocument();
       expect(vaultRecords.getByText(/verified · Compliance · v2/i)).toBeInTheDocument();
@@ -5064,6 +5065,38 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
+  }, 20000);
+
+  it("flags manifest drift after evidence changes make the saved Counsel Pack version stale", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+    const saveButton = await screen.findByRole("button", { name: /Save Pack Version/i });
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
+    fireEvent.click(saveButton);
+
+    expect(await screen.findByText(/Version 1/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    const evidenceContent = await screen.findByLabelText(/Content for evidence 1/i);
+    fireEvent.change(evidenceContent, {
+      target: { value: `${(evidenceContent as HTMLTextAreaElement).value} Updated manifest drift guard metadata.` }
+    });
+
+    const driftGuard = await screen.findByRole("region", { name: /Manifest Drift Guard/i });
+    await waitFor(() => {
+      expect(within(driftGuard).getByText(/Version 1 was saved against an older Evidence Manifest/i)).toBeInTheDocument();
+      expect(within(driftGuard).getByText(/Save a fresh Counsel Pack version before external counsel or judge handoff./i)).toBeInTheDocument();
+    });
+    expect(within(driftGuard).getByRole("button", { name: /Download Manifest Drift JSON/i })).toBeInTheDocument();
+    expect(
+      within(driftGuard).getByText(/Not legal advice. Manifest drift reports are audit preparation export-readiness metadata only./i)
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+    const counselDriftGuard = await screen.findByRole("region", { name: /Manifest Drift Guard/i });
+    expect(within(counselDriftGuard).getAllByText(/Counsel Pack Version/i).length).toBeGreaterThan(0);
+    expect(within(counselDriftGuard).getByText(/Version 1 was saved against an older Evidence Manifest/i)).toBeInTheDocument();
   }, 20000);
 
   it("creates server-side Counsel Pack export records from version metadata", async () => {

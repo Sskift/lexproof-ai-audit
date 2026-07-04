@@ -14,9 +14,11 @@ import {
   Trash2
 } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
+import { ManifestDriftGuardPanel } from "./ManifestDriftGuardPanel";
 import { downloadEvidenceAuditTrailJson, type EvidenceAuditEvent } from "../lib/evidenceAuditTrail";
 import type { EvidenceIntakeGuidance, EvidenceIntakeGuidanceAction } from "../lib/evidenceIntakeGuidance";
 import type { EvidenceManifest } from "../lib/evidenceManifest";
+import type { ManifestDriftReport } from "../lib/manifestDrift";
 import { downloadEvidenceVaultManifestJson } from "../lib/evidenceVaultManifestDownload";
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import {
@@ -55,6 +57,7 @@ import {
 
 type EvidenceLedgerProps = {
   projectId: string;
+  projectName: string;
   evidenceItems: EvidenceItem[];
   evidenceAuditEvents: EvidenceAuditEvent[];
   manifest: EvidenceManifest | null;
@@ -65,8 +68,11 @@ type EvidenceLedgerProps = {
   onApplyEvidenceTemplate: (templateId: string) => void;
   onUpdateEvidence: (index: number, updates: Partial<EvidenceItem>) => void;
   onRemoveEvidence: (index: number) => void;
+  manifestDriftReport?: ManifestDriftReport | null;
   onVaultControlCoverageChange?: (coverage: EvidenceVaultControlCoverage) => void;
   onVaultLineageDigestChange?: (digest: EvidenceVaultLineageDigest | null) => void;
+  onVaultManifestChange?: (manifest: EvidenceVaultManifestResponse | null) => void;
+  onVaultRecordsChange?: (records: EvidenceVaultRecordResponse[]) => void;
 };
 
 const statuses = evidenceStatuses;
@@ -92,6 +98,7 @@ type VaultErrorDetails = {
 
 export function EvidenceLedger({
   projectId,
+  projectName,
   evidenceItems,
   evidenceAuditEvents,
   manifest,
@@ -102,8 +109,11 @@ export function EvidenceLedger({
   onApplyEvidenceTemplate,
   onUpdateEvidence,
   onRemoveEvidence,
+  manifestDriftReport,
   onVaultControlCoverageChange,
-  onVaultLineageDigestChange
+  onVaultLineageDigestChange,
+  onVaultManifestChange,
+  onVaultRecordsChange
 }: EvidenceLedgerProps) {
   const [draft, setDraft] = useState<EvidenceItem>(blankEvidence);
   const [fileImportState, setFileImportState] = useState("");
@@ -140,6 +150,12 @@ export function EvidenceLedger({
   useEffect(() => {
     onVaultLineageDigestChange?.(vaultLineageDigest);
   }, [onVaultLineageDigestChange, vaultLineageDigest]);
+  useEffect(() => {
+    onVaultManifestChange?.(vaultManifest);
+  }, [onVaultManifestChange, vaultManifest]);
+  useEffect(() => {
+    onVaultRecordsChange?.(vaultRecords);
+  }, [onVaultRecordsChange, vaultRecords]);
   useEffect(() => {
     let isActive = true;
     setRetentionRemediationQueue(null);
@@ -369,6 +385,8 @@ export function EvidenceLedger({
           <code>{manifest?.bundleHash ?? "calculating"}</code>
         </div>
       </div>
+
+      <ManifestDriftGuardPanel projectName={projectName} report={manifestDriftReport ?? null} />
 
       {evidenceItems.length === 0 ? (
         <EvidenceIntakeGuidancePanel guidance={evidenceIntakeGuidance} onStartAction={startGuidanceAction} />

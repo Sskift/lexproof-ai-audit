@@ -18,6 +18,8 @@ const project: ProjectProfile = {
     "Australia",
     "South Korea",
     "India",
+    "Thailand",
+    "ID",
     "Switzerland",
     "Germany",
     "United Arab Emirates",
@@ -38,6 +40,24 @@ const project: ProjectProfile = {
       content: "Disclosure approval, offering memo, eligibility review, and go-live signoff.",
       status: "verified",
       owner: "Counsel"
+    },
+    {
+      id: "thailand-register",
+      label: "Thailand digital asset custody and AML/CDD register",
+      kind: "Register",
+      content:
+        "Thailand digital asset business scope, digital asset exchange, broker, dealer, custodial wallet provider, SEC license route, client asset records, daily reconciliation, transfer approval, client asset use prohibition, AMLO, CDD EDD, beneficial ownership, high-risk customer, internal control, training, reporting owner, no raw KYC.",
+      status: "verified",
+      owner: "Compliance"
+    },
+    {
+      id: "indonesia-register",
+      label: "Indonesia OJK digital financial asset trading and whitelist register",
+      kind: "Register",
+      content:
+        "Indonesia digital financial asset trading, Indonesia crypto asset trading, OJK, PAKD, CPAKD, whitelist, SPRINT licensing route, licensed registered operator, official app and website channels, consumer protection, POJK 27, POJK 23, SEOJK 20, product registration, instrument registration, daily report, monthly report, business plan, main parties, competence, compliance assessment, governance, integrity, no raw KYC.",
+      status: "verified",
+      owner: "Compliance"
     }
   ]
 };
@@ -59,6 +79,8 @@ describe("createJurisdictionPacks", () => {
         "Australia",
         "South Korea",
         "India",
+        "Thailand",
+        "Indonesia",
         "Switzerland",
         "Germany",
         "United Arab Emirates",
@@ -205,6 +227,48 @@ describe("createJurisdictionPacks", () => {
       ])
     );
 
+    const thailandPack = packs.find((pack) => pack.jurisdiction === "Thailand");
+    expect(thailandPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Thailand digital asset / AML counsel"
+      }
+    });
+    expect(thailandPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "SEC digital asset business license and client-asset custody control",
+          status: "evidence-ready",
+          evidenceLabels: ["Thailand digital asset custody and AML/CDD register"]
+        }),
+        expect.objectContaining({
+          title: "AMLO AML/CDD and high-risk customer control",
+          status: "evidence-ready",
+          evidenceLabels: ["Thailand digital asset custody and AML/CDD register"]
+        })
+      ])
+    );
+
+    const indonesiaPack = packs.find((pack) => pack.jurisdiction === "Indonesia");
+    expect(indonesiaPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Indonesia digital financial asset / crypto regulatory counsel"
+      }
+    });
+    expect(indonesiaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "OJK digital financial asset trading licensing and whitelist control",
+          status: "evidence-ready",
+          evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+        }),
+        expect.objectContaining({
+          title: "OJK product, reporting, governance, and main-party control",
+          status: "evidence-ready",
+          evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+        })
+      ])
+    );
+
     const switzerlandPack = packs.find((pack) => pack.jurisdiction === "Switzerland");
     expect(switzerlandPack).toMatchObject({
       localCounselRoute: {
@@ -262,5 +326,6 @@ describe("createJurisdictionPacks", () => {
       ])
     );
     expect(brazilPack?.source).toBe("LexProof jurisdiction pack v1 for audit preparation. Not legal advice.");
+    expect(JSON.stringify(packs)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

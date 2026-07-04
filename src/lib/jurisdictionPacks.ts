@@ -45,6 +45,8 @@ type PackTemplate = {
     | "Australia"
     | "South Korea"
     | "India"
+    | "Thailand"
+    | "Indonesia"
     | "Switzerland"
     | "Germany"
     | "United Arab Emirates"
@@ -498,6 +500,101 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "india record retention",
           "india no anonymous wallet",
           "india beneficial ownership"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Thailand",
+    aliases: ["thailand", "thai", "th"],
+    summary:
+      "Prepare digital asset business licensing, exchange/broker/dealer scope, custodial wallet provider, client-asset custody, AML/CDD, high-risk customer, and no-raw-KYC handoff controls for Thailand.",
+    recommendedRole: "Thailand digital asset / AML counsel",
+    controls: [
+      {
+        id: "th-sec-digital-asset-business-custody-control",
+        title: "SEC digital asset business license and client-asset custody control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "thailand digital asset business",
+          "digital asset exchange",
+          "digital asset broker",
+          "digital asset dealer",
+          "custodial wallet provider",
+          "sec license route",
+          "client asset records",
+          "daily reconciliation",
+          "transfer approval",
+          "client asset use prohibition"
+        ]
+      },
+      {
+        id: "th-amlo-aml-cdd-high-risk-control",
+        title: "AMLO AML/CDD and high-risk customer control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "amlo",
+          "cdd edd",
+          "beneficial ownership",
+          "high-risk customer",
+          "customer identification",
+          "internal control",
+          "training",
+          "reporting owner"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Indonesia",
+    aliases: ["indonesia", "indonesian", "id", "ri"],
+    summary:
+      "Prepare OJK digital financial asset and crypto asset trading licensing, PAKD/CPAKD whitelist, SPRINT, product/instrument registration, reporting, governance, main-party competence, consumer-protection, and no-raw-KYC handoff controls for Indonesia.",
+    recommendedRole: "Indonesia digital financial asset / crypto regulatory counsel",
+    controls: [
+      {
+        id: "id-ojk-dfa-crypto-licensing-whitelist-control",
+        title: "OJK digital financial asset trading licensing and whitelist control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "indonesia digital financial asset trading",
+          "indonesia crypto asset trading",
+          "ojk",
+          "pakd",
+          "cpakd",
+          "whitelist",
+          "sprint licensing route",
+          "licensed registered operator",
+          "official app and website",
+          "consumer protection"
+        ]
+      },
+      {
+        id: "id-ojk-dfa-governance-reporting-control",
+        title: "OJK product, reporting, governance, and main-party control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "pojk 27",
+          "pojk 23",
+          "seojk 20",
+          "product registration",
+          "instrument registration",
+          "daily report",
+          "monthly report",
+          "business plan",
+          "main parties",
+          "competence",
+          "compliance assessment",
+          "governance",
+          "integrity"
         ]
       }
     ]

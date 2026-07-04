@@ -5,7 +5,9 @@ import type { EvidenceManifest } from "./evidenceManifest";
 import {
   createCounselPackDiff,
   createCounselPackVersionRecord,
+  downloadCounselPackVersionDiffJson,
   downloadCounselPackVersionJson,
+  exportCounselPackVersionDiffJson,
   exportCounselPackVersionJson
 } from "./counselPackVersions";
 import type { ProjectProfile } from "./projectModel";
@@ -244,6 +246,56 @@ describe("counsel pack version records", () => {
       expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
       expect(click).toHaveBeenCalledTimes(1);
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-version");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
+  it("exports and downloads standalone version diff JSON without raw Markdown content", async () => {
+    const previous = await createCounselPackVersionRecord({
+      project,
+      audit,
+      manifest,
+      regulatorySourcePack,
+      markdown: "# Counsel Pack\n\nOriginal raw Markdown should stay hashed.",
+      counselReviews: reviews,
+      previousVersions: [],
+      exportedAt: "2026-06-30T01:00:00.000Z"
+    });
+    const next = await createCounselPackVersionRecord({
+      project,
+      audit,
+      manifest: { ...manifest, bundleHash: "b".repeat(64), itemCount: 2 },
+      regulatorySourcePack: { ...regulatorySourcePack, packHash: "d".repeat(64), evidenceGapCount: 3 },
+      markdown: "# Counsel Pack\n\nUpdated raw Markdown should stay hashed.",
+      counselReviews: [{ ...reviews[0], status: "reviewed", reviewerNote: "Reviewed for handoff." }],
+      previousVersions: [previous],
+      exportedAt: "2026-06-30T02:00:00.000Z"
+    });
+
+    expect(next.diffFromPrevious).toBeDefined();
+    const json = exportCounselPackVersionDiffJson(next.diffFromPrevious!);
+    expect(json).toContain("\"diffVersion\": \"lexproof-counsel-pack-version-diff-v1\"");
+    expect(json).toContain("\"manifestHashChanged\": true");
+    expect(json).toContain("Not legal advice");
+    expect(json).not.toContain("Original raw Markdown should stay hashed");
+    expect(json).not.toContain("Updated raw Markdown should stay hashed");
+
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:counsel-pack-version-diff");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      downloadCounselPackVersionDiffJson("counsel-pack-version-diff.json", next.diffFromPrevious!);
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-version-diff");
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

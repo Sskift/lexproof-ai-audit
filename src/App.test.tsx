@@ -4914,7 +4914,13 @@ describe("App", () => {
   it("saves Counsel Pack versions and shows a diff between exports", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
-    const createObjectUrl = vi.fn(() => "blob:counsel-pack-version");
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:counsel-pack-version";
+    });
     const revokeObjectUrl = vi.fn();
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     URL.createObjectURL = createObjectUrl;
@@ -4943,10 +4949,16 @@ describe("App", () => {
       expect(screen.getByText(/Markdown changed/i)).toBeInTheDocument();
 
       fireEvent.click(screen.getAllByRole("button", { name: /Download Version JSON/i })[0]);
+      fireEvent.click(screen.getByRole("button", { name: /Download Diff JSON/i }));
 
       expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
-      expect(click).toHaveBeenCalledTimes(1);
-      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-version");
+      expect(click).toHaveBeenCalledTimes(2);
+      expect(revokeObjectUrl).toHaveBeenCalledTimes(2);
+      const diffPayload = await readAppBlobText(capturedBlobs[1]);
+      expect(diffPayload).toContain("lexproof-counsel-pack-version-diff-v1");
+      expect(diffPayload).toContain("Not legal advice");
+      expect(diffPayload).toContain("review status");
+      expect(diffPayload).not.toContain("# Counsel Pack");
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

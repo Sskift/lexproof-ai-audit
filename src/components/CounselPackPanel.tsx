@@ -15,6 +15,7 @@ import {
   type CounselHandoffChecklistStatus
 } from "../lib/counselHandoffChecklist";
 import {
+  downloadCounselPackVersionDiffJson,
   downloadCounselPackVersionJson,
   type CounselPackVersionRecord
 } from "../lib/counselPackVersions";
@@ -640,6 +641,21 @@ function CounselPackVersionsPanel({
                 <Download size={16} aria-hidden="true" />
                 Download Version JSON
               </button>
+              {record.diffFromPrevious ? (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() =>
+                    downloadCounselPackVersionDiffJson(
+                      `${slug(projectName)}-counsel-pack-v${record.version}-diff.json`,
+                      record.diffFromPrevious!
+                    )
+                  }
+                >
+                  <Download size={16} aria-hidden="true" />
+                  Download Diff JSON
+                </button>
+              ) : null}
             </article>
           ))}
         </div>

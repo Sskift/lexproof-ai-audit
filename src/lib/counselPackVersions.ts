@@ -200,8 +200,25 @@ export function exportCounselPackVersionJson(record: CounselPackVersionRecord): 
   return `${JSON.stringify(record, null, 2)}\n`;
 }
 
+export function exportCounselPackVersionDiffJson(diff: CounselPackVersionDiff): string {
+  return `${JSON.stringify(diff, null, 2)}\n`;
+}
+
 export function downloadCounselPackVersionJson(filename: string, record: CounselPackVersionRecord): void {
   const blob = new Blob([exportCounselPackVersionJson(record)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function downloadCounselPackVersionDiffJson(filename: string, diff: CounselPackVersionDiff): void {
+  const blob = new Blob([exportCounselPackVersionDiffJson(diff)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

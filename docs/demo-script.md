@@ -182,8 +182,9 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - In **GRC Destination Policy Evaluation**, enter `http://127.0.0.1:8787`, fill synthetic owner, destination system such as `jira`, destination queue such as `LEGAL-AUDIT`, approve field mapping, authentication policy, export redaction, ticket ownership, retry/audit logging, no-sensitive-material, and human-review controls, then click **Evaluate Server GRC Policy**. Show **GRC policy report synced** and **External tickets: Disabled**. Download GRC Policy JSON if time allows. Not legal advice.
    - Enter `http://127.0.0.1:8787` in **Secure Review API base URL**.
    - Click **Run Secure Review Journey**.
-   - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, the automatically queued Human Review request ID, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
+   - Show the Evidence Vault manifest hash, Model Gateway response hash, **Model Gateway Evaluation** payload/response/source-evidence hashes, the automatically queued Human Review request ID, **Server Model Run Ledger**, **Download Model Run Receipt JSON**, receipt hash confirmation, **Audit Log Export** action counts/last action, JSON download actions, and Not legal advice boundary.
    - Screenshot: `docs/assets/screenshots/demo-05-secure-review-journey.png`.
+   - Model run receipt screenshot: `docs/assets/screenshots/model-run-receipt-download.png`.
    - Integration dossier screenshot: `docs/assets/screenshots/integration-enablement-dossier.png`.
    - Empty evidence chain-anchor recovery screenshot: `docs/assets/screenshots/empty-evidence-chain-anchor-blocked.png`.
    - Storage policy screenshot: `docs/assets/screenshots/object-storage-policy-evaluation.png`.

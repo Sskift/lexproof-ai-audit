@@ -3360,6 +3360,17 @@ describe("App", () => {
   });
 
   it("runs the full Secure Review Workspace journey across evidence vault, model gateway, and human review", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createdBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        createdBlobs.push(blob);
+      }
+      return "blob:lexproof-model-run-receipt";
+    });
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
       if (path.endsWith("/api/workspaces") && init?.method === "POST") {
@@ -3558,6 +3569,8 @@ describe("App", () => {
 
       throw new Error(`Unexpected request ${path}`);
     });
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
     vi.stubGlobal("fetch", fetchMock);
 
     try {
@@ -3617,6 +3630,17 @@ describe("App", () => {
       expect(modelRunLedger.getAllByText(/Human review needs-review/i).length).toBeGreaterThan(0);
       expect(modelRunLedger.getAllByText(/Retry state not-needed/i).length).toBeGreaterThan(0);
       expect(modelRunLedger.getAllByText(/AI-assisted draft for audit preparation only. Not legal advice./i).length).toBeGreaterThan(0);
+      fireEvent.click(modelRunLedger.getByRole("button", { name: /Download Model Run Receipt JSON/i }));
+      await waitFor(() => expect(modelRunLedger.getByText(/Model Run receipt ready:/i)).toBeInTheDocument());
+      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      expect(click).toHaveBeenCalledTimes(1);
+      const modelRunReceipt = JSON.parse(await readAppBlobText(createdBlobs[0])) as Record<string, unknown>;
+      expect(modelRunReceipt.receiptVersion).toBe("lexproof-model-gateway-run-receipt-v1");
+      expect(modelRunReceipt.runId).toBe("model-gateway-run-full");
+      expect(modelRunReceipt.receiptHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(JSON.stringify(modelRunReceipt)).toContain("Not legal advice");
+      expect(JSON.stringify(modelRunReceipt)).not.toContain("Approval summary represented by metadata hash");
+      expect(JSON.stringify(modelRunReceipt)).not.toContain("apiKey");
       const modelEvaluationSection = screen.getByRole("heading", { name: /Model Gateway Evaluation/i }).closest("section");
       expect(modelEvaluationSection).not.toBeNull();
       const modelEvaluation = within(modelEvaluationSection as HTMLElement);
@@ -3633,6 +3657,9 @@ describe("App", () => {
       expect(exportInventory.getAllByText(/Hash dddddddddddd/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
       vi.unstubAllGlobals();
     }
   });

@@ -12,6 +12,10 @@ import {
   downloadModelGatewayEvaluationJson,
   type ModelGatewayEvaluationRecord
 } from "../lib/modelGatewayEvaluation";
+import {
+  createModelGatewayRunReceipt,
+  downloadModelGatewayRunReceiptJson
+} from "../lib/modelGatewayRunReceipt";
 import { ModelGatewayRunClientError, fetchModelGatewayRuns } from "../lib/modelGatewayRunClient";
 import type { ModelConnectReceipt } from "../lib/modelConnect";
 import { createModelGatewayRunSummary, type AuditLogRecord, type ModelGatewayRun, type ModelGatewayRunSummary } from "../lib/phase2Types";
@@ -420,6 +424,7 @@ function AuditLogExplorerPanel({
 }
 
 type ModelGatewayRunLedgerStatus = "idle" | "syncing" | "synced" | "error";
+type ModelGatewayRunReceiptStatus = "idle" | "building" | "downloaded" | "error";
 
 function ModelGatewayRunLedgerPanel({
   apiBaseUrl,
@@ -434,6 +439,9 @@ function ModelGatewayRunLedgerPanel({
   const [refreshStatus, setRefreshStatus] = useState<ModelGatewayRunLedgerStatus>("idle");
   const [refreshError, setRefreshError] = useState("");
   const [refreshRecoveryAction, setRefreshRecoveryAction] = useState("");
+  const [receiptStatus, setReceiptStatus] = useState<ModelGatewayRunReceiptStatus>("idle");
+  const [receiptHash, setReceiptHash] = useState("");
+  const [receiptError, setReceiptError] = useState("");
   const visibleRuns = runs.slice(-4).reverse();
   const latestRun = visibleRuns[0];
 
@@ -442,6 +450,9 @@ function ModelGatewayRunLedgerPanel({
     setRefreshStatus("idle");
     setRefreshError("");
     setRefreshRecoveryAction("");
+    setReceiptStatus("idle");
+    setReceiptHash("");
+    setReceiptError("");
   }, [initialRun, workspaceId]);
 
   const refreshModelRuns = async () => {
@@ -468,6 +479,28 @@ function ModelGatewayRunLedgerPanel({
     }
   };
 
+  const downloadLatestRunReceipt = async () => {
+    if (!latestRun) {
+      setReceiptStatus("error");
+      setReceiptError("No Model Gateway run is available for receipt export.");
+      return;
+    }
+
+    setReceiptStatus("building");
+    setReceiptError("");
+
+    try {
+      const receiptSource = latestRun.id === initialRun.id ? initialRun : latestRun;
+      const receipt = await createModelGatewayRunReceipt(receiptSource, { workspaceId });
+      downloadModelGatewayRunReceiptJson(`model-gateway-run-${safeFilenamePart(latestRun.id)}-receipt.json`, receipt);
+      setReceiptHash(receipt.receiptHash);
+      setReceiptStatus("downloaded");
+    } catch (error) {
+      setReceiptStatus("error");
+      setReceiptError(error instanceof Error ? error.message : "Model Gateway run receipt export failed.");
+    }
+  };
+
   return (
     <section className="model-run-ledger" aria-label="Server Model Run Ledger">
       <div className="split-title compact-title">
@@ -487,11 +520,29 @@ function ModelGatewayRunLedgerPanel({
           <RefreshCcw size={16} aria-hidden="true" />
           {refreshStatus === "syncing" ? "Refreshing Server Model Runs" : "Refresh Server Model Runs"}
         </button>
+        <button
+          type="button"
+          className="secondary"
+          disabled={!latestRun || receiptStatus === "building"}
+          onClick={() => void downloadLatestRunReceipt()}
+        >
+          <Download size={16} aria-hidden="true" />
+          {receiptStatus === "building" ? "Preparing Model Run Receipt" : "Download Model Run Receipt JSON"}
+        </button>
       </div>
       {refreshStatus === "synced" ? (
         <span className="save-state">
           Model Gateway runs refreshed: {runs.length} metadata-only run{runs.length === 1 ? "" : "s"}.
         </span>
+      ) : null}
+      {receiptStatus === "downloaded" && receiptHash ? (
+        <span className="save-state">Model Run receipt ready: {shortHash(receiptHash)} metadata-only hash.</span>
+      ) : null}
+      {receiptError ? (
+        <div className="provider-policy-error" role="alert">
+          <strong>{receiptError}</strong>
+          <small>Not legal advice. Model Gateway run receipts are audit preparation metadata only.</small>
+        </div>
       ) : null}
       {refreshError ? (
         <div className="provider-policy-error" role="alert">
@@ -544,6 +595,10 @@ function ModelGatewayRunLedgerPanel({
       </div>
     </section>
   );
+}
+
+function safeFilenamePart(value: string): string {
+  return value.replace(/[^a-z0-9._-]+/gi, "-").replace(/^-+|-+$/g, "") || "model-run";
 }
 
 function ModelGatewayEvaluationPanel({ evaluation }: { evaluation: ModelGatewayEvaluationRecord }) {

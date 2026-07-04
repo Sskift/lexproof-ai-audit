@@ -427,7 +427,7 @@ function createJudgeRunbook(input: CreateSubmissionPackInput): string[] {
   return [
     "Run npm install, npm run verify, and npm run dev from a clean clone.",
     "Start the Phase 2 API with DATABASE_URL=file:./demo-review-workspace.db npm run start:api for the secure review path.",
-    "Launch a synthetic Demo Scenario Library path such as High-risk RWA launch, AI legal workflow review, Thailand digital asset custody review, Indonesia OJK crypto trading review, Brazil VASP source review, or Marketing claims review.",
+    "Launch a synthetic Demo Scenario Library path such as High-risk RWA launch, AI legal workflow review, Thailand digital asset custody review, Indonesia OJK crypto trading review, Malaysia digital asset exchange review, Brazil VASP source review, or Marketing claims review.",
     "Validate Model Connect with the mock local reviewer and inspect Redaction Gate status.",
     "Review or add metadata-only evidence, then confirm the Evidence Manifest bundle hash.",
     "Open Risk Audit, Human Review, Secure Review Journey, Counsel Pack, and Sources.",

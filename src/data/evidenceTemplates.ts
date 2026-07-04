@@ -280,6 +280,16 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "Malaysia digital asset exchange custody and AML/CFT register",
+        kind: "Register",
+        content:
+          "Requested: summarize Malaysia digital asset exchange, digital broker, RMO-DAX, DAX operator, Digital Asset Custodian, DAC registration route, IEO assumptions, SC Malaysia regulated-player source mapping, official app and website channels, tradeable asset and Shariah review assumptions, custody safeguarding owner, Bank Negara Malaysia, BNM digital currency exchanger scope, reporting institution handoff, AML/CFT, customer identification, CDD EDD, beneficial ownership, suspicious transaction reporting, STR, compliance officer, recordkeeping, transparency controls, reviewer owner, and no raw KYC, wallet secrets, credentials, customer records, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-my-sc-bnm-digital-asset-exchange-custody-aml",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "US FinCEN CVC MSB and BSA transfer control register",
         kind: "Register",
         content:

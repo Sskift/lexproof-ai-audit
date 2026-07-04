@@ -20,6 +20,7 @@ const project: ProjectProfile = {
     "India",
     "Thailand",
     "ID",
+    "Malaysia",
     "Switzerland",
     "Germany",
     "United Arab Emirates",
@@ -58,6 +59,15 @@ const project: ProjectProfile = {
         "Indonesia digital financial asset trading, Indonesia crypto asset trading, OJK, PAKD, CPAKD, whitelist, SPRINT licensing route, licensed registered operator, official app and website channels, consumer protection, POJK 27, POJK 23, SEOJK 20, product registration, instrument registration, daily report, monthly report, business plan, main parties, competence, compliance assessment, governance, integrity, no raw KYC.",
       status: "verified",
       owner: "Compliance"
+    },
+    {
+      id: "malaysia-register",
+      label: "Malaysia digital asset exchange custody and AML/CFT register",
+      kind: "Register",
+      content:
+        "Malaysia digital asset exchange, digital broker, RMO-DAX, DAX operator, Digital Asset Custodian, DAC registration route, IEO assumptions, SC Malaysia regulated-player source mapping, official app and website channels, tradeable asset, Shariah review assumptions, custody safeguarding, Bank Negara Malaysia, BNM digital currency exchanger, reporting institution, AML CFT, customer identification, CDD EDD, beneficial ownership, STR, compliance officer, recordkeeping, transparency, no raw KYC.",
+      status: "verified",
+      owner: "Compliance"
     }
   ]
 };
@@ -81,6 +91,7 @@ describe("createJurisdictionPacks", () => {
         "India",
         "Thailand",
         "Indonesia",
+        "Malaysia",
         "Switzerland",
         "Germany",
         "United Arab Emirates",
@@ -265,6 +276,27 @@ describe("createJurisdictionPacks", () => {
           title: "OJK product, reporting, governance, and main-party control",
           status: "evidence-ready",
           evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+        })
+      ])
+    );
+
+    const malaysiaPack = packs.find((pack) => pack.jurisdiction === "Malaysia");
+    expect(malaysiaPack).toMatchObject({
+      localCounselRoute: {
+        recommendedRole: "Malaysia digital asset / AML counsel"
+      }
+    });
+    expect(malaysiaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "SC DAX/DAC registration, trading, and custody control",
+          status: "evidence-ready",
+          evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+        }),
+        expect.objectContaining({
+          title: "BNM digital currency AML/CFT reporting-institution control",
+          status: "evidence-ready",
+          evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
         })
       ])
     );

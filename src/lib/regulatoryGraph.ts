@@ -117,8 +117,9 @@ function createMatchedClause(
   projectText: string,
   evidenceItems: EvidenceItem[]
 ): MatchedRegulatoryClause {
+  const candidateEvidenceItems = createCandidateEvidenceItems(clause, evidenceItems);
   const evidenceRequestStatuses = clause.evidenceRequests.map((request) =>
-    createEvidenceRequestStatus(clause, request, evidenceItems)
+    createEvidenceRequestStatus(request, candidateEvidenceItems)
   );
   const coveredEvidenceCount = evidenceRequestStatuses.filter((request) => request.status === "covered").length;
   const totalEvidenceRequestCount = evidenceRequestStatuses.length;
@@ -155,11 +156,10 @@ function createMatchedClause(
 }
 
 function createEvidenceRequestStatus(
-  clause: RegulatoryClause,
   request: RegulatoryEvidenceRequest,
-  evidenceItems: EvidenceItem[]
+  candidateEvidenceItems: EvidenceItem[]
 ): RegulatoryEvidenceRequestStatus {
-  const matchedItems = createCandidateEvidenceItems(clause, evidenceItems).filter((item) => evidenceMatchesRequest(item, request));
+  const matchedItems = candidateEvidenceItems.filter((item) => evidenceMatchesRequest(item, request));
   const coveredItems = matchedItems.filter((item) => item.status === "received" || item.status === "verified");
 
   return {
@@ -253,6 +253,9 @@ function createCandidateEvidenceItems(clause: RegulatoryClause, evidenceItems: E
 
 function extractRegulatoryControlIds(item: EvidenceItem): string[] {
   const text = [item.source, item.content].filter(Boolean).join(" ");
+  if (!text.includes("control-")) {
+    return [];
+  }
   const matches = Array.from(text.matchAll(/\bcontrol-[a-z0-9-]+\b/gi)).map((match) => match[0].toLowerCase());
   return unique(matches);
 }
@@ -295,6 +298,9 @@ function jurisdictionAliases(jurisdiction: string): string[] {
     indonesian: ["indonesia", "indonesian", "id", "ri"],
     id: ["indonesia", "indonesian", "id", "ri"],
     ri: ["indonesia", "indonesian", "id", "ri"],
+    malaysia: ["malaysia", "malaysian", "my"],
+    malaysian: ["malaysia", "malaysian", "my"],
+    my: ["malaysia", "malaysian", "my"],
     thailand: ["thailand", "thai", "th"],
     thai: ["thailand", "thai", "th"],
     th: ["thailand", "thai", "th"],

@@ -47,6 +47,7 @@ type PackTemplate = {
     | "India"
     | "Thailand"
     | "Indonesia"
+    | "Malaysia"
     | "Switzerland"
     | "Germany"
     | "United Arab Emirates"
@@ -518,6 +519,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-th-sec-digital-asset-business-custody-aml",
           "thailand digital asset business",
           "digital asset exchange",
           "digital asset broker",
@@ -537,6 +539,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
         evidenceKeywords: [
+          "control-th-sec-digital-asset-business-custody-aml",
           "amlo",
           "cdd edd",
           "beneficial ownership",
@@ -563,6 +566,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-id-ojk-digital-financial-asset-crypto-trading",
           "indonesia digital financial asset trading",
           "indonesia crypto asset trading",
           "ojk",
@@ -582,6 +586,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
         evidenceKeywords: [
+          "control-id-ojk-digital-financial-asset-crypto-trading",
           "pojk 27",
           "pojk 23",
           "seojk 20",
@@ -595,6 +600,61 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "compliance assessment",
           "governance",
           "integrity"
+        ]
+      }
+    ]
+  },
+  {
+    jurisdiction: "Malaysia",
+    aliases: ["malaysia", "malaysian", "my"],
+    summary:
+      "Prepare SC Malaysia digital asset exchange, digital broker, Digital Asset Custodian, IEO, tradeable-asset, BNM reporting-institution, AML/CFT, STR, recordkeeping, and no-raw-KYC handoff controls for Malaysia.",
+    recommendedRole: "Malaysia digital asset / AML counsel",
+    controls: [
+      {
+        id: "my-sc-dax-dac-registration-custody-control",
+        title: "SC DAX/DAC registration, trading, and custody control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "control-my-sc-bnm-digital-asset-exchange-custody-aml",
+          "malaysia digital asset",
+          "securities commission malaysia",
+          "sc malaysia",
+          "rmo-dax",
+          "dax operator",
+          "digital asset exchange",
+          "digital broker",
+          "digital asset custodian",
+          "dac",
+          "ieo",
+          "tradeable asset",
+          "official channels",
+          "custody safeguarding"
+        ]
+      },
+      {
+        id: "my-bnm-aml-cft-reporting-control",
+        title: "BNM digital currency AML/CFT reporting-institution control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        evidenceKeywords: [
+          "control-my-sc-bnm-digital-asset-exchange-custody-aml",
+          "bank negara malaysia",
+          "bnm",
+          "digital currency exchanger",
+          "reporting institution",
+          "aml cft",
+          "customer identification",
+          "cdd edd",
+          "beneficial ownership",
+          "suspicious transaction report",
+          "str",
+          "compliance officer",
+          "recordkeeping",
+          "transparency"
         ]
       }
     ]
@@ -803,7 +863,7 @@ function createKnownPack(template: PackTemplate, audit: AuditResult, evidenceIte
   const activeFlagIds = new Set(audit.flags.map((flag) => flag.id));
   const controls = template.controls
     .filter((control) => control.relatedFlagIds.some((flagId) => activeFlagIds.has(flagId)))
-    .map((control) => withEvidenceStatus(control, evidenceItems));
+    .map((control) => withEvidenceStatus(control, evidenceItems, template.aliases));
 
   return {
     id: slug(template.jurisdiction),
@@ -850,9 +910,9 @@ function createFallbackPack(jurisdiction: string, flags: AuditFlag[], sequence: 
   };
 }
 
-function withEvidenceStatus(control: ControlTemplate, evidenceItems: EvidenceItem[]): JurisdictionPackControl {
+function withEvidenceStatus(control: ControlTemplate, evidenceItems: EvidenceItem[], jurisdictionAliases: string[]): JurisdictionPackControl {
   const evidenceLabels = evidenceItems
-    .filter((item) => isEvidenceReady(item) && matchesControl(control, item))
+    .filter((item) => isEvidenceReady(item) && matchesControl(control, item, jurisdictionAliases))
     .map((item) => item.label.trim())
     .filter(Boolean);
 
@@ -863,9 +923,39 @@ function withEvidenceStatus(control: ControlTemplate, evidenceItems: EvidenceIte
   };
 }
 
-function matchesControl(control: ControlTemplate, item: EvidenceItem): boolean {
+function matchesControl(control: ControlTemplate, item: EvidenceItem, jurisdictionAliases: string[]): boolean {
   const text = `${item.label} ${item.kind} ${item.source ?? ""} ${item.content}`.toLowerCase();
+  const itemControlIds = extractRegulatoryControlIds(text);
+  const controlIds = control.evidenceKeywords
+    .filter((keyword) => keyword.startsWith("control-"))
+    .map((keyword) => keyword.toLowerCase());
+
+  if (itemControlIds.length > 0 && controlIds.length > 0) {
+    return controlIds.some((controlId) => itemControlIds.includes(controlId));
+  }
+
+  if (controlIds.length > 0 && !matchesJurisdictionText(text, jurisdictionAliases)) {
+    return false;
+  }
+
   return control.evidenceKeywords.some((keyword) => text.includes(keyword));
+}
+
+function extractRegulatoryControlIds(text: string): string[] {
+  if (!text.includes("control-")) {
+    return [];
+  }
+  return Array.from(text.matchAll(/\bcontrol-[a-z0-9-]+\b/gi)).map((match) => match[0].toLowerCase());
+}
+
+function matchesJurisdictionText(text: string, jurisdictionAliases: string[]): boolean {
+  return jurisdictionAliases.some((alias) => {
+    const normalizedAlias = alias.trim().toLowerCase();
+    if (!normalizedAlias || normalizedAlias.length <= 2) {
+      return false;
+    }
+    return text.includes(normalizedAlias);
+  });
 }
 
 function isEvidenceReady(item: EvidenceItem): boolean {

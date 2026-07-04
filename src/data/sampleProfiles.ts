@@ -557,6 +557,46 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "Kuala Lumpur Digital Asset Exchange Review",
+    entityType: "Digital asset exchange and custody operations team",
+    jurisdictions: ["Malaysia"],
+    assetModel:
+      "Malaysia digital asset exchange, digital broker, Digital Asset Custodian, IEO, and tradeable-asset review assumptions with SC Malaysia and BNM counsel routing",
+    userType: "Malaysian retail users, compliance reviewers, operations owners, and local counsel",
+    custodyModel:
+      "Platform coordinates exchange trading, hosted custody, official app and website channels, transfer approvals, custody safeguarding, and recordkeeping placeholders",
+    dataSensitivity:
+      "CDD status summaries, STR workflow metadata, wallet-risk summaries, and customer records excluded from demo evidence",
+    aiUsage: "AI drafts Malaysia SC/BNM licensing, custody, AML/CFT, and reporting evidence summaries for human review and local counsel routing",
+    blockchainUse: "Simulated evidence anchor for metadata-only SC Malaysia and BNM handoff",
+    operatingStage: "Planned Malaysia digital asset exchange and custody review before counsel signoff",
+    evidenceItems: [
+      {
+        label: "Malaysia SC/BNM source inventory",
+        kind: "CSV",
+        content: "Official-source citation metadata, review date, reviewer notes, and next review date; operational proof remains requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Malaysia exchange operations scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic service narrative, reviewer role, product team contact, and counsel handoff timing; detailed registers remain requested.",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Malaysia AML/CFT evidence backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic backlog placeholders for compliance reviewers without identity files, wallet secrets, or customer records.",
+        status: "requested",
+        owner: "Compliance"
+      }
+    ]
+  },
+  {
     projectName: "Thames Cryptoasset AML Review",
     entityType: "Cryptoasset exchange and custody operations team",
     jurisdictions: ["United Kingdom"],

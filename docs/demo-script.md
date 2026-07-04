@@ -49,6 +49,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional India source path: click **Start India VDA PMLA review** to load `Mumbai VDA PMLA Review` and start in Jurisdiction Checklist for FIU-IND/PMLA VDA service provider controls, Reporting Entity registration, AML/CFT/CPF, CDD/EDD, STR/monthly reporting, Travel Rule, record-retention evidence gaps, and counsel export.
    - Optional Thailand source path: click **Start Thailand digital asset custody review** to load `Bangkok Digital Asset Custody Review` and start in Jurisdiction Checklist for SEC digital asset business licensing/custody controls, AMLO AML/CDD controls, client-asset records, transfer approvals, daily reconciliation, beneficial-owner, high-risk customer, and local-counsel evidence gaps.
    - Optional Indonesia source path: click **Start Indonesia OJK crypto trading review** to load `Jakarta OJK Crypto Trading Review` and start in Jurisdiction Checklist for OJK digital financial asset / crypto asset trading controls, PAKD/CPAKD status, SPRINT route, whitelist, product/instrument registration, reporting, governance, main-party competence, consumer-protection, and local-counsel evidence gaps.
+   - Optional Malaysia source path: click **Start Malaysia digital asset exchange review** to load `Kuala Lumpur Digital Asset Exchange Review` and start in Jurisdiction Checklist for SC Malaysia DAX/DAC/IEO controls, BNM AML/CFT digital-currency reporting-institution controls, STR, recordkeeping, transparency, no-raw-KYC, and local-counsel evidence gaps.
    - Optional UK source path: click **Start UK cryptoasset AML review** to load `Thames Cryptoasset AML Review` and start in Jurisdiction Checklist for FCA cryptoasset AML/CTF, MLR registration, MLRO, BWRA/CRA, sanctions, SAR, transaction-monitoring, Travel Rule, record-retrieval evidence gaps, and counsel export.
    - Optional Germany source path: click **Start Germany MiCAR custody review** to load `RhineVault MiCAR Custody Review` and start in Jurisdiction Checklist for BaFin/MiCAR CASP service-scope, Article 60/62, Article 75 custody, client-position, segregation, return-process, means-of-access, and local-counsel evidence gaps.
    - Optional Swiss source path: click **Start Swiss FINMA stablecoin review** to load `Helvetia Stablecoin Review` and start in Jurisdiction Checklist for FINMA ICO token-classification, FINMA Guidance 06/2024 stablecoin issuer, bank-guarantee, AML, sanctions, transfer-risk evidence gaps, and counsel export.
@@ -73,6 +74,9 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Australia path screenshot: `docs/assets/screenshots/australia-digital-asset-source-graph.png`.
    - Korea path screenshot: `docs/assets/screenshots/korea-vasp-user-protection-source-graph.png`.
    - India path screenshot: `docs/assets/screenshots/india-vda-pmla-source-graph.png`.
+   - Thailand path screenshot: `docs/assets/screenshots/thailand-digital-asset-custody-source-graph.png`.
+   - Indonesia path screenshot: `docs/assets/screenshots/indonesia-ojk-crypto-trading-source-graph.png`.
+   - Malaysia path screenshot: `docs/assets/screenshots/malaysia-digital-asset-exchange-source-graph.png`.
    - UK path screenshot: `docs/assets/screenshots/uk-cryptoasset-aml-source-graph.png`.
    - Germany path screenshot: `docs/assets/screenshots/germany-micar-custody-source-graph.png`.
    - UAE VARA operating source screenshot: `docs/assets/screenshots/uae-vara-operating-source-graph.png`.
@@ -125,6 +129,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional India path screenshot after **Start India VDA PMLA review**: `docs/assets/screenshots/india-vda-pmla-source-graph.png`.
    - Optional Thailand path screenshot after **Start Thailand digital asset custody review**: `docs/assets/screenshots/thailand-digital-asset-custody-source-graph.png`.
    - Optional Indonesia path screenshot after **Start Indonesia OJK crypto trading review**: `docs/assets/screenshots/indonesia-ojk-crypto-trading-source-graph.png`.
+   - Optional Malaysia path screenshot after **Start Malaysia digital asset exchange review**: `docs/assets/screenshots/malaysia-digital-asset-exchange-source-graph.png`.
    - Optional UK path screenshot after **Start UK cryptoasset AML review**: `docs/assets/screenshots/uk-cryptoasset-aml-source-graph.png`.
    - Optional Germany path screenshot after **Start Germany MiCAR custody review**: `docs/assets/screenshots/germany-micar-custody-source-graph.png`.
    - Optional Swiss path screenshot after **Start Swiss FINMA stablecoin review**: `docs/assets/screenshots/swiss-finma-stablecoin-source-graph.png`.

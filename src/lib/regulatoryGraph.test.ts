@@ -1755,6 +1755,98 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches Malaysia SC digital asset and BNM AML/CFT controls without legal conclusions", () => {
+    const malaysiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-malaysia-digital-asset-exchange",
+      projectName: "Kuala Lumpur Digital Asset Exchange Review",
+      jurisdictions: ["Malaysia"],
+      entityType: "Digital asset exchange, digital broker, and custody operations team",
+      assetModel:
+        "Malaysia digital asset exchange with RMO-DAX, digital broker, Digital Asset Custodian, IEO, and tradeable asset review assumptions",
+      userType: "Malaysian retail users, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform supports official app and website trading channels with hosted custody, transfer approvals, custody safeguarding, and recordkeeping placeholders",
+      dataSensitivity: "CDD status summaries, STR workflow metadata, wallet-risk metadata, and customer records excluded",
+      aiUsage: "AI drafts Malaysia SC and BNM AML/CFT evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Malaysia digital asset exchange and custody review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(malaysiaProject);
+    const graph = createRegulatoryGraph(malaysiaProject, audit, malaysiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["my-sc-bnm-digital-asset-exchange-custody-aml"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "my-sc-bnm-digital-asset-exchange-custody-aml")).toMatchObject({
+      jurisdiction: "Malaysia",
+      regulator: "Securities Commission Malaysia / Bank Negara Malaysia",
+      sourceUrl: "https://www.sc.com.my/digital-assets",
+      citation:
+        "Securities Commission Malaysia Digital Assets page; Guidelines on Digital Assets issued 28 October 2020, revised 19 August 2024; Bank Negara Malaysia AML/CFT - Digital Currencies (Sector 6) policy document",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "Malaysia digital asset / AML counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Malaysia SC DAX/DAC registration, trading, and custody evidence",
+        "Malaysia BNM digital currency AML/CFT reporting-institution controls"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Malaysia")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Malaysia digital asset / AML counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Malaysia SC/BNM digital asset controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `malaysia-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const malaysiaProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-malaysia-digital-asset-exchange-covered",
+      projectName: "Kuala Lumpur Digital Asset Exchange Review",
+      jurisdictions: ["MY"],
+      entityType: "Digital asset exchange, digital broker, and custody operations team",
+      assetModel:
+        "Malaysia digital asset exchange with RMO-DAX, digital broker, Digital Asset Custodian, IEO, and tradeable asset review assumptions",
+      userType: "Malaysian retail users, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform supports official app and website trading channels with hosted custody, transfer approvals, custody safeguarding, and recordkeeping placeholders",
+      dataSensitivity: "CDD status summaries, STR workflow metadata, wallet-risk metadata, and customer records excluded",
+      aiUsage: "AI drafts Malaysia SC and BNM AML/CFT evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Malaysia digital asset exchange and custody review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(malaysiaProject);
+    const graph = createRegulatoryGraph(malaysiaProject, audit, malaysiaProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "my-sc-bnm-digital-asset-exchange-custody-aml")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+    });
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Malaysia")).toMatchObject({
+      readiness: "ready-for-counsel",
+      coveredEvidenceCount: 2,
+      missingEvidenceCount: 0
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "my-sc-bnm-digital-asset-exchange-custody-aml" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

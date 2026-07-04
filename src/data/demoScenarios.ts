@@ -352,6 +352,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "malaysia-digital-asset-exchange-source-path",
+    projectName: "Kuala Lumpur Digital Asset Exchange Review",
+    title: "Malaysia digital asset exchange review",
+    summary:
+      "Malaysia SC Digital Assets and BNM AML/CFT digital-currency review with RMO-DAX, digital broker, Digital Asset Custodian, tradeable-asset, reporting-institution, STR, recordkeeping, and no-raw-KYC evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect Malaysia SC and BNM source graph",
+      "Review DAX, digital broker, DAC, and custody evidence gaps",
+      "Check AML/CFT reporting-institution, STR, recordkeeping, and no-raw-KYC evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Malaysia", "SC Malaysia", "BNM", "Digital asset exchange"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "uk-cryptoasset-aml-source-path",
     projectName: "Thames Cryptoasset AML Review",
     title: "UK cryptoasset AML review",

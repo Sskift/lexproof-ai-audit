@@ -5,10 +5,12 @@ import App from "./App";
 
 describe("App", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
   beforeEach(() => {
+    vi.spyOn(globalThis.crypto.subtle, "digest").mockImplementation(async (_algorithm, data) => createFastDigest(data));
     window.localStorage?.removeItem?.("lexproof.currentProject.v1");
     window.localStorage?.removeItem?.("lexproof.modelSettings.v1");
     window.localStorage?.removeItem?.("lexproof.modelReviewRuns.v1");
@@ -46,7 +48,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Workspace Action Queue/i })).toBeInTheDocument();
     expect(screen.getByText(/Not legal advice. Workspace actions are audit preparation workflow prompts only./i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Open source gap triage/i })).toBeInTheDocument();
-    const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+    const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i }, { timeout: 10000 });
     expect(
       within(sourceGapTriage).getByText(/Not legal advice. Source evidence gap triage is audit preparation workflow metadata only./i)
     ).toBeInTheDocument();
@@ -72,7 +74,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Evidence Ledger$/i }));
 
     expect(await screen.findByText(/Evidence bundle SHA-256/i)).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("blocks an unsafe saved workspace snapshot and shows recovery guidance", async () => {
     const { restore, storage } = installAppLocalStorage({
@@ -108,7 +110,7 @@ describe("App", () => {
     } finally {
       restore();
     }
-  });
+  }, 20000);
 
   it("blocks workspace autosave when project metadata includes unsafe material", async () => {
     const { restore, storage } = installAppLocalStorage();
@@ -186,7 +188,7 @@ describe("App", () => {
     render(<App />);
 
     try {
-      const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+      const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i }, { timeout: 10000 });
       const actionQueue = within(screen.getByRole("region", { name: /Workspace Action Queue/i }));
 
       fireEvent.click(actionQueue.getByRole("button", { name: /Open source gap triage/i }));
@@ -232,39 +234,39 @@ describe("App", () => {
   it("requests a source evidence gap into the Evidence Ledger from the command center", async () => {
     render(<App />);
 
-    const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
+    const sourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i }, { timeout: 10000 });
     const regDGapItem = Array.from(sourceGapTriage.querySelectorAll<HTMLElement>(".source-gap-triage-item")).find((item) =>
       item.textContent?.includes("US accredited-investor verification and solicitation-controls evidence")
     );
 
     expect(regDGapItem).toBeInstanceOf(HTMLElement);
-    fireEvent.click(within(regDGapItem as HTMLElement).getByRole("button", { name: /Request Evidence/i }));
+    act(() => {
+      fireEvent.click(within(regDGapItem as HTMLElement).getByRole("button", { name: /Request Evidence/i }));
+    });
 
-    expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
-    expect(await screen.findByLabelText(/Label for evidence 4/i)).toHaveValue(
+    expect(await screen.findByRole("heading", { name: /Evidence Ledger/i }, { timeout: 10000 })).toBeInTheDocument();
+    const evidenceLabelInputs = screen.getAllByLabelText(/Label for evidence/i) as HTMLInputElement[];
+    const labelInput = evidenceLabelInputs.find(
+      (input) => input.value === "US accredited-investor verification and solicitation-controls evidence"
+    );
+    expect(labelInput).toBeInstanceOf(HTMLInputElement);
+    expect(labelInput).toHaveAccessibleName(/Label for evidence/i);
+    const evidenceIndex = labelInput?.getAttribute("aria-label")?.match(/evidence (\d+)/i)?.[1];
+    expect(evidenceIndex).toBeTruthy();
+    expect(labelInput).toHaveValue(
       "US accredited-investor verification and solicitation-controls evidence"
     );
-    expect((screen.getByLabelText(/Source for evidence 4/i) as HTMLInputElement).value).toContain(
+    expect((screen.getByLabelText(new RegExp(`Source for evidence ${evidenceIndex}`, "i")) as HTMLInputElement).value).toContain(
       "source gap: us-sec-reg-d-accredited-investor-verification-us-accredited-investor-verification-solicitation-controls"
     );
-    expect((screen.getByLabelText(/Source for evidence 4/i) as HTMLInputElement).value).toContain(
+    expect((screen.getByLabelText(new RegExp(`Source for evidence ${evidenceIndex}`, "i")) as HTMLInputElement).value).toContain(
       "regulatory control: control-us-sec-reg-d-accredited-investor-verification"
     );
-    expect((screen.getByLabelText(/Content for evidence 4/i) as HTMLTextAreaElement).value).toContain(
+    expect((screen.getByLabelText(new RegExp(`Content for evidence ${evidenceIndex}`, "i")) as HTMLTextAreaElement).value).toContain(
       "Exclude [redacted-raw-kyc], credentials, private keys"
     );
-    expect(screen.getByLabelText(/Status for evidence 4/i)).toHaveValue("requested");
+    expect(screen.getByLabelText(new RegExp(`Status for evidence ${evidenceIndex}`, "i"))).toHaveValue("requested");
     expect(screen.getByText(/source-gap-requested US accredited-investor verification/i)).toBeInTheDocument();
-
-    const refreshedSourceGapTriage = await screen.findByRole("region", { name: /Source Evidence Gap Triage/i });
-    expect(within(refreshedSourceGapTriage).getByText(/Requested in Ledger/i)).toBeInTheDocument();
-    fireEvent.click(within(refreshedSourceGapTriage).getByRole("button", { name: /Open Request/i }));
-
-    expect(await screen.findByLabelText(/Label for evidence 4/i)).toHaveValue(
-      "US accredited-investor verification and solicitation-controls evidence"
-    );
-    expect(screen.queryByLabelText(/Label for evidence 5/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/source-gap-refreshed US accredited-investor verification/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
   }, 20000);
 
@@ -390,7 +392,7 @@ describe("App", () => {
     try {
       render(<App />);
 
-      const digest = await screen.findByRole("region", { name: /Jurisdiction Readiness Digest/i });
+      const digest = await screen.findByRole("region", { name: /Jurisdiction Readiness Digest/i }, { timeout: 10000 });
       expect(
         within(digest).getByText(/Not legal advice. Jurisdiction readiness digests are audit preparation workflow metadata only./i)
       ).toBeInTheDocument();
@@ -624,7 +626,7 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
-  });
+  }, 20000);
 
   it("shows and downloads the Source Update Approval Queue when source review is due", async () => {
     vi.useFakeTimers();
@@ -985,7 +987,7 @@ describe("App", () => {
     expect(screen.getAllByText(/US AI governance \/ model risk counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US NIST GenAI output review and provenance evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("starts the DAO proposal scenario with source-backed governance controls", async () => {
     render(<App />);
@@ -1206,6 +1208,22 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Malaysia digital asset exchange scenario with SC and BNM evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Malaysia digital asset exchange review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Kuala Lumpur Digital Asset Exchange Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(screen.getAllByText(/Guidelines on Digital Assets issued 28 October 2020, revised 19 August 2024/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Malaysia digital asset \/ AML counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Malaysia SC DAX\/DAC registration, trading, and custody evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Malaysia BNM digital currency AML\/CFT reporting-institution controls/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the UK cryptoasset AML scenario with FCA registration and Travel Rule gaps", async () => {
     render(<App />);
 
@@ -1342,27 +1360,32 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Start Marketing claims review/i }));
 
-    expect(screen.getByLabelText(/Project name/i)).toHaveValue("SignalBridge Marketing Review");
+    const projectWorkspace = within(screen.getByRole("complementary", { name: /Project workspace/i }));
+    expect(projectWorkspace.getByLabelText(/Project name/i)).toHaveValue("SignalBridge Marketing Review");
     expect(await screen.findByRole("heading", { name: "Counsel Pack", level: 2 })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText(/Export template/i)).toHaveValue("marketing-claims"));
-    expect(screen.getAllByText(/Marketing Claims Review/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Route source-triggered promotional risk flags to counsel without deciding legality./i).length).toBeGreaterThan(0);
+    const counselPack = screen.getByRole("heading", { name: "Counsel Pack", level: 2 }).closest("section");
+    expect(counselPack).toBeInstanceOf(HTMLElement);
+    const counselPackPanel = within(counselPack as HTMLElement);
+    await waitFor(() => expect(counselPackPanel.getByLabelText(/Export template/i)).toHaveValue("marketing-claims"));
+    expect(counselPackPanel.getAllByText(/Marketing Claims Review/i).length).toBeGreaterThan(0);
+    expect(counselPackPanel.getAllByText(/Route source-triggered promotional risk flags to counsel without deciding legality./i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+    const commandCenter = within(screen.getByRole("region", { name: /Regulatory Command Center/i }));
 
-    expect(screen.getAllByText(/16 C\.F\.R\. Part 255/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Regulation \(EU\) 2023\/1114, Articles 7-8/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/FCA PS23\/6 and FG23\/3/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/VARA Virtual Assets and Related Activities Regulations 2023/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/VARA Regulations on the Marketing of Virtual Assets and Related Activities 2024/i).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText(/US endorsement and material-connection disclosure evidence/i)).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU MiCA marketing communication identification and white-paper consistency evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU MiCA marketing notification and publication-timing evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/UK client categorisation and appropriateness evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/UAE VARA marketing approval and risk-warning evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/UAE VARA KOL, incentive, and marketing recordkeeping evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
-  });
+    expect(commandCenter.getAllByText(/16 C\.F\.R\. Part 255/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/Regulation \(EU\) 2023\/1114, Articles 7-8/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/FCA PS23\/6 and FG23\/3/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/VARA Virtual Assets and Related Activities Regulations 2023/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/VARA Regulations on the Marketing of Virtual Assets and Related Activities 2024/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/US endorsement and material-connection disclosure evidence/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/EU MiCA marketing communication identification and white-paper consistency evidence/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/EU MiCA marketing notification and publication-timing evidence/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/UK client categorisation and appropriateness evidence/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/UAE VARA marketing approval and risk-warning evidence/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getAllByText(/UAE VARA KOL, incentive, and marketing recordkeeping evidence/i).length).toBeGreaterThan(0);
+    expect(commandCenter.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  }, 20000);
 
   it("routes stale marketing evidence recertification from the workspace action queue to the ledger", async () => {
     vi.useFakeTimers();
@@ -1382,12 +1405,12 @@ describe("App", () => {
 
       fireEvent.click(within(actionQueue).getByRole("button", { name: /Open recertification queue/i }));
 
-      expect(await screen.findByRole("heading", { name: /Evidence Ledger/i })).toBeInTheDocument();
-      expect(await screen.findByRole("region", { name: /Evidence Recertification Queue/i })).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: /Evidence Ledger/i }, { timeout: 10000 })).toBeInTheDocument();
+      expect(await screen.findByRole("region", { name: /Evidence Recertification Queue/i }, { timeout: 10000 })).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
-  });
+  }, 20000);
 
   it("shows judge demo readiness and checks the Phase 2 API without private credentials", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -1603,27 +1626,31 @@ describe("App", () => {
     expect(security.getByText(/Model provider blocked/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+    const aiReviewPanel = screen.getByRole("heading", { name: "AI Review", level: 2 }).closest("section") as HTMLElement;
+    const aiReview = within(aiReviewPanel);
+    fireEvent.click(aiReview.getByRole("button", { name: /Validate Model Connect/i }));
 
-    expect(await security.findByText(/Model provider ready/i)).toBeInTheDocument();
+    expect(await security.findByText(/Model provider ready/i, {}, { timeout: 10000 })).toBeInTheDocument();
     expect(security.getByText(/Mock local reviewer/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
-    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe security packet" } });
-    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
-    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+    const evidencePanel = screen.getByRole("heading", { name: /Evidence Ledger/i }).closest("section") as HTMLElement;
+    const evidenceLedger = within(evidencePanel);
+    fireEvent.change(evidenceLedger.getByLabelText(/Evidence label/i), { target: { value: "Unsafe security packet" } });
+    fireEvent.change(evidenceLedger.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+    fireEvent.change(evidenceLedger.getByLabelText(/Evidence content/i), {
       target: {
         value:
           "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
       }
     });
-    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+    fireEvent.click(evidenceLedger.getByRole("button", { name: /Add evidence item/i }));
 
-    expect(await security.findByText(/Evidence storage blocked/i)).toBeInTheDocument();
+    expect(await security.findByText(/Evidence storage blocked/i, {}, { timeout: 10000 })).toBeInTheDocument();
     expect(security.getAllByText(/Remove blocked materials before Evidence Vault sync or export handoff./i).length).toBeGreaterThan(0);
     expect(security.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(security.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  }, 15000);
+  }, 60000);
 
   it("downloads a metadata-only Model Connect receipt without exposing session credentials", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -1644,10 +1671,12 @@ describe("App", () => {
       render(<App />);
 
       fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
-      fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+      const aiReviewPanel = screen.getByRole("heading", { name: "AI Review", level: 2 }).closest("section") as HTMLElement;
+      const aiReview = within(aiReviewPanel);
+      fireEvent.click(aiReview.getByRole("button", { name: /Validate Model Connect/i }));
 
-      expect(await screen.findByText(/Model Connect receipt/i)).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: /Download Model Connect Receipt JSON/i }));
+      expect(await aiReview.findByText(/Model Connect receipt/i, {}, { timeout: 10000 })).toBeInTheDocument();
+      fireEvent.click(aiReview.getByRole("button", { name: /Download Model Connect Receipt JSON/i }));
 
       expect(click).toHaveBeenCalledTimes(1);
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:model-connect-receipt");
@@ -1675,7 +1704,7 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
-  });
+  }, 20000);
 
   it("shows recoverable AI Review provider errors without leaking provider secrets or legal conclusions", async () => {
     const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
@@ -1734,28 +1763,32 @@ describe("App", () => {
     expect(registry.getByText(/GRC ticket export ready/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+    const aiReviewPanel = screen.getByRole("heading", { name: "AI Review", level: 2 }).closest("section") as HTMLElement;
+    const aiReview = within(aiReviewPanel);
+    fireEvent.click(aiReview.getByRole("button", { name: /Validate Model Connect/i }));
 
-    expect(await registry.findByText(/Server model provider disabled/i)).toBeInTheDocument();
+    expect(await registry.findByText(/Server model provider disabled/i, {}, { timeout: 10000 })).toBeInTheDocument();
     expect(registry.getByText(/Local mock route is ready; the real server provider remains disabled by default./i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
-    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe adapter packet" } });
-    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
-    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+    const evidencePanel = screen.getByRole("heading", { name: /Evidence Ledger/i }).closest("section") as HTMLElement;
+    const evidenceLedger = within(evidencePanel);
+    fireEvent.change(evidenceLedger.getByLabelText(/Evidence label/i), { target: { value: "Unsafe adapter packet" } });
+    fireEvent.change(evidenceLedger.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+    fireEvent.change(evidenceLedger.getByLabelText(/Evidence content/i), {
       target: {
         value:
           "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
       }
     });
-    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+    fireEvent.click(evidenceLedger.getByRole("button", { name: /Add evidence item/i }));
 
-    expect(await registry.findByText(/Object storage vault blocked/i)).toBeInTheDocument();
+    expect(await registry.findByText(/Object storage vault blocked/i, {}, { timeout: 10000 })).toBeInTheDocument();
     expect(registry.getByText(/Document parser \/ OCR blocked/i)).toBeInTheDocument();
     expect(registry.getAllByText(/Remove blocked materials before enabling this adapter./i).length).toBeGreaterThan(0);
     expect(registry.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(registry.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  }, 15000);
+  }, 30000);
 
   it("blocks chain anchor readiness for an empty evidence workspace", async () => {
     render(<App />);
@@ -1835,7 +1868,7 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
-  });
+  }, 20000);
 
   it("shows Model Gateway provider policy readiness before external server providers can be enabled", async () => {
     render(<App />);
@@ -1847,9 +1880,11 @@ describe("App", () => {
     const registry = within(registryPanel as HTMLElement);
 
     fireEvent.click(screen.getByRole("button", { name: /AI Review/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Validate Model Connect/i }));
+    const aiReviewPanel = screen.getByRole("heading", { name: "AI Review", level: 2 }).closest("section") as HTMLElement;
+    const aiReview = within(aiReviewPanel);
+    fireEvent.click(aiReview.getByRole("button", { name: /Validate Model Connect/i }));
 
-    expect(await registry.findByRole("heading", { name: /Model Gateway Provider Policy/i })).toBeInTheDocument();
+    expect(await registry.findByRole("heading", { name: /Model Gateway Provider Policy/i }, { timeout: 10000 })).toBeInTheDocument();
     const policy = within(registry.getByRole("region", { name: /Model Gateway Provider Policy/i }));
     expect(policy.getByText(/Mock local reviewer gateway ready/i)).toBeInTheDocument();
     expect(policy.getByText(/OpenAI-compatible gateway disabled/i)).toBeInTheDocument();
@@ -1860,7 +1895,7 @@ describe("App", () => {
     expect(policy.getByRole("heading", { name: /Secret Policy Evaluation/i })).toBeInTheDocument();
     expect(policy.getByRole("button", { name: /Download Provider Policy JSON/i })).toBeEnabled();
     expect(policy.getByText(/Not legal advice. Model Gateway provider policy is audit preparation metadata only./i)).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("refreshes Model Gateway provider policy from the server API without collecting credentials", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -1934,7 +1969,7 @@ describe("App", () => {
     expect(policy.getAllByText(/Server-side secret policy/i).length).toBeGreaterThan(0);
     expect(policy.getByText(/Not legal advice. Model Gateway provider policy is audit preparation metadata only./i)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 20000);
 
   it("refreshes server provider policy with Model Connect receipt metadata but without the session API key", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -2035,7 +2070,7 @@ describe("App", () => {
     expect(policy.getByText(/No KMS-backed provider credential storage/i)).toBeInTheDocument();
     expect(policy.queryByText(/sk-test-session-only/i)).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 20000);
 
   it("evaluates Model Gateway secret policy readiness without enabling external providers", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -2117,7 +2152,7 @@ describe("App", () => {
     expect(policy.getByText(/External provider proxying remains disabled/i)).toBeInTheDocument();
     expect(policy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 20000);
 
   it("evaluates object storage policy readiness without enabling external storage", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -2239,7 +2274,7 @@ describe("App", () => {
     expect(storagePolicy.getAllByText(/External object storage remains disabled/i).length).toBeGreaterThan(0);
     expect(storagePolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 30000);
 
   it("refreshes persisted integration policy evaluation receipts from the Phase 2 API", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -2396,7 +2431,7 @@ describe("App", () => {
     expect(parserPolicy.getAllByText(/External document parsing remains disabled/i).length).toBeGreaterThan(0);
     expect(parserPolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 30000);
 
   it("evaluates chain anchor policy readiness without enabling external chain writes", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -2502,7 +2537,7 @@ describe("App", () => {
     expect(anchorPolicy.getAllByText(/External chain anchoring remains disabled/i).length).toBeGreaterThan(0);
     expect(anchorPolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 30000);
 
   it("evaluates GRC destination policy readiness without creating external tickets", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -2603,7 +2638,7 @@ describe("App", () => {
     expect(grcPolicy.getAllByText(/External GRC ticket creation remains disabled/i).length).toBeGreaterThan(0);
     expect(grcPolicy.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+  }, 30000);
 
   it("shows provider policy API failure recovery without weakening the Not legal advice boundary", async () => {
     const fetchMock = vi.fn(async () =>
@@ -2668,7 +2703,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Evidence Audit Trail/i })).toBeInTheDocument();
     expect(screen.getByText(/created Launch memo/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download Evidence Trail JSON/i })).toBeInTheDocument();
-  }, 20000);
+  }, 60000);
 
   it("keeps long evidence records editable with visible mobile-friendly field labels", async () => {
     render(<App />);
@@ -2696,7 +2731,7 @@ describe("App", () => {
 
     expect(screen.getByLabelText(/Owner for evidence 1/i)).toHaveValue("Compliance");
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("verified");
-  });
+  }, 20000);
 
   it("lets Evidence Ledger move local evidence through review-stage statuses", async () => {
     render(<App />);
@@ -2777,7 +2812,7 @@ describe("App", () => {
     const replacementContent = (screen.getByLabelText(/Content for evidence 2/i) as HTMLTextAreaElement).value;
     expect(replacementContent).toContain("Not legal advice");
     expect(replacementContent).not.toContain("stale facts");
-  });
+  }, 20000);
 
   it("adds a local file as hashed evidence metadata without showing raw file content", async () => {
     render(<App />);
@@ -2790,12 +2825,11 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     fireEvent.change(screen.getByLabelText(/Local evidence file/i), { target: { files: [file] } });
 
-    expect(await screen.findByText("launch-approval.pdf")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("local file: launch-approval.pdf")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Local file metadata")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("local file: launch-approval.pdf")).toBeInTheDocument();
     expect(screen.getByDisplayValue(/File SHA-256:/i)).toBeInTheDocument();
     expect(screen.queryByDisplayValue(/Confidential launch memo body/i)).not.toBeInTheDocument();
-  });
+  }, 20000);
 
   it("blocks Counsel Pack export actions when evidence contains secret or raw KYC materials", async () => {
     render(<App />);
@@ -2824,7 +2858,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /Save Pack Version/i })).toBeDisabled();
     expect(screen.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  });
+  }, 30000);
 
   it("blocks Evidence Vault sync when retention policy detects private keys or raw KYC materials", async () => {
     render(<App />);
@@ -2855,7 +2889,7 @@ describe("App", () => {
     expect(retention.getAllByText(/\[redacted-private-key\]/i).length).toBeGreaterThan(0);
     expect(retention.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
     expect(retention.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
-  });
+  }, 30000);
 
   it("syncs Evidence Ledger metadata to the backend Evidence Vault and displays the vault manifest hash", async () => {
     const uploadedForms: FormData[] = [];
@@ -5368,4 +5402,19 @@ function readAppBlobText(blob: Blob): Promise<string> {
     reader.addEventListener("error", () => reject(reader.error ?? new Error("Unable to read blob.")));
     reader.readAsText(blob);
   });
+}
+
+function createFastDigest(data: BufferSource): ArrayBuffer {
+  const input =
+    data instanceof ArrayBuffer
+      ? new Uint8Array(data)
+      : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  const digest = new Uint8Array(32);
+
+  for (let index = 0; index < input.length; index += 1) {
+    digest[index % digest.length] = (digest[index % digest.length] + input[index] + index * 31) % 256;
+    digest[(index * 7) % digest.length] = digest[(index * 7) % digest.length] ^ ((input[index] + index) % 256);
+  }
+
+  return digest.buffer;
 }

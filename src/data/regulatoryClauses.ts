@@ -2426,6 +2426,100 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "my-sc-bnm-digital-asset-exchange-custody-aml",
+    jurisdiction: "Malaysia",
+    regulator: "Securities Commission Malaysia / Bank Negara Malaysia",
+    sourceName: "Digital Assets regulation, Guidelines on Digital Assets, and AML/CFT - Digital Currencies",
+    sourceUrl: "https://www.sc.com.my/digital-assets",
+    citation:
+      "Securities Commission Malaysia Digital Assets page; Guidelines on Digital Assets issued 28 October 2020, revised 19 August 2024; Bank Negara Malaysia AML/CFT - Digital Currencies (Sector 6) policy document",
+    topic: "activity-scope",
+    summary:
+      "Prepare Malaysia digital asset exchange, digital broker, digital asset custodian, IEO, SC registration, regulated-player, tradeable-asset, BNM reporting-institution, AML/CFT, customer due diligence, STR, and no-raw-KYC evidence for Malaysia counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "malaysia",
+      "malaysian",
+      "securities commission malaysia",
+      "sc malaysia",
+      "bank negara malaysia",
+      "bnm",
+      "digital asset exchange",
+      "digital asset custodian",
+      "digital broker",
+      "rmo-dax",
+      "dax operator",
+      "ieo",
+      "digital currencies",
+      "digital currency exchanger",
+      "reporting institution",
+      "aml/cft",
+      "str",
+      "shariah"
+    ],
+    evidenceRequests: [
+      {
+        id: "my-sc-dax-dac-registration-custody-scope",
+        title: "Malaysia SC DAX/DAC registration, trading, and custody evidence",
+        reason:
+          "Malaysia digital asset review needs SC-regulated activity scope, RMO-DAX or digital broker model, Digital Asset Custodian registration route, official channels, tradeable-asset or IEO assumptions, custody safeguarding owner, and regulated-player source mapping before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "malaysia digital asset",
+          "securities commission malaysia",
+          "sc malaysia",
+          "rmo-dax",
+          "dax operator",
+          "digital asset exchange",
+          "digital broker",
+          "digital asset custodian",
+          "dac",
+          "ieo",
+          "tradeable asset",
+          "shariah",
+          "custody safeguarding",
+          "official channels"
+        ]
+      },
+      {
+        id: "my-bnm-digital-currency-aml-cft-reporting",
+        title: "Malaysia BNM digital currency AML/CFT reporting-institution controls",
+        reason:
+          "Counsel and compliance review need digital currency exchanger scope, AMLA reporting-institution handoff, customer identification, CDD/EDD, beneficial-owner, suspicious transaction reporting, compliance officer, recordkeeping, transparency, and no-raw-KYC evidence.",
+        priority: "P1",
+        keywords: [
+          "bank negara malaysia",
+          "bnm",
+          "digital currencies",
+          "digital currency exchanger",
+          "reporting institution",
+          "aml/cft",
+          "aml cft",
+          "customer identification",
+          "cdd",
+          "edd",
+          "beneficial ownership",
+          "suspicious transaction report",
+          "str",
+          "compliance officer",
+          "recordkeeping",
+          "transparency",
+          "no raw kyc"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Malaysia digital asset exchange, digital broker, digital asset custodian, IEO, tradeable-asset, official-channel, or SC registration assumptions need Malaysia counsel review?",
+      "What BNM AML/CFT, reporting-institution, customer identification, CDD/EDD, STR, recordkeeping, and no-raw-KYC evidence should be prepared before counsel or compliance handoff?"
+    ],
+    localCounselRole: "Malaysia digital asset / AML counsel",
+    effectiveAsOf: "2024-08-19",
+    lastReviewedAt: "2026-07-04",
+    reviewerNotes:
+      "Source metadata reviewed against Securities Commission Malaysia Digital Assets and Guidelines on Digital Assets pages, including RMO-DAX, Digital Asset Custodian, IEO, regulated-player and tradeable-asset metadata, plus Bank Negara Malaysia AML/CFT - Digital Currencies (Sector 6) policy metadata for reporting-institution, transparency, AML/CFT, CDD, STR, and no-raw-KYC evidence routing; route interpretation to Malaysia local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

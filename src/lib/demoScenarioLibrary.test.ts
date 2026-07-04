@@ -456,10 +456,11 @@ describe("validateDemoScenarioLibrary", () => {
     expect(indiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
-  it("keeps seeded Thailand and Indonesia source paths for APAC digital asset demos", () => {
+  it("keeps seeded Thailand, Indonesia, and Malaysia source paths for APAC digital asset demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const thailandScenario = findDemoScenarioById(demoScenarios, "thailand-digital-asset-custody-source-path");
     const indonesiaScenario = findDemoScenarioById(demoScenarios, "indonesia-ojk-crypto-trading-source-path");
+    const malaysiaScenario = findDemoScenarioById(demoScenarios, "malaysia-digital-asset-exchange-source-path");
 
     expect(result).toEqual({ valid: true, errors: [] });
     expect(thailandScenario).toEqual(
@@ -497,6 +498,24 @@ describe("validateDemoScenarioLibrary", () => {
       ])
     );
     expect(indonesiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+
+    expect(malaysiaScenario).toEqual(
+      expect.objectContaining({
+        title: "Malaysia digital asset exchange review",
+        projectName: "Kuala Lumpur Digital Asset Exchange Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Malaysia", "SC Malaysia", "BNM", "Digital asset exchange"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(malaysiaScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect Malaysia SC and BNM source graph",
+        "Review DAX, digital broker, DAC, and custody evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(malaysiaScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
   it("keeps a seeded UK cryptoasset AML path for FCA source demos", () => {

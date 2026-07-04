@@ -176,17 +176,18 @@ export const demoScenarios: DemoScenario[] = [
     id: "singapore-dpt-custody-source-path",
     projectName: "HarborKey DPT Custody Review",
     title: "Singapore DPT custody review",
-    summary: "Singapore DPT customer-asset safeguards, custody disclosure, reconciliation, and counsel handoff review.",
+    summary:
+      "Singapore DPT PSN02 AML/CFT, customer-asset safeguards, custody disclosure, reconciliation, data-redaction, and counsel handoff review.",
     estimatedMinutes: 6,
     recommendedStartTab: "jurisdiction",
     judgePath: [
-      "Inspect MAS customer asset safeguards",
-      "Review custody segregation evidence gaps",
+      "Inspect MAS PSN02 AML/CFT and PS-G03 customer asset safeguards",
+      "Review AML/CFT, CDD, sanctions, and data-redaction handoff evidence gaps",
       "Check custody disclosure and reconciliation evidence",
       "Export counsel pack"
     ],
     expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
-    focusTags: ["Singapore", "DPT custody", "Customer assets"],
+    focusTags: ["Singapore", "DPT custody", "MAS PSN02", "AML/CFT", "Customer assets"],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {

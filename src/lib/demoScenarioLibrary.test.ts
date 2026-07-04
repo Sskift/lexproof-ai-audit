@@ -274,14 +274,14 @@ describe("validateDemoScenarioLibrary", () => {
         title: "Singapore DPT custody review",
         projectName: "HarborKey DPT Custody Review",
         recommendedStartTab: "jurisdiction",
-        focusTags: expect.arrayContaining(["Singapore", "DPT custody", "Customer assets"]),
+        focusTags: expect.arrayContaining(["Singapore", "DPT custody", "MAS PSN02", "AML/CFT", "Customer assets"]),
         expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
       })
     );
     expect(singaporeScenario?.judgePath).toEqual(
       expect.arrayContaining([
-        "Inspect MAS customer asset safeguards",
-        "Review custody segregation evidence gaps",
+        "Inspect MAS PSN02 AML/CFT and PS-G03 customer asset safeguards",
+        "Review AML/CFT, CDD, sanctions, and data-redaction handoff evidence gaps",
         "Export counsel pack"
       ])
     );

@@ -1,6 +1,7 @@
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
+import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type ExportSafetyArtifactCategory =
@@ -191,6 +192,36 @@ export function createSourceFreshnessBoardExportArtifact(
     notLegalAdviceBoundary:
       sourceFreshnessBoard?.notLegalAdviceBoundary ??
       "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+  };
+}
+
+export function createEvidenceVaultLineageDigestExportArtifact(
+  digest: EvidenceVaultLineageDigest | null | undefined
+): ExportSafetyArtifactInput {
+  const hasDigest = Boolean(digest?.digestHash);
+  const status = digest?.readinessStatus;
+  const warnings =
+    hasDigest && status && status !== "ready"
+      ? [`Evidence Vault Lineage Digest status is ${status}; resolve vault lineage recovery before external handoff.`]
+      : [];
+
+  return {
+    id: "evidence-vault-lineage-digest",
+    label: "Evidence Vault Lineage Digest JSON",
+    category: "evidence",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasDigest,
+    artifactHash: digest?.digestHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: hasDigest
+      ? "Keep the Evidence Vault Lineage Digest with the final evidence handoff packet."
+      : "Sync metadata-only evidence to the Evidence Vault and wait for the lineage digest hash.",
+    notLegalAdviceBoundary:
+      digest?.notLegalAdviceBoundary ??
+      "Not legal advice. Evidence Vault lineage digests are audit preparation metadata only."
   };
 }
 

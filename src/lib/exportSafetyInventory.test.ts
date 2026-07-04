@@ -3,10 +3,12 @@ import { createDataBoundaryReport } from "./dataBoundary";
 import {
   createExportSafetyInventory,
   createDemoRunbookExportArtifact,
+  createEvidenceVaultLineageDigestExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   exportSafetyInventoryJson,
   type ExportSafetyArtifactInput
 } from "./exportSafetyInventory";
+import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
@@ -163,6 +165,39 @@ describe("createExportSafetyInventory", () => {
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
 
+  it("adds Evidence Vault Lineage Digest as a metadata-only evidence artifact with recovery warning", async () => {
+    const digest = evidenceVaultLineageDigest();
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-vault-lineage",
+      projectName: "Vault Lineage Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createEvidenceVaultLineageDigestExportArtifact(digest)],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "evidence-vault-lineage-digest");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Evidence Vault Lineage Digest JSON",
+        category: "evidence",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: digest.digestHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Evidence Vault Lineage Digest status is needs-replacement; resolve vault lineage recovery before external handoff."
+    ]);
+    expect(inventory.exportHandoffAllowed).toBe(true);
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key|source-note body/i);
+  });
+
   it("adds Demo Runbook as a metadata-only required submission artifact with runbook hash", async () => {
     const inventory = await createExportSafetyInventory({
       workspaceId: "workspace-demo-runbook",
@@ -305,6 +340,34 @@ function safeEvidence(): EvidenceItem[] {
       owner: "Compliance"
     }
   ];
+}
+
+function evidenceVaultLineageDigest(): EvidenceVaultLineageDigest {
+  return {
+    digestVersion: "lexproof-evidence-vault-lineage-digest-v1",
+    workspaceId: "workspace-vault-lineage",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    readinessStatus: "needs-replacement",
+    manifestHash: "f".repeat(64),
+    itemCount: 2,
+    statusCounts: { verified: 1, rejected: 1 },
+    lineageCounts: {
+      activeRecords: 1,
+      replacedRecords: 0,
+      openRejectedRecords: 1,
+      lineageLinkCount: 0,
+      linkedControlCount: 1,
+      linkedRiskFlagCount: 1
+    },
+    lineageLinks: [],
+    activeEvidenceIds: ["evidence-active"],
+    openRejectedEvidenceIds: ["evidence-rejected"],
+    linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
+    linkedRiskFlagIds: ["governance-approval"],
+    nextActions: ["Create metadata-only replacement records for rejected vault evidence before final handoff."],
+    digestHash: "6".repeat(64),
+    notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+  };
 }
 
 function sourceFreshnessBoard(overrides: Partial<SourceFreshnessBoard> = {}): SourceFreshnessBoard {

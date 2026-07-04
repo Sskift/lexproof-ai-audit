@@ -104,6 +104,7 @@ import {
 } from "./lib/evidenceRecertification";
 import {
   createDemoRunbookExportArtifact,
+  createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
   createSourceFreshnessBoardExportArtifact,
   type ExportSafetyArtifactInput,
@@ -1175,6 +1176,7 @@ export default function App() {
         recoveryAction: "Add metadata-only evidence and wait for the Evidence Manifest bundle hash.",
         notLegalAdviceBoundary: "Not legal advice. Evidence manifests are audit preparation hash metadata only."
       },
+      createEvidenceVaultLineageDigestExportArtifact(evidenceVaultLineageDigest),
       {
         id: "regulatory-source-pack",
         label: "Regulatory Source Pack JSON",
@@ -1290,6 +1292,7 @@ export default function App() {
   }, [
     currentCounselPackVersions,
     demoRunbookSummary,
+    evidenceVaultLineageDigest,
     grcTicketExport,
     integrationEnablementDossier,
     localCounselRoutingPlan,

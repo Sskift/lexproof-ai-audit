@@ -88,7 +88,7 @@ Key evidence:
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
 - Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, Regulatory Source Coverage hash/status, Demo Runbook hash, export safety summary, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
 - Demo Smoke Checklist JSON and `npm run demo:smoke` CLI preflight from Judge Demo Readiness, plus Demo Runbook JSON from Judge Demo Readiness and Sources with clean-clone commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash for hackathon judges. Not legal advice.
-- Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Demo Runbook JSON, Source Freshness Board hash/status, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
+- Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Demo Runbook JSON, Source Freshness Board hash/status, Evidence Vault Lineage Digest hash/status when available, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Judge Handoff Bundle JSON from Sources that consolidates Submission Pack, Demo Runbook, Export Safety Inventory, and Counsel Handoff Checklist hashes/statuses into one metadata-only judge packet with a stable bundle hash and Not legal advice boundary.
 - Responsive React workbench with tabs for Audit Wizard, AI Review, Model Intake, Jurisdiction Checklist, Risk Audit, Evidence Ledger, Counsel Pack, and Sources.
 
@@ -464,9 +464,11 @@ Sources now includes generated Submission Pack JSON and Demo Runbook JSON artifa
 
 ![Submission Pack Export Safety Summary](docs/assets/screenshots/submission-pack-export-safety-summary.jpg)
 
-Sources also includes an Export Safety Inventory that consolidates the handoff state for manifest, source pack, Counsel Pack version, source review, Source Freshness Board, Demo Runbook, local counsel routing, GRC ticket export, integration dossier, and submission pack artifacts. It carries the Source Freshness Board and Demo Runbook artifact hashes/statuses when available, blocks external handoff when the data boundary detects private keys, credential-like tokens, or raw KYC references, and downloads only redacted metadata. Not legal advice.
+Sources also includes an Export Safety Inventory that consolidates the handoff state for manifest, Evidence Vault Lineage Digest, source pack, Counsel Pack version, source review, Source Freshness Board, Demo Runbook, local counsel routing, GRC ticket export, integration dossier, and submission pack artifacts. It carries the Evidence Vault Lineage Digest, Source Freshness Board, and Demo Runbook artifact hashes/statuses when available, blocks external handoff when the data boundary detects private keys, credential-like tokens, or raw KYC references, and downloads only redacted metadata. Not legal advice.
 
 ![Export Safety Inventory](docs/assets/screenshots/export-safety-inventory.png)
+
+![Export Safety Inventory Vault Lineage Digest](docs/assets/screenshots/export-safety-vault-lineage-digest.png)
 
 ![Export Safety Inventory Source Freshness Board](docs/assets/screenshots/export-safety-source-freshness-board.jpg)
 
@@ -502,7 +504,7 @@ npm run dev
 6. Human Review return flow that moves linked evidence back to `requested` and records a downloadable review timeline.
 7. Secure Review Journey across Evidence Vault, Model Gateway, Model Gateway Evaluation, Human Review, audit log routes, and Audit Log Export.
 8. Counsel Pack template selection, Source Review Ledger API sync, Source Update Approval Queue preview, Counsel Handoff Checklist JSON, version save with Regulatory Source Pack hash, server export record creation, Markdown export, Manifest JSON, and simulated anchor receipt.
-9. Sources tab Judge Handoff Bundle, Export Safety Inventory, Submission Pack JSON, Demo Runbook JSON, and Counsel Handoff Checklist artifact status with bundle/inventory/pack/runbook/checklist hashes, export safety summary, known limitations, demo readiness, and hackathon mapping.
+9. Sources tab Judge Handoff Bundle, Export Safety Inventory, Submission Pack JSON, Demo Runbook JSON, and Counsel Handoff Checklist artifact status with bundle/inventory/pack/runbook/checklist hashes, Evidence Vault Lineage Digest readiness when available, export safety summary, known limitations, demo readiness, and hackathon mapping.
 
 Screenshots for the exact demo path:
 

@@ -2972,7 +2972,38 @@ describe("App", () => {
       expect(parsedLineage.digestHash).toMatch(/^[a-f0-9]{64}$/);
       expect(lineagePayload).not.toContain("Raw board approval facts stay local");
 
-      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+      const exportInventoryRegion = await screen.findByRole("region", { name: /Export Safety Inventory/i });
+      await waitFor(() =>
+        expect(within(exportInventoryRegion).getByText(/Evidence Vault Lineage Digest JSON/i)).toBeInTheDocument()
+      );
+      expect(
+        within(exportInventoryRegion).getByText(/Keep the Evidence Vault Lineage Digest with the final evidence handoff packet/i)
+      ).toBeInTheDocument();
+      fireEvent.click(within(exportInventoryRegion).getByRole("button", { name: /Download Export Inventory JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(3);
+      const inventoryPayload = await readAppBlobText(capturedBlobs[2]);
+      const parsedInventory = JSON.parse(inventoryPayload);
+      const lineageArtifact = parsedInventory.artifacts.find(
+        (artifact: { id: string }) => artifact.id === "evidence-vault-lineage-digest"
+      );
+      expect(lineageArtifact).toEqual(
+        expect.objectContaining({
+          label: "Evidence Vault Lineage Digest JSON",
+          category: "evidence",
+          exportMode: "metadata-only-json",
+          status: "ready",
+          available: true,
+          artifactHash: parsedLineage.digestHash,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+        })
+      );
+      expect(inventoryPayload).not.toContain("Raw board approval facts stay local");
+
+      fireEvent.click(screen.getByRole("button", { name: "Counsel Pack" }));
       const checklistRegion = await screen.findByRole("region", { name: /Counsel Handoff Checklist/i });
       await waitFor(() =>
         expect(within(checklistRegion).getAllByText(/Evidence Vault Lineage Digest/i).length).toBeGreaterThan(0)

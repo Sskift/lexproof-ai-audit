@@ -1483,7 +1483,10 @@ describe("App", () => {
         expect(within(submissionPack).getByText(/External model providers remain disabled/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Manifest hash/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Regulatory Source Pack hash/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/Source Coverage hash/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText(/Source Coverage status/i)).toBeInTheDocument();
         expect(within(submissionPack).getByText(/Demo Runbook hash/i)).toBeInTheDocument();
+        expect(within(submissionPack).getByText("Regulatory Source Coverage JSON", { exact: true })).toBeInTheDocument();
         expect(within(submissionPack).getByText("Demo Runbook JSON", { exact: true })).toBeInTheDocument();
       });
 
@@ -1511,6 +1514,7 @@ describe("App", () => {
             exportHandoffAllowed: false,
             manifestReady: true,
             regulatorySourcePackReady: true,
+            regulatorySourceCoverageReady: true,
             demoRunbookReady: false,
             notLegalAdviceBoundary: "Not legal advice. Submission export safety is audit preparation handoff metadata only."
           }),
@@ -1518,6 +1522,10 @@ describe("App", () => {
             "Not legal advice. Submission packs are audit preparation artifacts for hackathon judging and counsel handoff only."
         })
       );
+      expect(parsed.regulatorySourceCoverageHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.regulatorySourceCoverageStatus).toBe("needs-evidence");
+      expect(parsed.sourceCoverageJurisdictionCount).toBeGreaterThan(0);
+      expect(parsed.sourceCoverageOpenEvidenceRequestCount).toBeGreaterThan(0);
       expect(parsed.exportSafetySummary.nextActions).toEqual(
         expect.arrayContaining([
           "Save a Counsel Pack version to lock Markdown and source-pack hashes.",
@@ -1529,6 +1537,10 @@ describe("App", () => {
         expect.arrayContaining([
           expect.objectContaining({
             label: "Demo Runbook JSON",
+            status: "needs-action"
+          }),
+          expect.objectContaining({
+            label: "Regulatory Source Coverage JSON",
             status: "needs-action"
           })
         ])

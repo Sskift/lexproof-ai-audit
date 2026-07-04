@@ -1127,6 +1127,7 @@ export default function App() {
       fit,
       manifest,
       regulatorySourcePack,
+      regulatorySourceCoverageReport,
       demoReadinessReport,
       demoRunbookSummary,
       dataBoundaryReport,
@@ -1152,6 +1153,7 @@ export default function App() {
     fit,
     manifest,
     project,
+    regulatorySourceCoverageReport,
     regulatorySourcePack,
     submissionModelConnectStatus
   ]);

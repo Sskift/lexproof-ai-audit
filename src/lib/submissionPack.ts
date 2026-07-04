@@ -4,6 +4,7 @@ import { redactClassifiedText } from "./dataClassification";
 import type { DemoReadinessCheckStatus, DemoReadinessReport } from "./demoReadiness";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
+import type { RegulatorySourceCoverageReport } from "./regulatorySourceCoverage";
 import type { RegulatorySourcePack } from "./regulatorySourcePack";
 
 export type SubmissionPackStatus = "ready" | "needs-action" | "blocked";
@@ -38,6 +39,7 @@ export type SubmissionExportSafetySummary = {
   boundaryWarningCount: number;
   manifestReady: boolean;
   regulatorySourcePackReady: boolean;
+  regulatorySourceCoverageReady: boolean;
   counselPackVersionReady: boolean;
   serverExportRecordReady: boolean;
   demoRunbookReady: boolean;
@@ -68,9 +70,13 @@ export type SubmissionPack = {
   evidenceItemCount: number;
   manifestHash: string;
   regulatorySourcePackHash: string;
+  regulatorySourceCoverageHash: string;
+  regulatorySourceCoverageStatus: RegulatorySourceCoverageReport["status"] | "missing";
   demoRunbookHash: string;
   sourceCount: number;
   evidenceGapCount: number;
+  sourceCoverageJurisdictionCount: number;
+  sourceCoverageOpenEvidenceRequestCount: number;
   counselPackVersionCount: number;
   serverExportRecordCount: number;
   exportSafetySummary: SubmissionExportSafetySummary;
@@ -88,6 +94,7 @@ export type CreateSubmissionPackInput = {
   fit: SubmissionFit;
   manifest: EvidenceManifest | null;
   regulatorySourcePack: RegulatorySourcePack | null;
+  regulatorySourceCoverageReport?: RegulatorySourceCoverageReport | null;
   demoReadinessReport: DemoReadinessReport;
   demoRunbookSummary?: SubmissionDemoRunbookSummary | null;
   dataBoundaryReport: DataBoundaryReport;
@@ -104,6 +111,7 @@ export async function createSubmissionPack(input: CreateSubmissionPackInput): Pr
   const projectName = sanitize(input.project.projectName || "Untitled project");
   const manifestHash = sanitizeHash(input.manifest?.bundleHash ?? "");
   const regulatorySourcePackHash = sanitizeHash(input.regulatorySourcePack?.packHash ?? "");
+  const regulatorySourceCoverageHash = sanitizeHash(input.regulatorySourceCoverageReport?.reportHash ?? "");
   const demoRunbookHash = sanitizeHash(input.demoRunbookSummary?.runbookHash ?? "");
   const exportSafetySummary = createExportSafetySummary(input);
   const requiredAssets = createRequiredAssets(input);
@@ -124,9 +132,13 @@ export async function createSubmissionPack(input: CreateSubmissionPackInput): Pr
     evidenceItemCount: input.manifest?.itemCount ?? input.project.evidenceItems.length,
     manifestHash,
     regulatorySourcePackHash,
+    regulatorySourceCoverageHash,
+    regulatorySourceCoverageStatus: input.regulatorySourceCoverageReport?.status ?? "missing",
     demoRunbookHash,
     sourceCount: input.regulatorySourcePack?.sourceCount ?? input.audit.sourcePack.length,
     evidenceGapCount: input.regulatorySourcePack?.evidenceGapCount ?? 0,
+    sourceCoverageJurisdictionCount: input.regulatorySourceCoverageReport?.jurisdictionCount ?? 0,
+    sourceCoverageOpenEvidenceRequestCount: input.regulatorySourceCoverageReport?.openEvidenceRequestCount ?? 0,
     counselPackVersionCount: input.counselPackVersionCount,
     serverExportRecordCount: input.serverExportRecordCount,
     exportSafetySummary,
@@ -192,7 +204,8 @@ function createRequiredAssets(input: CreateSubmissionPackInput): SubmissionPackA
 
     return createAsset(asset, "needs-action", "Asset is tracked in the submission checklist.", "Confirm this asset before final DoraHacks submission.");
     }),
-    createDemoRunbookAsset(input)
+    createDemoRunbookAsset(input),
+    createSourceCoverageAsset(input)
   ];
 }
 
@@ -208,12 +221,14 @@ function createAsset(label: string, status: SubmissionPackStatus, evidence: stri
 function createExportSafetySummary(input: CreateSubmissionPackInput): SubmissionExportSafetySummary {
   const manifestReady = Boolean(input.manifest?.bundleHash);
   const regulatorySourcePackReady = Boolean(input.regulatorySourcePack?.packHash);
+  const regulatorySourceCoverageReady = Boolean(input.regulatorySourceCoverageReport?.reportHash);
   const counselPackVersionReady = input.counselPackVersionCount > 0;
   const serverExportRecordReady = input.serverExportRecordCount > 0;
   const demoRunbookReady = isDemoRunbookReady(input.demoRunbookSummary);
   const missingActions = [
     !manifestReady ? "Generate an Evidence Manifest before judge or counsel handoff." : "",
     !regulatorySourcePackReady ? "Open Counsel Pack or Sources after Regulatory Source Pack calculation completes." : "",
+    !regulatorySourceCoverageReady ? "Open the Regulatory Command Center after Regulatory Source Coverage calculation completes." : "",
     !counselPackVersionReady ? "Save a Counsel Pack version to lock Markdown and source-pack hashes." : "",
     !serverExportRecordReady ? "Create a server export record from the latest Counsel Pack version when the Phase 2 API is running." : "",
     !demoRunbookReady ? "Complete Demo API preflight and download the Demo Runbook JSON before judge handoff." : ""
@@ -222,7 +237,12 @@ function createExportSafetySummary(input: CreateSubmissionPackInput): Submission
     input.dataBoundaryReport.status === "clean" ? [] : input.dataBoundaryReport.remediation.map(sanitize);
   const nextActions = unique([...missingActions, ...boundaryActions].map(sanitize).filter(Boolean));
   const missingRequiredArtifact =
-    !manifestReady || !regulatorySourcePackReady || !counselPackVersionReady || !serverExportRecordReady || !demoRunbookReady;
+    !manifestReady ||
+    !regulatorySourcePackReady ||
+    !regulatorySourceCoverageReady ||
+    !counselPackVersionReady ||
+    !serverExportRecordReady ||
+    !demoRunbookReady;
   const status = createExportSafetyStatus(input.dataBoundaryReport, missingRequiredArtifact);
 
   return {
@@ -233,6 +253,7 @@ function createExportSafetySummary(input: CreateSubmissionPackInput): Submission
     boundaryWarningCount: input.dataBoundaryReport.warningCount,
     manifestReady,
     regulatorySourcePackReady,
+    regulatorySourceCoverageReady,
     counselPackVersionReady,
     serverExportRecordReady,
     demoRunbookReady,
@@ -261,6 +282,30 @@ function createDemoRunbookAsset(input: CreateSubmissionPackInput): SubmissionPac
     status === "ready"
       ? "Keep the runbook aligned with README, demo script, and current screenshots."
       : "Complete Demo API preflight and download the Demo Runbook JSON before judge handoff."
+  );
+}
+
+function createSourceCoverageAsset(input: CreateSubmissionPackInput): SubmissionPackAsset {
+  const coverage = input.regulatorySourceCoverageReport;
+
+  if (!coverage?.reportHash) {
+    return createAsset(
+      "Regulatory Source Coverage JSON",
+      "needs-action",
+      "Regulatory Source Coverage has not been generated for the current command-center state.",
+      "Open Regulatory Command Center after source graph and source review metadata finish calculating."
+    );
+  }
+
+  const status: SubmissionPackStatus = coverage.status === "ready-for-counsel" ? "ready" : "needs-action";
+
+  return createAsset(
+    "Regulatory Source Coverage JSON",
+    status,
+    `Coverage ${shortHash(coverage.reportHash)} spans ${coverage.jurisdictionCount} jurisdiction${coverage.jurisdictionCount === 1 ? "" : "s"}, ${coverage.sourceCount} source${coverage.sourceCount === 1 ? "" : "s"}, and ${coverage.openEvidenceRequestCount} open evidence request${coverage.openEvidenceRequestCount === 1 ? "" : "s"}.`,
+    status === "ready"
+      ? "Keep source coverage aligned with the latest source review ledger before final judge handoff."
+      : "Resolve open source coverage actions or explain them as known audit-prep blockers before judge handoff."
   );
 }
 
@@ -319,6 +364,9 @@ function createFeatureMappings(input: CreateSubmissionPackInput): SubmissionPack
         input.regulatorySourcePack
           ? `Regulatory Source Pack ${shortHash(input.regulatorySourcePack.packHash)} has ${input.regulatorySourcePack.evidenceGapCount} open evidence gap${input.regulatorySourcePack.evidenceGapCount === 1 ? "" : "s"}.`
           : "Regulatory Source Pack is still missing.",
+        input.regulatorySourceCoverageReport
+          ? `Regulatory Source Coverage ${shortHash(input.regulatorySourceCoverageReport.reportHash)} is ${input.regulatorySourceCoverageReport.status} across ${input.regulatorySourceCoverageReport.jurisdictionCount} jurisdiction${input.regulatorySourceCoverageReport.jurisdictionCount === 1 ? "" : "s"}.`
+          : "Regulatory Source Coverage is still missing.",
         `${input.serverExportRecordCount} server export metadata record${input.serverExportRecordCount === 1 ? "" : "s"}.`,
         `Demo readiness status: ${input.demoReadinessReport.status}.`
       ].map(sanitize),
@@ -383,7 +431,7 @@ function createJudgeRunbook(input: CreateSubmissionPackInput): string[] {
     "Validate Model Connect with the mock local reviewer and inspect Redaction Gate status.",
     "Review or add metadata-only evidence, then confirm the Evidence Manifest bundle hash.",
     "Open Risk Audit, Human Review, Secure Review Journey, Counsel Pack, and Sources.",
-    "Download Counsel Pack Markdown, Regulatory Source Pack JSON, Evidence Manifest JSON, Demo Runbook JSON, and this Submission Pack JSON."
+    "Download Counsel Pack Markdown, Regulatory Source Pack JSON, Regulatory Source Coverage JSON, Evidence Manifest JSON, Demo Runbook JSON, and this Submission Pack JSON."
   ].map(sanitize);
 }
 

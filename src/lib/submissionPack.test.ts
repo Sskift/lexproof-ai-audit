@@ -5,6 +5,7 @@ import { createSubmissionPack, exportSubmissionPackJson } from "./submissionPack
 import type { DemoReadinessReport } from "./demoReadiness";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { ProjectProfile } from "./projectModel";
+import type { RegulatorySourceCoverageReport } from "./regulatorySourceCoverage";
 import type { RegulatorySourcePack } from "./regulatorySourcePack";
 
 const project: ProjectProfile = {
@@ -63,6 +64,49 @@ const regulatorySourcePack = {
   }
 } as RegulatorySourcePack;
 
+const regulatorySourceCoverageReport: RegulatorySourceCoverageReport = {
+  reportVersion: "lexproof-regulatory-source-coverage-v1",
+  projectId: project.id,
+  generatedAt: "2026-07-01T00:00:00.000Z",
+  status: "needs-evidence",
+  reportHash: "f".repeat(64),
+  jurisdictionCount: 2,
+  sourceCount: 4,
+  currentSourceCount: 4,
+  reviewDueCount: 0,
+  metadataMissingCount: 0,
+  openEvidenceRequestCount: 2,
+  coveredEvidenceRequestCount: 2,
+  totalEvidenceRequestCount: 4,
+  jurisdictions: [
+    {
+      jurisdiction: "European Union",
+      status: "needs-evidence",
+      priority: "P1",
+      matchedClauseCount: 1,
+      sourceCount: 1,
+      currentSourceCount: 1,
+      reviewDueCount: 0,
+      metadataMissingCount: 0,
+      openEvidenceRequestCount: 1,
+      coveredEvidenceRequestCount: 1,
+      totalEvidenceRequestCount: 2,
+      localCounselRoles: ["EU crypto-asset counsel"],
+      nextAction: "Prepare open source-linked evidence requests for European Union before counsel review."
+    }
+  ],
+  actions: [
+    {
+      id: "reg-source-coverage-european-union",
+      jurisdiction: "European Union",
+      priority: "P1",
+      status: "needs-evidence",
+      action: "Prepare open source-linked evidence requests for European Union before counsel review."
+    }
+  ],
+  notLegalAdviceBoundary: "Not legal advice. Regulatory source coverage is audit preparation metadata only."
+};
+
 const demoReadinessReport: DemoReadinessReport = {
   reportVersion: "lexproof-demo-readiness-v1",
   status: "needs-api",
@@ -114,6 +158,7 @@ describe("createSubmissionPack", () => {
       fit: createSubmissionFit(),
       manifest,
       regulatorySourcePack,
+      regulatorySourceCoverageReport,
       demoReadinessReport,
       demoRunbookSummary,
       dataBoundaryReport,
@@ -128,6 +173,10 @@ describe("createSubmissionPack", () => {
     expect(pack.riskLevel).toBe("critical");
     expect(pack.manifestHash).toBe(manifest.bundleHash);
     expect(pack.regulatorySourcePackHash).toBe(regulatorySourcePack.packHash);
+    expect(pack.regulatorySourceCoverageHash).toBe(regulatorySourceCoverageReport.reportHash);
+    expect(pack.regulatorySourceCoverageStatus).toBe("needs-evidence");
+    expect(pack.sourceCoverageJurisdictionCount).toBe(2);
+    expect(pack.sourceCoverageOpenEvidenceRequestCount).toBe(2);
     expect(pack.demoRunbookHash).toBe(demoRunbookSummary.runbookHash);
     expect(pack.exportSafetySummary.demoRunbookReady).toBe(false);
     expect(pack.requiredAssets.map((asset) => asset.label)).toEqual(expect.arrayContaining(["Public GitHub repository", "Demo video"]));
@@ -137,6 +186,11 @@ describe("createSubmissionPack", () => {
           label: "Demo Runbook JSON",
           status: "needs-action",
           evidence: expect.stringContaining("not-checked")
+        }),
+        expect.objectContaining({
+          label: "Regulatory Source Coverage JSON",
+          status: "needs-action",
+          evidence: expect.stringContaining(regulatorySourceCoverageReport.reportHash.slice(0, 12))
         })
       ])
     );
@@ -159,6 +213,7 @@ describe("createSubmissionPack", () => {
       fit: createSubmissionFit(),
       manifest,
       regulatorySourcePack,
+      regulatorySourceCoverageReport,
       demoReadinessReport,
       demoRunbookSummary,
       dataBoundaryReport,
@@ -174,9 +229,15 @@ describe("createSubmissionPack", () => {
       manifest: { ...manifest, bundleHash: "d".repeat(64) },
       generatedAt: "2026-07-01T00:00:00.000Z"
     });
+    const changedCoverage = await createSubmissionPack({
+      ...baseInput,
+      regulatorySourceCoverageReport: { ...regulatorySourceCoverageReport, reportHash: "1".repeat(64) },
+      generatedAt: "2026-07-01T00:00:00.000Z"
+    });
 
     expect(second.packHash).toBe(first.packHash);
     expect(changed.packHash).not.toBe(first.packHash);
+    expect(changedCoverage.packHash).not.toBe(first.packHash);
   });
 
   it("includes export safety readiness for judge handoff without leaking raw boundary findings", async () => {
@@ -195,6 +256,7 @@ describe("createSubmissionPack", () => {
       fit: createSubmissionFit(),
       manifest,
       regulatorySourcePack,
+      regulatorySourceCoverageReport,
       demoReadinessReport,
       dataBoundaryReport: exportSafetyDataBoundaryReport,
       counselPackVersionCount: 0,
@@ -211,6 +273,7 @@ describe("createSubmissionPack", () => {
         boundaryBlockerCount: exportSafetyDataBoundaryReport.blockerCount,
         manifestReady: true,
         regulatorySourcePackReady: true,
+        regulatorySourceCoverageReady: true,
         counselPackVersionReady: false,
         serverExportRecordReady: false,
         demoRunbookReady: false,

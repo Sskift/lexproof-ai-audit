@@ -86,7 +86,7 @@ Key evidence:
 - Server-side Counsel Pack export records through the Phase 2 API, storing export hashes, version metadata, review summary, source count, Regulatory Source Pack hash, source review status, and audit-log entries without raw Markdown, KYC, personal data, or credentials. Blocked data-boundary findings disable Markdown/PDF, manifest JSON, simulated anchor, version save, and server export actions until remediated.
 - Counsel Handoff Checklist in Counsel Pack, with a stable checklist hash, export safety status, evidence manifest/source pack/submission pack readiness, evidence recertification status, Evidence Vault lineage readiness, review status, saved version state, server export-record state, and downloadable metadata-only JSON. Not legal advice.
 - Submission fit scorecard for BLI themes and required DoraHacks assets.
-- Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, Demo Runbook hash, export safety summary, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
+- Submission Pack JSON from Sources with pack hash, manifest hash, Regulatory Source Pack hash, Regulatory Source Coverage hash/status, Demo Runbook hash, export safety summary, demo readiness, required submission assets, hackathon theme mapping, known limitations, and Not legal advice boundary.
 - Demo Smoke Checklist JSON and `npm run demo:smoke` CLI preflight from Judge Demo Readiness, plus Demo Runbook JSON from Judge Demo Readiness and Sources with clean-clone commands, scenario paths, screenshot references, API preflight status, limitations, and a stable runbook hash for hackathon judges. Not legal advice.
 - Export Safety Inventory in Sources with a stable inventory hash, artifact readiness, Demo Runbook JSON, Source Freshness Board hash/status, data-boundary blockers, metadata-only JSON download, and an explicit handoff allowed/blocked status before counsel or judge artifacts leave the workspace.
 - Judge Handoff Bundle JSON from Sources that consolidates Submission Pack, Demo Runbook, Export Safety Inventory, and Counsel Handoff Checklist hashes/statuses into one metadata-only judge packet with a stable bundle hash and Not legal advice boundary.
@@ -458,7 +458,7 @@ The Counsel Handoff Checklist condenses Export Safety Inventory, Evidence Manife
 
 ![Counsel Handoff Vault lineage gate](docs/assets/screenshots/counsel-handoff-vault-lineage-gate.png)
 
-Sources now includes generated Submission Pack JSON and Demo Runbook JSON artifacts for judges. The Submission Pack summarizes demo readiness, Demo Runbook hash, export safety summary, required assets, feature-to-theme mapping, known limitations, manifest hash, Regulatory Source Pack hash, and the Not legal advice boundary.
+Sources now includes generated Submission Pack JSON and Demo Runbook JSON artifacts for judges. The Submission Pack summarizes demo readiness, Demo Runbook hash, export safety summary, required assets, feature-to-theme mapping, known limitations, manifest hash, Regulatory Source Pack hash, Regulatory Source Coverage hash/status, open source evidence count, and the Not legal advice boundary.
 
 ![Submission Pack artifact](docs/assets/screenshots/submission-pack.png)
 

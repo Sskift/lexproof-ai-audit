@@ -34,6 +34,8 @@ export function SubmissionPackPanel({ pack, demoRunbook }: SubmissionPackPanelPr
             <SubmissionFact label="Pack hash" value={pack.packHash} />
             <SubmissionFact label="Manifest hash" value={pack.manifestHash || "missing"} />
             <SubmissionFact label="Regulatory Source Pack hash" value={pack.regulatorySourcePackHash || "missing"} />
+            <SubmissionFact label="Source Coverage hash" value={pack.regulatorySourceCoverageHash || "missing"} />
+            <SubmissionFact label="Source Coverage status" value={formatSourceCoverageStatus(pack.regulatorySourceCoverageStatus)} />
             <SubmissionFact label="Demo Runbook hash" value={pack.demoRunbookHash || "missing"} />
             <SubmissionFact label="Demo readiness" value={pack.demoReadinessStatus} />
             <SubmissionFact label="Export safety" value={formatExportSafetyStatus(pack.exportSafetySummary.status)} />
@@ -165,6 +167,25 @@ function formatExportSafetyStatus(status: SubmissionExportSafetyStatus): string 
   }
 
   return status;
+}
+
+function formatSourceCoverageStatus(status: SubmissionPack["regulatorySourceCoverageStatus"]): string {
+  if (status === "ready-for-counsel") {
+    return "ready for counsel";
+  }
+  if (status === "needs-evidence") {
+    return "needs evidence";
+  }
+  if (status === "needs-source-review") {
+    return "needs source review";
+  }
+  if (status === "metadata-missing") {
+    return "metadata missing";
+  }
+  if (status === "no-source-coverage") {
+    return "no source coverage";
+  }
+  return "missing";
 }
 
 function downloadSubmissionPackJson(pack: SubmissionPack): void {

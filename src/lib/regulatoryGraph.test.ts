@@ -1572,6 +1572,99 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches Thailand SEC digital asset business custody and AMLO controls without legal conclusions", () => {
+    const thailandProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-thailand-digital-asset-custody",
+      projectName: "Bangkok Digital Asset Custody Review",
+      jurisdictions: ["Thailand"],
+      entityType: "Digital asset exchange, broker, dealer, and custody operations team",
+      assetModel: "Digital asset business with exchange, broker, dealer, and custodial wallet provider review assumptions",
+      userType: "Thai retail users, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform holds client assets through hot wallet and cold wallet controls with transfer approvals, client asset custody records, and daily reconciliation placeholders",
+      dataSensitivity: "CDD status summaries, high-risk customer metadata, wallet-risk metadata, and customer records excluded",
+      aiUsage: "AI drafts Thailand digital asset custody and AMLO CDD evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Thailand digital asset business custody and AML/CDD review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(thailandProject);
+    const graph = createRegulatoryGraph(thailandProject, audit, thailandProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["th-sec-digital-asset-business-custody-aml"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "th-sec-digital-asset-business-custody-aml")).toMatchObject({
+      jurisdiction: "Thailand",
+      regulator: "Thailand Securities and Exchange Commission / Anti-Money Laundering Office",
+      sourceUrl: "https://www.sec.or.th/EN/pages/lawandregulations/digitalassetbusiness.aspx",
+      citation:
+        "Emergency Decree on Digital Asset Businesses B.E. 2561 (2018) Sections 7 and 26; SEC custody amendments effective 1 March 2022; SEC custodial wallet provider amendments effective 16 January 2025; AMLO AML/CFT Laws/Policy/Measures",
+      topic: "custody",
+      coverageStatus: "missing",
+      localCounselRole: "Thailand digital asset / AML counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Thailand digital asset business license, custody, and client-asset evidence",
+        "Thailand AMLO AML/CDD and high-risk customer controls"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Thailand")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 2,
+      readiness: "evidence-gaps",
+      localCounselRole: "Thailand digital asset / AML counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Thailand digital asset custody and AML controls covered when RWA template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `thailand-rwa-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const thailandProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-thailand-digital-asset-custody-covered",
+      projectName: "Bangkok Digital Asset Custody Review",
+      jurisdictions: ["TH"],
+      entityType: "Digital asset exchange, broker, dealer, and custody operations team",
+      assetModel: "Digital asset business with exchange, broker, dealer, and custodial wallet provider review assumptions",
+      userType: "Thai retail users, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform holds client assets through hot wallet and cold wallet controls with transfer approvals, client asset custody records, and daily reconciliation placeholders",
+      dataSensitivity: "CDD status summaries, high-risk customer metadata, wallet-risk metadata, and customer records excluded",
+      aiUsage: "AI drafts Thailand digital asset custody and AMLO CDD evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Planned Thailand digital asset business custody and AML/CDD review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(thailandProject);
+    const graph = createRegulatoryGraph(thailandProject, audit, thailandProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "th-sec-digital-asset-business-custody-aml")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Custody and signer control runbook",
+        "Thailand digital asset custody and AML/CDD register"
+      ])
+    });
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Thailand")).toMatchObject({
+      readiness: "ready-for-counsel",
+      coveredEvidenceCount: 2,
+      missingEvidenceCount: 0
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "th-sec-digital-asset-business-custody-aml" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("does not match AI source controls for a manual EU and UK workflow", () => {
     const manualProject: ProjectProfile = {
       ...aiLegalWorkflowProject,

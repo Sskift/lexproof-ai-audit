@@ -113,6 +113,7 @@ describe("evidence templates", () => {
         "EU MiCA ART EMT issuer authorisation and white paper register",
         "EU MiCA stablecoin reserve redemption and recovery register",
         "India VDA SP FIU-IND registration and AML reporting register",
+        "Thailand digital asset custody and AML/CDD register",
         "US FinCEN CVC MSB and BSA transfer control register",
         "New York NYDFS BitLicense and custody customer-protection register",
         "US GENIUS Act permitted issuer and reserve register",
@@ -136,6 +137,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-au-asic-austrac-digital-asset-financial-services");
     expect(serializedSources).toContain("regulatory control: control-kr-fsc-kofiu-vasp-user-protection-aml");
     expect(serializedSources).toContain("regulatory control: control-in-fiu-pmla-vda-aml-cft");
+    expect(serializedSources).toContain("regulatory control: control-th-sec-digital-asset-business-custody-aml");
     expect(serializedSources).toContain("regulatory control: control-br-bcb-virtual-asset-service-framework");
     expect(serializedSources).toContain("regulatory control: control-br-cvm-crypto-asset-securities-guidance");
     expect(serializedSources).toContain("regulatory control: control-ch-finma-ico-token-classification");

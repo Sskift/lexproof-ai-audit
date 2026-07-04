@@ -2255,6 +2255,91 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "th-sec-digital-asset-business-custody-aml",
+    jurisdiction: "Thailand",
+    regulator: "Thailand Securities and Exchange Commission / Anti-Money Laundering Office",
+    sourceName: "Digital Asset Business Operators, custody amendments, and AMLO AML/CFT measures",
+    sourceUrl: "https://www.sec.or.th/EN/pages/lawandregulations/digitalassetbusiness.aspx",
+    citation:
+      "Emergency Decree on Digital Asset Businesses B.E. 2561 (2018) Sections 7 and 26; SEC custody amendments effective 1 March 2022; SEC custodial wallet provider amendments effective 16 January 2025; AMLO AML/CFT Laws/Policy/Measures",
+    topic: "custody",
+    summary:
+      "Prepare Thailand digital asset exchange, broker, dealer, custodial wallet provider, licensing, client-asset custody, transfer approval, daily reconciliation, AML/CDD, high-risk customer, and no-raw-KYC evidence for Thailand counsel review.",
+    triggerFlagIds: ["custody", "retail", "public-launch", "sensitive-data"],
+    triggerKeywords: [
+      "thailand",
+      "thai",
+      "digital asset business",
+      "digital asset exchange",
+      "digital asset broker",
+      "digital asset dealer",
+      "digital asset custodial wallet provider",
+      "custodial wallet provider",
+      "client assets",
+      "client asset custody",
+      "hot wallet",
+      "cold wallet",
+      "amlo",
+      "aml",
+      "cdd",
+      "enhanced due diligence"
+    ],
+    evidenceRequests: [
+      {
+        id: "th-sec-digital-asset-license-scope-custody",
+        title: "Thailand digital asset business license, custody, and client-asset evidence",
+        reason:
+          "Thailand digital asset review needs exchange, broker, dealer, or custodial-wallet-provider scope, licensing route, SEC readiness, client-asset records, transfer approvals, daily reconciliation, and no-client-asset-use controls before local counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "thailand digital asset",
+          "digital asset business",
+          "digital asset exchange",
+          "digital asset broker",
+          "digital asset dealer",
+          "license",
+          "custody and signer control",
+          "custody boundaries",
+          "transfer controls",
+          "client asset",
+          "daily reconciliation",
+          "custodial wallet provider"
+        ]
+      },
+      {
+        id: "th-amlo-digital-asset-aml-cdd-risk-controls",
+        title: "Thailand AMLO AML/CDD and high-risk customer controls",
+        reason:
+          "Thailand review needs AML law financial-institution status, customer identification, CDD/EDD, beneficial ownership, high-risk area/customer handling, internal controls, training, reporting-owner, and no-raw-KYC handoff evidence.",
+        priority: "P1",
+        keywords: [
+          "thailand amlo",
+          "amlo",
+          "aml",
+          "cdd",
+          "edd",
+          "beneficial ownership",
+          "high risk customer",
+          "customer identification",
+          "internal control",
+          "training",
+          "reporting owner",
+          "no raw kyc"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Thailand digital asset business activities, SEC license route, custodial-wallet-provider model, or client-asset custody assumptions need Thailand counsel review?",
+      "What AML/CDD, high-risk customer, beneficial-owner, internal-control, and reporting evidence can be prepared without raw KYC or customer records?"
+    ],
+    localCounselRole: "Thailand digital asset / AML counsel",
+    effectiveAsOf: "2022-03-01",
+    lastReviewedAt: "2026-07-04",
+    reviewerNotes:
+      "Source metadata reviewed against the Thailand SEC Digital Asset Business Operators page, the Emergency Decree Sections 7 and 26, SEC custody amendment notices effective 1 March 2022 and 16 January 2025, and AMLO AML/CFT measures for licensing, client-asset custody, transfer approval, daily reconciliation, AML/CDD, high-risk customer, and no-raw-KYC evidence routing; route interpretation to Thailand local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "ch-finma-ico-token-classification",
     jurisdiction: "Switzerland",
     regulator: "FINMA",

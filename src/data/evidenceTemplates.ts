@@ -489,6 +489,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "Colorado ADMT scope and developer documentation register",
+        kind: "Register",
+        content:
+          "Requested: document Colorado ADMT, covered ADMT scope, consequential decision assumptions, technical documentation, intended uses, training data categories, known limitations, deployer instructions, human review instructions, material updates, and no raw personal data.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-colorado-admt-consequential-decision-governance",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "Colorado ADMT notice and meaningful human review register",
+        kind: "Register",
+        content:
+          "Requested: document consumer notice, adverse outcome plain language explanation owner, personal data correction workflow, meaningful human review, reconsideration, three-year records, record retention owner, and no raw personal data.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-colorado-admt-consequential-decision-governance",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "US legal AI ethics and professional responsibility register",
         kind: "Register",
         content:

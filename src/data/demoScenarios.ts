@@ -69,18 +69,27 @@ export const demoScenarios: DemoScenario[] = [
     projectName: "LexAssist Evidence Desk",
     title: "AI legal workflow review",
     summary:
-      "Model-connect governance, AI event intake, ABA Formal Opinion 512 professional-responsibility review, US NIST AI RMF / GenAI Profile, EU AI Act, UK ICO source review, human review, and counsel export.",
+      "Model-connect governance, AI event intake, ABA Formal Opinion 512 professional-responsibility review, US NIST AI RMF / GenAI Profile, Colorado ADMT consequential-decision review, EU AI Act, UK ICO source review, human review, and counsel export.",
     estimatedMinutes: 6,
     recommendedStartTab: "model",
     judgePath: [
       "Connect model",
       "Register AI event",
       "Route human review",
-      "Inspect ABA Formal Opinion 512 / US NIST / EU AI Act / UK ICO source review",
+      "Inspect ABA Formal Opinion 512 / US NIST / Colorado ADMT / EU AI Act / UK ICO source review",
       "Export counsel pack"
     ],
     expectedArtifacts: ["Model Intake JSON", "Human Review Timeline", "Counsel Pack Markdown"],
-    focusTags: ["AI legal workflow", "ABA Formal Opinion 512", "US NIST AI RMF", "EU AI Act", "UK ICO", "Model governance", "Counsel handoff"],
+    focusTags: [
+      "AI legal workflow",
+      "ABA Formal Opinion 512",
+      "US NIST AI RMF",
+      "Colorado ADMT",
+      "EU AI Act",
+      "UK ICO",
+      "Model governance",
+      "Counsel handoff"
+    ],
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {

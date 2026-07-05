@@ -1234,6 +1234,83 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-colorado-admt-consequential-decision-governance",
+    jurisdiction: "United States",
+    regulator: "Colorado Attorney General / Colorado General Assembly",
+    sourceName: "Colorado SB26-189 Automated Decision-Making Technology",
+    sourceUrl: "https://leg.colorado.gov/bills/sb26-189",
+    citation:
+      "Colorado SB26-189, Automated Decision-Making Technology, signed May 14, 2026; operational provisions starting January 1, 2027",
+    topic: "ai-governance",
+    summary:
+      "Prepare Colorado ADMT consequential-decision scoping, developer technical documentation, deployer notice, adverse-outcome explanation, personal-data correction, meaningful human review, and three-year record-retention evidence for counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "colorado",
+      "admt",
+      "automated decision-making",
+      "automated decision making",
+      "consequential decision",
+      "meaningful human review",
+      "personal data correction",
+      "adverse outcome",
+      "consumer notice",
+      "employment",
+      "housing",
+      "financial service",
+      "lending",
+      "insurance",
+      "health care",
+      "essential government service"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-co-admt-scope-technical-documentation",
+        title: "Colorado ADMT scope and developer documentation evidence",
+        reason:
+          "Colorado ADMT review needs covered ADMT scope, personal-data input categories, intended uses, known limitations, deployer instructions, material-update handling, and human-review instructions before relying on AI workflow output.",
+        priority: "P1",
+        keywords: [
+          "colorado admt",
+          "covered admt",
+          "technical documentation",
+          "intended uses",
+          "training data",
+          "known limitations",
+          "human review instructions",
+          "material updates"
+        ]
+      },
+      {
+        id: "us-co-admt-deployer-notice-human-review-records",
+        title: "Colorado ADMT notice, correction, human-review, and retention evidence",
+        reason:
+          "Colorado ADMT audit-prep review needs point-of-interaction notice, adverse-outcome explanation owner, personal-data request and correction workflow, meaningful human-review or reconsideration workflow, and three-year record-retention metadata without raw personal data.",
+        priority: "P1",
+        keywords: [
+          "consumer notice",
+          "adverse outcome",
+          "plain language",
+          "personal data correction",
+          "meaningful human review",
+          "reconsideration",
+          "three-year records",
+          "record retention"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Does this AI workflow materially influence a Colorado consequential decision, or is it limited to internal audit-prep drafting?",
+      "What evidence shows consumer notice, adverse-outcome explanation, personal-data correction, meaningful human review, and record-retention ownership without storing raw personal data?"
+    ],
+    localCounselRole: "Colorado ADMT / AI consumer-protection counsel",
+    effectiveAsOf: "2027-01-01",
+    lastReviewedAt: "2026-07-05",
+    reviewerNotes:
+      "Source metadata reviewed against Colorado General Assembly SB26-189 and the Colorado Attorney General ADMT rulemaking page on 2026-07-05; route interpretation to Colorado counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-aba-formal-opinion-512-generative-ai-law-practice",
     jurisdiction: "United States",
     regulator: "American Bar Association",

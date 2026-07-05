@@ -24,11 +24,12 @@ const aiLegalWorkflowProject: ProjectProfile = {
   projectName: "LexAssist Evidence Desk",
   entityType: "Legal operations AI workflow",
   jurisdictions: ["United States", "European Union", "United Kingdom"],
-  assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
+  assetModel: "No token sale; AI-assisted matter intake, evidence review, and Colorado consequential-decision scoping workflow",
   userType: "In-house counsel, compliance reviewers, and outside counsel",
   custodyModel: "No custody; workspace stores metadata-only evidence records",
   dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
-  aiUsage: "AI drafts issue-spotting notes, evidence requests, and source-linked counsel questions for human review",
+  aiUsage:
+    "AI drafts issue-spotting notes, evidence requests, Colorado ADMT consequential-decision scoping questions, and source-linked counsel questions for human review",
   blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
   operatingStage: "Internal pilot before counsel-supervised rollout",
   evidenceItems: []
@@ -942,7 +943,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches ABA, US NIST, EU, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, Colorado ADMT, EU, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
@@ -950,6 +951,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "us-aba-formal-opinion-512-generative-ai-law-practice",
         "us-nist-ai-rmf-governance",
+        "us-colorado-admt-consequential-decision-governance",
         "eu-ai-act-ai-literacy-governance",
         "uk-ico-ai-data-protection-governance"
       ])
@@ -974,6 +976,16 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "US AI governance / model risk counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-colorado-admt-consequential-decision-governance")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "Colorado Attorney General / Colorado General Assembly",
+      sourceUrl: "https://leg.colorado.gov/bills/sb26-189",
+      citation:
+        "Colorado SB26-189, Automated Decision-Making Technology, signed May 14, 2026; operational provisions starting January 1, 2027",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "Colorado ADMT / AI consumer-protection counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-ai-literacy-governance")).toMatchObject({
       jurisdiction: "European Union",
       sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
@@ -994,6 +1006,8 @@ describe("createRegulatoryGraph", () => {
         "US legal AI communication, supervision, candor, and fee evidence",
         "US NIST AI RMF govern-map-measure-manage evidence",
         "US NIST GenAI output review and provenance evidence",
+        "Colorado ADMT scope and developer documentation evidence",
+        "Colorado ADMT notice, correction, human-review, and retention evidence",
         "EU AI use policy and human oversight evidence",
         "EU AI source lineage and risk-control evidence",
         "UK AI data-protection and redaction evidence",
@@ -1040,6 +1054,15 @@ describe("createRegulatoryGraph", () => {
         "NIST GenAI output review and provenance register"
       ])
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-colorado-admt-consequential-decision-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Colorado ADMT scope and developer documentation register",
+        "Colorado ADMT notice and meaningful human review register"
+      ])
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-ico-ai-data-protection-governance")).toMatchObject({
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
@@ -1049,6 +1072,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "us-aba-formal-opinion-512-generative-ai-law-practice" }),
         expect.objectContaining({ clauseId: "us-nist-ai-rmf-governance" }),
+        expect.objectContaining({ clauseId: "us-colorado-admt-consequential-decision-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
       ])

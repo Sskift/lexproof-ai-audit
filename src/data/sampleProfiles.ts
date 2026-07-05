@@ -74,11 +74,12 @@ export const sampleProfiles: AuditProfile[] = [
     projectName: "LexAssist Evidence Desk",
     entityType: "Legal operations AI workflow",
     jurisdictions: ["United States", "European Union", "United Kingdom"],
-    assetModel: "No token sale; AI-assisted matter intake and evidence review workflow",
+    assetModel: "No token sale; AI-assisted matter intake, evidence review, and Colorado consequential-decision scoping workflow",
     userType: "In-house counsel, compliance reviewers, and outside counsel",
     custodyModel: "No custody; workspace stores metadata-only evidence records",
     dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
-    aiUsage: "AI drafts issue-spotting notes, evidence requests, and source-linked counsel questions for human review",
+    aiUsage:
+      "AI drafts issue-spotting notes, evidence requests, Colorado ADMT consequential-decision scoping questions, and source-linked counsel questions for human review",
     blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
     operatingStage: "Internal pilot before counsel-supervised rollout",
     evidenceItems: [

@@ -1311,6 +1311,85 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-california-ccpa-admt-consumer-rights-governance",
+    jurisdiction: "United States",
+    regulator: "California Privacy Protection Agency",
+    sourceName: "CCPA Updates, Cybersecurity Audits, Risk Assessments, and Automated Decisionmaking Technology Regulations",
+    sourceUrl: "https://cppa.ca.gov/regulations/ccpa_updates.html",
+    citation:
+      "California Privacy Protection Agency, CCPA Updates, Cybersecurity Audits, Risk Assessments, and Automated Decisionmaking Technology Regulations, effective January 1, 2026",
+    topic: "ai-governance",
+    summary:
+      "Prepare California CCPA ADMT scoping, significant-decision risk assessment, access and opt-out request workflow, ADMT logic/output documentation, human involvement, secure request handling, and no-raw-personal-data evidence for counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "california",
+      "ccpa",
+      "cppa",
+      "admt",
+      "automated decisionmaking",
+      "automated decision-making",
+      "significant decision",
+      "right to access admt",
+      "request to opt-out of admt",
+      "risk assessment",
+      "human involvement",
+      "financial or lending services",
+      "housing",
+      "education",
+      "employment",
+      "healthcare"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-ca-ccpa-admt-scope-risk-assessment",
+        title: "California CCPA ADMT scope and risk-assessment evidence",
+        reason:
+          "California CCPA ADMT review needs ADMT scope, significant-decision mapping, personal-information categories, logic assumptions and limitations, output use, human-involvement authority, and risk-assessment report metadata before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "california ccpa admt",
+          "significant decision",
+          "risk assessment",
+          "personal information categories",
+          "logic assumptions",
+          "known limitations",
+          "output use",
+          "human involvement",
+          "human reviewer authority"
+        ]
+      },
+      {
+        id: "us-ca-ccpa-admt-access-opt-out-evidence",
+        title: "California CCPA ADMT access, opt-out, and secure request evidence",
+        reason:
+          "California CCPA ADMT audit-prep review needs consumer access and opt-out request workflow, no-dark-pattern intake, verification handling, secure response channel, non-retaliation owner, and no raw personal data in the audit packet.",
+        priority: "P1",
+        keywords: [
+          "right to access admt",
+          "request to opt-out of admt",
+          "consumer access",
+          "opt-out workflow",
+          "no dark patterns",
+          "verification handling",
+          "secure response",
+          "non-retaliation",
+          "no raw personal data"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Does this AI workflow use ADMT to make or substantially replace human involvement in a California significant decision, or is it limited to internal audit-prep drafting?",
+      "What evidence shows ADMT logic/output documentation, risk-assessment ownership, access and opt-out request handling, verification, secure response, and non-retaliation controls without storing raw personal data?"
+    ],
+    localCounselRole: "California CCPA / ADMT privacy counsel",
+    effectiveAsOf: "2026-01-01",
+    lastReviewedAt: "2026-07-05",
+    reviewerNotes:
+      "Source metadata reviewed against the CPPA CCPA Updates/Cyber/Risk/ADMT rulemaking page, FAQ, and approved regulations text on 2026-07-05; route interpretation to California privacy counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-aba-formal-opinion-512-generative-ai-law-practice",
     jurisdiction: "United States",
     regulator: "American Bar Association",

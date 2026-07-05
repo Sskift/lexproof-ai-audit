@@ -509,6 +509,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "California CCPA ADMT scope and risk assessment register",
+        kind: "Register",
+        content:
+          "Requested: document California CCPA ADMT scope, significant decision assumptions, personal information categories, ADMT logic assumptions, known limitations, output use, human involvement, human reviewer authority, risk assessment owner, and no raw personal data.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-california-ccpa-admt-consumer-rights-governance",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "California CCPA ADMT access and opt-out workflow register",
+        kind: "Register",
+        content:
+          "Requested: document right to access ADMT workflow, request to opt-out of ADMT workflow, consumer access intake, no dark patterns, verification handling, secure response channel, non-retaliation owner, and no raw personal data.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-california-ccpa-admt-consumer-rights-governance",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "US legal AI ethics and professional responsibility register",
         kind: "Register",
         content:

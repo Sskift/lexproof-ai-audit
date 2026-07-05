@@ -24,12 +24,13 @@ const aiLegalWorkflowProject: ProjectProfile = {
   projectName: "LexAssist Evidence Desk",
   entityType: "Legal operations AI workflow",
   jurisdictions: ["United States", "European Union", "United Kingdom"],
-  assetModel: "No token sale; AI-assisted matter intake, evidence review, and Colorado consequential-decision scoping workflow",
+  assetModel:
+    "No token sale; AI-assisted matter intake, evidence review, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
   userType: "In-house counsel, compliance reviewers, and outside counsel",
   custodyModel: "No custody; workspace stores metadata-only evidence records",
   dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
   aiUsage:
-    "AI drafts issue-spotting notes, evidence requests, Colorado ADMT consequential-decision scoping questions, and source-linked counsel questions for human review",
+    "AI drafts issue-spotting notes, evidence requests, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
   blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
   operatingStage: "Internal pilot before counsel-supervised rollout",
   evidenceItems: []
@@ -943,7 +944,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches ABA, US NIST, Colorado ADMT, EU, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, California CCPA ADMT, Colorado ADMT, EU, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
@@ -952,6 +953,7 @@ describe("createRegulatoryGraph", () => {
         "us-aba-formal-opinion-512-generative-ai-law-practice",
         "us-nist-ai-rmf-governance",
         "us-colorado-admt-consequential-decision-governance",
+        "us-california-ccpa-admt-consumer-rights-governance",
         "eu-ai-act-ai-literacy-governance",
         "uk-ico-ai-data-protection-governance"
       ])
@@ -986,6 +988,16 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "Colorado ADMT / AI consumer-protection counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-california-ccpa-admt-consumer-rights-governance")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "California Privacy Protection Agency",
+      sourceUrl: "https://cppa.ca.gov/regulations/ccpa_updates.html",
+      citation:
+        "California Privacy Protection Agency, CCPA Updates, Cybersecurity Audits, Risk Assessments, and Automated Decisionmaking Technology Regulations, effective January 1, 2026",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "California CCPA / ADMT privacy counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-ai-literacy-governance")).toMatchObject({
       jurisdiction: "European Union",
       sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
@@ -1008,6 +1020,8 @@ describe("createRegulatoryGraph", () => {
         "US NIST GenAI output review and provenance evidence",
         "Colorado ADMT scope and developer documentation evidence",
         "Colorado ADMT notice, correction, human-review, and retention evidence",
+        "California CCPA ADMT scope and risk-assessment evidence",
+        "California CCPA ADMT access, opt-out, and secure request evidence",
         "EU AI use policy and human oversight evidence",
         "EU AI source lineage and risk-control evidence",
         "UK AI data-protection and redaction evidence",
@@ -1063,6 +1077,15 @@ describe("createRegulatoryGraph", () => {
         "Colorado ADMT notice and meaningful human review register"
       ])
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-california-ccpa-admt-consumer-rights-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "California CCPA ADMT scope and risk assessment register",
+        "California CCPA ADMT access and opt-out workflow register"
+      ])
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-ico-ai-data-protection-governance")).toMatchObject({
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
@@ -1073,6 +1096,7 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "us-aba-formal-opinion-512-generative-ai-law-practice" }),
         expect.objectContaining({ clauseId: "us-nist-ai-rmf-governance" }),
         expect.objectContaining({ clauseId: "us-colorado-admt-consequential-decision-governance" }),
+        expect.objectContaining({ clauseId: "us-california-ccpa-admt-consumer-rights-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
       ])

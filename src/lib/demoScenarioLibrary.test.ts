@@ -69,6 +69,7 @@ describe("validateDemoScenarioLibrary", () => {
           "AI legal workflow",
           "ABA Formal Opinion 512",
           "US NIST AI RMF",
+          "California CCPA ADMT",
           "Colorado ADMT",
           "EU AI Act",
           "UK ICO",
@@ -83,7 +84,7 @@ describe("validateDemoScenarioLibrary", () => {
         "Connect model",
         "Register AI event",
         "Route human review",
-        "Inspect ABA Formal Opinion 512 / US NIST / Colorado ADMT / EU AI Act / UK ICO source review",
+        "Inspect ABA Formal Opinion 512 / US NIST / California CCPA ADMT / Colorado ADMT / EU AI Act / UK ICO source review",
         "Export counsel pack"
       ])
     );

@@ -3373,6 +3373,37 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice; vault records are audit preparation workflow metadata/i)).toBeInTheDocument();
   });
 
+  it("blocks unsafe local file metadata before adding file evidence", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const unsafeFile = new File(["metadata body stays local"], `raw KYC packet ${apiKey} private key ${privateKey}.pdf`, {
+      type: "application/pdf",
+      lastModified: Date.UTC(2026, 6, 5, 8, 30, 0)
+    });
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Local evidence file/i), {
+      target: { files: [unsafeFile] }
+    });
+
+    expect(await screen.findByText(/Local file metadata intake blocked before hashing/i)).toBeInTheDocument();
+    const boundary = within(screen.getByRole("region", { name: /Local file metadata boundary/i }));
+    expect(boundary.getByRole("heading", { name: /Local File Metadata Boundary/i })).toBeInTheDocument();
+    expect(boundary.getByText(/Blocked before hashing/i)).toBeInTheDocument();
+    expect(boundary.getByText(/credential-material/i)).toBeInTheDocument();
+    expect(boundary.getByText(/private-key-material/i)).toBeInTheDocument();
+    expect(boundary.getByText(/raw-kyc/i)).toBeInTheDocument();
+    expect(boundary.getByText(/rename or replace the evidence with metadata-only labels/i)).toBeInTheDocument();
+    expect(boundary.getByText(/Not legal advice. Evidence metadata boundary checks/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Label for evidence 1/i)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain(apiKey);
+    expect(document.body.textContent).not.toContain(privateKey);
+    expect(document.body.textContent).not.toContain("raw KYC packet");
+  });
+
   it("shows structured Evidence Vault duplicate recovery details without losing the non-advice boundary", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);

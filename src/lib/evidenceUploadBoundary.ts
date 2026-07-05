@@ -27,6 +27,14 @@ export type EvidenceMetadataBoundaryResult = {
   notLegalAdviceBoundary: "Not legal advice. Evidence metadata boundary checks are audit preparation safeguards only.";
 };
 
+export type LocalFileEvidenceMetadataInput = {
+  filename: string;
+  mimeType?: string;
+  byteSize?: number;
+  lastModified?: number | string | Date;
+  owner: string;
+};
+
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Evidence metadata boundary checks are audit preparation safeguards only.";
 const metadataClassOrder: EvidenceMetadataBoundaryClass[] = ["credential-material", "private-key-material", "raw-kyc"];
 const metadataWarningClassOrder: EvidenceMetadataBoundaryWarningClass[] = ["wallet-address", "personal-data", "confidential"];
@@ -72,6 +80,37 @@ export function validateEvidenceMetadataBoundary(input: EvidenceMetadataBoundary
   };
 }
 
+export function validateLocalFileEvidenceMetadata(input: LocalFileEvidenceMetadataInput): EvidenceMetadataBoundaryResult {
+  const mimeType = input.mimeType?.trim() || "unknown";
+  const byteSize = Number.isFinite(input.byteSize) ? String(input.byteSize) : "unknown";
+  const lastModified = formatLastModified(input.lastModified);
+
+  const result = validateEvidenceMetadataBoundary({
+    filename: input.filename,
+    owner: input.owner,
+    sourceNote: [
+      `local file: ${input.filename}`,
+      `mime type: ${mimeType}`,
+      `size bytes: ${byteSize}`,
+      `last modified: ${lastModified}`,
+      "metadata-only local file intake; raw file bytes are not uploaded or stored"
+    ].join("; "),
+    linkedRiskFlagIds: [],
+    linkedControlIds: [],
+    replacementReason: "local file metadata intake"
+  });
+
+  if (result.valid) {
+    return result;
+  }
+
+  return {
+    ...result,
+    warningClasses: [],
+    warningFindings: []
+  };
+}
+
 function createBoundaryError(dataClass: EvidenceMetadataBoundaryClass): string {
   return `Evidence metadata contains ${dataClass}. ${
     metadataBoundaryMessages[dataClass] ?? "Remove blocked material before Evidence Vault upload."
@@ -80,6 +119,22 @@ function createBoundaryError(dataClass: EvidenceMetadataBoundaryClass): string {
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function formatLastModified(value: LocalFileEvidenceMetadataInput["lastModified"]): string {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value).toISOString();
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value;
+  }
+
+  return "unknown";
 }
 
 function isEvidenceMetadataBoundaryClass(dataClass: ClassifiedDataClass): dataClass is EvidenceMetadataBoundaryClass {

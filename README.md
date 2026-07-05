@@ -73,7 +73,7 @@ Key evidence:
 - Jurisdiction Checklist for core US, EU, and UK audit-prep prompts without legal conclusions.
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Hong Kong, Japan, Canada, Australia, South Korea, India, Thailand, Indonesia, Malaysia, Philippines, South Africa, Germany, Switzerland, UAE, Brazil, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
-- Editable Evidence Ledger with empty-state Evidence Intake Guidance, `draft/requested/received/under-review/verified/rejected` evidence status, owner, source notes, local file SHA-256 metadata intake, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, Manifest Drift Guard, and local evidence change trail.
+- Editable Evidence Ledger with empty-state Evidence Intake Guidance, `draft/requested/received/under-review/verified/rejected` evidence status, owner, source notes, local file SHA-256 metadata intake with pre-hash metadata boundary blocking for raw KYC, credentials, and private-key-like filenames, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, Manifest Drift Guard, and local evidence change trail.
 - Evidence Retention Readiness panel that classifies metadata-only evidence, personal-data review needs, and vault-sync blockers for private-key-like material, API keys, and raw KYC references with metadata-only retention policy JSON plus a hashed remediation queue JSON export.
 - Evidence Recertification Queue that flags stale or expiring reliance-ready evidence from metadata timestamps, prioritizes source-linked controls, lets a reviewer mark evidence recertified, and downloads a metadata-only hashed queue. Not legal advice.
 - Evidence Vault versioning with duplicate-hash detection, rejected-record replacement, parent/superseded lineage, replacement reasons, linked regulatory control IDs, server-side persisted metadata manifests, downloadable Evidence Vault Lineage Digest JSON, server-enforced status transitions, local `under-review/rejected` ledger sync, and metadata-only recovery actions.
@@ -311,7 +311,9 @@ Model Intake records provider purpose, human review readiness, AI event hashes, 
 
 ![Model Intake JSON export](docs/assets/screenshots/model-intake-json-export.png)
 
-Evidence Ledger records local evidence creation, template application, source-gap requests, duplicate-safe request refreshes, edits, and removals as audit-prep events with a standalone JSON export. When a new project has no evidence, Evidence Intake Guidance recommends the safest next template and concrete metadata-only requests from the current risk coverage. Not legal advice.
+Evidence Ledger records local evidence creation, template application, source-gap requests, duplicate-safe request refreshes, edits, and removals as audit-prep events with a standalone JSON export. Local file intake now checks filename and file metadata before hashing; raw KYC, credentials, and private-key-like metadata are blocked with redacted recovery guidance, while raw file bytes remain local. When a new project has no evidence, Evidence Intake Guidance recommends the safest next template and concrete metadata-only requests from the current risk coverage. Not legal advice.
+
+![Local file metadata boundary blocker](docs/assets/screenshots/local-file-metadata-boundary-blocker.png)
 
 ![Evidence Audit Trail](docs/assets/screenshots/evidence-audit-trail.png)
 

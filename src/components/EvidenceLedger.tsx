@@ -36,6 +36,10 @@ import {
   downloadEvidenceVaultLineageDigestJson,
   type EvidenceVaultLineageDigest
 } from "../lib/evidenceVaultLineageDigest";
+import {
+  validateLocalFileEvidenceMetadata,
+  type EvidenceMetadataBoundaryResult
+} from "../lib/evidenceUploadBoundary";
 import { createEvidenceItemFromFile } from "../lib/fileEvidence";
 import { createRejectedEvidenceReplacementDraft } from "../lib/evidenceReplacement";
 import { evidenceStatuses, type EvidenceItem, type EvidenceOwner, type EvidenceStatus } from "../lib/projectModel";
@@ -117,6 +121,7 @@ export function EvidenceLedger({
 }: EvidenceLedgerProps) {
   const [draft, setDraft] = useState<EvidenceItem>(blankEvidence);
   const [fileImportState, setFileImportState] = useState("");
+  const [fileBoundaryResult, setFileBoundaryResult] = useState<EvidenceMetadataBoundaryResult | null>(null);
   const [vaultApiBaseUrl, setVaultApiBaseUrl] = useState("");
   const [vaultStatus, setVaultStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [vaultError, setVaultError] = useState("");
@@ -231,13 +236,31 @@ export function EvidenceLedger({
     if (!file) {
       return;
     }
-    setFileImportState(`Hashing ${file.name}`);
+    const boundaryResult = validateLocalFileEvidenceMetadata({
+      filename: file.name,
+      mimeType: file.type,
+      byteSize: file.size,
+      lastModified: file.lastModified,
+      owner: "Founder"
+    });
+    setFileBoundaryResult(boundaryResult);
+
+    if (!boundaryResult.valid) {
+      setFileImportState("Local file metadata intake blocked before hashing.");
+      return;
+    }
+
+    setFileImportState("Hashing local file metadata");
     const item = await createEvidenceItemFromFile(file, {
       owner: "Founder",
       status: "received"
     });
     onAddEvidence(item);
-    setFileImportState(`Added ${file.name} as local file metadata`);
+    setFileImportState(
+      boundaryResult.warningClasses.length > 0
+        ? "Added local file metadata with boundary warnings for human review."
+        : "Added local file metadata."
+    );
   };
 
   const startGuidanceAction = (action: EvidenceIntakeGuidanceAction) => {
@@ -471,6 +494,7 @@ export function EvidenceLedger({
           />
         </label>
         {fileImportState ? <p className="save-state">{fileImportState}</p> : null}
+        {fileBoundaryResult ? <LocalFileBoundaryPanel result={fileBoundaryResult} /> : null}
       </section>
 
       <RetentionPolicyPanel report={retentionReport} remediationQueue={retentionRemediationQueue} />
@@ -1016,6 +1040,49 @@ function RetentionPolicyPanel({
           Download Retention Policy JSON
         </button>
       </div>
+    </section>
+  );
+}
+
+function LocalFileBoundaryPanel({ result }: { result: EvidenceMetadataBoundaryResult }) {
+  const status = result.valid ? (result.warningClasses.length > 0 ? "needs-review" : "clean") : "blocked";
+  const statusLabel =
+    status === "blocked" ? "Blocked before hashing" : status === "needs-review" ? "Needs metadata review" : "Metadata clean";
+
+  return (
+    <section className={`local-file-boundary-panel ${status}`} aria-label="Local file metadata boundary">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldAlert size={16} aria-hidden="true" />
+          <h4>Local File Metadata Boundary</h4>
+        </div>
+        <span className={`boundary-status ${status}`}>{statusLabel}</span>
+      </div>
+      <p className="section-note">{result.notLegalAdviceBoundary}</p>
+      {!result.valid ? (
+        <div className="local-file-boundary-findings">
+          {result.errors.map((error) => (
+            <p key={error}>{error}</p>
+          ))}
+          <small>Recovery: rename or replace the evidence with metadata-only labels, then choose the file again.</small>
+        </div>
+      ) : null}
+      {result.warningFindings.length > 0 ? (
+        <div className="local-file-boundary-findings">
+          {result.warningFindings.map((finding) => (
+            <article key={`${finding.dataClass}-${finding.redactedSnippet}`}>
+              <span className={`boundary-severity ${finding.severity}`}>{finding.severity}</span>
+              <strong>{finding.dataClass}</strong>
+              <small>{finding.message}</small>
+              <code>{finding.redactedSnippet}</code>
+            </article>
+          ))}
+          <small>Recovery: confirm this metadata is approved for audit-prep handling before syncing to Evidence Vault.</small>
+        </div>
+      ) : null}
+      {result.valid && result.warningFindings.length === 0 ? (
+        <p className="save-state">Metadata-only local file intake is ready for ledger creation.</p>
+      ) : null}
     </section>
   );
 }

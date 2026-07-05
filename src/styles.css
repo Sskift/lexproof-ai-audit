@@ -5405,6 +5405,67 @@ textarea {
   padding: 9px 12px;
 }
 
+.local-file-boundary-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.local-file-boundary-panel.blocked {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.local-file-boundary-panel.needs-review {
+  border-color: #e7c673;
+  background: #fffbeb;
+}
+
+.local-file-boundary-panel.clean {
+  border-color: #a9d5c4;
+  background: #f3fbf7;
+}
+
+.local-file-boundary-findings {
+  display: grid;
+  gap: 9px;
+}
+
+.local-file-boundary-findings article,
+.local-file-boundary-findings p {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid #e1e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.local-file-boundary-findings article {
+  display: grid;
+  gap: 7px;
+}
+
+.local-file-boundary-findings strong,
+.local-file-boundary-findings small {
+  overflow-wrap: anywhere;
+}
+
+.local-file-boundary-findings code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  background: #f4f7f9;
+  color: #263d73;
+  padding: 8px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .retention-policy-panel {
   display: grid;
   gap: 12px;

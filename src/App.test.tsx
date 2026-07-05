@@ -1051,6 +1051,10 @@ describe("App", () => {
     expect(screen.getAllByText(/ABA Formal Opinion 512, Generative Artificial Intelligence Tools, July 29, 2024/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US legal AI professional responsibility counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US AI governance \/ model risk counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/New York City Local Law 144 of 2021 and DCWP AEDT rule/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/NYC AEDT \/ employment AI counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/NYC AEDT scope and bias-audit evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/NYC AEDT notice, accommodation, and data-retention request evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Colorado SB26-189, Automated Decision-Making Technology/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Colorado ADMT \/ AI consumer-protection counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/California Privacy Protection Agency, CCPA Updates/i).length).toBeGreaterThan(0);
@@ -3321,12 +3325,13 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Apply AI compliance workflow template/i }));
       fireEvent.click(await screen.findByRole("button", { name: /Sync Evidence Vault/i }));
 
-      expect(await screen.findByText(/Evidence Vault synced 10 records/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Evidence Vault synced 12 records/i)).toBeInTheDocument();
       const coverage = within(screen.getByRole("region", { name: /Evidence Vault Control Coverage/i }));
       expect(coverage.getByRole("heading", { name: /Evidence Vault Control Coverage/i })).toBeInTheDocument();
-      expect(coverage.getByText(/6 controls linked across 10 vault records and 10 manifest items/i)).toBeInTheDocument();
+      expect(coverage.getByText(/7 controls linked across 12 vault records and 12 manifest items/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-nist-ai-rmf-governance/i)).toBeInTheDocument();
+      expect(coverage.getByText(/control-us-nyc-local-law-144-aedt-employment-decision-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-colorado-admt-consequential-decision-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-california-ccpa-admt-consumer-rights-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-eu-ai-act-ai-literacy-governance/i)).toBeInTheDocument();
@@ -3340,6 +3345,7 @@ describe("App", () => {
       expect(await screen.findByText(/## Evidence Vault Control Coverage/i)).toBeInTheDocument();
       expect(screen.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-us-nist-ai-rmf-governance: needs-review/i)).toBeInTheDocument();
+      expect(screen.getByText(/control-us-nyc-local-law-144-aedt-employment-decision-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-us-colorado-admt-consequential-decision-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-us-california-ccpa-admt-consumer-rights-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-eu-ai-act-ai-literacy-governance: needs-review/i)).toBeInTheDocument();
@@ -3347,8 +3353,8 @@ describe("App", () => {
       expect(screen.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
       const checklist = within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i }));
       expect(checklist.getByText(/Evidence Vault Control Coverage/i)).toBeInTheDocument();
-      expect(checklist.getByText(/0\/6 controls ready for handoff/i)).toBeInTheDocument();
-      expect(checklist.getByText(/needs review: 6/i)).toBeInTheDocument();
+      expect(checklist.getByText(/0\/7 controls ready for handoff/i)).toBeInTheDocument();
+      expect(checklist.getByText(/needs review: 7/i)).toBeInTheDocument();
       expect(checklist.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();

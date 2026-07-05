@@ -25,12 +25,12 @@ const aiLegalWorkflowProject: ProjectProfile = {
   entityType: "Legal operations AI workflow",
   jurisdictions: ["United States", "European Union", "United Kingdom"],
   assetModel:
-    "No token sale; AI-assisted matter intake, evidence review, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
+    "No token sale; AI-assisted matter intake, evidence review, NYC AEDT hiring-screening scoping, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
   userType: "In-house counsel, compliance reviewers, and outside counsel",
   custodyModel: "No custody; workspace stores metadata-only evidence records",
   dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
   aiUsage:
-    "AI drafts issue-spotting notes, evidence requests, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
+    "AI drafts issue-spotting notes, evidence requests, NYC AEDT bias-audit questions, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
   blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
   operatingStage: "Internal pilot before counsel-supervised rollout",
   evidenceItems: []
@@ -944,7 +944,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches ABA, US NIST, California CCPA ADMT, Colorado ADMT, EU, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
@@ -952,6 +952,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "us-aba-formal-opinion-512-generative-ai-law-practice",
         "us-nist-ai-rmf-governance",
+        "us-nyc-local-law-144-aedt-employment-decision-governance",
         "us-colorado-admt-consequential-decision-governance",
         "us-california-ccpa-admt-consumer-rights-governance",
         "eu-ai-act-ai-literacy-governance",
@@ -977,6 +978,15 @@ describe("createRegulatoryGraph", () => {
       topic: "ai-governance",
       coverageStatus: "missing",
       localCounselRole: "US AI governance / model risk counsel"
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nyc-local-law-144-aedt-employment-decision-governance")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "New York City Department of Consumer and Worker Protection",
+      sourceUrl: "https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page",
+      citation: "New York City Local Law 144 of 2021 and DCWP AEDT rule, effective July 5, 2023",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "NYC AEDT / employment AI counsel"
     });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-colorado-admt-consequential-decision-governance")).toMatchObject({
       jurisdiction: "United States",
@@ -1018,6 +1028,8 @@ describe("createRegulatoryGraph", () => {
         "US legal AI communication, supervision, candor, and fee evidence",
         "US NIST AI RMF govern-map-measure-manage evidence",
         "US NIST GenAI output review and provenance evidence",
+        "NYC AEDT scope and bias-audit evidence",
+        "NYC AEDT notice, accommodation, and data-retention request evidence",
         "Colorado ADMT scope and developer documentation evidence",
         "Colorado ADMT notice, correction, human-review, and retention evidence",
         "California CCPA ADMT scope and risk-assessment evidence",
@@ -1068,6 +1080,15 @@ describe("createRegulatoryGraph", () => {
         "NIST GenAI output review and provenance register"
       ])
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nyc-local-law-144-aedt-employment-decision-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "NYC AEDT scope and bias audit register",
+        "NYC AEDT notice and data retention request register"
+      ])
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-colorado-admt-consequential-decision-governance")).toMatchObject({
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
@@ -1095,6 +1116,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "us-aba-formal-opinion-512-generative-ai-law-practice" }),
         expect.objectContaining({ clauseId: "us-nist-ai-rmf-governance" }),
+        expect.objectContaining({ clauseId: "us-nyc-local-law-144-aedt-employment-decision-governance" }),
         expect.objectContaining({ clauseId: "us-colorado-admt-consequential-decision-governance" }),
         expect.objectContaining({ clauseId: "us-california-ccpa-admt-consumer-rights-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),

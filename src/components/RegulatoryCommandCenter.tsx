@@ -153,8 +153,11 @@ export function RegulatoryCommandCenter({
   onNavigate,
   onRequestSourceGapEvidence
 }: RegulatoryCommandCenterProps) {
-  const topClauses = graph.matchedClauses.slice(0, 6);
-  const topGaps = graph.evidenceGaps.slice(0, 12);
+  const topClauses = graph.matchedClauses.slice(0, 7);
+  const topClauseIds = new Set(topClauses.map((clause) => clause.clauseId));
+  const priorityGaps = graph.evidenceGaps.slice(0, 20);
+  const visibleClauseGaps = graph.evidenceGaps.filter((gap) => topClauseIds.has(gap.clauseId));
+  const topGaps = Array.from(new Map([...priorityGaps, ...visibleClauseGaps].map((gap) => [gap.id, gap])).values());
   const topSourceReviewItems = sourceReview.items.slice(0, 4);
   const topSourceApprovalRecords = sourceApprovalRecords.slice(0, 4);
   const topCounselRoutes = localCounselRoutingPlan?.routes.slice(0, 4) ?? [];

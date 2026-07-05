@@ -489,6 +489,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "NYC AEDT scope and bias audit register",
+        kind: "Register",
+        content:
+          "Requested: document NYC AEDT scope, hiring or promotion use, automated employment decision tool output, decision role, independent auditor, bias audit date, public summary, distribution date, selection or scoring rates, impact ratios, data source explanation, excluded categories, and no raw applicant or employee records.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-nyc-local-law-144-aedt-employment-decision-governance",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "NYC AEDT notice and data retention request register",
+        kind: "Register",
+        content:
+          "Requested: document 10 business days notice workflow, NYC-resident candidate or employee notice, job qualifications or characteristics assessed, alternative selection process or reasonable accommodation instructions, AEDT data type, data source, retention policy request handling, and no raw applicant or employee records.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-nyc-local-law-144-aedt-employment-decision-governance",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "Colorado ADMT scope and developer documentation register",
         kind: "Register",
         content:

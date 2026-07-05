@@ -23,12 +23,12 @@ const aiLegalWorkflowProject: ProjectProfile = {
   entityType: "Legal operations AI workflow",
   jurisdictions: ["United States", "European Union", "United Kingdom"],
   assetModel:
-    "No token sale; AI-assisted matter intake, evidence review, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
+    "No token sale; AI-assisted matter intake, evidence review, NYC AEDT hiring-screening scoping, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
   userType: "In-house counsel and compliance reviewers",
   custodyModel: "No custody; metadata-only evidence records",
   dataSensitivity: "Confidential matter summaries with client identifiers excluded",
   aiUsage:
-    "AI drafts issue-spotting notes, evidence requests, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
+    "AI drafts issue-spotting notes, evidence requests, NYC AEDT bias-audit questions, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
   blockchainUse: "Simulated manifest anchor",
   operatingStage: "Internal pilot before counsel-supervised rollout",
   evidenceItems: []
@@ -176,7 +176,7 @@ describe("evidence templates", () => {
     );
   });
 
-  it("recommends AI workflow evidence with ABA, US NIST, California CCPA ADMT, Colorado ADMT, EU, and UK regulatory control links", () => {
+  it("recommends AI workflow evidence with ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU, and UK regulatory control links", () => {
     const recommended = recommendEvidenceTemplates(aiLegalWorkflowProject);
     const items = createEvidenceItemsFromTemplate("ai-compliance-workflow");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
@@ -189,6 +189,8 @@ describe("evidence templates", () => {
       expect.arrayContaining([
         "AI system use policy",
         "NIST GenAI output review and provenance register",
+        "NYC AEDT scope and bias audit register",
+        "NYC AEDT notice and data retention request register",
         "Colorado ADMT scope and developer documentation register",
         "Colorado ADMT notice and meaningful human review register",
         "California CCPA ADMT scope and risk assessment register",
@@ -198,6 +200,7 @@ describe("evidence templates", () => {
     );
     expect(serializedSources).toContain("regulatory control: control-us-aba-formal-opinion-512-generative-ai-law-practice");
     expect(serializedSources).toContain("regulatory control: control-us-nist-ai-rmf-governance");
+    expect(serializedSources).toContain("regulatory control: control-us-nyc-local-law-144-aedt-employment-decision-governance");
     expect(serializedSources).toContain("regulatory control: control-us-colorado-admt-consequential-decision-governance");
     expect(serializedSources).toContain("regulatory control: control-us-california-ccpa-admt-consumer-rights-governance");
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");

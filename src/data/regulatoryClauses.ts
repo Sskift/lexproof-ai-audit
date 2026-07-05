@@ -1234,6 +1234,92 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-nyc-local-law-144-aedt-employment-decision-governance",
+    jurisdiction: "United States",
+    regulator: "New York City Department of Consumer and Worker Protection",
+    sourceName: "Automated Employment Decision Tools (AEDT)",
+    sourceUrl: "https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page",
+    citation: "New York City Local Law 144 of 2021 and DCWP AEDT rule, effective July 5, 2023",
+    topic: "ai-governance",
+    summary:
+      "Prepare NYC AEDT hiring or promotion scoping, annual independent bias-audit evidence, public audit-summary metadata, 10-business-day notice workflow, job qualification or characteristic notice, alternative process or accommodation route, and AEDT data/source/retention request handling for counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "nyc",
+      "new york city",
+      "local law 144",
+      "aedt",
+      "automated employment decision tool",
+      "automated employment decision tools",
+      "employment decision",
+      "hiring",
+      "promotion",
+      "candidate screening",
+      "employee promotion",
+      "bias audit",
+      "independent auditor",
+      "impact ratio",
+      "selection rate",
+      "scoring rate",
+      "job qualifications",
+      "alternative selection process",
+      "reasonable accommodation",
+      "data retention policy"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-nyc-aedt-scope-bias-audit",
+        title: "NYC AEDT scope and bias-audit evidence",
+        reason:
+          "NYC AEDT review needs hiring or promotion scope, AEDT output and decision role, independent auditor, bias-audit date within one year of use, data source explanation, selection or scoring rates, impact ratios, excluded categories, distribution date, and public summary metadata before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "nyc aedt",
+          "local law 144",
+          "automated employment decision tool",
+          "employment decision",
+          "bias audit",
+          "independent auditor",
+          "selection rate",
+          "scoring rate",
+          "impact ratio",
+          "distribution date",
+          "public summary"
+        ]
+      },
+      {
+        id: "us-nyc-aedt-notice-data-retention",
+        title: "NYC AEDT notice, accommodation, and data-retention request evidence",
+        reason:
+          "NYC AEDT audit-prep review needs notice to NYC-resident candidates or employees at least 10 business days before use, job qualifications or characteristics assessed, alternative selection process or accommodation instructions, AEDT data type/source, retention policy request handling, and no raw applicant or employee records in the packet.",
+        priority: "P1",
+        keywords: [
+          "10 business days",
+          "candidate notice",
+          "employee notice",
+          "job qualifications",
+          "job characteristics",
+          "alternative selection process",
+          "reasonable accommodation",
+          "data source",
+          "data retention policy",
+          "no raw applicant records",
+          "no raw employee records"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Does this workflow use an AEDT to screen NYC candidates for employment or employees for promotion, or is it limited to internal audit-prep drafting?",
+      "What metadata shows annual independent bias-audit status, public summary, 10-business-day notice, accommodation or alternative process instructions, and data-retention request handling without storing raw applicant or employee records?"
+    ],
+    localCounselRole: "NYC AEDT / employment AI counsel",
+    effectiveAsOf: "2023-07-05",
+    lastReviewedAt: "2026-07-05",
+    reviewerNotes:
+      "Source metadata reviewed against NYC DCWP AEDT page, NYC Rules adopted rule, and NYC Council Local Law 144 text on 2026-07-05; route interpretation to NYC employment AI counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-colorado-admt-consequential-decision-governance",
     jurisdiction: "United States",
     regulator: "Colorado Attorney General / Colorado General Assembly",

@@ -188,9 +188,11 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 5. **Route human review**
    - Open **Human Review**.
    - Set one evidence item to `needs-more-evidence`, adjust the due date if useful for narration, save the decision, and show the return message.
+   - Show **Human Review Recovery Packet**, click **Download Recovery Packet JSON**, and point out the stable packet hash, returned/rejected counts, recovery actions, redacted reviewer notes, and Not legal advice boundary.
    - Show **Human Review Timeline** with the saved decision, audit log ID, and **Download Review Timeline JSON**.
    - Return to **Evidence Ledger** and show the linked evidence status moved back to `requested`.
    - Screenshot: `docs/assets/screenshots/demo-04-human-review-return.png`.
+   - Recovery packet screenshot: `docs/assets/screenshots/human-review-recovery-packet.png`.
 
 6. **Sync vault and gateway journey**
    - Open the **Secure Review Workspace** panel at the top of the app.

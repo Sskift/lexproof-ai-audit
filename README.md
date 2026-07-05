@@ -401,9 +401,11 @@ Manifest Drift Guard compares the current Evidence Manifest against refreshed Ev
 
 ![Manifest Drift Guard stale version](docs/assets/screenshots/manifest-drift-guard-stale-version.png)
 
-Human Review records reviewer due dates, saved status history, audit log IDs, source clause-match refresh actions, and a downloadable review timeline.
+Human Review records reviewer due dates, saved status history, audit log IDs, source clause-match refresh actions, and a downloadable review timeline. Returned or rejected items also produce a Human Review Recovery Packet JSON with a stable packet hash, redacted decision notes, target-specific recovery actions, and a Not legal advice boundary before handoff.
 
 ![Human Review timeline](docs/assets/screenshots/human-review-timeline.png)
+
+![Human Review Recovery Packet](docs/assets/screenshots/human-review-recovery-packet.png)
 
 Source review refresh actions route into Human Review as clause-match items for local counsel or compliance review. They remain audit-prep workflow metadata, not legal conclusions.
 

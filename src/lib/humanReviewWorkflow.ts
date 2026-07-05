@@ -1,5 +1,6 @@
 import type { CounselPackVersionRecord } from "./counselPackVersions";
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
+import { redactDataBoundaryText } from "./dataBoundary";
 import type { AIEventRecord, AIEventReviewStatus } from "./modelIntake";
 import type { EvidenceItem, EvidenceStatus } from "./projectModel";
 import type { RegulatorySourceReview, RegulatorySourceReviewAction } from "./regulatorySourceReview";
@@ -74,6 +75,42 @@ export type HumanReviewQueue = {
   summary: HumanReviewWorkflowSummary;
 };
 
+export type HumanReviewRecoveryItem = {
+  itemVersion: "lexproof-human-review-recovery-item-v1";
+  id: string;
+  targetType: HumanReviewTargetType;
+  targetId: string;
+  sourceId: string;
+  title: string;
+  status: Extract<HumanReviewStatus, "needs-more-evidence" | "rejected">;
+  priority: HumanReviewQueueItem["priority"];
+  reviewer: string;
+  decisionNote: string;
+  dueAt: string;
+  updatedAt: string;
+  recoveryAction: string;
+  notLegalAdviceBoundary: "Not legal advice. Human review recovery items are audit preparation workflow metadata only.";
+};
+
+export type HumanReviewRecoveryPacket = {
+  packetVersion: "lexproof-human-review-recovery-packet-v1";
+  projectId: string;
+  projectName: string;
+  generatedAt: string;
+  packetHash: string;
+  status: "ready" | "needs-recovery";
+  summary: {
+    totalRecoveryCount: number;
+    returnedCount: number;
+    rejectedCount: number;
+    highestPriority: HumanReviewQueueItem["priority"] | "none";
+    nextAction: string;
+    notLegalAdviceBoundary: "Not legal advice. Human review recovery packets are audit preparation workflow metadata only.";
+  };
+  items: HumanReviewRecoveryItem[];
+  notLegalAdviceBoundary: "Not legal advice. Human review recovery packets are audit preparation workflow metadata only.";
+};
+
 export type CreateHumanReviewQueueInput = {
   projectId: string;
   counselReviews: CounselReviewItem[];
@@ -94,6 +131,16 @@ export type CreateHumanReviewTimelineInput = {
   queue: HumanReviewQueue;
   decisions?: HumanReviewDecision[];
 };
+
+export type CreateHumanReviewRecoveryPacketInput = {
+  projectId: string;
+  projectName: string;
+  queue: HumanReviewQueue;
+  generatedAt?: string;
+};
+
+const RECOVERY_PACKET_BOUNDARY = "Not legal advice. Human review recovery packets are audit preparation workflow metadata only." as const;
+const RECOVERY_ITEM_BOUNDARY = "Not legal advice. Human review recovery items are audit preparation workflow metadata only." as const;
 
 export function createHumanReviewQueue(input: CreateHumanReviewQueueInput): HumanReviewQueue {
   const decisionsById = createLatestDecisionMap(input.decisions ?? []);
@@ -176,6 +223,59 @@ export function exportHumanReviewTimelineJson(entries: HumanReviewTimelineEntry[
 
 export function downloadHumanReviewTimelineJson(filename: string, entries: HumanReviewTimelineEntry[]): void {
   const blob = new Blob([exportHumanReviewTimelineJson(entries)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function createHumanReviewRecoveryPacket(
+  input: CreateHumanReviewRecoveryPacketInput
+): Promise<HumanReviewRecoveryPacket> {
+  const items = input.queue.items
+    .filter((item): item is HumanReviewQueueItem & { status: HumanReviewRecoveryItem["status"] } =>
+      item.status === "needs-more-evidence" || item.status === "rejected"
+    )
+    .map(createRecoveryItem)
+    .sort(compareRecoveryItems);
+  const returnedCount = items.filter((item) => item.status === "needs-more-evidence").length;
+  const rejectedCount = items.filter((item) => item.status === "rejected").length;
+  const highestPriority = items[0]?.priority ?? "none";
+  const hashPayload = {
+    packetVersion: "lexproof-human-review-recovery-packet-v1" as const,
+    projectId: sanitize(input.projectId || input.queue.items[0]?.projectId || "local-workspace"),
+    projectName: sanitize(input.projectName || "Untitled workspace"),
+    status: items.length > 0 ? ("needs-recovery" as const) : ("ready" as const),
+    summary: {
+      totalRecoveryCount: items.length,
+      returnedCount,
+      rejectedCount,
+      highestPriority,
+      nextAction: createRecoveryNextAction(items),
+      notLegalAdviceBoundary: RECOVERY_PACKET_BOUNDARY
+    },
+    items,
+    notLegalAdviceBoundary: RECOVERY_PACKET_BOUNDARY
+  };
+
+  return {
+    ...hashPayload,
+    generatedAt: input.generatedAt ?? new Date().toISOString(),
+    packetHash: await sha256Hex(stableStringify(hashPayload))
+  };
+}
+
+export function exportHumanReviewRecoveryPacketJson(packet: HumanReviewRecoveryPacket): string {
+  return `${JSON.stringify(packet, null, 2)}\n`;
+}
+
+export function downloadHumanReviewRecoveryPacketJson(filename: string, packet: HumanReviewRecoveryPacket): void {
+  const blob = new Blob([exportHumanReviewRecoveryPacketJson(packet)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -505,4 +605,106 @@ function shortHash(value: string): string {
 
 function formatCount(count: number, singular: string): string {
   return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+function createRecoveryItem(item: HumanReviewQueueItem & { status: HumanReviewRecoveryItem["status"] }): HumanReviewRecoveryItem {
+  return {
+    itemVersion: "lexproof-human-review-recovery-item-v1",
+    id: sanitize(item.id),
+    targetType: item.targetType,
+    targetId: sanitize(item.targetId),
+    sourceId: sanitize(item.sourceId),
+    title: sanitize(item.title),
+    status: item.status,
+    priority: item.priority,
+    reviewer: sanitize(item.reviewer || "Unassigned reviewer"),
+    decisionNote: sanitize(item.decisionNote || "No reviewer note recorded."),
+    dueAt: item.dueAt,
+    updatedAt: item.updatedAt,
+    recoveryAction: recoveryActionFor(item),
+    notLegalAdviceBoundary: RECOVERY_ITEM_BOUNDARY
+  };
+}
+
+function recoveryActionFor(item: HumanReviewQueueItem & { status: HumanReviewRecoveryItem["status"] }): string {
+  if (item.targetType === "evidence" && item.status === "rejected") {
+    return "Create replacement evidence metadata before vault sync or export reliance.";
+  }
+
+  if (item.targetType === "evidence") {
+    return "Return linked evidence to requested status and attach additional metadata before review.";
+  }
+
+  if (item.targetType === "ai-event") {
+    return item.status === "rejected"
+      ? "Re-run or replace the model output and route the new draft through human review before reliance."
+      : "Add missing evidence or reviewer context before relying on the model output.";
+  }
+
+  if (item.targetType === "clause-match") {
+    return "Refresh source metadata or route the clause-match item to local counsel before source handoff.";
+  }
+
+  if (item.targetType === "counsel-pack") {
+    return "Save a new Counsel Pack version after blockers are remediated and route it back through review.";
+  }
+
+  return "Attach missing evidence or reviewer context before external audit-prep handoff.";
+}
+
+function createRecoveryNextAction(items: HumanReviewRecoveryItem[]): string {
+  if (items.length === 0) {
+    return "No returned or rejected human review items currently need recovery.";
+  }
+
+  const first = items[0];
+  return `${first.title}: ${first.recoveryAction}`;
+}
+
+function compareRecoveryItems(left: HumanReviewRecoveryItem, right: HumanReviewRecoveryItem): number {
+  return (
+    recoveryStatusWeight(left.status) - recoveryStatusWeight(right.status) ||
+    priorityWeight(left.priority) - priorityWeight(right.priority) ||
+    left.dueAt.localeCompare(right.dueAt) ||
+    left.title.localeCompare(right.title)
+  );
+}
+
+function recoveryStatusWeight(status: HumanReviewRecoveryItem["status"]): number {
+  return status === "rejected" ? 0 : 1;
+}
+
+function priorityWeight(priority: HumanReviewQueueItem["priority"]): number {
+  return { P0: 0, P1: 1, P2: 2 }[priority];
+}
+
+async function sha256Hex(payload: string): Promise<string> {
+  const encoded = new TextEncoder().encode(payload);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", encoded);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function sanitize(value: string): string {
+  return redactDataBoundaryText(value.replace(/\s+/g, " ").trim()).replace(
+    /\b(passport|driver'?s? license|national id)(?:\s+(file|document|record))?\b/gi,
+    "[redacted-identity-document]"
+  );
 }

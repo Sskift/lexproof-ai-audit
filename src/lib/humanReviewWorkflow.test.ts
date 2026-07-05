@@ -4,7 +4,9 @@ import type { CounselReviewItem } from "./counselReview";
 import {
   createHumanReviewDecision,
   createHumanReviewQueue,
+  createHumanReviewRecoveryPacket,
   createHumanReviewTimeline,
+  exportHumanReviewRecoveryPacketJson,
   exportHumanReviewTimelineJson,
   humanReviewStatusToEvidenceStatus
 } from "./humanReviewWorkflow";
@@ -33,6 +35,16 @@ const evidence: EvidenceItem = {
   label: "Disclosure memo",
   kind: "Markdown",
   content: "Offering disclosure assumptions.",
+  status: "received",
+  owner: "Compliance",
+  updatedAt: "2026-06-30T00:00:00.000Z"
+};
+
+const secondEvidence: EvidenceItem = {
+  id: "evidence-2",
+  label: "Custody support memo",
+  kind: "Markdown",
+  content: "Custody control support.",
   status: "received",
   owner: "Compliance",
   updatedAt: "2026-06-30T00:00:00.000Z"
@@ -369,5 +381,135 @@ describe("human review workflow", () => {
     expect(humanReviewStatusToEvidenceStatus("needs-more-evidence")).toBe("requested");
     expect(humanReviewStatusToEvidenceStatus("rejected")).toBe("rejected");
     expect(humanReviewStatusToEvidenceStatus("needs-review")).toBe("received");
+  });
+
+  it("exports a stable metadata-only recovery packet for returned and rejected reviews", async () => {
+    const initialQueue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [evidence, secondEvidence],
+      aiEvents: [aiEvent]
+    });
+    const returnedDecision = createHumanReviewDecision(
+      initialQueue.items.find((item) => item.targetId === "evidence-1")!,
+      {
+        status: "needs-more-evidence",
+        reviewer: "Compliance",
+        decisionNote: "Return for missing source memo and raw KYC passport file should not be included.",
+        dueAt: "2026-07-03T00:00:00.000Z"
+      },
+      "2026-06-30T02:00:00.000Z"
+    );
+    const rejectedDecision = createHumanReviewDecision(
+      initialQueue.items.find((item) => item.targetId === "evidence-2")!,
+      {
+        status: "rejected",
+        reviewer: "Outside counsel",
+        decisionNote: "Rejected stale memo; remove sk-live-1234567890abcdef1234567890abcdef before replacement.",
+        dueAt: "2026-07-02T00:00:00.000Z"
+      },
+      "2026-06-30T03:00:00.000Z"
+    );
+    const queue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [evidence, secondEvidence],
+      aiEvents: [aiEvent],
+      decisions: [returnedDecision, rejectedDecision]
+    });
+
+    const first = await createHumanReviewRecoveryPacket({
+      projectId: "project-1",
+      projectName: "Review Recovery Desk",
+      queue,
+      generatedAt: "2026-07-05T00:00:00.000Z"
+    });
+    const second = await createHumanReviewRecoveryPacket({
+      projectId: "project-1",
+      projectName: "Review Recovery Desk",
+      queue,
+      generatedAt: "2026-07-06T00:00:00.000Z"
+    });
+    const payload = exportHumanReviewRecoveryPacketJson(first);
+
+    expect(first.packetVersion).toBe("lexproof-human-review-recovery-packet-v1");
+    expect(first.packetHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(second.packetHash).toBe(first.packetHash);
+    expect(first.status).toBe("needs-recovery");
+    expect(first.summary).toEqual({
+      totalRecoveryCount: 2,
+      returnedCount: 1,
+      rejectedCount: 1,
+      highestPriority: "P2",
+      nextAction: "Custody support memo: Create replacement evidence metadata before vault sync or export reliance.",
+      notLegalAdviceBoundary: "Not legal advice. Human review recovery packets are audit preparation workflow metadata only."
+    });
+    expect(first.items.map((item) => `${item.status}:${item.title}`)).toEqual([
+      "rejected:Custody support memo",
+      "needs-more-evidence:Disclosure memo"
+    ]);
+    expect(first.items[0].recoveryAction).toContain("replacement evidence metadata");
+    expect(first.items.every((item) => item.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);
+    expect(payload).toContain("\"packetHash\"");
+    expect(payload).toContain("Not legal advice");
+    expect(payload).not.toMatch(/sk-live|raw KYC|passport file|\blegal approval\b|\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("changes the recovery packet hash when reviewer recovery content changes", async () => {
+    const initialQueue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [evidence],
+      aiEvents: []
+    });
+    const firstDecision = createHumanReviewDecision(
+      initialQueue.items[0],
+      {
+        status: "needs-more-evidence",
+        reviewer: "Compliance",
+        decisionNote: "Return for missing source memo.",
+        dueAt: "2026-07-03T00:00:00.000Z"
+      },
+      "2026-06-30T02:00:00.000Z"
+    );
+    const secondDecision = createHumanReviewDecision(
+      initialQueue.items[0],
+      {
+        status: "needs-more-evidence",
+        reviewer: "Compliance",
+        decisionNote: "Return for missing source memo and owner attestation.",
+        dueAt: "2026-07-03T00:00:00.000Z"
+      },
+      "2026-06-30T02:00:00.000Z"
+    );
+    const firstQueue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [evidence],
+      aiEvents: [],
+      decisions: [firstDecision]
+    });
+    const secondQueue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [],
+      evidenceItems: [evidence],
+      aiEvents: [],
+      decisions: [secondDecision]
+    });
+
+    const first = await createHumanReviewRecoveryPacket({
+      projectId: "project-1",
+      projectName: "Review Recovery Desk",
+      queue: firstQueue,
+      generatedAt: "2026-07-05T00:00:00.000Z"
+    });
+    const second = await createHumanReviewRecoveryPacket({
+      projectId: "project-1",
+      projectName: "Review Recovery Desk",
+      queue: secondQueue,
+      generatedAt: "2026-07-05T00:00:00.000Z"
+    });
+
+    expect(second.packetHash).not.toBe(first.packetHash);
   });
 });

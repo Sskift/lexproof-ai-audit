@@ -1,10 +1,11 @@
 import "@testing-library/jest-dom/vitest";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("App", () => {
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -4576,31 +4577,26 @@ describe("App", () => {
     expect(screen.getByDisplayValue("risk evidence requirement: signer-control")).toBeInTheDocument();
   });
 
-  it("shows concrete empty evidence intake guidance and applies the recommended template", async () => {
-    render(<App />);
+  it("shows concrete empty evidence intake guidance and applies a recommended template", async () => {
+    const { container } = render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /New project/i }));
-    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Empty Evidence RWA Desk" } });
-    fireEvent.change(screen.getByLabelText(/Entity type/i), { target: { value: "Startup issuer" } });
-    fireEvent.change(screen.getByLabelText(/Jurisdictions/i), { target: { value: "United States, European Union" } });
-    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "Tokenized private credit note with yield" } });
-    fireEvent.change(screen.getByLabelText(/User exposure/i), { target: { value: "Retail investors" } });
-    fireEvent.change(screen.getByLabelText(/Custody model/i), { target: { value: "Platform controls omnibus wallet" } });
-    fireEvent.change(screen.getByLabelText(/Data sensitivity/i), { target: { value: "Policy metadata only" } });
-    fireEvent.change(screen.getByLabelText(/AI usage/i), { target: { value: "AI drafts suitability memo" } });
-    fireEvent.change(screen.getByLabelText(/Blockchain use/i), { target: { value: "Evidence anchor only" } });
-    fireEvent.change(screen.getByLabelText(/Operating stage/i), { target: { value: "Pilot with planned public launch" } });
+    fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Empty Evidence AI Desk" } });
+    fireEvent.change(screen.getByLabelText(/Asset model/i), { target: { value: "AI model governance workflow" } });
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
 
-    expect(await screen.findByRole("heading", { name: /Evidence Intake Guidance/i })).toBeInTheDocument();
-    expect(screen.getByText(/Start with tokenized yield \/ RWA evidence/i)).toBeInTheDocument();
-    expect(screen.getByText(/Not legal advice. Evidence intake guidance is audit preparation workflow metadata only./i)).toBeInTheDocument();
-    expect(screen.getByText(/Asset classification memo/i)).toBeInTheDocument();
+    await waitFor(() => expect(container.querySelector(".evidence-intake-guidance")).toBeInTheDocument());
+    const intakeGuidance = within(container.querySelector(".evidence-intake-guidance") as HTMLElement);
+    expect(intakeGuidance.getByRole("heading", { name: /Evidence Intake Guidance/i })).toBeInTheDocument();
+    expect(intakeGuidance.getByText(/Start with AI compliance workflow evidence/i)).toBeInTheDocument();
+    expect(
+      intakeGuidance.getByText(/Not legal advice. Evidence intake guidance is audit preparation workflow metadata only./i)
+    ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Apply recommended tokenized yield \/ RWA template/i }));
+    fireEvent.click(intakeGuidance.getByRole("button", { name: /Apply recommended AI compliance workflow template/i }));
 
-    expect(await screen.findByDisplayValue("RWA disclosure assumptions memo")).toBeInTheDocument();
+    await waitFor(() => expect(container.querySelector<HTMLInputElement>("#evidence-1-label")?.value).toBe("AI system use policy"));
     expect(screen.getByLabelText("Status for evidence 1")).toHaveValue("requested");
   });
 
@@ -4718,6 +4714,72 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
+  }, 20000);
+
+  it("downloads a metadata-only Human Review Recovery Packet for rejected decisions", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const revokeObjectUrl = vi.fn();
+    const capturedBlobs: Blob[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:human-review-recovery-packet";
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.change(screen.getByLabelText(/Project name/i), { target: { value: "Review Recovery Desk" } });
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Rejected recovery memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "received" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: { value: "Evidence summary for recovery packet testing." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+      expect(await screen.findByText("Rejected recovery memo")).toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText(/Status for Rejected recovery memo/i), { target: { value: "rejected" } });
+      fireEvent.change(screen.getByLabelText(/Decision note for Rejected recovery memo/i), {
+        target: { value: "Rejected stale audit-prep evidence; replace before handoff." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Save decision for Rejected recovery memo/i }));
+
+      expect(await screen.findByText(/Rejected from review. Linked evidence is marked rejected for replacement recovery/i)).toBeInTheDocument();
+      const recoveryPacketPanel = within(screen.getByRole("region", { name: /Human Review Recovery Packet/i }));
+      expect(recoveryPacketPanel.getByText(/returned or rejected review item/i)).toBeInTheDocument();
+      fireEvent.click(recoveryPacketPanel.getByRole("button", { name: /Download Recovery Packet JSON/i }));
+
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      const packet = JSON.parse(payload);
+
+      expect(packet.packetVersion).toBe("lexproof-human-review-recovery-packet-v1");
+      expect(packet.packetHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(packet.projectName).toBe("Review Recovery Desk");
+      expect(packet.status).toBe("needs-recovery");
+      expect(packet.summary.totalRecoveryCount).toBeGreaterThan(0);
+      expect(packet.summary.rejectedCount).toBeGreaterThan(0);
+      expect(packet.notLegalAdviceBoundary).toBe(
+        "Not legal advice. Human review recovery packets are audit preparation workflow metadata only."
+      );
+      expect(packet.items.some((item: { title: string; recoveryAction: string }) => item.title === "Rejected recovery memo" && item.recoveryAction.includes("replacement evidence metadata"))).toBe(true);
+      expect(payload).not.toMatch(/sk-live|private key|raw KYC|\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
+      await waitFor(() => expect(recoveryPacketPanel.getByText(/Recovery packet hash/i)).toBeInTheDocument());
+    } finally {
+      click.mockRestore();
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+    }
   }, 20000);
 
   it("filters the Human Review queue by target type, status, reviewer, and search text", async () => {

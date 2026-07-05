@@ -2,12 +2,15 @@ import { useMemo, useState } from "react";
 import { ClipboardCheck, Download, History, ShieldAlert, UserCheck } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
+  createHumanReviewRecoveryPacket,
   createHumanReviewTimeline,
+  downloadHumanReviewRecoveryPacketJson,
   downloadHumanReviewTimelineJson,
   type HumanReviewDecision,
   type HumanReviewDecisionUpdate,
   type HumanReviewQueue,
   type HumanReviewQueueItem,
+  type HumanReviewRecoveryPacket,
   type HumanReviewStatus,
   type HumanReviewTimelineEntry
 } from "../lib/humanReviewWorkflow";
@@ -16,24 +19,30 @@ import { createHumanReviewQueueFilterOptions, filterHumanReviewQueueItems } from
 type HumanReviewPanelProps = {
   queue: HumanReviewQueue;
   decisions: HumanReviewDecision[];
+  projectName: string;
   onSaveDecision: (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => void;
 };
 
 const statuses: HumanReviewStatus[] = ["needs-review", "in-review", "needs-more-evidence", "reviewed", "rejected"];
 
-export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanReviewPanelProps) {
+export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision }: HumanReviewPanelProps) {
   const [savedTitle, setSavedTitle] = useState("");
   const [saveGuidance, setSaveGuidance] = useState("");
   const [targetTypeFilter, setTargetTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [reviewerFilter, setReviewerFilter] = useState("all");
   const [reviewQuery, setReviewQuery] = useState("");
+  const [recoveryPacket, setRecoveryPacket] = useState<HumanReviewRecoveryPacket | null>(null);
+  const [buildingRecoveryPacket, setBuildingRecoveryPacket] = useState(false);
   const timeline = createHumanReviewTimeline({
     projectId: queue.items[0]?.projectId ?? "",
     queue,
     decisions
   });
   const savedDecisionCount = decisions.length;
+  const recoveryCount = queue.items.filter((item) => item.status === "needs-more-evidence" || item.status === "rejected").length;
+  const returnedCount = queue.items.filter((item) => item.status === "needs-more-evidence").length;
+  const rejectedCount = queue.items.filter((item) => item.status === "rejected").length;
   const filterOptions = useMemo(() => createHumanReviewQueueFilterOptions(queue.items), [queue.items]);
   const filteredItems = useMemo(
     () =>
@@ -61,6 +70,22 @@ export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanRevi
     setReviewQuery("");
   };
 
+  const downloadRecoveryPacket = async () => {
+    setBuildingRecoveryPacket(true);
+
+    try {
+      const packet = await createHumanReviewRecoveryPacket({
+        projectId: queue.items[0]?.projectId ?? "local-workspace",
+        projectName,
+        queue
+      });
+      setRecoveryPacket(packet);
+      downloadHumanReviewRecoveryPacketJson("human-review-recovery-packet.json", packet);
+    } finally {
+      setBuildingRecoveryPacket(false);
+    }
+  };
+
   return (
     <section className="panel stage-panel">
       <SectionHeader
@@ -80,6 +105,15 @@ export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanRevi
         <SummaryStat label="Reviewed items" value={queue.summary.reviewedCount} />
         <SummaryStat label="Rejected or blocked" value={queue.summary.blockedCount} />
       </div>
+
+      <HumanReviewRecoveryPacketPanel
+        recoveryCount={recoveryCount}
+        returnedCount={returnedCount}
+        rejectedCount={rejectedCount}
+        recoveryPacket={recoveryPacket}
+        buildingRecoveryPacket={buildingRecoveryPacket}
+        onDownload={downloadRecoveryPacket}
+      />
 
       <HumanReviewTimelinePanel timeline={timeline} savedDecisionCount={savedDecisionCount} />
 
@@ -165,6 +199,48 @@ export function HumanReviewPanel({ queue, decisions, onSaveDecision }: HumanRevi
         {filteredItems.map((item, index) => (
           <HumanReviewCard key={item.id} item={item} sequence={index + 1} onSave={saveDecision} />
         ))}
+      </div>
+    </section>
+  );
+}
+
+function HumanReviewRecoveryPacketPanel({
+  recoveryCount,
+  returnedCount,
+  rejectedCount,
+  recoveryPacket,
+  buildingRecoveryPacket,
+  onDownload
+}: {
+  recoveryCount: number;
+  returnedCount: number;
+  rejectedCount: number;
+  recoveryPacket: HumanReviewRecoveryPacket | null;
+  buildingRecoveryPacket: boolean;
+  onDownload: () => void;
+}) {
+  return (
+    <section className={`human-review-recovery-packet ${recoveryCount > 0 ? "needs-recovery" : "ready"}`} aria-label="Human Review Recovery Packet">
+      <div>
+        <ShieldAlert size={17} aria-hidden="true" />
+        <div>
+          <h3>Human Review Recovery Packet</h3>
+          <p>
+            {recoveryCount > 0
+              ? `${recoveryCount} returned or rejected review item${recoveryCount === 1 ? "" : "s"} need recovery before handoff.`
+              : "No returned or rejected review items currently need recovery."}
+          </p>
+          <small>
+            {returnedCount} returned · {rejectedCount} rejected · Not legal advice.
+          </small>
+        </div>
+      </div>
+      <div className="human-review-recovery-actions">
+        {recoveryPacket ? <small>Recovery packet hash {recoveryPacket.packetHash.slice(0, 12)}...</small> : null}
+        <button type="button" className="secondary" onClick={onDownload} disabled={recoveryCount === 0 || buildingRecoveryPacket}>
+          <Download size={15} aria-hidden="true" />
+          {buildingRecoveryPacket ? "Preparing Recovery Packet" : "Download Recovery Packet JSON"}
+        </button>
       </div>
     </section>
   );

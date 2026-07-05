@@ -2485,7 +2485,12 @@ export default function App() {
             />
           ) : null}
           {activeTab === "review" ? (
-            <HumanReviewPanel queue={humanReviewQueue} decisions={currentHumanReviewDecisions} onSaveDecision={saveHumanReviewDecision} />
+            <HumanReviewPanel
+              queue={humanReviewQueue}
+              decisions={currentHumanReviewDecisions}
+              projectName={project.projectName}
+              onSaveDecision={saveHumanReviewDecision}
+            />
           ) : null}
           {activeTab === "jurisdiction" ? <JurisdictionChecklistPanel project={project} audit={audit} /> : null}
           {activeTab === "risk" ? (

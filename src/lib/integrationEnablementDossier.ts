@@ -2,7 +2,7 @@ import type { ChainAnchorPolicyReport } from "./chainAnchorPolicy";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { DocumentParserPolicyReport } from "./documentParserPolicy";
 import type { GrcDestinationPolicyReport } from "./grcDestinationPolicy";
-import type { IntegrationPolicyEvaluationRecord } from "./integrationPolicyEvaluation";
+import type { IntegrationPolicyEvaluationRecord, IntegrationPolicyId } from "./integrationPolicyEvaluation";
 import type { IntegrationAdapterId, IntegrationAdapterStatus, IntegrationReadinessRegistry } from "./integrationReadiness";
 import type { ModelGatewayProviderPolicyReport } from "./modelGatewayProviderPolicy";
 import type { ModelGatewaySecretPolicyReport } from "./modelGatewaySecretPolicy";
@@ -50,6 +50,28 @@ export type IntegrationEnablementPolicyEvaluationSummary = {
   notLegalAdviceBoundary: string;
 };
 
+export type IntegrationPolicyReceiptCoverageStatus = "covered" | "missing" | "needs-policy" | "blocked";
+
+export type IntegrationEnablementPolicyReceiptCoverage = {
+  policyId: IntegrationPolicyId;
+  policyReportId: Extract<
+    IntegrationEnablementPolicyReportId,
+    "object-storage-policy" | "document-parser-policy" | "chain-anchor-policy" | "grc-destination-policy"
+  >;
+  label: string;
+  coverageStatus: IntegrationPolicyReceiptCoverageStatus;
+  latestRecordId: string | null;
+  latestRecordStatus: Exclude<IntegrationAdapterStatus, "disabled"> | "missing";
+  externalCapabilityAllowed: false;
+  externalCapabilityStatus: string;
+  reportHash: string | null;
+  contextHash: string | null;
+  policyHash: string | null;
+  source: "server" | "missing";
+  recoveryAction: string;
+  notLegalAdviceBoundary: string;
+};
+
 export type IntegrationEnablementAdapterSummary = {
   id: IntegrationAdapterId;
   label: string;
@@ -76,11 +98,17 @@ export type IntegrationEnablementDossier = {
   disabledCount: number;
   policyReportCount: number;
   policyEvaluationRecordCount: number;
+  policyReceiptCoverageCount: number;
+  policyReceiptPresentCount: number;
+  policyReceiptCoveredCount: number;
+  policyReceiptMissingCount: number;
+  policyReceiptBlockedCount: number;
   externalEnablementAllowed: false;
   externalEnablementStatus: "disabled-by-default" | "blocked-by-policy" | "needs-policy-review";
   adapters: IntegrationEnablementAdapterSummary[];
   policyReports: IntegrationEnablementPolicyReportSummary[];
   policyEvaluationRecords: IntegrationEnablementPolicyEvaluationSummary[];
+  policyReceiptCoverage: IntegrationEnablementPolicyReceiptCoverage[];
   blockerCount: number;
   blockers: string[];
   nextActions: string[];
@@ -103,6 +131,17 @@ const NOT_LEGAL_ADVICE =
   "Not legal advice. Integration enablement dossiers are audit preparation metadata only." as const;
 const DEFAULT_NEXT_ACTION =
   "Keep all external adapters disabled until adapter enablement review, secret handling, retention, audit logging, and human review controls are approved.";
+const RECEIPT_BOUNDARY = "Not legal advice. Integration policy receipt coverage is audit preparation metadata only.";
+const receiptPolicyReports: Array<{
+  policyId: IntegrationPolicyId;
+  policyReportId: IntegrationEnablementPolicyReceiptCoverage["policyReportId"];
+  label: string;
+}> = [
+  { policyId: "object-storage", policyReportId: "object-storage-policy", label: "Object Storage Policy" },
+  { policyId: "document-parser", policyReportId: "document-parser-policy", label: "Document Parser Policy" },
+  { policyId: "chain-anchor", policyReportId: "chain-anchor-policy", label: "Chain Anchor Policy" },
+  { policyId: "grc-destination", policyReportId: "grc-destination-policy", label: "GRC Destination Policy" }
+];
 
 export async function createIntegrationEnablementDossier({
   registry,
@@ -168,6 +207,7 @@ export async function createIntegrationEnablementDossier({
   const evaluationRecords = policyEvaluationRecords
     .map(summarizePolicyEvaluationRecord)
     .sort((left, right) => `${right.createdAt}-${right.id}`.localeCompare(`${left.createdAt}-${left.id}`));
+  const policyReceiptCoverage = createPolicyReceiptCoverage(evaluationRecords);
   const blockedCount = adapters.filter((adapter) => adapter.status === "blocked").length;
   const needsPolicyCount = adapters.filter((adapter) => adapter.status === "needs-policy").length;
   const readyCount = adapters.filter((adapter) => adapter.status === "ready").length;
@@ -175,8 +215,17 @@ export async function createIntegrationEnablementDossier({
   const policyBlockedCount = policyReports.filter((report) => report.status === "blocked").length;
   const policyNeedsReviewCount = policyReports.filter((report) => report.status === "needs-policy").length;
   const blockers = collectBlockers(adapters, policyReports);
-  const nextActions = createNextActions(registry.nextActions, policyReports);
-  const overallStatus = createOverallStatus(blockedCount + policyBlockedCount, needsPolicyCount + policyNeedsReviewCount, readyCount);
+  const receiptBlockedCount = policyReceiptCoverage.filter((coverage) => coverage.coverageStatus === "blocked").length;
+  const receiptPresentCount = policyReceiptCoverage.filter((coverage) => coverage.source === "server").length;
+  const receiptCoveredCount = policyReceiptCoverage.filter((coverage) => coverage.coverageStatus === "covered").length;
+  const receiptMissingCount = policyReceiptCoverage.filter((coverage) => coverage.coverageStatus === "missing").length;
+  const receiptNeedsPolicyCount = policyReceiptCoverage.filter((coverage) => coverage.coverageStatus === "needs-policy").length;
+  const nextActions = createNextActions(registry.nextActions, policyReports, policyReceiptCoverage);
+  const overallStatus = createOverallStatus(
+    blockedCount + policyBlockedCount + receiptBlockedCount,
+    needsPolicyCount + policyNeedsReviewCount + receiptMissingCount + receiptNeedsPolicyCount,
+    readyCount
+  );
   const hashPayload = {
     dossierVersion: "lexproof-integration-enablement-dossier-v1",
     overallStatus,
@@ -184,6 +233,7 @@ export async function createIntegrationEnablementDossier({
     adapters,
     policyReports,
     policyEvaluationRecords: evaluationRecords,
+    policyReceiptCoverage,
     blockers,
     nextActions,
     externalEnablementAllowed: false
@@ -202,11 +252,20 @@ export async function createIntegrationEnablementDossier({
     disabledCount,
     policyReportCount: policyReports.length,
     policyEvaluationRecordCount: evaluationRecords.length,
+    policyReceiptCoverageCount: policyReceiptCoverage.length,
+    policyReceiptPresentCount: receiptPresentCount,
+    policyReceiptCoveredCount: receiptCoveredCount,
+    policyReceiptMissingCount: receiptMissingCount,
+    policyReceiptBlockedCount: receiptBlockedCount,
     externalEnablementAllowed: false,
-    externalEnablementStatus: createExternalEnablementStatus(blockedCount + policyBlockedCount, needsPolicyCount + policyNeedsReviewCount),
+    externalEnablementStatus: createExternalEnablementStatus(
+      blockedCount + policyBlockedCount + receiptBlockedCount,
+      needsPolicyCount + policyNeedsReviewCount + receiptMissingCount + receiptNeedsPolicyCount
+    ),
     adapters,
     policyReports,
     policyEvaluationRecords: evaluationRecords,
+    policyReceiptCoverage,
     blockerCount: blockers.length,
     blockers,
     nextActions,
@@ -233,6 +292,77 @@ function summarizePolicyEvaluationRecord(record: IntegrationPolicyEvaluationReco
     nextActions: record.nextActions.map(sanitize).filter(Boolean),
     notLegalAdviceBoundary: sanitize(record.notLegalAdviceBoundary)
   };
+}
+
+function createPolicyReceiptCoverage(
+  records: IntegrationEnablementPolicyEvaluationSummary[]
+): IntegrationEnablementPolicyReceiptCoverage[] {
+  return receiptPolicyReports.map(({ policyId, policyReportId, label }) => {
+    const latestRecord = records.find((record) => record.policyId === policyId);
+
+    if (!latestRecord) {
+      return {
+        policyId,
+        policyReportId,
+        label,
+        coverageStatus: "missing",
+        latestRecordId: null,
+        latestRecordStatus: "missing",
+        externalCapabilityAllowed: false,
+        externalCapabilityStatus: "missing-server-receipt",
+        reportHash: null,
+        contextHash: null,
+        policyHash: null,
+        source: "missing",
+        recoveryAction: `Evaluate ${label} against the Phase 2 API or refresh policy receipts before adapter enablement review.`,
+        notLegalAdviceBoundary: RECEIPT_BOUNDARY
+      };
+    }
+
+    const coverageStatus = createReceiptCoverageStatus(latestRecord.status);
+
+    return {
+      policyId,
+      policyReportId,
+      label,
+      coverageStatus,
+      latestRecordId: latestRecord.id,
+      latestRecordStatus: latestRecord.status,
+      externalCapabilityAllowed: false,
+      externalCapabilityStatus: latestRecord.externalCapabilityStatus,
+      reportHash: latestRecord.reportHash,
+      contextHash: latestRecord.contextHash,
+      policyHash: latestRecord.policyHash,
+      source: "server",
+      recoveryAction: createReceiptCoverageRecoveryAction(label, coverageStatus, latestRecord.nextActions),
+      notLegalAdviceBoundary: RECEIPT_BOUNDARY
+    };
+  });
+}
+
+function createReceiptCoverageStatus(
+  status: Exclude<IntegrationAdapterStatus, "disabled">
+): IntegrationPolicyReceiptCoverageStatus {
+  if (status === "ready") {
+    return "covered";
+  }
+  return status;
+}
+
+function createReceiptCoverageRecoveryAction(
+  label: string,
+  coverageStatus: IntegrationPolicyReceiptCoverageStatus,
+  nextActions: string[]
+): string {
+  if (coverageStatus === "covered") {
+    return `${label} has a server policy receipt; keep external capability disabled until adapter enablement review.`;
+  }
+
+  if (nextActions.length > 0) {
+    return `${label}: ${nextActions[0]}`;
+  }
+
+  return `Resolve ${label} server receipt status before adapter enablement review.`;
 }
 
 export function exportIntegrationEnablementDossierJson(dossier: IntegrationEnablementDossier): string {
@@ -328,15 +458,23 @@ function collectBlockers(
   ]);
 }
 
-function createNextActions(registryActions: string[], policyReports: IntegrationEnablementPolicyReportSummary[]): string[] {
+function createNextActions(
+  registryActions: string[],
+  policyReports: IntegrationEnablementPolicyReportSummary[],
+  policyReceiptCoverage: IntegrationEnablementPolicyReceiptCoverage[]
+): string[] {
   const policyActions = policyReports.flatMap((report) =>
     report.status === "ready" ? [] : report.nextActions.slice(0, 2).map((action) => `${report.label}: ${action}`)
+  );
+  const receiptActions = policyReceiptCoverage.flatMap((coverage) =>
+    coverage.coverageStatus === "covered" ? [] : [coverage.recoveryAction]
   );
 
   return unique([
     DEFAULT_NEXT_ACTION,
     ...registryActions.map(sanitize).filter(Boolean),
-    ...policyActions.map(sanitize).filter(Boolean)
+    ...policyActions.map(sanitize).filter(Boolean),
+    ...receiptActions.map(sanitize).filter(Boolean)
   ]);
 }
 

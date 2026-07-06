@@ -18,7 +18,9 @@ import type {
 } from "../lib/integrationReadiness";
 import {
   downloadIntegrationEnablementDossierJson,
-  type IntegrationEnablementDossier
+  type IntegrationEnablementDossier,
+  type IntegrationEnablementPolicyReceiptCoverage,
+  type IntegrationPolicyReceiptCoverageStatus
 } from "../lib/integrationEnablementDossier";
 import {
   exportModelGatewayProviderPolicyJson,
@@ -343,11 +345,16 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
         <ProviderPolicyFact label="Dossier hash" value={dossier ? `${dossier.dossierHash.slice(0, 12)}...` : "Calculating"} />
         <ProviderPolicyFact label="Policy reports" value={dossier ? String(dossier.policyReportCount) : "0"} />
         <ProviderPolicyFact label="Server receipts" value={dossier ? String(dossier.policyEvaluationRecordCount) : "0"} />
+        <ProviderPolicyFact
+          label="Receipt coverage"
+          value={dossier ? `${dossier.policyReceiptPresentCount}/${dossier.policyReceiptCoverageCount}` : "0/0"}
+        />
         <ProviderPolicyFact label="External enablement" value={dossier?.externalEnablementAllowed ? "Enabled" : "Disabled"} />
       </div>
       <div className="provider-policy-summary secret-policy-summary">
         <ProviderPolicyFact label="Ready adapters" value={dossier ? String(dossier.readyCount) : "0"} />
         <ProviderPolicyFact label="Needs policy" value={dossier ? String(dossier.needsPolicyCount) : "0"} />
+        <ProviderPolicyFact label="Missing receipts" value={dossier ? String(dossier.policyReceiptMissingCount) : "0"} />
         <ProviderPolicyFact label="Blocked" value={dossier ? String(dossier.blockedCount + dossier.blockerCount) : "0"} />
       </div>
       <div className="integration-dossier-policy-list">
@@ -365,6 +372,7 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
           </article>
         ))}
       </div>
+      <PolicyReceiptCoveragePanel coverage={dossier?.policyReceiptCoverage ?? []} />
       <div className="inline-actions provider-policy-actions">
         <span>
           External enablement remains disabled. The dossier is metadata-only and does not call providers, storage, OCR,
@@ -379,6 +387,45 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
           <Download size={16} aria-hidden="true" />
           Download Enablement Dossier JSON
         </button>
+      </div>
+    </section>
+  );
+}
+
+function PolicyReceiptCoveragePanel({ coverage }: { coverage: IntegrationEnablementPolicyReceiptCoverage[] }) {
+  return (
+    <section className="integration-policy-receipt-coverage" aria-label="Integration Policy Receipt Coverage">
+      <div className="split-title compact-title">
+        <div>
+          <ReceiptText size={16} aria-hidden="true" />
+          <h5>Policy Receipt Coverage</h5>
+        </div>
+        <span className="workflow-status disabled">
+          {coverage.filter((item) => item.source === "server").length}/{coverage.length} receipts
+        </span>
+      </div>
+      <p className="section-note">
+        Not legal advice. Server policy receipts are audit preparation evidence for future adapter enablement review only.
+      </p>
+      <div className="integration-policy-receipt-coverage-list">
+        {coverage.map((item) => (
+          <article key={item.policyId} className={`provider-control ${receiptCoverageClass(item.coverageStatus)}`}>
+            <header>
+              <span>{receiptCoverageLabel(item.coverageStatus)}</span>
+              <strong>{item.label}</strong>
+            </header>
+            <p>
+              {item.latestRecordId
+                ? `Server receipt ${item.latestRecordId}; external capability remains disabled.`
+                : "Missing server receipt; external capability remains disabled."}
+            </p>
+            <small>
+              {item.reportHash ? `report ${item.reportHash.slice(0, 12)}... · policy ${item.policyHash?.slice(0, 12)}...` : item.externalCapabilityStatus}
+            </small>
+            <small>{item.recoveryAction}</small>
+            <small>{item.notLegalAdviceBoundary}</small>
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -1579,6 +1626,34 @@ function statusLabel(status: IntegrationReadinessRegistry["overallStatus"]): str
 function policyStatusLabel(status: ModelGatewayProviderPolicyStatus): string {
   if (status === "needs-policy") {
     return "needs policy";
+  }
+
+  return status;
+}
+
+function receiptCoverageLabel(status: IntegrationPolicyReceiptCoverageStatus): string {
+  if (status === "covered") {
+    return "server receipt covered";
+  }
+
+  if (status === "missing") {
+    return "missing server receipt";
+  }
+
+  if (status === "needs-policy") {
+    return "server receipt needs policy";
+  }
+
+  return "server receipt blocked";
+}
+
+function receiptCoverageClass(status: IntegrationPolicyReceiptCoverageStatus): IntegrationReadinessRegistry["overallStatus"] {
+  if (status === "covered") {
+    return "ready";
+  }
+
+  if (status === "missing") {
+    return "needs-policy";
   }
 
   return status;

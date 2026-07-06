@@ -1947,6 +1947,9 @@ describe("App", () => {
       expect(await registry.findByRole("heading", { name: /Integration Enablement Dossier/i })).toBeInTheDocument();
       expect(await registry.findByText(/External enablement remains disabled/i)).toBeInTheDocument();
       expect(registry.getByText(/Dossier hash/i)).toBeInTheDocument();
+      const receiptCoverage = within(registry.getByRole("region", { name: /Integration Policy Receipt Coverage/i }));
+      expect(receiptCoverage.getByText(/0\/4 receipts/i)).toBeInTheDocument();
+      expect(receiptCoverage.getAllByText(/missing server receipt/i).length).toBeGreaterThanOrEqual(4);
 
       fireEvent.click(registry.getByRole("button", { name: /Download Enablement Dossier JSON/i }));
 
@@ -1964,11 +1967,25 @@ describe("App", () => {
           dossierVersion: "lexproof-integration-enablement-dossier-v1",
           externalEnablementAllowed: false,
           policyReportCount: 6,
+          policyReceiptCoverageCount: 4,
+          policyReceiptPresentCount: 0,
+          policyReceiptCoveredCount: 0,
+          policyReceiptMissingCount: 4,
           notLegalAdviceBoundary: "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
         })
       );
       expect(parsed.dossierHash).toMatch(/^[a-f0-9]{64}$/);
       expect(parsed.policyReports.length).toBe(6);
+      expect(parsed.policyReceiptCoverage).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            policyId: "object-storage",
+            coverageStatus: "missing",
+            externalCapabilityAllowed: false,
+            recoveryAction: expect.stringContaining("Evaluate Object Storage Policy against the Phase 2 API")
+          })
+        ])
+      );
       expect(payload).toContain("Not legal advice");
       expect(payload).not.toContain("sk-live-");
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:integration-enablement-dossier");
@@ -2439,6 +2456,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(registry.getByText(/Server receipts/i).parentElement).toHaveTextContent("1");
     });
+    const dossier = within(registry.getByRole("region", { name: /Integration Enablement Dossier/i }));
+    const coverage = within(dossier.getByRole("region", { name: /Integration Policy Receipt Coverage/i }));
+    await waitFor(() => expect(coverage.getByText(/1\/4 receipts/i)).toBeInTheDocument());
+    expect(coverage.getByText(/server receipt needs policy/i)).toBeInTheDocument();
+    expect(coverage.getAllByText(/Document Parser Policy/i).length).toBeGreaterThan(0);
+    expect(coverage.getByText(/Server receipt integration-policy-evaluation-persisted-ui/i)).toBeInTheDocument();
+    expect(coverage.getAllByText(/missing server receipt/i).length).toBeGreaterThanOrEqual(3);
+    expect(coverage.getByText(/Not legal advice. Server policy receipts are audit preparation evidence/i)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

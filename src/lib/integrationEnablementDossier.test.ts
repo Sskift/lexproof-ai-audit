@@ -32,6 +32,9 @@ describe("createIntegrationEnablementDossier", () => {
         externalEnablementAllowed: false,
         adapterCount: 5,
         policyReportCount: 6,
+        policyReceiptCoverageCount: 4,
+        policyReceiptPresentCount: 0,
+        policyReceiptMissingCount: 4,
         notLegalAdviceBoundary: "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
       })
     );
@@ -52,7 +55,37 @@ describe("createIntegrationEnablementDossier", () => {
     expect(dossier.nextActions).toEqual(
       expect.arrayContaining([expect.stringContaining("Keep all external adapters disabled until adapter enablement review")])
     );
+    expect(dossier.nextActions).toEqual(
+      expect.arrayContaining([expect.stringContaining("Evaluate Object Storage Policy against the Phase 2 API")])
+    );
     expect(JSON.stringify(dossier)).toContain("Not legal advice");
+  });
+
+  it("summarizes missing server policy receipt coverage before external adapter enablement", async () => {
+    const dossier = await createIntegrationEnablementDossier(createInput({ readyPolicyControls: true }));
+
+    expect(dossier.policyReceiptCoverage).toHaveLength(4);
+    expect(dossier.policyReceiptPresentCount).toBe(0);
+    expect(dossier.policyReceiptCoveredCount).toBe(0);
+    expect(dossier.policyReceiptMissingCount).toBe(4);
+    expect(dossier.policyReceiptBlockedCount).toBe(0);
+    expect(dossier.externalEnablementStatus).toBe("needs-policy-review");
+    expect(dossier.policyReceiptCoverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          policyId: "object-storage",
+          policyReportId: "object-storage-policy",
+          label: "Object Storage Policy",
+          coverageStatus: "missing",
+          latestRecordStatus: "missing",
+          externalCapabilityAllowed: false,
+          externalCapabilityStatus: "missing-server-receipt",
+          source: "missing",
+          recoveryAction: "Evaluate Object Storage Policy against the Phase 2 API or refresh policy receipts before adapter enablement review.",
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt coverage is audit preparation metadata only."
+        })
+      ])
+    );
   });
 
   it("exports metadata-only JSON without leaking unsafe adapter metadata", async () => {
@@ -113,6 +146,25 @@ describe("createIntegrationEnablementDossier", () => {
     const json = exportIntegrationEnablementDossierJson(dossier);
 
     expect(dossier.policyEvaluationRecordCount).toBe(1);
+    expect(dossier.policyReceiptPresentCount).toBe(1);
+    expect(dossier.policyReceiptCoveredCount).toBe(1);
+    expect(dossier.policyReceiptMissingCount).toBe(3);
+    expect(dossier.policyReceiptCoverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          policyId: "object-storage",
+          coverageStatus: "covered",
+          latestRecordId: evaluationRecord.id,
+          latestRecordStatus: "ready",
+          source: "server",
+          reportHash: evaluationRecord.reportHash,
+          contextHash: evaluationRecord.contextHash,
+          policyHash: evaluationRecord.policyHash,
+          externalCapabilityAllowed: false,
+          recoveryAction: "Object Storage Policy has a server policy receipt; keep external capability disabled until adapter enablement review."
+        })
+      ])
+    );
     expect(dossier.policyEvaluationRecords[0]).toEqual(
       expect.objectContaining({
         id: evaluationRecord.id,
@@ -130,6 +182,75 @@ describe("createIntegrationEnablementDossier", () => {
     expect(json).not.toContain("sk-live-abcdef");
     expect(json).not.toContain("raw customer file body");
     expect(json).not.toContain("rawEvidence");
+  });
+
+  it("marks blocked server policy receipts as enablement blockers without leaking unsafe payloads", async () => {
+    const input = createInput();
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const blockedGrcReport = createGrcDestinationPolicyReport({
+      context: {
+        workspaceId: "integration-enable",
+        remediationItemCount: 2,
+        exportSafetyStatus: "blocked",
+        exportBlockerCount: 1,
+        integrationAdapterStatus: "ready",
+        localTicketExportAvailable: false
+      },
+      policy: {
+        policyOwner: "GRC owner",
+        destinationSystem: "Jira placeholder",
+        destinationQueue: "Regulatory review queue",
+        fieldMappingApproved: true,
+        authenticationPolicyApproved: true,
+        redactionPolicyApproved: true,
+        ticketOwnershipApproved: true,
+        retryAndAuditLoggingApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: "Metadata-only ticket export."
+      }
+    });
+    const evaluationRecord = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "integration-enable",
+      policyId: "grc-destination",
+      report: blockedGrcReport,
+      context: {
+        workspaceId: "integration-enable",
+        exportSafetyStatus: "blocked"
+      },
+      policy: {
+        policyOwner: "GRC owner",
+        notes: `Do not create ticket with ${apiKey} or raw KYC packet.`
+      },
+      evaluatorId: "GRC owner",
+      createdAt: "2026-07-03T08:00:00.000Z"
+    });
+    const dossier = await createIntegrationEnablementDossier({
+      ...input,
+      grcDestinationPolicyReport: blockedGrcReport,
+      policyEvaluationRecords: [evaluationRecord]
+    });
+    const json = exportIntegrationEnablementDossierJson(dossier);
+
+    expect(evaluationRecord.overallStatus).toBe("blocked");
+    expect(dossier.overallStatus).toBe("blocked");
+    expect(dossier.policyReceiptPresentCount).toBe(1);
+    expect(dossier.policyReceiptBlockedCount).toBe(1);
+    expect(dossier.externalEnablementStatus).toBe("blocked-by-policy");
+    expect(dossier.policyReceiptCoverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          policyId: "grc-destination",
+          coverageStatus: "blocked",
+          latestRecordStatus: "blocked",
+          externalCapabilityAllowed: false,
+          source: "server",
+          recoveryAction: expect.stringContaining("GRC Destination Policy:")
+        })
+      ])
+    );
+    expect(json).not.toContain(apiKey);
+    expect(json).not.toContain("raw KYC packet");
   });
 
   it("changes the dossier hash when server policy evaluation receipts change", async () => {

@@ -35,6 +35,15 @@ export type LocalFileEvidenceMetadataInput = {
   owner: string;
 };
 
+export type EvidenceDraftBoundaryInput = {
+  label: string;
+  kind: string;
+  sourceNote?: string;
+  content: string;
+  status?: string;
+  owner?: string;
+};
+
 const NOT_LEGAL_ADVICE_BOUNDARY = "Not legal advice. Evidence metadata boundary checks are audit preparation safeguards only.";
 const metadataClassOrder: EvidenceMetadataBoundaryClass[] = ["credential-material", "private-key-material", "raw-kyc"];
 const metadataWarningClassOrder: EvidenceMetadataBoundaryWarningClass[] = ["wallet-address", "personal-data", "confidential"];
@@ -98,6 +107,33 @@ export function validateLocalFileEvidenceMetadata(input: LocalFileEvidenceMetada
     linkedRiskFlagIds: [],
     linkedControlIds: [],
     replacementReason: "local file metadata intake"
+  });
+
+  if (result.valid) {
+    return result;
+  }
+
+  return {
+    ...result,
+    warningClasses: [],
+    warningFindings: []
+  };
+}
+
+export function validateEvidenceDraftBoundary(input: EvidenceDraftBoundaryInput): EvidenceMetadataBoundaryResult {
+  const result = validateEvidenceMetadataBoundary({
+    filename: input.label || "draft evidence",
+    owner: input.owner ?? "unassigned",
+    sourceNote: [
+      `evidence kind: ${input.kind || "unknown"}`,
+      `source note: ${input.sourceNote ?? ""}`,
+      `status: ${input.status ?? "draft"}`,
+      `draft content summary: ${input.content}`,
+      "manual evidence draft intake; raw evidence bytes should stay outside LexProof"
+    ].join("; "),
+    linkedRiskFlagIds: [],
+    linkedControlIds: [],
+    replacementReason: "manual evidence draft intake"
   });
 
   if (result.valid) {

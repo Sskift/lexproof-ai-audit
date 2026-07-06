@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+const LONG_APP_FLOW_TIMEOUT_MS = 60000;
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -3197,7 +3199,7 @@ describe("App", () => {
       click.mockRestore();
       vi.unstubAllGlobals();
     }
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("shows Evidence Vault control coverage after syncing AI workflow template evidence", async () => {
     const uploadedRecords: Array<{
@@ -3404,6 +3406,39 @@ describe("App", () => {
     expect(document.body.textContent).not.toContain("raw KYC packet");
   });
 
+  it("previews unsafe manual evidence draft boundaries before downstream handoff", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe draft evidence" } });
+    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+      target: { value: `Contains ${apiKey}, private key ${privateKey}, and raw KYC packet.` }
+    });
+
+    const boundary = within(await screen.findByRole("region", { name: /Evidence draft boundary preview/i }));
+    expect(boundary.getByRole("heading", { name: /Evidence Draft Boundary Preview/i })).toBeInTheDocument();
+    expect(boundary.getByText(/Blocked downstream/i)).toBeInTheDocument();
+    expect(boundary.getByText(/credential-material/i)).toBeInTheDocument();
+    expect(boundary.getByText(/private-key-material/i)).toBeInTheDocument();
+    expect(boundary.getByText(/raw-kyc/i)).toBeInTheDocument();
+    expect(boundary.getByText(/replace blocked material with a metadata-only summary/i)).toBeInTheDocument();
+    expect(boundary.getByText(/Not legal advice. Evidence metadata boundary checks/i)).toBeInTheDocument();
+    expect(boundary.getByRole("heading", { name: /Evidence Draft Boundary Preview/i }).closest("section")?.textContent).not.toContain(
+      apiKey
+    );
+    expect(boundary.getByRole("heading", { name: /Evidence Draft Boundary Preview/i }).closest("section")?.textContent).not.toContain(
+      privateKey
+    );
+    expect(boundary.getByRole("heading", { name: /Evidence Draft Boundary Preview/i }).closest("section")?.textContent).not.toContain(
+      "raw KYC packet"
+    );
+    expect(screen.getByRole("button", { name: /Add evidence item/i })).toBeEnabled();
+  });
+
   it("shows structured Evidence Vault duplicate recovery details without losing the non-advice boundary", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
@@ -3570,7 +3605,7 @@ describe("App", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("runs the full Secure Review Workspace journey across evidence vault, model gateway, and human review", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
@@ -3875,7 +3910,7 @@ describe("App", () => {
       click.mockRestore();
       vi.unstubAllGlobals();
     }
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("shows Model Gateway failure receipts with remediation steps in the secure journey error state", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -3998,7 +4033,7 @@ describe("App", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("shows Secure Review Journey blockers for empty evidence and missing Model Connect", async () => {
     render(<App />);

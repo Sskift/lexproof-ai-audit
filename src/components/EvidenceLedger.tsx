@@ -37,6 +37,7 @@ import {
   type EvidenceVaultLineageDigest
 } from "../lib/evidenceVaultLineageDigest";
 import {
+  validateEvidenceDraftBoundary,
   validateLocalFileEvidenceMetadata,
   type EvidenceMetadataBoundaryResult
 } from "../lib/evidenceUploadBoundary";
@@ -149,6 +150,22 @@ export function EvidenceLedger({
       }),
     [evidenceItems, projectId]
   );
+  const draftBoundaryResult = useMemo(() => {
+    if (!hasDraftBoundaryPreview(draft)) {
+      return null;
+    }
+
+    const result = validateEvidenceDraftBoundary({
+      label: draft.label,
+      kind: draft.kind,
+      sourceNote: draft.source,
+      content: draft.content,
+      status: draft.status,
+      owner: draft.owner
+    });
+
+    return result.valid && result.warningFindings.length === 0 ? null : result;
+  }, [draft]);
   useEffect(() => {
     onVaultControlCoverageChange?.(vaultControlCoverage);
   }, [onVaultControlCoverageChange, vaultControlCoverage]);
@@ -691,6 +708,7 @@ export function EvidenceLedger({
             placeholder="Summarize the artifact. Do not paste raw KYC, private keys, or personal data."
           />
         </div>
+        {draftBoundaryResult ? <EvidenceDraftBoundaryPanel result={draftBoundaryResult} /> : null}
         <button type="button" disabled={!canAdd} onClick={addEvidence}>
           Add evidence item
         </button>
@@ -1084,6 +1102,54 @@ function LocalFileBoundaryPanel({ result }: { result: EvidenceMetadataBoundaryRe
         <p className="save-state">Metadata-only local file intake is ready for ledger creation.</p>
       ) : null}
     </section>
+  );
+}
+
+function EvidenceDraftBoundaryPanel({ result }: { result: EvidenceMetadataBoundaryResult }) {
+  const status = result.valid ? "needs-review" : "blocked";
+  const statusLabel = status === "blocked" ? "Blocked downstream" : "Needs metadata review";
+
+  return (
+    <section className={`evidence-draft-boundary-panel ${status}`} aria-label="Evidence draft boundary preview">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldAlert size={16} aria-hidden="true" />
+          <h3>Evidence Draft Boundary Preview</h3>
+        </div>
+        <span className={`boundary-status ${status}`}>{statusLabel}</span>
+      </div>
+      <p className="section-note">{result.notLegalAdviceBoundary}</p>
+      {!result.valid ? (
+        <div className="evidence-draft-boundary-findings">
+          {result.errors.map((error) => (
+            <p key={error}>{error}</p>
+          ))}
+          <small>
+            Recovery: replace blocked material with a metadata-only summary before Evidence Vault sync, model review, or
+            external export.
+          </small>
+        </div>
+      ) : null}
+      {result.warningFindings.length > 0 ? (
+        <div className="evidence-draft-boundary-findings">
+          {result.warningFindings.map((finding) => (
+            <article key={`${finding.dataClass}-${finding.redactedSnippet}`}>
+              <span className={`boundary-severity ${finding.severity}`}>{finding.severity}</span>
+              <strong>{finding.dataClass}</strong>
+              <small>{finding.message}</small>
+              <code>{finding.redactedSnippet}</code>
+            </article>
+          ))}
+          <small>Recovery: confirm this draft is metadata-only and approved for audit-prep handling before handoff.</small>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function hasDraftBoundaryPreview(item: EvidenceItem): boolean {
+  return [item.label, item.kind, item.source, item.status, item.owner, item.content].some(
+    (value) => typeof value === "string" && value.trim().length > 0
   );
 }
 

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateEvidenceMetadataBoundary, validateLocalFileEvidenceMetadata } from "./evidenceUploadBoundary";
+import {
+  validateEvidenceDraftBoundary,
+  validateEvidenceMetadataBoundary,
+  validateLocalFileEvidenceMetadata
+} from "./evidenceUploadBoundary";
 
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
 const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -134,6 +138,75 @@ describe("validateLocalFileEvidenceMetadata", () => {
         mimeType: "application/pdf",
         byteSize: 4096,
         lastModified: Date.UTC(2026, 6, 5, 8, 30, 0),
+        owner: "Compliance"
+      })
+    ).toEqual({
+      resultVersion: "lexproof-evidence-metadata-boundary-v1",
+      valid: true,
+      blockedClasses: [],
+      warningClasses: [],
+      warningFindings: [],
+      errors: [],
+      notLegalAdviceBoundary: "Not legal advice. Evidence metadata boundary checks are audit preparation safeguards only."
+    });
+  });
+});
+
+describe("validateEvidenceDraftBoundary", () => {
+  it("previews blocked manual evidence drafts without leaking pasted secret values", () => {
+    const result = validateEvidenceDraftBoundary({
+      label: "Unsafe draft",
+      kind: "Markdown",
+      sourceNote: "Manual evidence draft",
+      content: `Pasted private key ${privateKey}, API key ${apiKey}, and raw KYC packet.`,
+      status: "draft",
+      owner: "Founder"
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        valid: false,
+        blockedClasses: expect.arrayContaining(["credential-material", "private-key-material", "raw-kyc"]),
+        warningClasses: [],
+        notLegalAdviceBoundary: "Not legal advice. Evidence metadata boundary checks are audit preparation safeguards only."
+      })
+    );
+    expect(JSON.stringify(result)).not.toContain(apiKey);
+    expect(JSON.stringify(result)).not.toContain(privateKey);
+    expect(JSON.stringify(result)).not.toContain("raw KYC packet");
+  });
+
+  it("previews warning classes for linkable manual evidence metadata", () => {
+    const result = validateEvidenceDraftBoundary({
+      label: "Wallet review draft",
+      kind: "Summary",
+      sourceNote: `Treasury wallet ${walletAddress}`,
+      content: "Owner contact jane.founder@example.com needs metadata-only review.",
+      status: "received",
+      owner: "Compliance"
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.blockedClasses).toEqual([]);
+    expect(result.warningClasses).toEqual(["wallet-address", "personal-data"]);
+    expect(result.warningFindings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ dataClass: "wallet-address", redactedSnippet: expect.stringContaining("[redacted-wallet-address]") }),
+        expect.objectContaining({ dataClass: "personal-data", redactedSnippet: expect.stringContaining("[redacted-email]") })
+      ])
+    );
+    expect(JSON.stringify(result)).not.toContain(walletAddress);
+    expect(JSON.stringify(result)).not.toContain("jane.founder@example.com");
+  });
+
+  it("allows clean manual evidence draft summaries", () => {
+    expect(
+      validateEvidenceDraftBoundary({
+        label: "Board approval summary",
+        kind: "Markdown",
+        sourceNote: "Synthetic board approval memo",
+        content: "Metadata-only summary of approval scope and reviewer owner.",
+        status: "draft",
         owner: "Compliance"
       })
     ).toEqual({

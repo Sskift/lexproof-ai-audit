@@ -153,6 +153,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional VARA 2024 marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/uae-vara-marketing-source-graph.png`.
    - Optional EU MiCA marketing source screenshot after **Start Marketing claims review**: `docs/assets/screenshots/eu-mica-marketing-source-graph.png`.
    - Optional marketing template screenshot after **Start Marketing claims review**: `docs/assets/screenshots/counsel-pack-marketing-claims-template.png`.
+   - Optional Evidence Ledger draft safety screenshot: open **Evidence Ledger**, enter a manual evidence draft that mentions private-key-like material or direct identifiers, and confirm **Evidence Draft Boundary Preview** shows redacted recovery guidance before downstream handoff. Screenshot: `docs/assets/screenshots/evidence-draft-boundary-preview.png`.
    - Optional Evidence Ledger safety screenshot: open **Evidence Ledger**, choose a local file whose filename includes raw KYC, credential, or private-key-like metadata, and confirm **Local File Metadata Boundary** blocks the intake before hashing with redacted recovery guidance. Screenshot: `docs/assets/screenshots/local-file-metadata-boundary-blocker.png`.
    - Screenshot: `docs/assets/screenshots/regulatory-control-matrix.png`.
 

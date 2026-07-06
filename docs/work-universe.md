@@ -106,7 +106,7 @@ Every future slice should make at least one step in this journey more real, safe
 The repository already has:
 
 - React + TypeScript + Vite workbench UI.
-- Local-first project workspace and synthetic sample profiles.
+- Local-first project workspace, metadata-only JSON profile import, and synthetic sample profiles.
 - Deterministic risk audit, issue explainers, source links, remediation queue, and risk evidence coverage.
 - Model Intake, Model Connect, model readiness checks, Redaction Gate, AI Review run ledger, and a mock/OpenAI-compatible client-side model path.
 - Phase 2 API routes for secure review workspace, Evidence Vault metadata hashing, duplicate-hash blocking, rejected-evidence replacement lineage, mock Model Gateway success/failure receipts with automatic Human Review queueing for completed output, Human Review, server-side Counsel Pack export metadata records, and filtered Audit Log listing with Secure Review Workspace refresh UI.

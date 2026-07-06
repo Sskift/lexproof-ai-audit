@@ -225,7 +225,13 @@ import {
   type ModelConnectionProfile,
   type ModelIntakeSummary
 } from "./lib/modelIntake";
-import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./lib/projectModel";
+import {
+  importProjectProfileJson,
+  validateProjectProfile,
+  type EvidenceItem,
+  type ProjectProfile,
+  type ProjectProfileImportResult
+} from "./lib/projectModel";
 import {
   assessProjectPersistenceSafety,
   parseStoredProjectSnapshot,
@@ -1713,6 +1719,21 @@ export default function App() {
     setActiveTab(scenario.recommendedStartTab);
   };
 
+  const importProjectJson = (json: string): ProjectProfileImportResult => {
+    const result = importProjectProfileJson(json);
+    if (!result.ok) {
+      return result;
+    }
+
+    setProject(result.profile);
+    setShowValidation(false);
+    setSavedAt("");
+    clearWorkspaceRecoveryNotice();
+    resetModelConnectContext();
+    setActiveTab("wizard");
+    return result;
+  };
+
   const newProject = () => {
     setProject(createBlankProject());
     setShowValidation(false);
@@ -2381,6 +2402,7 @@ export default function App() {
           onProjectChange={updateProject}
           onLoadSample={loadSample}
           onLoadDemoScenario={loadDemoScenario}
+          onImportProjectJson={importProjectJson}
           onDemoApiPreflightChange={setDemoApiPreflight}
           onNewProject={newProject}
           onSave={saveWorkspace}

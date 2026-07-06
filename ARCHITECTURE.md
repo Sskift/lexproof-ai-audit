@@ -237,6 +237,7 @@ Owns first-stage workspace types and validation:
 - `ProjectProfile` is the editable audit project model.
 - `EvidenceItem` includes optional local ID, source, status, owner, and timestamps.
 - `validateProjectProfile()` returns explicit errors for missing project facts.
+- `importProjectProfileJson()` parses metadata-only project profile JSON, normalizes evidence metadata, blocks unsafe project/evidence fields, and returns a Not legal advice import boundary.
 
 This module does not store data and does not accept raw KYC or private data handling.
 
@@ -1087,7 +1088,6 @@ UI tests cover:
 
 Good next additions:
 
-- import custom JSON profiles
 - deepen jurisdiction pack controls with more scenarios, evidence patterns, and local-counsel workflows
 - add source citation controls per flag
 - add optional real on-chain anchoring only after privacy, wallet, backend, and signing boundaries are documented

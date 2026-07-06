@@ -38,7 +38,7 @@ Key evidence:
 
 ## MVP Features
 
-- Custom Project Workspace for creating a local audit project from zero, loading synthetic samples, launching a judge-ready Demo Scenario Library path, and recovering from corrupt or unsafe local workspace snapshots without persisting credentials, private keys, raw KYC, personal identifiers, or wallet addresses in project metadata.
+- Custom Project Workspace for creating a local audit project from zero, importing metadata-only JSON profiles, loading synthetic samples, launching a judge-ready Demo Scenario Library path, and recovering from corrupt or unsafe local workspace snapshots without persisting credentials, private keys, raw KYC, personal identifiers, or wallet addresses in project metadata.
 - Step-by-step Audit Wizard for reviewing facts, AI/data/chain boundaries, and handoff readiness.
 - Model Intake for registering provider/model purpose, allowed data classes, human-review owner, editable hashed AI event review records, and downloadable Model Intake JSON.
 - AI Review with mock and OpenAI-compatible model settings, Model Access Workflow, Model Connection Readiness, audit-prep extraction, draft questions, and missing evidence suggestions.
@@ -124,6 +124,10 @@ Judge Demo Readiness keeps the clean-clone path visible on the first screen: req
 Project Workspace persistence recovery blocks corrupt, invalid-shape, or unsafe local snapshots and prevents autosave when project metadata appears to include credentials, private keys, raw KYC, personal identifiers, or wallet addresses. The user stays in a safe synthetic workspace and sees the Not legal advice boundary before saving clean metadata again.
 
 ![Workspace persistence recovery](docs/assets/screenshots/workspace-persistence-recovery.png)
+
+Project Workspace JSON import lets teams paste a metadata-only `ProjectProfile` or audit-profile-shaped JSON payload, normalizes evidence owners/statuses, blocks unsafe project or evidence metadata, and keeps the import boundary as audit preparation material only. Not legal advice.
+
+![Project Profile JSON Import](docs/assets/screenshots/project-profile-json-import.png)
 
 Risk Audit explains deterministic trigger facts and links source context for counsel review.
 

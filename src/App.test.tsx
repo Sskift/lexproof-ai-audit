@@ -2937,6 +2937,50 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /Download Evidence Trail JSON/i })).toBeInTheDocument();
   }, 60000);
 
+  it("imports a metadata-only project profile JSON into the workspace journey", async () => {
+    render(<App />);
+
+    const importedProfile = {
+      projectName: "Imported RWA Review Desk",
+      entityType: "Delaware C-corp issuer",
+      jurisdictions: ["United States", "European Union"],
+      assetModel: "Tokenized yield note",
+      userType: "Accredited investors and issuer counsel",
+      custodyModel: "Platform controls omnibus wallet policy metadata",
+      dataSensitivity: "Policy metadata only; no raw KYC",
+      aiUsage: "AI flags missing approvals for human review",
+      blockchainUse: "Simulated evidence anchor",
+      operatingStage: "Planned public launch",
+      evidenceItems: [
+        {
+          label: "Imported launch memo",
+          kind: "Markdown",
+          content: "Token terms, user eligibility, custody assumptions, and approval status",
+          source: "Synthetic imported profile",
+          status: "received",
+          owner: "Compliance"
+        }
+      ]
+    };
+
+    fireEvent.change(screen.getByLabelText(/Import project profile JSON/i), {
+      target: { value: JSON.stringify(importedProfile) }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Import profile JSON/i }));
+
+    expect(await screen.findByText(/Imported profile: Imported RWA Review Desk. 1 evidence item/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("Imported RWA Review Desk");
+    expect(screen.getByText(/Not legal advice. Imported profiles are audit preparation metadata only./i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+    expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(screen.getByText(/Asset model: Tokenized yield note/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+    expect(await screen.findByText("Imported launch memo")).toBeInTheDocument();
+    expect(screen.getAllByText(/Synthetic imported profile/i).length).toBeGreaterThan(0);
+  }, 60000);
+
   it("keeps long evidence records editable with visible mobile-friendly field labels", async () => {
     render(<App />);
 

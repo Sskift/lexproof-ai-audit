@@ -1,9 +1,10 @@
-import { AlertTriangle, CirclePlus, Gavel, Layers3, Save } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, CirclePlus, Gavel, Layers3, Save, Upload } from "lucide-react";
 import type { AuditProfile, SubmissionFit } from "../lib/auditEngine";
 import type { DemoScenario, DemoScenarioValidationResult } from "../lib/demoScenarioLibrary";
 import type { DemoApiPreflight } from "../lib/demoReadiness";
 import type { ProjectWorkspaceRecoveryNotice } from "../lib/projectPersistence";
-import type { ProjectProfile, ProjectValidationResult } from "../lib/projectModel";
+import type { ProjectProfile, ProjectProfileImportResult, ProjectValidationResult } from "../lib/projectModel";
 import { DemoReadinessPanel } from "./DemoReadinessPanel";
 import { DemoScenarioLibrary } from "./DemoScenarioLibrary";
 
@@ -22,6 +23,7 @@ type ProjectWorkspaceProps = {
   onProjectChange: (project: ProjectProfile) => void;
   onLoadSample: (projectName: string) => void;
   onLoadDemoScenario: (scenarioId: string) => void;
+  onImportProjectJson: (json: string) => ProjectProfileImportResult;
   onDemoApiPreflightChange: (preflight: DemoApiPreflight) => void;
   onNewProject: () => void;
   onSave: () => void;
@@ -42,12 +44,22 @@ export function ProjectWorkspace({
   onProjectChange,
   onLoadSample,
   onLoadDemoScenario,
+  onImportProjectJson,
   onDemoApiPreflightChange,
   onNewProject,
   onSave
 }: ProjectWorkspaceProps) {
+  const [importJson, setImportJson] = useState("");
+  const [importResult, setImportResult] = useState<ProjectProfileImportResult | null>(null);
   const updateProject = (updates: Partial<ProjectProfile>) => {
     onProjectChange({ ...project, ...updates });
+  };
+  const importProfile = () => {
+    const result = onImportProjectJson(importJson);
+    setImportResult(result);
+    if (result.ok) {
+      setImportJson("");
+    }
   };
 
   return (
@@ -94,6 +106,46 @@ export function ProjectWorkspace({
             </option>
           ))}
         </select>
+
+        <div className="profile-import-panel" aria-label="Profile JSON import panel">
+          <label className="field-label" htmlFor="profile-import-json">
+            Import project profile JSON
+          </label>
+          <textarea
+            id="profile-import-json"
+            value={importJson}
+            onChange={(event) => {
+              setImportJson(event.target.value);
+              setImportResult(null);
+            }}
+            placeholder='{"projectName":"AI Governance Desk","jurisdictions":["United States"],"evidenceItems":[]}'
+          />
+          <button type="button" className="secondary" disabled={!importJson.trim()} onClick={importProfile}>
+            <Upload size={16} aria-hidden="true" />
+            Import profile JSON
+          </button>
+          {importResult?.ok ? (
+            <p className="save-state">
+              Imported profile: {importResult.profile.projectName}. {importResult.profile.evidenceItems.length} evidence item
+              {importResult.profile.evidenceItems.length === 1 ? "" : "s"}. {importResult.notLegalAdviceBoundary}
+            </p>
+          ) : null}
+          {importResult?.ok && importResult.warnings.length > 0 ? (
+            <ul className="validation-list" aria-label="Project import warnings">
+              {importResult.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          ) : null}
+          {importResult && !importResult.ok ? (
+            <ul className="validation-list" aria-label="Project import errors">
+              {importResult.errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+              <li>{importResult.notLegalAdviceBoundary}</li>
+            </ul>
+          ) : null}
+        </div>
 
         <DemoScenarioLibrary
           scenarios={demoScenarios}

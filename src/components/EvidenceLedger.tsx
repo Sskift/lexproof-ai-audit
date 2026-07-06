@@ -200,7 +200,7 @@ export function EvidenceLedger({
     let isActive = true;
     setEvidenceDisposalRunbook(null);
 
-    if (!retentionRemediationQueue) {
+    if (!retentionRemediationQueue || retentionReport.evidenceCount === 0) {
       return () => {
         isActive = false;
       };

@@ -339,6 +339,8 @@ Evidence Retention Readiness blocks Evidence Vault sync when evidence contains p
 
 ![Evidence Retention Remediation Queue](docs/assets/screenshots/evidence-retention-remediation-queue.png)
 
+![Evidence Disposal Runbook](docs/assets/screenshots/evidence-disposal-runbook.jpg)
+
 Evidence Recertification Queue flags stale source-linked metadata before counsel/export reliance. Load `SignalBridge Marketing Review`, confirm the first-screen **Workspace Action Queue** routes stale `Claims inventory` to Evidence Ledger, and refresh the evidence to clear the queue. Not legal advice.
 
 ![Workspace Action Queue recertification route](docs/assets/screenshots/workspace-action-recertification.png)

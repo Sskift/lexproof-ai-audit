@@ -489,7 +489,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
     title: "AI Legal / Compliance Workflow",
     shortLabel: "AI compliance workflow",
     description: "Human review, source lineage, model payload, and approval evidence requests for AI-assisted compliance workflows.",
-    triggerKeywords: ["ai", "llm", "agent", "model", "drafts", "summarizes", "flags", "legal workflow"],
+    triggerKeywords: ["ai", "llm", "agent", "agentic", "model", "drafts", "summarizes", "flags", "legal workflow"],
     notLegalAdviceBoundary: "Not legal advice. These are AI workflow evidence requests for audit preparation.",
     items: [
       {
@@ -569,6 +569,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: document NIST AI 600-1, generative AI profile, output review, unsupported claims, source provenance, content-risk escalation, human accountability, reviewer owner, and confidential matter text exclusion.",
         source:
           "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-us-nist-ai-rmf-governance",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Singapore agentic AI action-space and approval register",
+        kind: "Register",
+        content:
+          "Requested: document Singapore agentic AI, agentic AI action-space, use-case fit, agent limits, tool permissions, access controls, autonomy level, read vs write boundaries, human approvals, human approval checkpoints, reviewer owner, and no legal conclusion.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-sg-imda-agentic-ai-governance",
+        status: "requested",
+        owner: "Product"
+      },
+      {
+        label: "Singapore AI Verify logging and user-responsibility register",
+        kind: "Register",
+        content:
+          "Requested: document agent action log, tool-call monitoring, logging and monitoring, policy adherence, continuous monitoring, user responsibilities, training, AI Verify documentary evidence, reviewer owner, and no raw matter text, client identifiers, credentials, personal data, or legal conclusions.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-sg-imda-agentic-ai-governance",
         status: "requested",
         owner: "Compliance"
       },

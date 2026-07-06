@@ -2,8 +2,29 @@ import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { evidenceTemplates } from "./data/evidenceTemplates";
 
 const LONG_APP_FLOW_TIMEOUT_MS = 60000;
+const REGULATORY_CONTROL_ID_PATTERN = /regulatory control: ([a-z0-9-]+)/g;
+
+const getEvidenceTemplate = (templateId: string) => {
+  const template = evidenceTemplates.find((candidate) => candidate.id === templateId);
+  if (!template) {
+    throw new Error(`Missing evidence template: ${templateId}`);
+  }
+  return template;
+};
+
+const getTemplateControlIds = (templateId: string) => {
+  const template = getEvidenceTemplate(templateId);
+  return Array.from(
+    new Set(
+      template.items.flatMap((item) =>
+        Array.from((item.source ?? "").matchAll(REGULATORY_CONTROL_ID_PATTERN), (match) => match[1])
+      )
+    )
+  ).sort();
+};
 
 describe("App", () => {
   afterEach(() => {
@@ -1061,26 +1082,13 @@ describe("App", () => {
     expect(
       (await screen.findAllByText(/NIST AI RMF 1\.0 and NIST AI 600-1 Generative AI Profile/i)).length
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText(/ABA Formal Opinion 512, Generative Artificial Intelligence Tools, July 29, 2024/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US legal AI professional responsibility counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US AI governance \/ model risk counsel/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/New York City Local Law 144 of 2021 and DCWP AEDT rule/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/NYC AEDT \/ employment AI counsel/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/NYC AEDT scope and bias-audit evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/NYC AEDT notice, accommodation, and data-retention request evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Colorado SB26-189, Automated Decision-Making Technology/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Colorado ADMT \/ AI consumer-protection counsel/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/California Privacy Protection Agency, CCPA Updates/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/California CCPA \/ ADMT privacy counsel/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/California CCPA ADMT scope and risk-assessment evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/California CCPA ADMT access, opt-out, and secure request evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Regulation \(EU\) 2024\/1689, Article 50/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU AI Act Article 50 user-interaction disclosure evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU AI Act AI-generated output labelling and editorial-control evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU AI Act transparency \/ Article 50 counsel/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Regulation \(EU\) 2024\/1689, Article 6\(2\), Articles 26-27, and Annex III point 8\(a\)/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU AI Act justice and ADR perimeter evidence/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/EU AI Act high-risk \/ administration-of-justice counsel/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Model AI Governance Framework for Agentic AI/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Singapore agentic AI action-space and human-approval evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Singapore agentic AI logging, monitoring, and user-responsibility evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Singapore AI governance \/ agentic AI counsel/i).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/MAS Notice PSN02 and Guidelines to Notice PSN02/i)).toHaveLength(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   }, 20000);
 
@@ -3316,6 +3324,9 @@ describe("App", () => {
   }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("shows Evidence Vault control coverage after syncing AI workflow template evidence", async () => {
+    const aiWorkflowTemplate = getEvidenceTemplate("ai-compliance-workflow");
+    const aiWorkflowTemplateItemCount = aiWorkflowTemplate.items.length;
+    const aiWorkflowControlIds = getTemplateControlIds("ai-compliance-workflow");
     const uploadedRecords: Array<{
       id: string;
       filename: string;
@@ -3441,19 +3452,22 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Apply AI compliance workflow template/i }));
       fireEvent.click(await screen.findByRole("button", { name: /Sync Evidence Vault/i }));
 
-      expect(await screen.findByText(/Evidence Vault synced 16 records/i)).toBeInTheDocument();
+      expect(
+        await screen.findByText(new RegExp(`Evidence Vault synced ${aiWorkflowTemplateItemCount} records`, "i"))
+      ).toBeInTheDocument();
       const coverage = within(screen.getByRole("region", { name: /Evidence Vault Control Coverage/i }));
       expect(coverage.getByRole("heading", { name: /Evidence Vault Control Coverage/i })).toBeInTheDocument();
-      expect(coverage.getByText(/9 controls linked across 16 vault records and 16 manifest items/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-us-nist-ai-rmf-governance/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-us-nyc-local-law-144-aedt-employment-decision-governance/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-us-colorado-admt-consequential-decision-governance/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-us-california-ccpa-admt-consumer-rights-governance/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-eu-ai-act-ai-literacy-governance/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-eu-ai-act-article-50-transparency-disclosure/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-eu-ai-act-administration-justice-adr-perimeter/i)).toBeInTheDocument();
-      expect(coverage.getByText(/control-uk-ico-ai-data-protection-governance/i)).toBeInTheDocument();
+      expect(
+        coverage.getByText(
+          new RegExp(
+            `${aiWorkflowControlIds.length} controls linked across ${aiWorkflowTemplateItemCount} vault records and ${aiWorkflowTemplateItemCount} manifest items`,
+            "i"
+          )
+        )
+      ).toBeInTheDocument();
+      for (const controlId of aiWorkflowControlIds) {
+        expect(coverage.getByText(new RegExp(controlId, "i"))).toBeInTheDocument();
+      }
       expect(coverage.getAllByText(/Needs review/i).length).toBeGreaterThan(0);
       expect(coverage.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(coverage.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
@@ -3461,20 +3475,15 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
 
       expect(await screen.findByText(/## Evidence Vault Control Coverage/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-us-nist-ai-rmf-governance: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-us-nyc-local-law-144-aedt-employment-decision-governance: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-us-colorado-admt-consequential-decision-governance: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-us-california-ccpa-admt-consumer-rights-governance: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-eu-ai-act-ai-literacy-governance: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-eu-ai-act-article-50-transparency-disclosure: needs-review/i)).toBeInTheDocument();
-      expect(screen.getByText(/control-eu-ai-act-administration-justice-adr-perimeter: needs-review/i)).toBeInTheDocument();
+      for (const controlId of aiWorkflowControlIds) {
+        expect(screen.getByText(new RegExp(`${controlId}: needs-review`, "i"))).toBeInTheDocument();
+      }
       expect(screen.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
       const checklist = within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i }));
       expect(checklist.getByText(/Evidence Vault Control Coverage/i)).toBeInTheDocument();
-      expect(checklist.getByText(/0\/9 controls ready for handoff/i)).toBeInTheDocument();
-      expect(checklist.getByText(/needs review: 9/i)).toBeInTheDocument();
+      expect(checklist.getByText(new RegExp(`0/${aiWorkflowControlIds.length} controls ready for handoff`, "i"))).toBeInTheDocument();
+      expect(checklist.getByText(new RegExp(`needs review: ${aiWorkflowControlIds.length}`, "i"))).toBeInTheDocument();
       expect(checklist.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();

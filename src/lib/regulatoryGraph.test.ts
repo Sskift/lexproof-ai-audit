@@ -23,14 +23,14 @@ const aiLegalWorkflowProject: ProjectProfile = {
   id: "project-ai-legal-workflow",
   projectName: "LexAssist Evidence Desk",
   entityType: "Legal operations AI workflow",
-  jurisdictions: ["United States", "European Union", "United Kingdom"],
+  jurisdictions: ["United States", "European Union", "United Kingdom", "Singapore"],
   assetModel:
-    "No token sale; AI-assisted matter intake, evidence review, NYC AEDT hiring-screening scoping, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
+    "No token sale; AI-assisted matter intake, evidence review, Singapore agentic AI tool-permission scoping, NYC AEDT hiring-screening scoping, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
   userType: "In-house counsel, compliance reviewers, and outside counsel",
   custodyModel: "No custody; workspace stores metadata-only evidence records",
   dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
   aiUsage:
-    "AI drafts issue-spotting notes, evidence requests, NYC AEDT bias-audit questions, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
+    "AI drafts issue-spotting notes, evidence requests, Singapore agentic AI tool-call summaries, human approval checkpoints, NYC AEDT bias-audit questions, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
   blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
   operatingStage: "Internal pilot before counsel-supervised rollout",
   evidenceItems: []
@@ -944,7 +944,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU AI Act transparency and justice, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU AI Act, UK ICO, and Singapore Agentic AI workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
@@ -958,8 +958,12 @@ describe("createRegulatoryGraph", () => {
         "eu-ai-act-ai-literacy-governance",
         "eu-ai-act-article-50-transparency-disclosure",
         "eu-ai-act-administration-justice-adr-perimeter",
-        "uk-ico-ai-data-protection-governance"
+        "uk-ico-ai-data-protection-governance",
+        "sg-imda-agentic-ai-governance"
       ])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["sg-mas-psn02-dpt-aml-cft", "sg-mas-dpt-customer-asset-safeguards"])
     );
 
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-aba-formal-opinion-512-generative-ai-law-practice")).toMatchObject({
@@ -1042,6 +1046,17 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "UK AI / data protection counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "sg-imda-agentic-ai-governance")).toMatchObject({
+      jurisdiction: "Singapore",
+      regulator: "Infocomm Media Development Authority / AI Verify Foundation",
+      sourceUrl:
+        "https://www.imda.gov.sg/-/media/imda/files/about/emerging-tech-and-research/artificial-intelligence/mgf-for-agentic-ai.pdf",
+      citation:
+        "IMDA / AI Verify Foundation, Model AI Governance Framework for Agentic AI, Version 1.5, published 20 May 2026 and updated 5 June 2026; AI Verify Testing Framework, updated 29 May 2025",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "Singapore AI governance / agentic AI counsel"
+    });
     expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
       expect.arrayContaining([
         "US legal AI competence and confidentiality evidence",
@@ -1061,7 +1076,9 @@ describe("createRegulatoryGraph", () => {
         "EU AI Act justice and ADR perimeter evidence",
         "EU AI Act high-risk oversight and fundamental-rights review evidence",
         "UK AI data-protection and redaction evidence",
-        "UK AI explainability and reviewer decision log"
+        "UK AI explainability and reviewer decision log",
+        "Singapore agentic AI action-space and human-approval evidence",
+        "Singapore agentic AI logging, monitoring, and user-responsibility evidence"
       ])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
@@ -1154,6 +1171,15 @@ describe("createRegulatoryGraph", () => {
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "sg-imda-agentic-ai-governance")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Singapore agentic AI action-space and approval register",
+        "Singapore AI Verify logging and user-responsibility register"
+      ])
+    });
     expect(graph.evidenceGaps).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ clauseId: "us-aba-formal-opinion-512-generative-ai-law-practice" }),
@@ -1164,7 +1190,8 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-article-50-transparency-disclosure" }),
         expect.objectContaining({ clauseId: "eu-ai-act-administration-justice-adr-perimeter" }),
-        expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
+        expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" }),
+        expect.objectContaining({ clauseId: "sg-imda-agentic-ai-governance" })
       ])
     );
   });

@@ -73,14 +73,14 @@ export const sampleProfiles: AuditProfile[] = [
   {
     projectName: "LexAssist Evidence Desk",
     entityType: "Legal operations AI workflow",
-    jurisdictions: ["United States", "European Union", "United Kingdom"],
+    jurisdictions: ["United States", "European Union", "United Kingdom", "Singapore"],
     assetModel:
-      "No token sale; AI-assisted matter intake, evidence review, EU AI Act Article 50 AI disclosure scoping, NYC AEDT hiring-screening scoping, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
+      "No token sale; AI-assisted matter intake, evidence review, Singapore agentic AI tool-permission scoping, EU AI Act Article 50 AI disclosure scoping, NYC AEDT hiring-screening scoping, California CCPA ADMT significant-decision scoping, and Colorado consequential-decision scoping workflow",
     userType: "In-house counsel, compliance reviewers, and outside counsel",
     custodyModel: "No custody; workspace stores metadata-only evidence records",
     dataSensitivity: "Confidential matter summaries, privileged-review notes, and client identifiers excluded from demo evidence",
     aiUsage:
-      "AI drafts issue-spotting notes, evidence requests, EU AI Act AI-generated output disclosure prompts, NYC AEDT bias-audit questions, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
+      "AI drafts issue-spotting notes, evidence requests, Singapore agentic AI tool-call summaries, human approval checkpoints, EU AI Act AI-generated output disclosure prompts, NYC AEDT bias-audit questions, California CCPA ADMT and Colorado ADMT scoping questions, and source-linked counsel questions for human review",
     blockchainUse: "Simulated manifest anchor for exported audit-prep packets",
     operatingStage: "Internal pilot before counsel-supervised rollout",
     evidenceItems: [

@@ -89,6 +89,7 @@ describe("validateDemoScenarioLibrary", () => {
           "EU AI Act Article 50 transparency",
           "EU AI Act justice and ADR perimeter",
           "UK ICO",
+          "Singapore IMDA Agentic AI",
           "Model governance",
           "Counsel handoff"
         ]),
@@ -100,7 +101,7 @@ describe("validateDemoScenarioLibrary", () => {
         "Connect model",
         "Register AI event",
         "Route human review",
-        "Inspect ABA Formal Opinion 512 / US NIST / NYC AEDT / California CCPA ADMT / Colorado ADMT / EU AI Act Article 50 and justice perimeter / UK ICO source review",
+        "Inspect ABA Formal Opinion 512 / US NIST / NYC AEDT / California CCPA ADMT / Colorado ADMT / EU AI Act Article 50 and justice perimeter / UK ICO / Singapore IMDA Agentic AI source review",
         "Export counsel pack"
       ])
     );

@@ -1376,6 +1376,80 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "sg-imda-agentic-ai-governance",
+    jurisdiction: "Singapore",
+    regulator: "Infocomm Media Development Authority / AI Verify Foundation",
+    sourceName: "Model AI Governance Framework for Agentic AI and AI Verify Testing Framework",
+    sourceUrl: "https://www.imda.gov.sg/-/media/imda/files/about/emerging-tech-and-research/artificial-intelligence/mgf-for-agentic-ai.pdf",
+    citation:
+      "IMDA / AI Verify Foundation, Model AI Governance Framework for Agentic AI, Version 1.5, published 20 May 2026 and updated 5 June 2026; AI Verify Testing Framework, updated 29 May 2025",
+    topic: "ai-governance",
+    summary:
+      "Prepare agentic AI use-case, tool-permission, action-space, autonomy, human-approval, logging, monitoring, and user-responsibility evidence for Singapore AI governance review without treating agent output as legal advice.",
+    triggerFlagIds: ["ai-workflow"],
+    triggerKeywords: [
+      "agentic ai",
+      "ai agent",
+      "agentic workflow",
+      "tool use",
+      "tool call",
+      "human approvals",
+      "human approval",
+      "logging and monitoring",
+      "model context protocol",
+      "mcp",
+      "multi-agent"
+    ],
+    evidenceRequests: [
+      {
+        id: "sg-agentic-ai-action-space-human-approval",
+        title: "Singapore agentic AI action-space and human-approval evidence",
+        reason:
+          "Singapore agentic AI workflow review needs use-case fit, agent limits, tool permissions, access controls, autonomy level, and human approval checkpoints before operational reliance.",
+        priority: "P1",
+        keywords: [
+          "singapore agentic ai",
+          "agentic ai action-space",
+          "tool permissions",
+          "access controls",
+          "human approvals",
+          "human approval checkpoints",
+          "autonomy level",
+          "read vs write",
+          "agent limits"
+        ]
+      },
+      {
+        id: "sg-agentic-ai-logging-monitoring-user-responsibility",
+        title: "Singapore agentic AI logging, monitoring, and user-responsibility evidence",
+        reason:
+          "Agentic AI handoff needs agent action logs, tool-call monitoring, policy-adherence testing, user responsibility instructions, training, and AI Verify documentary evidence without raw matter text.",
+        priority: "P1",
+        keywords: [
+          "agent action log",
+          "tool-call monitoring",
+          "logging and monitoring",
+          "policy adherence",
+          "continuous monitoring",
+          "user responsibilities",
+          "ai verify",
+          "documentary evidence",
+          "no raw matter text"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which agentic workflow facts, tools, permissions, and action-space assumptions should Singapore AI governance reviewers inspect before deployment?",
+      "What evidence shows human approval checkpoints, logging, monitoring, user responsibility, and AI Verify-style documentary evidence without raw matter text or legal conclusions?"
+    ],
+    localCounselRole: "Singapore AI governance / agentic AI counsel",
+    effectiveAsOf: "2026-06-05",
+    lastReviewedAt: "2026-07-06",
+    reviewerNotes:
+      "Source metadata reviewed against IMDA / AI Verify Foundation Model AI Governance Framework for Agentic AI Version 1.5 and AI Verify Testing Framework materials for agent limits, access controls, human approvals, logging/monitoring, testing, user responsibility, and documentary-evidence routing; route interpretation to Singapore AI governance counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-nyc-local-law-144-aedt-employment-decision-governance",
     jurisdiction: "United States",
     regulator: "New York City Department of Consumer and Worker Protection",
@@ -1983,8 +2057,8 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     topic: "aml-cft",
     summary:
       "Prepare digital payment token AML/CFT, customer due diligence, sanctions, transaction monitoring, and data-minimization evidence for Singapore counsel review.",
-    triggerFlagIds: ["sensitive-data", "custody", "retail", "public-launch"],
-    triggerKeywords: ["singapore", "dpt", "digital payment token", "kyc", "aml", "cft", "sanctions"],
+    triggerFlagIds: ["custody"],
+    triggerKeywords: ["dpt", "digital payment token", "kyc", "wallet history", "aml", "cft", "sanctions"],
     evidenceRequests: [
       {
         id: "sg-psn02-aml-risk-assessment",

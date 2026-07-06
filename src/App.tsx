@@ -65,6 +65,7 @@ import {
   type CounselQuestion
 } from "./lib/counselQuestions";
 import { createDataBoundaryReport } from "./lib/dataBoundary";
+import type { AuditLogExportRecord } from "./lib/auditLogExport";
 import {
   createEvidenceCreatedEvent,
   createEvidenceRemovedEvent,
@@ -105,6 +106,7 @@ import {
   type EvidenceRecertificationQueue
 } from "./lib/evidenceRecertification";
 import {
+  createAuditLogExportArtifact,
   createDemoRunbookExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
@@ -398,6 +400,7 @@ export default function App() {
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
   const [modelGatewayEvaluation, setModelGatewayEvaluation] = useState<ModelGatewayEvaluationRecord | null>(null);
+  const [auditLogExportRecord, setAuditLogExportRecord] = useState<AuditLogExportRecord | null>(null);
   const [modelIntakeProfile, setModelIntakeProfile] = useState<ModelConnectionProfile>(() => loadStoredModelIntakeProfile());
   const [aiEvents, setAIEvents] = useState<AIEventRecord[]>(() => loadStoredAIEvents());
   const [modelIntakeSummary, setModelIntakeSummary] = useState<ModelIntakeSummary | null>(null);
@@ -507,6 +510,7 @@ export default function App() {
   );
   useEffect(() => {
     setModelGatewayEvaluation(null);
+    setAuditLogExportRecord(null);
   }, [project.id]);
   const regulatoryControlMatrix = useMemo(
     () => createRegulatoryControlMatrix({ graph: regulatoryGraph, sourceReview: regulatorySourceReview }),
@@ -1306,6 +1310,7 @@ export default function App() {
         notLegalAdviceBoundary: "Not legal advice. Source review packets are audit preparation source-lineage metadata only."
       },
       createModelGatewayEvaluationExportArtifact(modelGatewayEvaluation),
+      createAuditLogExportArtifact(auditLogExportRecord),
       createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard),
       {
         id: "local-counsel-routing",
@@ -1374,6 +1379,7 @@ export default function App() {
     localCounselRoutingPlan,
     manifest?.bundleHash,
     manifestDriftReport,
+    auditLogExportRecord,
     modelGatewayEvaluation,
     regulatorySourcePack,
     regulatorySourceReviewPacket,
@@ -2360,6 +2366,7 @@ export default function App() {
             manifestHash={manifest?.bundleHash}
             onNavigate={setActiveTab}
             onModelGatewayEvaluationChange={setModelGatewayEvaluation}
+            onAuditLogExportChange={setAuditLogExportRecord}
           />
 
           <SecurityReviewChecklistPanel report={securityReviewChecklist} onNavigate={setActiveTab} />

@@ -3934,6 +3934,8 @@ describe("App", () => {
       await waitFor(() => {
         expect(exportInventory.getByText(/Model Gateway Evaluation JSON/i)).toBeInTheDocument();
         expect(exportInventory.getByText(/Route Model Gateway Evaluation through Human Review before relying on model output/i)).toBeInTheDocument();
+        expect(exportInventory.getByText("Audit Log Export JSON")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep Audit Log Export JSON with the secure review handoff packet.")).toBeInTheDocument();
       });
       expect(exportInventory.getAllByText(/Hash dddddddddddd/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);

@@ -1,3 +1,4 @@
+import type { AuditLogExportRecord } from "./auditLogExport";
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
 import type { DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
@@ -250,6 +251,29 @@ export function createModelGatewayEvaluationExportArtifact(
   };
 }
 
+export function createAuditLogExportArtifact(
+  auditLogExport: AuditLogExportRecord | null | undefined
+): ExportSafetyArtifactInput {
+  const hasExport = Boolean(auditLogExport);
+
+  return {
+    id: "audit-log-export",
+    label: "Audit Log Export JSON",
+    category: "security",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasExport,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    blockers: createAuditLogExportBlockers(auditLogExport),
+    warnings: createAuditLogExportWarnings(auditLogExport),
+    recoveryAction: createAuditLogExportRecoveryAction(auditLogExport),
+    notLegalAdviceBoundary:
+      auditLogExport?.notLegalAdviceBoundary ??
+      "Not legal advice. Audit Log exports are review workspace metadata only."
+  };
+}
+
 export function createDemoRunbookExportArtifact(
   summary: ExportSafetyDemoRunbookSummary | null | undefined
 ): ExportSafetyArtifactInput {
@@ -280,6 +304,59 @@ export function createDemoRunbookExportArtifact(
     notLegalAdviceBoundary:
       summary?.notLegalAdviceBoundary ?? "Not legal advice. Demo runbooks are audit preparation demo metadata only."
   };
+}
+
+function createAuditLogExportBlockers(auditLogExport: AuditLogExportRecord | null | undefined): string[] {
+  if (!auditLogExport || auditLogExport.exportAllowed) {
+    return [];
+  }
+
+  return [
+    `Audit Log Export boundary status is ${auditLogExport.dataBoundaryStatus}; remove blocked data before external handoff.`,
+    ...auditLogExport.boundaryFindings
+      .filter((finding) => finding.severity === "block")
+      .slice(0, 5)
+      .map((finding) => `${finding.field}: ${finding.message} (${finding.redactedSnippet})`)
+  ];
+}
+
+function createAuditLogExportWarnings(auditLogExport: AuditLogExportRecord | null | undefined): string[] {
+  if (!auditLogExport) {
+    return ["Run Secure Review Journey or refresh Server Audit Log Explorer before relying on audit-log handoff metadata."];
+  }
+
+  return [
+    auditLogExport.eventCount === 0 ? "Audit Log Export has no events; run Secure Review Journey before final handoff." : "",
+    auditLogExport.dataBoundaryStatus === "needs-review"
+      ? `Audit Log Export has ${auditLogExport.boundaryWarningCount} warning-level boundary finding${
+          auditLogExport.boundaryWarningCount === 1 ? "" : "s"
+        }; review redacted metadata before external handoff.`
+      : "",
+    ...auditLogExport.boundaryFindings
+      .filter((finding) => finding.severity === "warn")
+      .slice(0, 5)
+      .map((finding) => `${finding.field}: ${finding.message} (${finding.redactedSnippet})`)
+  ].filter(Boolean);
+}
+
+function createAuditLogExportRecoveryAction(auditLogExport: AuditLogExportRecord | null | undefined): string {
+  if (!auditLogExport) {
+    return "Run Secure Review Journey or refresh Server Audit Log Explorer to produce a metadata-only Audit Log Export.";
+  }
+
+  if (!auditLogExport.exportAllowed) {
+    return auditLogExport.remediation[0] ?? "Remove blocked Audit Log source fields before external handoff.";
+  }
+
+  if (auditLogExport.dataBoundaryStatus === "needs-review") {
+    return auditLogExport.remediation[0] ?? "Review warning-level Audit Log boundary findings before handoff.";
+  }
+
+  if (auditLogExport.eventCount === 0) {
+    return "Run Secure Review Journey before treating Audit Log Export as complete handoff evidence.";
+  }
+
+  return "Keep Audit Log Export JSON with the secure review handoff packet.";
 }
 
 function createModelGatewayEvaluationWarnings(

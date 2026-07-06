@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, RefreshCcw, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
 import { AuditLogClientError, fetchAuditLogRecords } from "../lib/auditLogClient";
 import {
   createAuditLogExport,
-  downloadAuditLogJson
+  downloadAuditLogJson,
+  type AuditLogExportRecord
 } from "../lib/auditLogExport";
 import type { AuditLogFilterInput } from "../lib/auditLogFilters";
 import {
@@ -37,6 +38,7 @@ type SecureReviewWorkspaceProps = {
   manifestHash?: string;
   onNavigate: (target: "wizard" | "ai" | "model" | "review" | "evidence" | "counsel") => void;
   onModelGatewayEvaluationChange?: (evaluation: ModelGatewayEvaluationRecord | null) => void;
+  onAuditLogExportChange?: (record: AuditLogExportRecord | null) => void;
 };
 
 type SecureJourneyErrorState = {
@@ -60,7 +62,8 @@ export function SecureReviewWorkspace({
   humanReviewOwner,
   manifestHash,
   onNavigate,
-  onModelGatewayEvaluationChange
+  onModelGatewayEvaluationChange,
+  onAuditLogExportChange
 }: SecureReviewWorkspaceProps) {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [journeyStatus, setJourneyStatus] = useState<"idle" | "running" | "complete" | "error">("idle");
@@ -75,6 +78,7 @@ export function SecureReviewWorkspace({
     setJourneyError(null);
     setJourneyResult(null);
     onModelGatewayEvaluationChange?.(null);
+    onAuditLogExportChange?.(null);
 
     try {
       const result = await runSecureReviewJourney({
@@ -87,11 +91,18 @@ export function SecureReviewWorkspace({
       });
       setJourneyResult(result);
       onModelGatewayEvaluationChange?.(createModelGatewayEvaluationRecord(result.modelGatewayRun));
+      onAuditLogExportChange?.(
+        createAuditLogExport({
+          workspaceId: result.workspace.id,
+          records: result.auditLogRecords
+        })
+      );
       setJourneyStatus("complete");
     } catch (error) {
       setJourneyStatus("error");
       setJourneyError(toSecureJourneyErrorState(error));
       onModelGatewayEvaluationChange?.(null);
+      onAuditLogExportChange?.(null);
     }
   };
 
@@ -184,7 +195,9 @@ export function SecureReviewWorkspace({
         {journeyError ? (
           <SecureJourneyError error={journeyError} onNavigate={onNavigate} />
         ) : null}
-        {journeyResult ? <SecureJourneyResult result={journeyResult} apiBaseUrl={apiBaseUrl} /> : null}
+        {journeyResult ? (
+          <SecureJourneyResult result={journeyResult} apiBaseUrl={apiBaseUrl} onAuditLogExportChange={onAuditLogExportChange} />
+        ) : null}
       </section>
     </section>
   );
@@ -228,7 +241,15 @@ function statusLabel(status: WorkflowStepProps["status"]): string {
   return "needs input";
 }
 
-function SecureJourneyResult({ result, apiBaseUrl }: { result: SecureReviewJourneyResult; apiBaseUrl: string }) {
+function SecureJourneyResult({
+  result,
+  apiBaseUrl,
+  onAuditLogExportChange
+}: {
+  result: SecureReviewJourneyResult;
+  apiBaseUrl: string;
+  onAuditLogExportChange?: SecureReviewWorkspaceProps["onAuditLogExportChange"];
+}) {
   const evaluation = createModelGatewayEvaluationRecord(result.modelGatewayRun);
 
   return (
@@ -245,6 +266,7 @@ function SecureJourneyResult({ result, apiBaseUrl }: { result: SecureReviewJourn
         apiBaseUrl={apiBaseUrl}
         workspaceId={result.workspace.id}
         initialRecords={result.auditLogRecords}
+        onAuditLogExportChange={onAuditLogExportChange}
       />
       <ModelGatewayRunLedgerPanel apiBaseUrl={apiBaseUrl} workspaceId={result.workspace.id} initialRun={result.modelGatewayRun} />
       <ModelGatewayEvaluationPanel evaluation={evaluation} />
@@ -257,23 +279,33 @@ type AuditLogExplorerStatus = "idle" | "syncing" | "synced" | "error";
 function AuditLogExplorerPanel({
   apiBaseUrl,
   workspaceId,
-  initialRecords
+  initialRecords,
+  onAuditLogExportChange
 }: {
   apiBaseUrl: string;
   workspaceId: string;
   initialRecords: AuditLogRecord[];
+  onAuditLogExportChange?: SecureReviewWorkspaceProps["onAuditLogExportChange"];
 }) {
   const [records, setRecords] = useState<AuditLogRecord[]>(initialRecords);
   const [filters, setFilters] = useState<AuditLogFilterInput>({});
   const [refreshStatus, setRefreshStatus] = useState<AuditLogExplorerStatus>("idle");
   const [refreshError, setRefreshError] = useState("");
   const [refreshRecoveryAction, setRefreshRecoveryAction] = useState("");
-  const exportRecord = createAuditLogExport({
-    workspaceId,
-    records
-  });
+  const exportRecord = useMemo(
+    () =>
+      createAuditLogExport({
+        workspaceId,
+        records
+      }),
+    [records, workspaceId]
+  );
   const latestAction = exportRecord.events.at(-1)?.action ?? "none";
   const visibleEvents = exportRecord.events.slice(-4).reverse();
+
+  useEffect(() => {
+    onAuditLogExportChange?.(exportRecord);
+  }, [exportRecord, onAuditLogExportChange]);
 
   useEffect(() => {
     setRecords(initialRecords);

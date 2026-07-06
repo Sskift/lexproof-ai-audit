@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { createAuditLogExport } from "./auditLogExport";
 import { createDataBoundaryReport } from "./dataBoundary";
 import {
+  createAuditLogExportArtifact,
   createExportSafetyInventory,
   createDemoRunbookExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
@@ -11,6 +13,7 @@ import {
 } from "./exportSafetyInventory";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
+import type { AuditLogRecord } from "./phase2Types";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
@@ -237,6 +240,96 @@ describe("createExportSafetyInventory", () => {
     expect(json).not.toMatch(/\braw model payload\b|\blegal approval\b/i);
   });
 
+  it("adds Audit Log Export as a metadata-only security artifact when boundary checks are clean", async () => {
+    const auditLogExport = createAuditLogExport({
+      workspaceId: "workspace-audit-log-export",
+      records: [
+        auditLogRecord({
+          id: "audit-log-export-clean",
+          action: "model.run.human-review-queued",
+          targetType: "model-run",
+          targetId: "model-gateway-run-clean",
+          summary: "Queued model run for human review with metadata-only hashes."
+        })
+      ],
+      exportedAt: "2026-07-01T01:00:00.000Z"
+    });
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-audit-log-export",
+      projectName: "Audit Log Export Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createAuditLogExportArtifact(auditLogExport)],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "audit-log-export");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Audit Log Export JSON",
+        category: "security",
+        exportMode: "metadata-only-json",
+        status: "ready",
+        required: false,
+        available: true,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Keep Audit Log Export JSON with the secure review handoff packet.",
+        notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([]);
+    expect(artifact?.blockers).toEqual([]);
+    expect(exportSafetyInventoryJson(inventory)).toContain("Audit Log Export JSON");
+  });
+
+  it("blocks Audit Log Export artifacts with unsafe source fields without leaking secrets", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const auditLogExport = createAuditLogExport({
+      workspaceId: "workspace-audit-log-blocked",
+      records: [
+        auditLogRecord({
+          actorId: `reviewer ${apiKey}`,
+          beforeHash: privateKey,
+          afterHash: apiKey,
+          summary: `Blocked ${apiKey}, private key ${privateKey}, and raw KYC packet before export.`
+        })
+      ],
+      exportedAt: "2026-07-01T01:00:00.000Z"
+    });
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-audit-log-blocked",
+      projectName: "Blocked Audit Log Export Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createAuditLogExportArtifact(auditLogExport)],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+    const artifact = inventory.artifacts.find((item) => item.id === "audit-log-export");
+    const json = exportSafetyInventoryJson(inventory);
+
+    expect(inventory.overallStatus).toBe("blocked");
+    expect(inventory.exportHandoffAllowed).toBe(false);
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        status: "blocked",
+        available: true,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction:
+          "Remove secrets, private-key material, and [redacted-raw-kyc] references from Audit Log source records before handoff."
+      })
+    );
+    expect(artifact?.blockers.join(" ")).toContain("Audit Log Export boundary status is blocked");
+    expect(json).toContain("[redacted-api-key]");
+    expect(json).toContain("[redacted-private-key]");
+    expect(json).toContain("[redacted-raw-kyc]");
+    expect(json).not.toContain(apiKey);
+    expect(json).not.toContain(privateKey);
+    expect(json).not.toContain("raw KYC packet");
+    expect(json).toContain("Not legal advice");
+  });
+
   it("adds Demo Runbook as a metadata-only required submission artifact with runbook hash", async () => {
     const inventory = await createExportSafetyInventory({
       workspaceId: "workspace-demo-runbook",
@@ -379,6 +472,24 @@ function safeEvidence(): EvidenceItem[] {
       owner: "Compliance"
     }
   ];
+}
+
+function auditLogRecord(overrides: Partial<AuditLogRecord> = {}): AuditLogRecord {
+  return {
+    recordVersion: "lexproof-audit-log-record-v1",
+    id: "audit-log-export-1",
+    workspaceId: "workspace-audit-log-export",
+    actorId: "Compliance",
+    action: "workspace.created",
+    targetType: "workspace",
+    targetId: "workspace-audit-log-export",
+    beforeHash: "",
+    afterHash: "a".repeat(64),
+    summary: "Created secure review workspace metadata.",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata.",
+    ...overrides
+  };
 }
 
 function evidenceVaultLineageDigest(): EvidenceVaultLineageDigest {

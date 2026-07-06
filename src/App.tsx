@@ -138,7 +138,9 @@ import {
 } from "./lib/grcDestinationPolicyClient";
 import { createGrcTicketExport, type GrcTicketExportBundle } from "./lib/grcTicketExport";
 import {
+  createIntegrationEnablementGate,
   createIntegrationEnablementDossier,
+  type IntegrationEnablementGate,
   type IntegrationEnablementDossier
 } from "./lib/integrationEnablementDossier";
 import {
@@ -397,6 +399,7 @@ export default function App() {
   const [manifestDriftReport, setManifestDriftReport] = useState<ManifestDriftReport | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
+  const [integrationEnablementGate, setIntegrationEnablementGate] = useState<IntegrationEnablementGate | null>(null);
   const [integrationPolicyEvaluationRecords, setIntegrationPolicyEvaluationRecords] = useState<IntegrationPolicyEvaluationRecord[]>([]);
   const [exportSafetyInventory, setExportSafetyInventory] = useState<ExportSafetyInventory | null>(null);
   const [judgeHandoffBundle, setJudgeHandoffBundle] = useState<JudgeHandoffBundle | null>(null);
@@ -900,11 +903,21 @@ export default function App() {
       chainAnchorPolicyReport: activeChainAnchorPolicyReport,
       grcDestinationPolicyReport: activeGrcDestinationPolicyReport,
       policyEvaluationRecords: activeIntegrationPolicyEvaluationRecords
-    }).then((dossier) => {
-      if (!cancelled) {
-        setIntegrationEnablementDossier(dossier);
-      }
-    });
+    })
+      .then(async (dossier) => {
+        const gate = await createIntegrationEnablementGate(dossier);
+
+        if (!cancelled) {
+          setIntegrationEnablementDossier(dossier);
+          setIntegrationEnablementGate(gate);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIntegrationEnablementDossier(null);
+          setIntegrationEnablementGate(null);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -2408,6 +2421,7 @@ export default function App() {
           <IntegrationReadinessPanel
             registry={integrationReadinessRegistry}
             enablementDossier={integrationEnablementDossier}
+            enablementGate={integrationEnablementGate}
             integrationPolicyEvaluationRecords={activeIntegrationPolicyEvaluationRecords}
             integrationPolicyEvaluationApiBaseUrl={integrationPolicyEvaluationApiBaseUrl}
             integrationPolicyEvaluationSyncStatus={integrationPolicyEvaluationSyncStatus}

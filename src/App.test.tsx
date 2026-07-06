@@ -1932,7 +1932,9 @@ describe("App", () => {
 
     expect(await registry.findByText(/Chain anchor blocked/i)).toBeInTheDocument();
     expect(registry.getByText(/No metadata-only evidence records are available for anchor review./i)).toBeInTheDocument();
-    expect(registry.getByText(/Add at least one metadata-only evidence item before chain anchor policy review./i)).toBeInTheDocument();
+    expect(
+      registry.getAllByText(/Add at least one metadata-only evidence item before chain anchor policy review./i).length
+    ).toBeGreaterThan(0);
     expect(
       registry.getAllByText(/Add metadata-only evidence in the Evidence Ledger before enabling this adapter./i).length
     ).toBeGreaterThan(0);
@@ -1941,7 +1943,7 @@ describe("App", () => {
     ).toBeGreaterThan(0);
   }, 15000);
 
-  it("downloads an Integration Enablement Dossier without enabling external adapters", async () => {
+  it("downloads Integration Enablement Dossier and Gate JSON without enabling external adapters", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
     const capturedBlobs: Blob[] = [];
@@ -1967,18 +1969,53 @@ describe("App", () => {
       expect(await registry.findByRole("heading", { name: /Integration Enablement Dossier/i })).toBeInTheDocument();
       expect(await registry.findByText(/External enablement remains disabled/i)).toBeInTheDocument();
       expect(registry.getByText(/Dossier hash/i)).toBeInTheDocument();
+      const gate = within(registry.getByRole("region", { name: /Integration Enablement Gate/i }));
+      expect(await gate.findByText(/Gate hash/i)).toBeInTheDocument();
+      expect(gate.getAllByText(/missing receipt/i).length).toBeGreaterThan(0);
+      expect(gate.getByText(/Download Enablement Gate JSON/i)).toBeInTheDocument();
       const receiptCoverage = within(registry.getByRole("region", { name: /Integration Policy Receipt Coverage/i }));
       expect(receiptCoverage.getByText(/0\/4 receipts/i)).toBeInTheDocument();
       expect(receiptCoverage.getAllByText(/missing server receipt/i).length).toBeGreaterThanOrEqual(4);
 
+      fireEvent.click(gate.getByRole("button", { name: /Download Enablement Gate JSON/i }));
       fireEvent.click(registry.getByRole("button", { name: /Download Enablement Dossier JSON/i }));
 
-      const payloadBlob = capturedBlobs[0];
+      const gatePayloadBlob = capturedBlobs[0];
+      expect(gatePayloadBlob).toBeInstanceOf(Blob);
+      if (!gatePayloadBlob) {
+        throw new Error("Integration Enablement Gate did not create a blob.");
+      }
+      const gatePayload = await readAppBlobText(gatePayloadBlob);
+      const parsedGate = JSON.parse(gatePayload);
+
+      expect(parsedGate).toEqual(
+        expect.objectContaining({
+          gateVersion: "lexproof-integration-enablement-gate-v1",
+          gateStatus: "blocked",
+          externalEnablementAllowed: false,
+          externalEnablementStatus: "blocked-by-policy",
+          missingReceiptCount: 4,
+          notLegalAdviceBoundary: "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."
+        })
+      );
+      expect(parsedGate.gateHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsedGate.queueItems).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "receipt-object-storage",
+            status: "missing-receipt",
+            externalCapabilityAllowed: false
+          })
+        ])
+      );
+      expect(gatePayload).not.toContain("sk-live-");
+
+      const payloadBlob = capturedBlobs[1];
       expect(payloadBlob).toBeInstanceOf(Blob);
       if (!payloadBlob) {
         throw new Error("Integration Enablement Dossier did not create a blob.");
       }
-      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      expect(createObjectUrl).toHaveBeenCalledTimes(2);
       const payload = await readAppBlobText(payloadBlob);
       const parsed = JSON.parse(payload);
 
@@ -2009,7 +2046,7 @@ describe("App", () => {
       expect(payload).toContain("Not legal advice");
       expect(payload).not.toContain("sk-live-");
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:integration-enablement-dossier");
-      expect(click).toHaveBeenCalledTimes(1);
+      expect(click).toHaveBeenCalledTimes(2);
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

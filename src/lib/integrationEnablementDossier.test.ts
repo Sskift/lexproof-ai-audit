@@ -3,7 +3,9 @@ import { createChainAnchorPolicyReport } from "./chainAnchorPolicy";
 import { createDocumentParserPolicyReport } from "./documentParserPolicy";
 import { createGrcDestinationPolicyReport } from "./grcDestinationPolicy";
 import {
+  createIntegrationEnablementGate,
   createIntegrationEnablementDossier,
+  exportIntegrationEnablementGateJson,
   exportIntegrationEnablementDossierJson,
   type CreateIntegrationEnablementDossierInput
 } from "./integrationEnablementDossier";
@@ -86,6 +88,129 @@ describe("createIntegrationEnablementDossier", () => {
         })
       ])
     );
+  });
+
+  it("creates a stable Integration Enablement Gate recovery queue from dossier gaps", async () => {
+    const dossier = await createIntegrationEnablementDossier(createInput({ readyPolicyControls: true }));
+    const first = await createIntegrationEnablementGate(dossier, "2026-07-01T01:00:00.000Z");
+    const second = await createIntegrationEnablementGate(dossier, "2026-07-01T02:00:00.000Z");
+    const json = exportIntegrationEnablementGateJson(first);
+
+    expect(first.gateHash).toBe(second.gateHash);
+    expect(first.gateHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(first).toEqual(
+      expect.objectContaining({
+        gateVersion: "lexproof-integration-enablement-gate-v1",
+        dossierHash: dossier.dossierHash,
+        gateStatus: "needs-policy",
+        externalEnablementAllowed: false,
+        externalEnablementStatus: "needs-policy-review",
+        queueItemCount: 7,
+        missingReceiptCount: 4,
+        needsPolicyCount: 3,
+        coveredReceiptCount: 0,
+        notLegalAdviceBoundary: "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."
+      })
+    );
+    expect(first.queueItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "receipt-object-storage",
+          label: "Object Storage Policy",
+          source: "server-receipt",
+          status: "missing-receipt",
+          priority: "P1",
+          externalCapabilityAllowed: false,
+          recoveryAction: "Evaluate Object Storage Policy against the Phase 2 API or refresh policy receipts before adapter enablement review."
+        })
+      ])
+    );
+    expect(first.nextAction).toContain("keep disabled until policy review");
+    expect(json).toContain("Integration enablement gates are audit preparation workflow metadata only");
+    expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key|sk-live-/i);
+  });
+
+  it("keeps external adapters disabled after all policy receipts are ready", async () => {
+    const input = createInput({ readyPolicyControls: true });
+    const records = await Promise.all([
+      createIntegrationPolicyEvaluationRecord({
+        workspaceId: "integration-enable",
+        policyId: "object-storage",
+        report: input.objectStoragePolicyReport,
+        context: { workspaceId: "integration-enable" },
+        policy: { retentionDays: 365 },
+        createdAt: "2026-07-03T08:00:00.000Z"
+      }),
+      createIntegrationPolicyEvaluationRecord({
+        workspaceId: "integration-enable",
+        policyId: "document-parser",
+        report: input.documentParserPolicyReport,
+        context: { workspaceId: "integration-enable" },
+        policy: { rawDocumentRetentionDays: 7 },
+        createdAt: "2026-07-03T08:01:00.000Z"
+      }),
+      createIntegrationPolicyEvaluationRecord({
+        workspaceId: "integration-enable",
+        policyId: "chain-anchor",
+        report: input.chainAnchorPolicyReport,
+        context: { workspaceId: "integration-enable" },
+        policy: { targetNetwork: "testnet-disabled" },
+        createdAt: "2026-07-03T08:02:00.000Z"
+      }),
+      createIntegrationPolicyEvaluationRecord({
+        workspaceId: "integration-enable",
+        policyId: "grc-destination",
+        report: input.grcDestinationPolicyReport,
+        context: { workspaceId: "integration-enable" },
+        policy: { destinationSystem: "Jira placeholder" },
+        createdAt: "2026-07-03T08:03:00.000Z"
+      })
+    ]);
+    const dossier = await createIntegrationEnablementDossier({
+      ...input,
+      policyEvaluationRecords: records
+    });
+    const readyForReviewDossier = {
+      ...dossier,
+      overallStatus: "ready" as const,
+      externalEnablementStatus: "disabled-by-default" as const,
+      adapters: dossier.adapters.map((adapter) => ({
+        ...adapter,
+        status: "ready" as const,
+        blockerCount: 0,
+        blockers: [],
+        disabledReason: undefined
+      })),
+      policyReports: dossier.policyReports.map((report) => ({
+        ...report,
+        status: "ready" as const,
+        approvedControlCount: report.requiredControlCount,
+        blockedControlCount: 0,
+        nextActions: []
+      }))
+    };
+    const gate = await createIntegrationEnablementGate(readyForReviewDossier);
+
+    expect(gate).toEqual(
+      expect.objectContaining({
+        gateStatus: "ready",
+        externalEnablementAllowed: false,
+        externalEnablementStatus: "disabled-by-default",
+        queueItemCount: 1,
+        blockerCount: 0,
+        needsPolicyCount: 0,
+        missingReceiptCount: 0,
+        coveredReceiptCount: 4
+      })
+    );
+    expect(gate.queueItems).toEqual([
+      expect.objectContaining({
+        id: "external-adapter-enable-review",
+        source: "external-disable",
+        status: "disabled",
+        recoveryAction: expect.stringContaining("Keep all external adapters disabled")
+      })
+    ]);
   });
 
   it("exports metadata-only JSON without leaking unsafe adapter metadata", async () => {

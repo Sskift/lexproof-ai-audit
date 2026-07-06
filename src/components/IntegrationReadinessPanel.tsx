@@ -17,8 +17,10 @@ import type {
   IntegrationReadinessRegistry
 } from "../lib/integrationReadiness";
 import {
+  downloadIntegrationEnablementGateJson,
   downloadIntegrationEnablementDossierJson,
   type IntegrationEnablementDossier,
+  type IntegrationEnablementGate,
   type IntegrationEnablementPolicyReceiptCoverage,
   type IntegrationPolicyReceiptCoverageStatus
 } from "../lib/integrationEnablementDossier";
@@ -61,6 +63,7 @@ import type { IntegrationPolicyEvaluationRecord } from "../lib/integrationPolicy
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
   enablementDossier: IntegrationEnablementDossier | null;
+  enablementGate: IntegrationEnablementGate | null;
   integrationPolicyEvaluationRecords: IntegrationPolicyEvaluationRecord[];
   integrationPolicyEvaluationApiBaseUrl: string;
   integrationPolicyEvaluationSyncStatus: "idle" | "syncing" | "synced" | "error";
@@ -144,6 +147,7 @@ const categoryIcons: Record<IntegrationAdapterCategory, typeof PlugZap> = {
 export function IntegrationReadinessPanel({
   registry,
   enablementDossier,
+  enablementGate,
   integrationPolicyEvaluationRecords,
   integrationPolicyEvaluationApiBaseUrl,
   integrationPolicyEvaluationSyncStatus,
@@ -234,7 +238,7 @@ export function IntegrationReadinessPanel({
           <IntegrationAdapterCard key={adapter.id} adapter={adapter} onNavigate={onNavigate} />
         ))}
       </div>
-      <IntegrationEnablementDossierPanel dossier={enablementDossier} />
+      <IntegrationEnablementDossierPanel dossier={enablementDossier} gate={enablementGate} />
       <IntegrationPolicyEvaluationReceiptsPanel
         records={integrationPolicyEvaluationRecords}
         apiBaseUrl={integrationPolicyEvaluationApiBaseUrl}
@@ -326,7 +330,13 @@ export function IntegrationReadinessPanel({
   );
 }
 
-function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEnablementDossier | null }) {
+function IntegrationEnablementDossierPanel({
+  dossier,
+  gate
+}: {
+  dossier: IntegrationEnablementDossier | null;
+  gate: IntegrationEnablementGate | null;
+}) {
   return (
     <section className={`integration-enablement-dossier ${dossier?.overallStatus ?? "disabled"}`} aria-label="Integration Enablement Dossier">
       <div className="split-title compact-title">
@@ -357,6 +367,7 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
         <ProviderPolicyFact label="Missing receipts" value={dossier ? String(dossier.policyReceiptMissingCount) : "0"} />
         <ProviderPolicyFact label="Blocked" value={dossier ? String(dossier.blockedCount + dossier.blockerCount) : "0"} />
       </div>
+      <IntegrationEnablementGatePanel gate={gate} />
       <div className="integration-dossier-policy-list">
         {(dossier?.policyReports ?? []).map((report) => (
           <article key={report.id} className={`provider-control ${report.status}`}>
@@ -386,6 +397,59 @@ function IntegrationEnablementDossierPanel({ dossier }: { dossier: IntegrationEn
         >
           <Download size={16} aria-hidden="true" />
           Download Enablement Dossier JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function IntegrationEnablementGatePanel({ gate }: { gate: IntegrationEnablementGate | null }) {
+  const visibleItems = gate?.queueItems.slice(0, 6) ?? [];
+
+  return (
+    <section className={`integration-enablement-gate ${gate?.gateStatus ?? "disabled"}`} aria-label="Integration Enablement Gate">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldCheck size={16} aria-hidden="true" />
+          <h5>Integration Enablement Gate</h5>
+        </div>
+        <span className={`workflow-status ${gate?.gateStatus ?? "disabled"}`}>
+          {gate ? statusLabel(gate.gateStatus) : "calculating"}
+        </span>
+      </div>
+      <p className="section-note">
+        {gate?.notLegalAdviceBoundary ?? "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."}
+      </p>
+      <div className="provider-policy-summary secret-policy-summary">
+        <ProviderPolicyFact label="Gate hash" value={gate ? `${gate.gateHash.slice(0, 12)}...` : "Calculating"} />
+        <ProviderPolicyFact label="Queue items" value={gate ? String(gate.queueItemCount) : "0"} />
+        <ProviderPolicyFact label="Blockers" value={gate ? String(gate.blockerCount) : "0"} />
+        <ProviderPolicyFact label="Missing receipts" value={gate ? String(gate.missingReceiptCount) : "0"} />
+        <ProviderPolicyFact label="External enablement" value={gate?.externalEnablementAllowed ? "Enabled" : "Disabled"} />
+      </div>
+      <div className="integration-enablement-gate-list">
+        {visibleItems.map((item) => (
+          <article key={item.id} className={`provider-control ${gateItemClass(item.status)}`}>
+            <header>
+              <span>{gateItemLabel(item.status)}</span>
+              <strong>{item.label}</strong>
+            </header>
+            <p>{item.blocker}</p>
+            <small>{item.recoveryAction}</small>
+            {item.referenceHash ? <small>reference {item.referenceHash.slice(0, 12)}...</small> : null}
+          </article>
+        ))}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>{gate?.nextAction ?? "Wait for integration enablement gate calculation."}</span>
+        <button
+          type="button"
+          className="secondary"
+          disabled={!gate}
+          onClick={() => gate && downloadIntegrationEnablementGateJson("integration-enablement-gate.json", gate)}
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Enablement Gate JSON
         </button>
       </div>
     </section>
@@ -1657,6 +1721,34 @@ function receiptCoverageClass(status: IntegrationPolicyReceiptCoverageStatus): I
   }
 
   return status;
+}
+
+function gateItemLabel(status: IntegrationEnablementGate["queueItems"][number]["status"]): string {
+  if (status === "missing-receipt") {
+    return "missing receipt";
+  }
+
+  if (status === "needs-policy") {
+    return "needs policy";
+  }
+
+  if (status === "disabled") {
+    return "disabled";
+  }
+
+  return "blocked";
+}
+
+function gateItemClass(status: IntegrationEnablementGate["queueItems"][number]["status"]): IntegrationReadinessRegistry["overallStatus"] {
+  if (status === "missing-receipt" || status === "needs-policy") {
+    return "needs-policy";
+  }
+
+  if (status === "disabled") {
+    return "disabled";
+  }
+
+  return "blocked";
 }
 
 function policyLabel(policyId: IntegrationPolicyEvaluationRecord["policyId"]): string {

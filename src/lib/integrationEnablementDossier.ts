@@ -115,6 +115,41 @@ export type IntegrationEnablementDossier = {
   notLegalAdviceBoundary: "Not legal advice. Integration enablement dossiers are audit preparation metadata only.";
 };
 
+export type IntegrationEnablementGateItemStatus = "blocked" | "needs-policy" | "missing-receipt" | "disabled";
+export type IntegrationEnablementGateItemPriority = "P0" | "P1" | "P2";
+
+export type IntegrationEnablementGateItem = {
+  id: string;
+  label: string;
+  source: "adapter" | "policy-report" | "server-receipt" | "external-disable";
+  status: IntegrationEnablementGateItemStatus;
+  priority: IntegrationEnablementGateItemPriority;
+  blocker: string;
+  recoveryAction: string;
+  externalCapabilityAllowed: false;
+  externalCapabilityStatus: string;
+  referenceHash: string | null;
+  notLegalAdviceBoundary: string;
+};
+
+export type IntegrationEnablementGate = {
+  gateVersion: "lexproof-integration-enablement-gate-v1";
+  generatedAt: string;
+  gateHash: string;
+  dossierHash: string;
+  gateStatus: IntegrationAdapterStatus;
+  externalEnablementAllowed: false;
+  externalEnablementStatus: IntegrationEnablementDossier["externalEnablementStatus"];
+  queueItemCount: number;
+  blockerCount: number;
+  needsPolicyCount: number;
+  missingReceiptCount: number;
+  coveredReceiptCount: number;
+  queueItems: IntegrationEnablementGateItem[];
+  nextAction: string;
+  notLegalAdviceBoundary: "Not legal advice. Integration enablement gates are audit preparation workflow metadata only.";
+};
+
 export type CreateIntegrationEnablementDossierInput = {
   registry: IntegrationReadinessRegistry;
   providerPolicyReport: ModelGatewayProviderPolicyReport;
@@ -129,6 +164,7 @@ export type CreateIntegrationEnablementDossierInput = {
 
 const NOT_LEGAL_ADVICE =
   "Not legal advice. Integration enablement dossiers are audit preparation metadata only." as const;
+const GATE_BOUNDARY = "Not legal advice. Integration enablement gates are audit preparation workflow metadata only." as const;
 const DEFAULT_NEXT_ACTION =
   "Keep all external adapters disabled until adapter enablement review, secret handling, retention, audit logging, and human review controls are approved.";
 const RECEIPT_BOUNDARY = "Not legal advice. Integration policy receipt coverage is audit preparation metadata only.";
@@ -273,6 +309,67 @@ export async function createIntegrationEnablementDossier({
   };
 }
 
+export async function createIntegrationEnablementGate(
+  dossier: IntegrationEnablementDossier,
+  generatedAt = new Date().toISOString()
+): Promise<IntegrationEnablementGate> {
+  const queueItems = [
+    ...dossier.adapters.flatMap(createAdapterGateItems),
+    ...dossier.policyReports.flatMap(createPolicyReportGateItems),
+    ...dossier.policyReceiptCoverage.flatMap(createPolicyReceiptGateItems)
+  ].sort(compareGateItems);
+
+  const fallbackQueueItem: IntegrationEnablementGateItem = {
+    id: "external-adapter-enable-review",
+    label: "External Adapter Enablement Review",
+    source: "external-disable",
+    status: "disabled",
+    priority: "P2",
+    blocker: "External adapter enablement remains disabled by default.",
+    recoveryAction: DEFAULT_NEXT_ACTION,
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: dossier.externalEnablementStatus,
+    referenceHash: dossier.dossierHash,
+    notLegalAdviceBoundary: GATE_BOUNDARY
+  };
+  const finalQueueItems = queueItems.length > 0 ? queueItems : [fallbackQueueItem];
+  const blockerCount = finalQueueItems.filter((item) => item.status === "blocked").length;
+  const needsPolicyCount = finalQueueItems.filter((item) => item.status === "needs-policy").length;
+  const missingReceiptCount = finalQueueItems.filter((item) => item.status === "missing-receipt").length;
+  const gateStatus = createGateStatus(blockerCount, needsPolicyCount + missingReceiptCount, dossier);
+  const hashPayload = {
+    gateVersion: "lexproof-integration-enablement-gate-v1",
+    dossierHash: dossier.dossierHash,
+    gateStatus,
+    externalEnablementAllowed: false,
+    externalEnablementStatus: dossier.externalEnablementStatus,
+    queueItems: finalQueueItems,
+    blockerCount,
+    needsPolicyCount,
+    missingReceiptCount,
+    coveredReceiptCount: dossier.policyReceiptCoveredCount,
+    notLegalAdviceBoundary: GATE_BOUNDARY
+  };
+
+  return {
+    gateVersion: "lexproof-integration-enablement-gate-v1",
+    generatedAt,
+    gateHash: await sha256Hex(stableStringify(hashPayload)),
+    dossierHash: dossier.dossierHash,
+    gateStatus,
+    externalEnablementAllowed: false,
+    externalEnablementStatus: dossier.externalEnablementStatus,
+    queueItemCount: finalQueueItems.length,
+    blockerCount,
+    needsPolicyCount,
+    missingReceiptCount,
+    coveredReceiptCount: dossier.policyReceiptCoveredCount,
+    queueItems: finalQueueItems,
+    nextAction: finalQueueItems[0]?.recoveryAction ?? DEFAULT_NEXT_ACTION,
+    notLegalAdviceBoundary: GATE_BOUNDARY
+  };
+}
+
 function summarizePolicyEvaluationRecord(record: IntegrationPolicyEvaluationRecord): IntegrationEnablementPolicyEvaluationSummary {
   return {
     id: sanitize(record.id),
@@ -369,8 +466,25 @@ export function exportIntegrationEnablementDossierJson(dossier: IntegrationEnabl
   return `${JSON.stringify(dossier, null, 2)}\n`;
 }
 
+export function exportIntegrationEnablementGateJson(gate: IntegrationEnablementGate): string {
+  return `${JSON.stringify(gate, null, 2)}\n`;
+}
+
 export function downloadIntegrationEnablementDossierJson(filename: string, dossier: IntegrationEnablementDossier): void {
   const blob = new Blob([exportIntegrationEnablementDossierJson(dossier)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function downloadIntegrationEnablementGateJson(filename: string, gate: IntegrationEnablementGate): void {
+  const blob = new Blob([exportIntegrationEnablementGateJson(gate)], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -507,6 +621,120 @@ function createExternalEnablementStatus(
   }
 
   return "disabled-by-default";
+}
+
+function createAdapterGateItems(adapter: IntegrationEnablementAdapterSummary): IntegrationEnablementGateItem[] {
+  if (adapter.status !== "blocked" && adapter.status !== "needs-policy") {
+    return [];
+  }
+
+  return [
+    {
+      id: `adapter-${adapter.id}`,
+      label: adapter.label,
+      source: "adapter",
+      status: adapter.status,
+      priority: adapter.status === "blocked" ? "P0" : "P1",
+      blocker: adapter.blockers[0] ?? adapter.requiredPolicy,
+      recoveryAction: adapter.recoveryAction,
+      externalCapabilityAllowed: false,
+      externalCapabilityStatus: adapter.disabledReason ?? adapter.status,
+      referenceHash: null,
+      notLegalAdviceBoundary: adapter.notLegalAdviceBoundary
+    }
+  ];
+}
+
+function createPolicyReportGateItems(report: IntegrationEnablementPolicyReportSummary): IntegrationEnablementGateItem[] {
+  if (report.status !== "blocked" && report.status !== "needs-policy") {
+    return [];
+  }
+
+  return [
+    {
+      id: `policy-${report.id}`,
+      label: report.label,
+      source: "policy-report",
+      status: report.status,
+      priority: report.status === "blocked" ? "P0" : "P1",
+      blocker: `${report.approvedControlCount}/${report.requiredControlCount} controls ready for ${report.externalCapability}.`,
+      recoveryAction: report.nextActions[0] ?? `Resolve ${report.label} before adapter enablement review.`,
+      externalCapabilityAllowed: false,
+      externalCapabilityStatus: report.externalCapabilityStatus,
+      referenceHash: null,
+      notLegalAdviceBoundary: report.notLegalAdviceBoundary
+    }
+  ];
+}
+
+function createPolicyReceiptGateItems(coverage: IntegrationEnablementPolicyReceiptCoverage): IntegrationEnablementGateItem[] {
+  if (coverage.coverageStatus === "covered") {
+    return [];
+  }
+
+  const status: IntegrationEnablementGateItemStatus =
+    coverage.coverageStatus === "missing" ? "missing-receipt" : coverage.coverageStatus;
+
+  return [
+    {
+      id: `receipt-${coverage.policyId}`,
+      label: coverage.label,
+      source: "server-receipt",
+      status,
+      priority: status === "blocked" ? "P0" : "P1",
+      blocker:
+        status === "missing-receipt"
+          ? `${coverage.label} is missing a server policy receipt.`
+          : `${coverage.label} server policy receipt is ${coverage.coverageStatus}.`,
+      recoveryAction: coverage.recoveryAction,
+      externalCapabilityAllowed: false,
+      externalCapabilityStatus: coverage.externalCapabilityStatus,
+      referenceHash: coverage.reportHash,
+      notLegalAdviceBoundary: coverage.notLegalAdviceBoundary
+    }
+  ];
+}
+
+function createGateStatus(
+  blockerCount: number,
+  policyOrReceiptGapCount: number,
+  dossier: IntegrationEnablementDossier
+): IntegrationAdapterStatus {
+  if (blockerCount > 0) {
+    return "blocked";
+  }
+
+  if (policyOrReceiptGapCount > 0) {
+    return "needs-policy";
+  }
+
+  if (dossier.policyReceiptCoverageCount > 0 && dossier.policyReceiptCoveredCount === dossier.policyReceiptCoverageCount) {
+    return "ready";
+  }
+
+  return "disabled";
+}
+
+function compareGateItems(left: IntegrationEnablementGateItem, right: IntegrationEnablementGateItem): number {
+  const priority = priorityWeight(left.priority) - priorityWeight(right.priority);
+
+  if (priority !== 0) {
+    return priority;
+  }
+
+  return left.label.localeCompare(right.label);
+}
+
+function priorityWeight(priority: IntegrationEnablementGateItemPriority): number {
+  if (priority === "P0") {
+    return 0;
+  }
+
+  if (priority === "P1") {
+    return 1;
+  }
+
+  return 2;
 }
 
 function normalizeStatus(value: string): IntegrationAdapterStatus {

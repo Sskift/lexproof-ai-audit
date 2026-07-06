@@ -1,5 +1,5 @@
-import { Clock3, PackageCheck, PlayCircle, Route } from "lucide-react";
-import type { DemoScenario } from "../lib/demoScenarioLibrary";
+import { Clock3, PackageCheck, PlayCircle, Route, ShieldCheck } from "lucide-react";
+import { createDemoScenarioProofSummary, type DemoScenario } from "../lib/demoScenarioLibrary";
 
 type DemoScenarioLibraryProps = {
   scenarios: DemoScenario[];
@@ -26,6 +26,7 @@ export function DemoScenarioLibrary({ scenarios, activeProjectName, onStartScena
       <div className="demo-scenario-list">
         {scenarios.map((scenario) => {
           const isActive = scenario.projectName === activeProjectName;
+          const proof = createDemoScenarioProofSummary(scenario);
 
           return (
             <article className={`demo-scenario-card${isActive ? " active" : ""}`} key={scenario.id}>
@@ -54,6 +55,19 @@ export function DemoScenarioLibrary({ scenarios, activeProjectName, onStartScena
               <div className="demo-scenario-meta">
                 <PackageCheck size={14} aria-hidden="true" />
                 <span>{scenario.expectedArtifacts.join(", ")}</span>
+              </div>
+
+              <div className="demo-scenario-proof" aria-label={`${scenario.title} proof signals`}>
+                <div>
+                  <ShieldCheck size={14} aria-hidden="true" />
+                  <span>{proof.label}</span>
+                </div>
+                <p>{proof.notLegalAdviceBoundary}</p>
+                <div className="demo-scenario-proof-tags">
+                  {proof.sourceControlSignals.slice(0, 6).map((signal) => (
+                    <span key={signal}>{signal}</span>
+                  ))}
+                </div>
               </div>
 
               <button type="button" onClick={() => onStartScenario(scenario.id)} aria-pressed={isActive}>

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { demoScenarios } from "../data/demoScenarios";
 import { sampleProfiles } from "../data/sampleProfiles";
 import {
+  createDemoScenarioProofSummary,
   findDemoScenarioById,
   summarizeDemoScenario,
   validateDemoScenarioLibrary,
@@ -53,6 +54,19 @@ describe("validateDemoScenarioLibrary", () => {
         "unsafe-demo includes blocked demo text: private key."
       ])
     );
+  });
+
+  it("blocks scenario cards that do not expose source or control proof signals", () => {
+    const invalid: DemoScenario = {
+      ...scenario,
+      id: "weak-proof-demo",
+      focusTags: ["Workshop", "Checklist", "Demo"]
+    };
+
+    const result = validateDemoScenarioLibrary([invalid], sampleProfiles);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("weak-proof-demo needs at least one source/control proof signal.");
   });
 
   it("keeps a seeded AI legal workflow path for model governance and counsel handoff demos", () => {
@@ -669,12 +683,30 @@ describe("findDemoScenarioById", () => {
   });
 });
 
+describe("createDemoScenarioProofSummary", () => {
+  it("summarizes workflow, artifact, and source-control proof signals without legal-advice language", () => {
+    const proof = createDemoScenarioProofSummary(scenario);
+
+    expect(proof).toEqual({
+      scenarioId: "yieldpassport-judge-path",
+      workflowStepCount: 5,
+      expectedArtifactCount: 3,
+      sourceControlSignalCount: 2,
+      sourceControlSignals: ["RWA", "AI governance"],
+      label: "5 steps / 3 artifacts / 2 source-control signals",
+      notLegalAdviceBoundary: "Not legal advice. Demo scenario proof signals are audit preparation readiness metadata only."
+    });
+    expect(JSON.stringify(proof)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|legal opinion|final legal decision/i);
+  });
+});
+
 describe("summarizeDemoScenario", () => {
   it("creates a concise non-advice UI summary", () => {
     const summary = summarizeDemoScenario(scenario);
 
     expect(summary).toContain("High-risk RWA launch");
     expect(summary).toContain("8 min");
+    expect(summary).toContain("5 steps / 3 artifacts / 2 source-control signals");
     expect(summary).toContain("Evidence Manifest, GRC Ticket Export, Counsel Pack Markdown");
     expect(summary).toContain("Not legal advice");
   });

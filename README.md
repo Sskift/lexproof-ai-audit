@@ -95,9 +95,11 @@ Key evidence:
 
 ## Product Screenshots
 
-The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts and Not legal advice boundaries, including RWA launch with NYDFS BitLicense/custody review, DAO review, public-source review, AI legal workflow review, Brazil VASP source review, Swiss FINMA stablecoin review, US GENIUS Act stablecoin review, EU MiCA ART/EMT stablecoin review, UK qualifying stablecoin issuer review, Singapore DPT custody / MAS PSN02 AML-CFT review, Hong Kong VATP custody review, Hong Kong HKMA stablecoin issuer review, Japan crypto custody review, Canada CTP custody review, Australia digital asset review, Korea VASP user protection review, India VDA PMLA review, Thailand digital asset custody review, Indonesia OJK crypto trading review, Malaysia digital asset exchange review, Philippines VASP custody review, South Africa CASP Travel Rule review, UK cryptoasset AML review, Germany MiCAR custody review, and marketing claims review paths.
+The Demo Scenario Library turns seeded synthetic profiles into runnable judging paths with expected artifacts, source-control proof signals, and Not legal advice boundaries, including RWA launch with NYDFS BitLicense/custody review, DAO review, public-source review, AI legal workflow review, Brazil VASP source review, Swiss FINMA stablecoin review, US GENIUS Act stablecoin review, EU MiCA ART/EMT stablecoin review, UK qualifying stablecoin issuer review, Singapore DPT custody / MAS PSN02 AML-CFT review, Hong Kong VATP custody review, Hong Kong HKMA stablecoin issuer review, Japan crypto custody review, Canada CTP custody review, Australia digital asset review, Korea VASP user protection review, India VDA PMLA review, Thailand digital asset custody review, Indonesia OJK crypto trading review, Malaysia digital asset exchange review, Philippines VASP custody review, South Africa CASP Travel Rule review, UK cryptoasset AML review, Germany MiCAR custody review, and marketing claims review paths.
 
 ![Demo Scenario Library](docs/assets/screenshots/demo-scenario-library-ai-workflow.png)
+
+![Demo Scenario proof signals](docs/assets/screenshots/demo-scenario-proof-signals.jpg)
 
 ![Demo Scenario Library Brazil VASP path](docs/assets/screenshots/demo-scenario-library-brazil-vasp.png)
 

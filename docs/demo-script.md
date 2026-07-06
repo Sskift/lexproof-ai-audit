@@ -62,7 +62,9 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Optional marketing path: click **Start Marketing claims review** to load `SignalBridge Marketing Review`, open Counsel Pack, confirm the **Marketing Claims Review** template, and review US FTC / EU MiCA / UK FCA / UAE VARA 2024 promotion, marketing-communication, risk-warning, KOL/incentive, and recordkeeping source gaps.
    - On the marketing path, show the first-screen **Workspace Action Queue** item **Recertify stale evidence** for the stale source-linked `Claims inventory` record, then click it to route into Evidence Ledger. Not legal advice.
    - Show expected artifacts: Evidence Manifest, GRC Ticket Export, and Counsel Pack Markdown.
+   - Show the scenario proof strip for workflow step count, expected artifact count, source-control signals, and the Not legal advice proof-signal boundary.
    - Confirm the scenario boundary: Not legal advice. Demo scenarios are synthetic audit preparation paths only.
+   - Proof strip screenshot: `docs/assets/screenshots/demo-scenario-proof-signals.jpg`.
    - Screenshot: `docs/assets/screenshots/demo-scenario-library-ai-workflow.png`.
    - DAO source screenshot: `docs/assets/screenshots/dao-governance-source-graph.png`.
    - Brazil path screenshot: `docs/assets/screenshots/demo-scenario-library-brazil-vasp.png`.

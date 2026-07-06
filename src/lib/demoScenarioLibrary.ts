@@ -29,7 +29,18 @@ export type DemoScenarioValidationResult = {
   errors: string[];
 };
 
+export type DemoScenarioProofSummary = {
+  scenarioId: string;
+  workflowStepCount: number;
+  expectedArtifactCount: number;
+  sourceControlSignalCount: number;
+  sourceControlSignals: string[];
+  label: string;
+  notLegalAdviceBoundary: "Not legal advice. Demo scenario proof signals are audit preparation readiness metadata only.";
+};
+
 const REQUIRED_BOUNDARY = "Not legal advice";
+const PROOF_SIGNAL_BOUNDARY = "Not legal advice. Demo scenario proof signals are audit preparation readiness metadata only." as const;
 
 const blockedDemoText: Array<{ label: string; pattern: RegExp }> = [
   { label: "raw KYC", pattern: /\braw\s+kyc\b/i },
@@ -37,6 +48,8 @@ const blockedDemoText: Array<{ label: string; pattern: RegExp }> = [
   { label: "seed phrase", pattern: /\bseed\s+phrase\b/i },
   { label: "live API key", pattern: /\bsk-(live|proj|test)-[a-z0-9_-]{8,}\b/i }
 ];
+const sourceControlSignalPattern =
+  /\b(source|control|regulation|review|governance|counsel|export|regulator|aba|nist|aedt|ccpa|colorado|ai act|ico|sec|cftc|nydfs|fincen|ofac|genius|mica|dora|tfr|dlt|fca|boe|mas|sfc|hkma|fsa|csa|asic|austrac|ojk|fsc|kofiu|fiu|pmla|bnm|bsp|fsca|fic|vara|bafin|finma|aml|cft|travel rule|custody|stablecoin|vasp|casp|dao|rwa|consumer protection)\b/i;
 
 export function validateDemoScenarioLibrary(
   scenarios: DemoScenario[],
@@ -70,6 +83,10 @@ export function validateDemoScenarioLibrary(
       errors.push(`${scenario.id} needs at least one expected artifact.`);
     }
 
+    if (createDemoScenarioProofSummary(scenario).sourceControlSignalCount === 0) {
+      errors.push(`${scenario.id} needs at least one source/control proof signal.`);
+    }
+
     for (const blocked of blockedDemoText) {
       if (blocked.pattern.test(scenarioText(scenario))) {
         errors.push(`${scenario.id} includes blocked demo text: ${blocked.label}.`);
@@ -88,7 +105,25 @@ export function findDemoScenarioById(scenarios: DemoScenario[], id: string): Dem
 }
 
 export function summarizeDemoScenario(scenario: DemoScenario): string {
-  return `${scenario.title} | ${scenario.estimatedMinutes} min | ${scenario.expectedArtifacts.join(", ")} | ${scenario.notLegalAdviceBoundary}`;
+  const proof = createDemoScenarioProofSummary(scenario);
+  return `${scenario.title} | ${scenario.estimatedMinutes} min | ${proof.label} | ${scenario.expectedArtifacts.join(", ")} | ${scenario.notLegalAdviceBoundary}`;
+}
+
+export function createDemoScenarioProofSummary(scenario: DemoScenario): DemoScenarioProofSummary {
+  const sourceControlSignals = scenario.focusTags.filter((tag) => sourceControlSignalPattern.test(tag.trim()));
+  const workflowStepCount = scenario.judgePath.length;
+  const expectedArtifactCount = scenario.expectedArtifacts.length;
+  const sourceControlSignalCount = sourceControlSignals.length;
+
+  return {
+    scenarioId: scenario.id,
+    workflowStepCount,
+    expectedArtifactCount,
+    sourceControlSignalCount,
+    sourceControlSignals,
+    label: `${workflowStepCount} steps / ${expectedArtifactCount} artifacts / ${sourceControlSignalCount} source-control signals`,
+    notLegalAdviceBoundary: PROOF_SIGNAL_BOUNDARY
+  };
 }
 
 function scenarioText(scenario: DemoScenario): string {

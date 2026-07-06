@@ -1014,6 +1014,14 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Demo scenarios are synthetic audit preparation paths only./i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /High-risk RWA launch/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /AI legal workflow review/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/High-risk RWA launch proof signals/i)).toHaveTextContent(
+      /10 steps \/ 3 artifacts \/ 7 source-control signals/i
+    );
+    expect(screen.getByLabelText(/High-risk RWA launch proof signals/i)).toHaveTextContent(
+      /Not legal advice. Demo scenario proof signals are audit preparation readiness metadata only./i
+    );
+    expect(screen.getByLabelText(/High-risk RWA launch proof signals/i)).toHaveTextContent(/NYDFS BitLicense/i);
+    expect(screen.getByLabelText(/AI legal workflow review proof signals/i)).toHaveTextContent(/source-control signals/i);
     expect(screen.getAllByText(/GRC Ticket Export/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Start High-risk RWA launch/i }));

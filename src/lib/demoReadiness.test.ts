@@ -12,6 +12,7 @@ import {
   createDemoScreenshotInventory,
   createDemoReadinessReport,
   createDemoSmokeChecklist,
+  createDemoSmokeChecklistSummary,
   demoReadinessCommands,
   exportDemoSmokeChecklistJson
 } from "./demoReadiness";
@@ -37,7 +38,7 @@ const healthResponse = {
 };
 
 describe("demo readiness", () => {
-  it("keeps a clean-clone judge run in needs-api state until Phase 2 API preflight is checked", () => {
+  it("keeps a clean-clone judge run in needs-api state until Phase 2 API preflight is checked", async () => {
     const report = createDemoReadinessReport({
       scenarioValidation: validScenarioValidation,
       scenarioCount: 4,
@@ -93,6 +94,48 @@ describe("demo readiness", () => {
     expect(checklistJson).toContain("lexproof-demo-smoke-checklist-v1");
     expect(checklistJson).toContain("Not legal advice");
     expect(checklistJson.endsWith("\n")).toBe(true);
+
+    const firstSummary = await createDemoSmokeChecklistSummary(checklist);
+    const secondSummary = await createDemoSmokeChecklistSummary(createDemoSmokeChecklist(report));
+    const readyReport = createDemoReadinessReport({
+      scenarioValidation: validScenarioValidation,
+      scenarioCount: 4,
+      screenshotRefs: ["docs/assets/screenshots/demo-01-model-connect.png", "docs/assets/screenshots/demo-02-evidence-ledger.png"],
+      apiPreflight: {
+        status: "ready",
+        service: healthResponse.service,
+        version: healthResponse.version,
+        capabilities: ["modelGateway: mock-run-ready"],
+        apiPreflightReportHash: "a".repeat(64),
+        routeChecks: [
+          {
+            id: "api-preflight-report",
+            label: "API Preflight report",
+            status: "ready",
+            url: "http://127.0.0.1:8787/api/preflight",
+            detail: "API preflight report is reachable with a stable metadata hash.",
+            artifactHash: "a".repeat(64)
+          }
+        ],
+        checkedAt: "2026-07-01T00:00:00.000Z",
+        notLegalAdviceBoundary: healthResponse.notLegalAdviceBoundary
+      }
+    });
+    const readySummary = await createDemoSmokeChecklistSummary(createDemoSmokeChecklist(readyReport));
+
+    expect(firstSummary).toEqual(
+      expect.objectContaining({
+        status: "needs-api",
+        commandCount: demoReadinessCommands.length,
+        stepCount: 8,
+        apiPreflightStatus: "not-checked",
+        screenshotStatus: "ready",
+        notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
+      })
+    );
+    expect(firstSummary.checklistHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(secondSummary.checklistHash).toBe(firstSummary.checklistHash);
+    expect(readySummary.checklistHash).not.toBe(firstSummary.checklistHash);
   });
 
   it("blocks readiness when scenario validation fails even if the API is healthy", () => {

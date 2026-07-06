@@ -94,7 +94,13 @@ import {
   fetchDocumentParserPolicyReport
 } from "./lib/documentParserPolicyClient";
 import { findDemoScenarioById, validateDemoScenarioLibrary } from "./lib/demoScenarioLibrary";
-import { createDemoReadinessReport, type DemoApiPreflight } from "./lib/demoReadiness";
+import {
+  createDemoReadinessReport,
+  createDemoSmokeChecklist,
+  createDemoSmokeChecklistSummary,
+  type DemoApiPreflight,
+  type DemoSmokeChecklistSummary
+} from "./lib/demoReadiness";
 import { createDemoRunbook, type DemoRunbook } from "./lib/demoRunbook";
 import { createEvidenceIntakeGuidance } from "./lib/evidenceIntakeGuidance";
 import { createEvidenceManifest, type EvidenceManifest } from "./lib/evidenceManifest";
@@ -109,6 +115,7 @@ import {
   createApiPreflightExportArtifact,
   createAuditLogExportArtifact,
   createDemoRunbookExportArtifact,
+  createDemoSmokeChecklistExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
   createModelGatewayEvaluationExportArtifact,
@@ -398,6 +405,7 @@ export default function App() {
   const [submissionPack, setSubmissionPack] = useState<SubmissionPack | null>(null);
   const [demoApiPreflight, setDemoApiPreflight] = useState<DemoApiPreflight>({ status: "not-checked" });
   const [demoRunbook, setDemoRunbook] = useState<DemoRunbook | null>(null);
+  const [demoSmokeChecklistSummary, setDemoSmokeChecklistSummary] = useState<DemoSmokeChecklistSummary | null>(null);
   const [modelSettings, setModelSettings] = useState<ModelSettings>(() => loadStoredModelSettings());
   const [modelConnectReceipt, setModelConnectReceipt] = useState<ModelConnectReceipt | null>(null);
   const [modelGatewayEvaluation, setModelGatewayEvaluation] = useState<ModelGatewayEvaluationRecord | null>(null);
@@ -592,6 +600,21 @@ export default function App() {
       }),
     [demoApiPreflight, demoScenarioValidation]
   );
+  const demoSmokeChecklist = useMemo(() => createDemoSmokeChecklist(demoReadinessReport), [demoReadinessReport]);
+  useEffect(() => {
+    let live = true;
+    setDemoSmokeChecklistSummary(null);
+
+    createDemoSmokeChecklistSummary(demoSmokeChecklist).then((nextSummary) => {
+      if (live) {
+        setDemoSmokeChecklistSummary(nextSummary);
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [demoSmokeChecklist]);
   useEffect(() => {
     let live = true;
     setDemoRunbook(null);
@@ -1356,6 +1379,7 @@ export default function App() {
           "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
       },
       createDemoRunbookExportArtifact(demoRunbookSummary),
+      createDemoSmokeChecklistExportArtifact(demoSmokeChecklistSummary),
       {
         id: "submission-pack",
         label: "Submission Pack JSON",
@@ -1376,6 +1400,7 @@ export default function App() {
     currentCounselPackVersions,
     demoApiPreflight,
     demoRunbookSummary,
+    demoSmokeChecklistSummary,
     evidenceVaultLineageDigest,
     grcTicketExport,
     integrationEnablementDossier,

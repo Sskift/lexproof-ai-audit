@@ -1630,6 +1630,10 @@ describe("App", () => {
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
         expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 8/8 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
+        expect(
+          exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
+        ).toBeInTheDocument();
         expect(exportInventory.getAllByText(/Hash aaaaaaaaaaaa/i).length).toBeGreaterThan(0);
       });
     } finally {
@@ -4526,6 +4530,7 @@ describe("App", () => {
       const inventory = within(inventoryRegion);
       await waitFor(() => expect(inventory.getByText(/Source Freshness Board JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Runbook JSON/i)).toBeInTheDocument());
+      await waitFor(() => expect(inventory.getByText(/Demo Smoke Checklist JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
       expect(
         inventory.getByText(/Not legal advice. Export Safety Inventory is audit preparation handoff metadata only./i)
@@ -4542,6 +4547,7 @@ describe("App", () => {
       const parsed = JSON.parse(payload);
       const sourceFreshnessArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "source-freshness-board");
       const demoRunbookArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-runbook");
+      const demoSmokeArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-smoke-checklist");
 
       expect(sourceFreshnessArtifact).toEqual(
         expect.objectContaining({
@@ -4572,6 +4578,24 @@ describe("App", () => {
         })
       );
       expect(demoRunbookArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(demoSmokeArtifact).toEqual(
+        expect.objectContaining({
+          label: "Demo Smoke Checklist JSON",
+          category: "submission",
+          exportMode: "metadata-only-json",
+          required: true,
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
+        })
+      );
+      expect(demoSmokeArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(demoSmokeArtifact.warnings).toEqual(
+        expect.arrayContaining([
+          "Demo Smoke Checklist status is needs-api with API preflight not-checked; complete clean-clone smoke recovery before judge handoff."
+        ])
+      );
       expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:export-safety-source-freshness");
       expect(click).toHaveBeenCalledTimes(1);

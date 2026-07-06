@@ -109,6 +109,16 @@ export type DemoSmokeChecklist = {
   notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only.";
 };
 
+export type DemoSmokeChecklistSummary = {
+  checklistHash: string;
+  status: DemoReadinessStatus;
+  commandCount: number;
+  stepCount: number;
+  apiPreflightStatus: DemoReadinessCheckStatus;
+  screenshotStatus: DemoReadinessCheckStatus;
+  notLegalAdviceBoundary: DemoSmokeChecklist["notLegalAdviceBoundary"];
+};
+
 export type DemoReadinessInput = {
   scenarioValidation: DemoScenarioValidationResult;
   scenarioCount: number;
@@ -294,6 +304,36 @@ export function createDemoSmokeChecklist(report: DemoReadinessReport): DemoSmoke
     steps,
     nextActions: createNextActions(steps),
     notLegalAdviceBoundary: SMOKE_CHECKLIST_BOUNDARY
+  };
+}
+
+export async function createDemoSmokeChecklistSummary(checklist: DemoSmokeChecklist): Promise<DemoSmokeChecklistSummary> {
+  const hashPayload = {
+    checklistVersion: checklist.checklistVersion,
+    status: checklist.status,
+    commandCount: checklist.commandCount,
+    steps: checklist.steps.map((step) => ({
+      id: step.id,
+      label: step.label,
+      command: step.command,
+      status: step.status,
+      detail: step.detail,
+      recoveryAction: step.recoveryAction
+    })),
+    nextActions: checklist.nextActions,
+    notLegalAdviceBoundary: checklist.notLegalAdviceBoundary
+  };
+  const apiPreflightStatus = checklist.steps.find((step) => step.id === "phase-2-api-preflight")?.status ?? "not-checked";
+  const screenshotStatus = checklist.steps.find((step) => step.id === "screenshot-set")?.status ?? "not-checked";
+
+  return {
+    checklistHash: await sha256Hex(stableStringify(hashPayload)),
+    status: checklist.status,
+    commandCount: checklist.commandCount,
+    stepCount: checklist.steps.length,
+    apiPreflightStatus,
+    screenshotStatus,
+    notLegalAdviceBoundary: checklist.notLegalAdviceBoundary
   };
 }
 
@@ -722,6 +762,27 @@ function preserveSha256(value: unknown): string | undefined {
 
 function unique(values: string[]): string[] {
   return Array.from(new Set(values));
+}
+
+async function sha256Hex(payload: string): Promise<string> {
+  const bytes = new TextEncoder().encode(payload);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  return `{${Object.entries(value)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+    .join(",")}}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

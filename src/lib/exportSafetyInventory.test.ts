@@ -6,6 +6,7 @@ import {
   createAuditLogExportArtifact,
   createExportSafetyInventory,
   createDemoRunbookExportArtifact,
+  createDemoSmokeChecklistExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   createModelGatewayEvaluationExportArtifact,
@@ -451,6 +452,50 @@ describe("createExportSafetyInventory", () => {
     );
     expect(artifact?.warnings).toEqual([]);
     expect(exportSafetyInventoryJson(inventory)).toContain("Demo Runbook JSON");
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("adds Demo Smoke Checklist as a hashed metadata-only required submission artifact", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-demo-smoke",
+      projectName: "Demo Smoke Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [
+        ...safeArtifacts(),
+        createDemoSmokeChecklistExportArtifact({
+          checklistHash: "f".repeat(64),
+          status: "needs-api",
+          commandCount: 6,
+          stepCount: 8,
+          apiPreflightStatus: "not-checked",
+          screenshotStatus: "ready",
+          notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
+        })
+      ],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "demo-smoke-checklist");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Demo Smoke Checklist JSON",
+        category: "submission",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: true,
+        available: true,
+        artifactHash: "f".repeat(64),
+        metadataOnly: true,
+        rawContentIncluded: false,
+        notLegalAdviceBoundary: "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Demo Smoke Checklist status is needs-api with API preflight not-checked; complete clean-clone smoke recovery before judge handoff."
+    ]);
+    expect(artifact?.recoveryAction).toContain("6 commands and 8 smoke steps");
+    expect(exportSafetyInventoryJson(inventory)).toContain("Demo Smoke Checklist JSON");
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
 });

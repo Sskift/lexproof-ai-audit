@@ -1,7 +1,12 @@
 import type { AuditLogExportRecord } from "./auditLogExport";
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
-import type { DemoApiPreflight, DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
+import type {
+  DemoApiPreflight,
+  DemoReadinessCheckStatus,
+  DemoReadinessStatus,
+  DemoSmokeChecklistSummary
+} from "./demoReadiness";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
@@ -361,6 +366,41 @@ export function createDemoRunbookExportArtifact(
       : "Open Judge Demo Readiness, complete API preflight, and download Demo Runbook JSON.",
     notLegalAdviceBoundary:
       summary?.notLegalAdviceBoundary ?? "Not legal advice. Demo runbooks are audit preparation demo metadata only."
+  };
+}
+
+export function createDemoSmokeChecklistExportArtifact(
+  summary: DemoSmokeChecklistSummary | null | undefined
+): ExportSafetyArtifactInput {
+  const hasChecklist = Boolean(summary?.checklistHash);
+  const warnings =
+    hasChecklist && summary?.status !== "ready"
+      ? [
+          `Demo Smoke Checklist status is ${summary?.status ?? "missing"} with API preflight ${
+            summary?.apiPreflightStatus ?? "missing"
+          }; complete clean-clone smoke recovery before judge handoff.`
+        ]
+      : [];
+
+  return {
+    id: "demo-smoke-checklist",
+    label: "Demo Smoke Checklist JSON",
+    category: "submission",
+    exportMode: "metadata-only-json",
+    required: true,
+    available: hasChecklist,
+    artifactHash: summary?.checklistHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: hasChecklist
+      ? `Keep the Demo Smoke Checklist with judge setup notes; ${summary?.commandCount ?? 0} commands and ${
+          summary?.stepCount ?? 0
+        } smoke steps are represented.`
+      : "Open Judge Demo Readiness and let the Demo Smoke Checklist hash finish calculating before judge handoff.",
+    notLegalAdviceBoundary:
+      summary?.notLegalAdviceBoundary ??
+      "Not legal advice. Demo smoke checklists are audit preparation readiness metadata only."
   };
 }
 

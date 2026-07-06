@@ -10,6 +10,7 @@ import {
   createEvidenceDisposalRunbookExportArtifact,
   createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
+  createIntegrationEnablementGateExportArtifact,
   createSourceApprovalQueueExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   createModelGatewayEvaluationExportArtifact,
@@ -19,6 +20,7 @@ import {
 import type { EvidenceDisposalRunbook } from "./evidenceDisposalRunbook";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
+import type { IntegrationEnablementGate } from "./integrationEnablementDossier";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { AuditLogRecord } from "./phase2Types";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
@@ -625,6 +627,48 @@ describe("createExportSafetyInventory", () => {
     expect(exportSafetyInventoryJson(inventory)).toContain("Evidence Disposal Runbook JSON");
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
+
+  it("adds Integration Enablement Gate as a metadata-only integration readiness artifact", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-integration-gate",
+      projectName: "Integration Gate Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [
+        ...safeArtifacts(),
+        createIntegrationEnablementGateExportArtifact(
+          integrationEnablementGate({
+            gateStatus: "needs-policy",
+            queueItemCount: 3,
+            nextAction: "Evaluate missing server policy receipts before adapter enablement review."
+          })
+        )
+      ],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "integration-enablement-gate");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Integration Enablement Gate JSON",
+        category: "integration-readiness",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: "7".repeat(64),
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Evaluate missing server policy receipts before adapter enablement review.",
+        notLegalAdviceBoundary: "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Integration Enablement Gate status is needs-policy with 3 recovery items; keep external adapters disabled until policy review is complete."
+    ]);
+    expect(exportSafetyInventoryJson(inventory)).toContain("Integration Enablement Gate JSON");
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key|external write/i);
+  });
 });
 
 function recertificationQueue({
@@ -689,6 +733,34 @@ function disposalRunbook({
     nextSteps,
     notLegalAdviceBoundary:
       "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."
+  };
+}
+
+function integrationEnablementGate({
+  gateStatus,
+  queueItemCount,
+  nextAction
+}: {
+  gateStatus: IntegrationEnablementGate["gateStatus"];
+  queueItemCount: number;
+  nextAction: string;
+}): IntegrationEnablementGate {
+  return {
+    gateVersion: "lexproof-integration-enablement-gate-v1",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    gateHash: "7".repeat(64),
+    dossierHash: "6".repeat(64),
+    gateStatus,
+    externalEnablementAllowed: false,
+    externalEnablementStatus: gateStatus === "ready" ? "disabled-by-default" : "needs-policy-review",
+    queueItemCount,
+    blockerCount: gateStatus === "blocked" ? queueItemCount : 0,
+    needsPolicyCount: gateStatus === "needs-policy" ? queueItemCount : 0,
+    missingReceiptCount: gateStatus === "needs-policy" ? queueItemCount : 0,
+    coveredReceiptCount: 0,
+    queueItems: [],
+    nextAction,
+    notLegalAdviceBoundary: "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."
   };
 }
 

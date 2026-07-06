@@ -10,6 +10,7 @@ import type {
 import type { EvidenceDisposalRunbook } from "./evidenceDisposalRunbook";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
+import type { IntegrationEnablementGate } from "./integrationEnablementDossier";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
@@ -413,6 +414,39 @@ export function createModelGatewayEvaluationExportArtifact(
     notLegalAdviceBoundary:
       evaluation?.notLegalAdviceBoundary ??
       "Not legal advice. Model Gateway evaluation records are audit preparation metadata only."
+  };
+}
+
+export function createIntegrationEnablementGateExportArtifact(
+  gate: IntegrationEnablementGate | null | undefined
+): ExportSafetyArtifactInput {
+  const hasGate = Boolean(gate?.gateHash);
+  const warnings =
+    hasGate && gate?.gateStatus !== "ready"
+      ? [
+          `Integration Enablement Gate status is ${gate?.gateStatus ?? "missing"} with ${gate?.queueItemCount ?? 0} recovery item${
+            gate?.queueItemCount === 1 ? "" : "s"
+          }; keep external adapters disabled until policy review is complete.`
+        ]
+      : [];
+
+  return {
+    id: "integration-enablement-gate",
+    label: "Integration Enablement Gate JSON",
+    category: "integration-readiness",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasGate,
+    artifactHash: gate?.gateHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction:
+      gate?.nextAction ??
+      "Open Integration Readiness and wait for the Integration Enablement Gate recovery queue before adapter review.",
+    notLegalAdviceBoundary:
+      gate?.notLegalAdviceBoundary ??
+      "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."
   };
 }
 

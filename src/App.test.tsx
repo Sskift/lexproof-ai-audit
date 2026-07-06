@@ -4651,6 +4651,10 @@ describe("App", () => {
       await waitFor(() => expect(inventory.getByText(/Source Update Approval Queue JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getAllByText(/Evidence Recertification Queue JSON/i).length).toBeGreaterThan(0));
       await waitFor(() => expect(inventory.getByText(/Evidence Disposal Runbook JSON/i)).toBeInTheDocument());
+      await waitFor(() => {
+        expect(inventory.getByText(/Integration Enablement Gate JSON/i)).toBeInTheDocument();
+        expect(inventory.queryByText(/wait for the Integration Enablement Gate recovery queue/i)).not.toBeInTheDocument();
+      });
       await waitFor(() => expect(inventory.getByText(/Demo Runbook JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Smoke Checklist JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
@@ -4675,6 +4679,9 @@ describe("App", () => {
         (artifact: { id: string }) => artifact.id === "evidence-recertification-queue"
       );
       const disposalArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "evidence-disposal-runbook");
+      const integrationGateArtifact = parsed.artifacts.find(
+        (artifact: { id: string }) => artifact.id === "integration-enablement-gate"
+      );
       const demoRunbookArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-runbook");
       const demoSmokeArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-smoke-checklist");
 
@@ -4742,6 +4749,26 @@ describe("App", () => {
         })
       );
       expect(disposalArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(integrationGateArtifact).toEqual(
+        expect.objectContaining({
+          label: "Integration Enablement Gate JSON",
+          category: "integration-readiness",
+          exportMode: "metadata-only-json",
+          required: false,
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Integration enablement gates are audit preparation workflow metadata only."
+        })
+      );
+      expect(integrationGateArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(integrationGateArtifact.warnings).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(
+            /Integration Enablement Gate status is (blocked|needs-policy|disabled) with \d+ recovery item/
+          )
+        ])
+      );
       expect(demoRunbookArtifact).toEqual(
         expect.objectContaining({
           label: "Demo Runbook JSON",

@@ -122,6 +122,7 @@ import {
   createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
+  createIntegrationEnablementGateExportArtifact,
   createModelGatewayEvaluationExportArtifact,
   createSourceApprovalQueueExportArtifact,
   createSourceFreshnessBoardExportArtifact,
@@ -1423,6 +1424,7 @@ export default function App() {
           integrationEnablementDossier?.notLegalAdviceBoundary ??
           "Not legal advice. Integration enablement dossiers are audit preparation metadata only."
       },
+      createIntegrationEnablementGateExportArtifact(integrationEnablementGate),
       createDemoRunbookExportArtifact(demoRunbookSummary),
       createDemoSmokeChecklistExportArtifact(demoSmokeChecklistSummary),
       {
@@ -1451,6 +1453,7 @@ export default function App() {
     evidenceVaultLineageDigest,
     grcTicketExport,
     integrationEnablementDossier,
+    integrationEnablementGate,
     localCounselRoutingPlan,
     manifest?.bundleHash,
     manifestDriftReport,

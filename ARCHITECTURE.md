@@ -678,7 +678,7 @@ Blocked findings disable Counsel Pack Markdown download, browser Print / Save PD
 
 Owns Sources-level export handoff readiness:
 
-- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Evidence Vault Lineage Digest, Evidence Recertification Queue, Evidence Disposal Runbook, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Source Freshness Board, Demo Runbook, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, and Submission Pack.
+- `createExportSafetyInventory(input)` combines the current data-boundary report with metadata-only handoff artifacts such as Evidence Manifest, Evidence Vault Lineage Digest, Evidence Recertification Queue, Evidence Disposal Runbook, Regulatory Source Pack, Counsel Pack version, Source Review Packet, Source Freshness Board, Demo Runbook, Local Counsel Routing Plan, GRC Ticket Export, Integration Enablement Dossier, Integration Enablement Gate, and Submission Pack.
 - `createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard)` converts the Source Freshness Board into a metadata-only export artifact with board hash, review warning status, and the Not legal advice boundary for the Sources-level safety inventory.
 - `createDemoRunbookExportArtifact(summary)` converts the generated Demo Runbook summary into a required metadata-only submission artifact with runbook hash, preflight status, recovery action, and the Not legal advice boundary.
 - The inventory returns a stable SHA-256 inventory hash, artifact statuses, blocker counts, recovery actions, and `exportHandoffAllowed`.
@@ -727,6 +727,7 @@ The registry is audit preparation metadata only. It does not call external provi
 Owns the W9 adapter enablement handoff artifact:
 
 - `createIntegrationEnablementDossier(input)` consolidates the Integration Readiness Registry, Model Gateway provider policy, secret policy, object storage policy, document parser policy, chain anchor policy, and GRC destination policy reports into one metadata-only dossier.
+- `createIntegrationEnablementGate(dossier)` turns adapter blockers, policy gaps, missing server receipts, and the disabled-by-default external adapter boundary into a hashed metadata-only recovery queue.
 - The dossier includes adapter summaries, policy report summaries, sanitized blockers, next actions, `externalEnablementAllowed: false`, and a stable SHA-256 dossier hash that ignores `generatedAt`.
 - `exportIntegrationEnablementDossierJson()` and `downloadIntegrationEnablementDossierJson()` serialize and download the local JSON bundle for security/counsel review.
 

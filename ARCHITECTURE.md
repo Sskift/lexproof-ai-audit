@@ -102,6 +102,7 @@ lexproof-ai-audit/
       evidenceVaultWorkflow.ts # Evidence Vault status transition guardrails
       missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
       riskExplainers.ts      # Source-linked issue cards and trigger facts
+      sourceCitationControls.ts # Per-risk regulatory citation controls from the source graph
       riskEvidence.ts        # Per-risk evidence requirements and coverage status
       evidenceManifest.ts    # Deterministic item and bundle hashes
       evidenceVaultManifest.ts # Server Evidence Vault persisted metadata manifests
@@ -281,6 +282,14 @@ Owns user-facing issue explanation:
 - `createRiskIssueCards(project, audit)` maps deterministic flags to trigger facts such as asset model, custody model, data sensitivity, or AI usage.
 - Each issue card links back to source references from the audit source pack.
 - The output explains why a flag triggered for audit preparation. It does not create legal conclusions.
+
+### `src/lib/sourceCitationControls.ts`
+
+Owns per-risk citation control summaries:
+
+- `createRiskSourceCitationControls(audit, regulatoryGraph)` maps active deterministic risk flags to matched regulatory source clauses.
+- Each control reports citation count, coverage status, top open source-linked evidence requests, local counsel routes, and source URLs.
+- The output is audit preparation metadata only. It does not decide compliance, non-compliance, or legal advice.
 
 ### `src/lib/riskEvidence.ts`
 
@@ -1077,6 +1086,7 @@ UI tests cover:
 - Counsel Pack server export-record creation from saved Pack Version metadata
 - Jurisdiction Checklist tab with policy controls and local-counsel routing
 - source-linked Risk Audit trigger explanations
+- source citation controls on active Risk Audit flags
 - evidence template application
 - Evidence Audit Trail visibility and JSON download action
 - Evidence Retention Readiness blocker state and disabled Evidence Vault sync action
@@ -1089,7 +1099,6 @@ UI tests cover:
 Good next additions:
 
 - deepen jurisdiction pack controls with more scenarios, evidence patterns, and local-counsel workflows
-- add source citation controls per flag
 - add optional real on-chain anchoring only after privacy, wallet, backend, and signing boundaries are documented
 - add screenshot-backed demo assets
 

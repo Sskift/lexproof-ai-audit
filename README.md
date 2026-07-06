@@ -129,7 +129,9 @@ Project Workspace JSON import lets teams paste a metadata-only `ProjectProfile` 
 
 ![Project Profile JSON Import](docs/assets/screenshots/project-profile-json-import.png)
 
-Risk Audit explains deterministic trigger facts and links source context for counsel review.
+Risk Audit explains deterministic trigger facts and links source context for counsel review. Each active risk flag now includes source citation controls derived from the Regulatory Source Graph, showing mapped citations, source URLs, open source-linked evidence requests, local counsel routes, and the Not legal advice boundary without making compliance conclusions.
+
+![Risk Audit Source Citation Controls](docs/assets/screenshots/risk-audit-source-citation-controls.png)
 
 The Regulatory Command Center turns project facts into a first-screen Workspace Cockpit, Workspace Journey, Workspace Action Queue, source-backed jurisdiction triggers, source review freshness, source update approval gates, evidence gaps, and local counsel handoff status without making legal conclusions. The Workspace Cockpit Handoff JSON exports the cockpit status, facts, journey steps, action queue, manifest/export state, and a stable handoff hash as metadata-only audit preparation material. The Workspace Action Queue JSON exports the current ranked recovery work, stable queue hash, summary counts, and Not legal advice boundary as a separate metadata-only artifact. The Workspace Journey shows the audit-prep path from project facts through model/evidence intake, risk/source graph, human review, vault/manifest, and counsel export with a next-action button. Source gap actions focus the Source Evidence Gap Triage panel directly, source update approval actions focus the Source Update Approval Queue when the source review as-of date makes refreshed metadata review due, and final handoff recovery actions route unresolved Handoff Recovery Playbook work to Sources. Not legal advice.
 

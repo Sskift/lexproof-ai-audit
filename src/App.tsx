@@ -285,6 +285,10 @@ import {
   createEvidenceRequestOperationFromSourceGapTriageItem,
   type SourceEvidenceGapTriageItem
 } from "./lib/sourceEvidenceGapTriage";
+import {
+  createRiskSourceCitationControls,
+  type RiskSourceCitationControl
+} from "./lib/sourceCitationControls";
 import { createRiskIssueCards, type RiskIssueCard } from "./lib/riskExplainers";
 import {
   createRiskEvidenceCoverage,
@@ -517,6 +521,10 @@ export default function App() {
   );
   const riskEvidenceCoverage = useMemo(() => createRiskEvidenceCoverage(audit, project.evidenceItems), [audit, project.evidenceItems]);
   const regulatoryGraph = useMemo(() => createRegulatoryGraph(project, audit, project.evidenceItems), [audit, project]);
+  const riskSourceCitationControls = useMemo(
+    () => createRiskSourceCitationControls(audit, regulatoryGraph),
+    [audit, regulatoryGraph]
+  );
   const normalizedSourceReviewAsOf = sourceReviewAsOf.trim();
   const activeSourceReviewAsOf = /^\d{4}-\d{2}-\d{2}$/.test(normalizedSourceReviewAsOf)
     ? normalizedSourceReviewAsOf
@@ -2606,6 +2614,7 @@ export default function App() {
             <RiskAuditPanel
               project={project}
               audit={audit}
+              sourceCitationControls={riskSourceCitationControls}
               grcTicketExport={grcTicketExport}
               onRequestEvidence={(requirement) => addEvidence(createEvidenceRequestFromRequirement(requirement))}
             />
@@ -2677,15 +2686,18 @@ export default function App() {
 function RiskAuditPanel({
   project,
   audit,
+  sourceCitationControls,
   grcTicketExport,
   onRequestEvidence
 }: {
   project: ProjectProfile;
   audit: ReturnType<typeof analyzeAuditProfile>;
+  sourceCitationControls: RiskSourceCitationControl[];
   grcTicketExport: GrcTicketExportBundle;
   onRequestEvidence: (requirement: RiskEvidenceRequirement) => void;
 }) {
   const issueCards = createRiskIssueCards(project, audit);
+  const sourceCitationControlByFlag = new Map(sourceCitationControls.map((control) => [control.flagId, control]));
   const evidenceCoverageByFlag = new Map(
     createRiskEvidenceCoverage(audit, project.evidenceItems).map((coverage) => [coverage.flagId, coverage])
   );
@@ -2717,6 +2729,7 @@ function RiskAuditPanel({
             key={card.flagId}
             card={card}
             evidenceCoverage={evidenceCoverageByFlag.get(card.flagId)}
+            sourceCitationControl={sourceCitationControlByFlag.get(card.flagId)}
             onRequestEvidence={onRequestEvidence}
           />
         ))}
@@ -2776,10 +2789,12 @@ function SourcesPanel({
 function FlagCard({
   card,
   evidenceCoverage,
+  sourceCitationControl,
   onRequestEvidence
 }: {
   card: RiskIssueCard;
   evidenceCoverage?: RiskEvidenceCoverage;
+  sourceCitationControl?: RiskSourceCitationControl;
   onRequestEvidence: (requirement: RiskEvidenceRequirement) => void;
 }) {
   return (
@@ -2799,6 +2814,7 @@ function FlagCard({
         </ul>
       </section>
       {evidenceCoverage ? <RiskEvidenceWorkflow coverage={evidenceCoverage} onRequestEvidence={onRequestEvidence} /> : null}
+      {sourceCitationControl ? <SourceCitationControlsPanel control={sourceCitationControl} /> : null}
       <div className="flag-source-links">
         {card.sourceReferences.map((source) => (
           <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
@@ -2809,6 +2825,58 @@ function FlagCard({
       </div>
       <small>{card.notLegalAdviceBoundary}</small>
     </article>
+  );
+}
+
+function SourceCitationControlsPanel({ control }: { control: RiskSourceCitationControl }) {
+  const visibleCitations = control.citations.slice(0, 3);
+  const hiddenCitationCount = Math.max(0, control.citationCount - visibleCitations.length);
+
+  return (
+    <section className={`source-citation-controls ${control.coverageStatus}`} aria-label={`${control.flagTitle} source citation controls`}>
+      <div className="source-citation-header">
+        <strong>Source citation controls</strong>
+        <span>
+          {control.citationCount} citation{control.citationCount === 1 ? "" : "s"} · {control.coverageStatus}
+        </span>
+      </div>
+      {visibleCitations.length > 0 ? (
+        <ul className="source-citation-list">
+          {visibleCitations.map((citation) => (
+            <li key={`${citation.clauseId}-${citation.citation}`}>
+              <a href={citation.sourceUrl} target="_blank" rel="noreferrer">
+                <Link2 size={13} aria-hidden="true" />
+                {citation.jurisdiction}: {citation.citation}
+              </a>
+              <small>
+                {citation.coverageStatus} · {citation.openEvidenceRequestCount} open request
+                {citation.openEvidenceRequestCount === 1 ? "" : "s"} · {citation.localCounselRole}
+              </small>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No jurisdiction citation controls are mapped to this deterministic flag yet.</p>
+      )}
+      {hiddenCitationCount > 0 ? <small>{hiddenCitationCount} more citation controls in Regulatory Command Center.</small> : null}
+      {control.topOpenEvidenceRequests.length > 0 ? (
+        <div className="source-citation-open-requests">
+          <strong>Open citation evidence</strong>
+          <ul>
+            {control.topOpenEvidenceRequests.map((request) => (
+              <li key={`${request.clauseId}-${request.requestId}`}>
+                <span className={`priority ${request.priority}`}>{request.priority}</span>
+                <span>
+                  {request.title} · {request.jurisdiction}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <p>{control.nextAction}</p>
+      <small>{control.notLegalAdviceBoundary}</small>
+    </section>
   );
 }
 

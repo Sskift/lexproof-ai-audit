@@ -1031,6 +1031,25 @@ describe("App", () => {
     }
   });
 
+  it("shows source citation controls on Risk Audit flags without legal conclusions", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    const citationControls = within(
+      await screen.findByRole("region", { name: /Yield-bearing or investment-like asset source citation controls/i })
+    );
+
+    expect(citationControls.getByText("Source citation controls", { selector: "strong" })).toBeInTheDocument();
+    expect(citationControls.getByText(/Regulation \(EU\) 2023\/1114, Title II/i)).toBeInTheDocument();
+    expect(citationControls.getByText(/Open citation evidence/i)).toBeInTheDocument();
+    expect(citationControls.getByText(/Prepare \d+ open source-linked evidence request/i)).toBeInTheDocument();
+    expect(
+      citationControls.getByText(/Not legal advice. Source citation controls are audit preparation prompts only./i)
+    ).toBeInTheDocument();
+    expect(citationControls.queryByText(/\bcompliant\b|\bnon-compliant\b/i)).not.toBeInTheDocument();
+  });
+
   it("loads a judge-ready demo scenario from the seeded scenario library", async () => {
     render(<App />);
 
@@ -1052,7 +1071,7 @@ describe("App", () => {
 
     expect(screen.getByLabelText(/Project name/i)).toHaveValue("YieldPassport");
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
-    expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Yield-bearing or investment-like asset/i, level: 3 })).toBeInTheDocument();
     expect(screen.getAllByText(/23 NYCRR Part 200; NYDFS Updated Guidance on Custodial Structures, September 30, 2025/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/New York NYDFS virtual-currency business activity and license-route evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/New York NYDFS custody segregation, beneficial-interest, and disclosure evidence/i).length).toBeGreaterThan(0);
@@ -2916,7 +2935,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save workspace/i }));
 
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
-    expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Yield-bearing or investment-like asset/i, level: 3 })).toBeInTheDocument();
     expect(screen.getAllByText(/Why this flag triggered/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Asset model: Tokenized yield note/i)).toBeInTheDocument();
 
@@ -2973,7 +2992,7 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Imported profiles are audit preparation metadata only./i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
-    expect(await screen.findByText(/Yield-bearing or investment-like asset/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Yield-bearing or investment-like asset/i, level: 3 })).toBeInTheDocument();
     expect(screen.getByText(/Asset model: Tokenized yield note/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));

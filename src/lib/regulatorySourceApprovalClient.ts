@@ -114,6 +114,7 @@ function createQueuePayload(queue: RegulatorySourceApprovalQueue): RegulatorySou
     queueVersion: "lexproof-regulatory-source-approval-queue-v1",
     generatedAt: queue.generatedAt,
     status: queue.status,
+    queueHash: queue.queueHash,
     totalItemCount: queue.totalItemCount,
     approvalRequiredCount: queue.approvalRequiredCount,
     metadataRequiredCount: queue.metadataRequiredCount,

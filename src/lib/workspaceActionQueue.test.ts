@@ -553,6 +553,7 @@ function sourceApprovalQueue({
     queueVersion: "lexproof-regulatory-source-approval-queue-v1",
     generatedAt: "2026-07-01T00:00:00.000Z",
     status: metadataRequiredCount > 0 ? "needs-metadata" : approvalRequiredCount > 0 ? "needs-approval" : "empty",
+    queueHash: "a".repeat(64),
     totalItemCount,
     approvalRequiredCount,
     metadataRequiredCount,

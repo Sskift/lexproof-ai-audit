@@ -250,6 +250,7 @@ function formatRegulatorySourceApprovalQueueSection(queue: RegulatorySourceAppro
   return [
     queue.notLegalAdviceBoundary,
     `- Queue status: ${queue.status}`,
+    `- Queue hash: ${queue.queueHash}`,
     `- Approval required: ${queue.approvalRequiredCount}`,
     `- Metadata required: ${queue.metadataRequiredCount}`,
     `- Open gates: ${queue.totalItemCount}`,

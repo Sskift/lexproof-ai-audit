@@ -236,6 +236,7 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("Not legal advice. Source update approvals are audit preparation workflow metadata only.");
     expect(markdown).toContain("Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.");
     expect(markdown).toContain("- Queue status: needs-approval");
+    expect(markdown).toContain(`- Queue hash: ${sourceApprovalQueue.queueHash}`);
     expect(markdown).toContain("- Approval required:");
     expect(markdown).toContain("approval-required");
     expect(markdown).toContain("Refresh and approve");

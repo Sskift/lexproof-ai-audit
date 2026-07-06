@@ -4529,7 +4529,8 @@ describe("App", () => {
       const inventoryRegion = await screen.findByRole("region", { name: /Export Safety Inventory/i });
       const inventory = within(inventoryRegion);
       await waitFor(() => expect(inventory.getByText(/Source Freshness Board JSON/i)).toBeInTheDocument());
-      await waitFor(() => expect(inventory.getByText(/Evidence Recertification Queue JSON/i)).toBeInTheDocument());
+      await waitFor(() => expect(inventory.getByText(/Source Update Approval Queue JSON/i)).toBeInTheDocument());
+      await waitFor(() => expect(inventory.getAllByText(/Evidence Recertification Queue JSON/i).length).toBeGreaterThan(0));
       await waitFor(() => expect(inventory.getByText(/Demo Runbook JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Smoke Checklist JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
@@ -4547,6 +4548,9 @@ describe("App", () => {
       const payload = await readAppBlobText(payloadBlob);
       const parsed = JSON.parse(payload);
       const sourceFreshnessArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "source-freshness-board");
+      const sourceApprovalArtifact = parsed.artifacts.find(
+        (artifact: { id: string }) => artifact.id === "source-update-approval-queue"
+      );
       const recertificationArtifact = parsed.artifacts.find(
         (artifact: { id: string }) => artifact.id === "evidence-recertification-queue"
       );
@@ -4568,6 +4572,27 @@ describe("App", () => {
       expect(sourceFreshnessArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
       expect(sourceFreshnessArtifact.warnings).toEqual(
         expect.arrayContaining(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."])
+      );
+      expect(sourceApprovalArtifact).toEqual(
+        expect.objectContaining({
+          label: "Source Update Approval Queue JSON",
+          category: "source-lineage",
+          exportMode: "metadata-only-json",
+          status: "needs-review",
+          required: false,
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
+        })
+      );
+      expect(sourceApprovalArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(sourceApprovalArtifact.warnings).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(
+            /Source Update Approval Queue status is needs-approval with \d+ open gates; source matching remains gated until refreshed metadata is reviewed\./
+          )
+        ])
       );
       expect(recertificationArtifact).toEqual(
         expect.objectContaining({

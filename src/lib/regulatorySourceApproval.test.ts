@@ -38,6 +38,7 @@ describe("createRegulatorySourceApprovalQueue", () => {
         queueVersion: "lexproof-regulatory-source-approval-queue-v1",
         status: "needs-approval",
         generatedAt: "2026-10-01T00:00:00.000Z",
+        queueHash: expect.stringMatching(/^[a-f0-9]{64}$/),
         approvalRequiredCount: sourceReview.reviewDueCount,
         metadataRequiredCount: 0,
         notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
@@ -71,7 +72,27 @@ describe("createRegulatorySourceApprovalQueue", () => {
 
     expect(parsed).toEqual(queue);
     expect(json).toContain("\"queueVersion\": \"lexproof-regulatory-source-approval-queue-v1\"");
+    expect(json).toContain(`"queueHash": "${queue.queueHash}"`);
     expect(json).toContain("\"notLegalAdviceBoundary\": \"Not legal advice. Source update approvals are audit preparation workflow metadata only.\"");
     expect(json).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("keeps the source approval queue hash stable across generation time changes", () => {
+    const audit = analyzeAuditProfile(globalLaunchProject);
+    const graph = createRegulatoryGraph(globalLaunchProject, audit, globalLaunchProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, {
+      asOf: "2026-10-01T00:00:00.000Z",
+      reviewWindowDays: 90
+    });
+
+    const firstQueue = createRegulatorySourceApprovalQueue(sourceReview, {
+      generatedAt: "2026-10-01T00:00:00.000Z"
+    });
+    const secondQueue = createRegulatorySourceApprovalQueue(sourceReview, {
+      generatedAt: "2026-10-02T00:00:00.000Z"
+    });
+
+    expect(firstQueue.queueHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(secondQueue.queueHash).toBe(firstQueue.queueHash);
   });
 });

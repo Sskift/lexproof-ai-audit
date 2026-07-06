@@ -10,6 +10,7 @@ import type {
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
+import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type ExportSafetyArtifactCategory =
@@ -203,6 +204,38 @@ export function createSourceFreshnessBoardExportArtifact(
     notLegalAdviceBoundary:
       sourceFreshnessBoard?.notLegalAdviceBoundary ??
       "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+  };
+}
+
+export function createSourceApprovalQueueExportArtifact(
+  queue: RegulatorySourceApprovalQueue | null | undefined
+): ExportSafetyArtifactInput {
+  const hasQueue = Boolean(queue?.queueHash);
+  const totalItemCount = queue?.totalItemCount ?? 0;
+  const warnings =
+    hasQueue && totalItemCount > 0
+      ? [
+          `Source Update Approval Queue status is ${queue?.status ?? "missing"} with ${totalItemCount} open gate${
+            totalItemCount === 1 ? "" : "s"
+          }; source matching remains gated until refreshed metadata is reviewed.`
+        ]
+      : [];
+
+  return {
+    id: "source-update-approval-queue",
+    label: "Source Update Approval Queue JSON",
+    category: "source-lineage",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasQueue,
+    artifactHash: queue?.queueHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: createSourceApprovalQueueRecoveryAction(queue),
+    notLegalAdviceBoundary:
+      queue?.notLegalAdviceBoundary ??
+      "Not legal advice. Source update approvals are audit preparation workflow metadata only."
   };
 }
 
@@ -488,6 +521,28 @@ function createAuditLogExportRecoveryAction(auditLogExport: AuditLogExportRecord
   }
 
   return "Keep Audit Log Export JSON with the secure review handoff packet.";
+}
+
+function createSourceApprovalQueueRecoveryAction(queue: RegulatorySourceApprovalQueue | null | undefined): string {
+  if (!queue) {
+    return "Open Regulatory Command Center and wait for the Source Update Approval Queue hash before external handoff.";
+  }
+
+  if (queue.metadataRequiredCount > 0) {
+    return (
+      queue.items.find((item) => item.approvalStatus === "metadata-required")?.nextAction ??
+      "Complete missing source metadata before it can change source matching behavior."
+    );
+  }
+
+  if (queue.approvalRequiredCount > 0) {
+    return (
+      queue.items.find((item) => item.approvalStatus === "approval-required")?.nextAction ??
+      "Refresh and approve due source metadata before it can change source matching behavior."
+    );
+  }
+
+  return "Keep Source Update Approval Queue JSON with the final source-lineage handoff packet.";
 }
 
 function createEvidenceRecertificationRecoveryAction(queue: EvidenceRecertificationQueue | null | undefined): string {

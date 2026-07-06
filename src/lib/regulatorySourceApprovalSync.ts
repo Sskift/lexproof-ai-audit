@@ -76,7 +76,18 @@ export function createRegulatorySourceApprovalSyncResult(
 }
 
 export function hashRegulatorySourceApprovalQueue(queue: RegulatorySourceApprovalSyncQueue): string {
-  return sha256Hex(stableStringify(normalizeQueue(queue)));
+  const normalized = normalizeQueue(queue);
+  return sha256Hex(
+    stableStringify({
+      queueVersion: normalized.queueVersion,
+      status: normalized.status,
+      totalItemCount: normalized.totalItemCount,
+      approvalRequiredCount: normalized.approvalRequiredCount,
+      metadataRequiredCount: normalized.metadataRequiredCount,
+      items: normalized.items,
+      notLegalAdviceBoundary: normalized.notLegalAdviceBoundary
+    })
+  );
 }
 
 function createRecord({

@@ -9,6 +9,7 @@ import {
   createDemoSmokeChecklistExportArtifact,
   createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
+  createSourceApprovalQueueExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   createModelGatewayEvaluationExportArtifact,
   exportSafetyInventoryJson,
@@ -19,6 +20,7 @@ import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { AuditLogRecord } from "./phase2Types";
 import type { EvidenceItem, ProjectProfile } from "./projectModel";
+import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 describe("createExportSafetyInventory", () => {
@@ -171,6 +173,41 @@ describe("createExportSafetyInventory", () => {
     );
     expect(artifact?.warnings).toEqual(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."]);
     expect(inventory.exportHandoffAllowed).toBe(true);
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("adds Source Update Approval Queue as a hashed metadata-only source-lineage artifact", async () => {
+    const queue = sourceApprovalQueue();
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-source-approval",
+      projectName: "Source Approval Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createSourceApprovalQueueExportArtifact(queue)],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "source-update-approval-queue");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Source Update Approval Queue JSON",
+        category: "source-lineage",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: queue.queueHash,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Refresh and approve source metadata before it changes source matching.",
+        notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Source Update Approval Queue status is needs-approval with 1 open gate; source matching remains gated until refreshed metadata is reviewed."
+    ]);
+    expect(inventory.exportHandoffAllowed).toBe(true);
+    expect(exportSafetyInventoryJson(inventory)).toContain("Source Update Approval Queue JSON");
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
 
@@ -775,6 +812,42 @@ function sourceFreshnessBoard(overrides: Partial<SourceFreshnessBoard> = {}): So
     scheduledCount: 0,
     lanes: [],
     notLegalAdviceBoundary: "Not legal advice. Source freshness boards are audit preparation scheduling metadata only.",
+    ...overrides
+  };
+}
+
+function sourceApprovalQueue(overrides: Partial<RegulatorySourceApprovalQueue> = {}): RegulatorySourceApprovalQueue {
+  return {
+    queueVersion: "lexproof-regulatory-source-approval-queue-v1",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    status: "needs-approval",
+    queueHash: "8".repeat(64),
+    totalItemCount: 1,
+    approvalRequiredCount: 1,
+    metadataRequiredCount: 0,
+    items: [
+      {
+        id: "source-approval-control-eu-mica-title-ii-white-paper",
+        priority: "P1",
+        approvalStatus: "approval-required",
+        reviewStatus: "review-due",
+        clauseId: "control-eu-mica-title-ii-white-paper",
+        jurisdiction: "European Union",
+        regulator: "ESMA",
+        citation: "Regulation (EU) 2023/1114, Title II",
+        sourceName: "EUR-Lex",
+        sourceUrl: "https://eur-lex.europa.eu/",
+        effectiveAsOf: "2024-06-30",
+        lastReviewedAt: "2026-03-01",
+        nextReviewDueAt: "2026-06-01",
+        reviewerNotes: "Review refreshed source metadata before handoff.",
+        nextAction: "Refresh and approve source metadata before it changes source matching.",
+        approvalGate:
+          "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
+        notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only."
+      }
+    ],
+    notLegalAdviceBoundary: "Not legal advice. Source update approvals are audit preparation workflow metadata only.",
     ...overrides
   };
 }

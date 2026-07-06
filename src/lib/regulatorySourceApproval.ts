@@ -3,6 +3,7 @@ import type {
   RegulatorySourceReviewItem,
   RegulatorySourceReviewStatus
 } from "./regulatorySourceReview";
+import { hashRegulatorySourceApprovalQueue, type RegulatorySourceApprovalSyncQueue } from "./regulatorySourceApprovalSync";
 
 export type RegulatorySourceApprovalStatus = "approval-required" | "metadata-required";
 export type RegulatorySourceApprovalQueueStatus = "empty" | "needs-approval" | "needs-metadata";
@@ -32,6 +33,7 @@ export type RegulatorySourceApprovalQueue = {
   queueVersion: "lexproof-regulatory-source-approval-queue-v1";
   generatedAt: string;
   status: RegulatorySourceApprovalQueueStatus;
+  queueHash: string;
   totalItemCount: number;
   approvalRequiredCount: number;
   metadataRequiredCount: number;
@@ -51,19 +53,24 @@ export function createRegulatorySourceApprovalQueue(
   sourceReview: RegulatorySourceReview,
   options: RegulatorySourceApprovalQueueOptions = {}
 ): RegulatorySourceApprovalQueue {
+  const generatedAt = options.generatedAt ?? new Date().toISOString();
   const items = sourceReview.items.filter((item) => item.reviewStatus !== "current").map(createApprovalItem).sort(compareItems);
   const metadataRequiredCount = items.filter((item) => item.approvalStatus === "metadata-required").length;
   const approvalRequiredCount = items.filter((item) => item.approvalStatus === "approval-required").length;
-
-  return {
+  const queuePayload: RegulatorySourceApprovalSyncQueue = {
     queueVersion: "lexproof-regulatory-source-approval-queue-v1",
-    generatedAt: options.generatedAt ?? new Date().toISOString(),
+    generatedAt,
     status: metadataRequiredCount > 0 ? "needs-metadata" : approvalRequiredCount > 0 ? "needs-approval" : "empty",
     totalItemCount: items.length,
     approvalRequiredCount,
     metadataRequiredCount,
     items,
     notLegalAdviceBoundary: boundary
+  };
+
+  return {
+    ...queuePayload,
+    queueHash: hashRegulatorySourceApprovalQueue(queuePayload)
   };
 }
 

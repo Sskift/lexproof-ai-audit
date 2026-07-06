@@ -120,6 +120,7 @@ import {
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
   createModelGatewayEvaluationExportArtifact,
+  createSourceApprovalQueueExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   type ExportSafetyArtifactInput,
   type ExportSafetyInventory
@@ -1335,6 +1336,7 @@ export default function App() {
         recoveryAction: "Use the command center Source Review Packet export when source refresh actions need handoff.",
         notLegalAdviceBoundary: "Not legal advice. Source review packets are audit preparation source-lineage metadata only."
       },
+      createSourceApprovalQueueExportArtifact(regulatorySourceApprovalQueue),
       createModelGatewayEvaluationExportArtifact(modelGatewayEvaluation),
       createAuditLogExportArtifact(auditLogExportRecord),
       createApiPreflightExportArtifact(demoApiPreflight),
@@ -1412,6 +1414,7 @@ export default function App() {
     manifestDriftReport,
     auditLogExportRecord,
     modelGatewayEvaluation,
+    regulatorySourceApprovalQueue,
     regulatorySourcePack,
     regulatorySourceReviewPacket,
     sourceFreshnessBoard,

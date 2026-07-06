@@ -10,6 +10,7 @@ const approvalQueue: RegulatorySourceApprovalQueue = {
   queueVersion: "lexproof-regulatory-source-approval-queue-v1",
   generatedAt: "2026-10-01T00:00:00.000Z",
   status: "needs-approval",
+  queueHash: "b".repeat(64),
   totalItemCount: 1,
   approvalRequiredCount: 1,
   metadataRequiredCount: 0,

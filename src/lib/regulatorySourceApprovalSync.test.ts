@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
-import { createRegulatorySourceApprovalSyncResult } from "./regulatorySourceApprovalSync";
+import { createRegulatorySourceApprovalSyncResult, hashRegulatorySourceApprovalQueue } from "./regulatorySourceApprovalSync";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import type { ProjectProfile } from "./projectModel";
 
@@ -112,5 +112,26 @@ describe("regulatory source approval sync", () => {
         createdAt: "2026-10-01T00:00:00.000Z"
       })
     ).toThrow("Source approval records must not include credentials, private keys, raw KYC, personal data, or legal conclusions.");
+  });
+
+  it("hashes approval queue content independently from generatedAt", () => {
+    const queue = createDueApprovalQueue();
+    const regeneratedQueue = {
+      ...queue,
+      generatedAt: "2026-10-02T00:00:00.000Z"
+    };
+    const changedQueue = {
+      ...queue,
+      items: [
+        {
+          ...queue.items[0],
+          nextAction: `${queue.items[0].nextAction} Route to refreshed source owner.`
+        },
+        ...queue.items.slice(1)
+      ]
+    };
+
+    expect(hashRegulatorySourceApprovalQueue(regeneratedQueue)).toBe(hashRegulatorySourceApprovalQueue(queue));
+    expect(hashRegulatorySourceApprovalQueue(changedQueue)).not.toBe(hashRegulatorySourceApprovalQueue(queue));
   });
 });

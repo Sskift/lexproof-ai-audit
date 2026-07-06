@@ -86,8 +86,8 @@ describe("createRegulatoryGraph", () => {
     });
 
     expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "European Union")).toMatchObject({
-      matchedClauseCount: 6,
-      missingEvidenceCount: 12,
+      matchedClauseCount: 7,
+      missingEvidenceCount: 14,
       readiness: "evidence-gaps",
       localCounselRole: "EU crypto-asset / data protection counsel"
     });
@@ -944,7 +944,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU AI Act justice, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU AI Act transparency and justice, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
@@ -956,6 +956,7 @@ describe("createRegulatoryGraph", () => {
         "us-colorado-admt-consequential-decision-governance",
         "us-california-ccpa-admt-consumer-rights-governance",
         "eu-ai-act-ai-literacy-governance",
+        "eu-ai-act-article-50-transparency-disclosure",
         "eu-ai-act-administration-justice-adr-perimeter",
         "uk-ico-ai-data-protection-governance"
       ])
@@ -1016,6 +1017,15 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "EU AI governance / data protection counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-article-50-transparency-disclosure")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union",
+      sourceUrl: "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      citation: "Regulation (EU) 2024/1689, Article 50",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "EU AI Act transparency / Article 50 counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-administration-justice-adr-perimeter")).toMatchObject({
       jurisdiction: "European Union",
       regulator: "European Union",
@@ -1046,6 +1056,8 @@ describe("createRegulatoryGraph", () => {
         "California CCPA ADMT access, opt-out, and secure request evidence",
         "EU AI use policy and human oversight evidence",
         "EU AI source lineage and risk-control evidence",
+        "EU AI Act Article 50 user-interaction disclosure evidence",
+        "EU AI Act AI-generated output labelling and editorial-control evidence",
         "EU AI Act justice and ADR perimeter evidence",
         "EU AI Act high-risk oversight and fundamental-rights review evidence",
         "UK AI data-protection and redaction evidence",
@@ -1082,6 +1094,15 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-article-50-transparency-disclosure")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "EU AI Act Article 50 user disclosure register",
+        "EU AI Act AI-generated output labelling register"
+      ])
     });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-administration-justice-adr-perimeter")).toMatchObject({
       coverageStatus: "covered",
@@ -1141,6 +1162,7 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "us-colorado-admt-consequential-decision-governance" }),
         expect.objectContaining({ clauseId: "us-california-ccpa-admt-consumer-rights-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
+        expect.objectContaining({ clauseId: "eu-ai-act-article-50-transparency-disclosure" }),
         expect.objectContaining({ clauseId: "eu-ai-act-administration-justice-adr-perimeter" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
       ])

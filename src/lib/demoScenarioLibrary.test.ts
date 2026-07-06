@@ -86,6 +86,7 @@ describe("validateDemoScenarioLibrary", () => {
           "NYC AEDT",
           "California CCPA ADMT",
           "Colorado ADMT",
+          "EU AI Act Article 50 transparency",
           "EU AI Act justice and ADR perimeter",
           "UK ICO",
           "Model governance",
@@ -99,7 +100,7 @@ describe("validateDemoScenarioLibrary", () => {
         "Connect model",
         "Register AI event",
         "Route human review",
-        "Inspect ABA Formal Opinion 512 / US NIST / NYC AEDT / California CCPA ADMT / Colorado ADMT / EU AI Act justice and ADR perimeter / UK ICO source review",
+        "Inspect ABA Formal Opinion 512 / US NIST / NYC AEDT / California CCPA ADMT / Colorado ADMT / EU AI Act Article 50 and justice perimeter / UK ICO source review",
         "Export counsel pack"
       ])
     );

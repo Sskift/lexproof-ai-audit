@@ -69,14 +69,14 @@ export const demoScenarios: DemoScenario[] = [
     projectName: "LexAssist Evidence Desk",
     title: "AI legal workflow review",
     summary:
-      "Model-connect governance, AI event intake, ABA Formal Opinion 512 professional-responsibility review, US NIST AI RMF / GenAI Profile, NYC AEDT hiring/promotion bias-audit review, California CCPA ADMT consumer-rights review, Colorado ADMT consequential-decision review, EU AI Act AI-literacy plus administration-of-justice/ADR perimeter review, UK ICO source review, human review, and counsel export.",
+      "Model-connect governance, AI event intake, ABA Formal Opinion 512 professional-responsibility review, US NIST AI RMF / GenAI Profile, NYC AEDT hiring/promotion bias-audit review, California CCPA ADMT consumer-rights review, Colorado ADMT consequential-decision review, EU AI Act AI-literacy plus Article 50 transparency and administration-of-justice/ADR perimeter review, UK ICO source review, human review, and counsel export.",
     estimatedMinutes: 6,
     recommendedStartTab: "model",
     judgePath: [
       "Connect model",
       "Register AI event",
       "Route human review",
-      "Inspect ABA Formal Opinion 512 / US NIST / NYC AEDT / California CCPA ADMT / Colorado ADMT / EU AI Act justice and ADR perimeter / UK ICO source review",
+      "Inspect ABA Formal Opinion 512 / US NIST / NYC AEDT / California CCPA ADMT / Colorado ADMT / EU AI Act Article 50 and justice perimeter / UK ICO source review",
       "Export counsel pack"
     ],
     expectedArtifacts: ["Model Intake JSON", "Human Review Timeline", "Counsel Pack Markdown"],
@@ -87,6 +87,7 @@ export const demoScenarios: DemoScenario[] = [
       "NYC AEDT",
       "California CCPA ADMT",
       "Colorado ADMT",
+      "EU AI Act Article 50 transparency",
       "EU AI Act justice and ADR perimeter",
       "UK ICO",
       "Model governance",

@@ -7,6 +7,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/eu-dlt-pilot-rwa-source-control.png",
   "docs/assets/screenshots/eu-mica-casp-custody-source-graph.png",
   "docs/assets/screenshots/ai-workflow-regulatory-source-controls.png",
+  "docs/assets/screenshots/eu-ai-act-article-50-transparency-source-control.png",
   "docs/assets/screenshots/singapore-dpt-custody-source-graph.png",
   "docs/assets/screenshots/hong-kong-stablecoin-source-graph.png",
   "docs/assets/screenshots/japan-crypto-custody-source-graph.png",

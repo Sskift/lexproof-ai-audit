@@ -1171,6 +1171,76 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-ai-act-article-50-transparency-disclosure",
+    jurisdiction: "European Union",
+    regulator: "European Union",
+    sourceName: "European Commission AI Act Service Desk Article 50",
+    sourceUrl: "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+    citation: "Regulation (EU) 2024/1689, Article 50",
+    topic: "ai-governance",
+    summary:
+      "Prepare AI-user interaction disclosure, AI-generated output labelling, human editorial-control, and accessibility evidence for EU AI workflow transparency review without converting the output into legal advice.",
+    triggerFlagIds: ["ai-workflow"],
+    triggerKeywords: [
+      "ai-assisted",
+      "ai drafts",
+      "ai-generated",
+      "model",
+      "human review",
+      "source-linked counsel",
+      "non-advice output",
+      "first interaction",
+      "ai disclosure"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-ai-act-article-50-user-interaction-disclosure",
+        title: "EU AI Act Article 50 user-interaction disclosure evidence",
+        reason:
+          "EU AI workflow transparency review needs evidence that natural persons are told when they interact with an AI system, with timing, wording, accessibility, role owner, and exception routing captured before external reliance.",
+        priority: "P1",
+        keywords: [
+          "article 50",
+          "user interaction disclosure",
+          "natural persons",
+          "ai disclosure",
+          "first interaction",
+          "clear distinguishable accessible",
+          "transparency notice",
+          "role owner"
+        ]
+      },
+      {
+        id: "eu-ai-act-article-50-output-labelling-editorial-review",
+        title: "EU AI Act AI-generated output labelling and editorial-control evidence",
+        reason:
+          "AI-generated or manipulated text/content needs labelling, machine-readable or detectable marking assumptions, human review or editorial-control owner, public-interest publication routing, and non-advice wording without raw matter text.",
+        priority: "P1",
+        keywords: [
+          "ai-generated output",
+          "output labelling",
+          "machine-readable",
+          "detectable",
+          "editorial control",
+          "human editorial review",
+          "public interest",
+          "not legal advice",
+          "no raw matter text"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "What evidence shows EU-facing users receive clear AI-interaction disclosure at or before first interaction, and who owns accessibility and exception review?",
+      "What evidence shows AI-generated text or other content is labelled, reviewed, and kept within audit-preparation / Not legal advice boundaries before any public or counsel handoff?"
+    ],
+    localCounselRole: "EU AI Act transparency / Article 50 counsel",
+    effectiveAsOf: "2024-08-01",
+    lastReviewedAt: "2026-07-06",
+    reviewerNotes:
+      "Source metadata reviewed against Regulation (EU) 2024/1689 Article 50 using the European Commission AI Act Service Desk and linked official text for AI interaction disclosure, AI-generated content labelling, timing, accessibility, and human editorial-control evidence routing; route interpretation to EU local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-ai-act-administration-justice-adr-perimeter",
     jurisdiction: "European Union",
     regulator: "European Union",

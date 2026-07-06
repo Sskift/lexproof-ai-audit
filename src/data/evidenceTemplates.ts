@@ -489,6 +489,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Counsel"
       },
       {
+        label: "EU AI Act Article 50 user disclosure register",
+        kind: "Register",
+        content:
+          "Requested: document Article 50 user interaction disclosure, natural persons notice, AI disclosure wording, first interaction timing, clear distinguishable accessible format, role owner, exception routing, and non-advice output boundary.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-article-50-transparency-disclosure",
+        status: "requested",
+        owner: "Product"
+      },
+      {
+        label: "EU AI Act AI-generated output labelling register",
+        kind: "Register",
+        content:
+          "Requested: document AI-generated output labelling, machine-readable or detectable marking assumptions, human editorial review, editorial control owner, public interest publication routing, not legal advice wording, and no raw matter text, client identifiers, credentials, or personal data.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-article-50-transparency-disclosure",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "EU AI Act high-risk oversight and fundamental-rights register",
         kind: "Register",
         content:

@@ -1171,6 +1171,78 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "eu-ai-act-administration-justice-adr-perimeter",
+    jurisdiction: "European Union",
+    regulator: "European Union",
+    sourceName: "Regulation (EU) 2024/1689 high-risk AI systems for administration of justice",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+    citation: "Regulation (EU) 2024/1689, Article 6(2), Articles 26-27, and Annex III point 8(a)",
+    topic: "ai-governance",
+    summary:
+      "Prepare administration-of-justice, alternative-dispute-resolution, role, human-oversight, logging, and fundamental-rights review evidence for EU AI legal workflow perimeter review without deciding high-risk status.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "legal operations ai workflow",
+      "ai-assisted matter intake",
+      "ai drafts issue-spotting",
+      "source-linked counsel questions",
+      "model-assisted legal",
+      "judicial authority",
+      "alternative dispute resolution",
+      "applying the law"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-ai-act-justice-adr-perimeter",
+        title: "EU AI Act justice and ADR perimeter evidence",
+        reason:
+          "EU AI legal workflow review needs intended-use, judicial-authority or on-behalf-of authority, ADR, legal-research, fact/law interpretation, concrete-fact application, provider/deployer role, and high-risk-perimeter evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "eu ai act justice",
+          "annex iii point 8",
+          "judicial authority",
+          "on behalf of judicial authority",
+          "alternative dispute resolution",
+          "legal research",
+          "interpreting facts and law",
+          "applying law to concrete facts",
+          "provider deployer role",
+          "high-risk perimeter"
+        ]
+      },
+      {
+        id: "eu-ai-act-high-risk-oversight-fria",
+        title: "EU AI Act high-risk oversight and fundamental-rights review evidence",
+        reason:
+          "If justice or ADR facts remain in scope, reviewers need deployer instructions, human oversight, logging, input-data controls, monitoring, escalation, fundamental-rights impact assessment routing, and output-use limits without raw matter text.",
+        priority: "P1",
+        keywords: [
+          "article 26 deployer obligations",
+          "article 27 fundamental rights",
+          "fundamental rights impact assessment",
+          "human oversight",
+          "input data relevance",
+          "logging",
+          "monitoring",
+          "incident escalation",
+          "output use limits",
+          "no raw matter text"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Do any EU AI workflow facts involve a judicial authority, work performed on behalf of a judicial authority, or a similar alternative-dispute-resolution use case that needs high-risk perimeter review?",
+      "What evidence shows human oversight, deployer instructions, logging, input-data boundaries, monitoring, escalation, and fundamental-rights review without exposing raw matter text or client identifiers?"
+    ],
+    localCounselRole: "EU AI Act high-risk / administration-of-justice counsel",
+    effectiveAsOf: "2024-08-01",
+    lastReviewedAt: "2026-07-06",
+    reviewerNotes:
+      "Source metadata reviewed against Regulation (EU) 2024/1689 Article 6(2), Articles 26-27, and Annex III point 8(a) for administration-of-justice, ADR, human-oversight, logging, and fundamental-rights evidence routing; route interpretation to EU local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "us-nist-ai-rmf-governance",
     jurisdiction: "United States",
     regulator: "National Institute of Standards and Technology",

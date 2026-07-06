@@ -479,6 +479,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "EU AI Act justice and ADR perimeter memo",
+        kind: "Memo",
+        content:
+          "Requested: document EU AI Act justice and ADR perimeter, Article 6(2), Annex III point 8(a), judicial authority or on-behalf-of judicial authority assumptions, alternative dispute resolution assumptions, legal research, interpreting facts and law, applying law to concrete facts, provider and deployer role, high-risk perimeter, counsel review owner, and no legal conclusion.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-administration-justice-adr-perimeter",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "EU AI Act high-risk oversight and fundamental-rights register",
+        kind: "Register",
+        content:
+          "Requested: document Article 26 deployer obligations, Article 27 fundamental rights impact assessment routing, deployer instructions, human oversight, input data relevance, logging, monitoring, incident escalation, output use limits, reviewer authority, and no raw matter text, client identifiers, credentials, or personal data.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-administration-justice-adr-perimeter",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "NIST GenAI output review and provenance register",
         kind: "Register",
         content:

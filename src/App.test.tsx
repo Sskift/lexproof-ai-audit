@@ -661,7 +661,7 @@ describe("App", () => {
       expect(
         within(routing).getByText(/Not legal advice. Local counsel routing plans are audit preparation workflow metadata only./i)
       ).toBeInTheDocument();
-      expect(within(routing).getAllByText(/US private offering \/ securities counsel/i).length).toBeGreaterThan(0);
+      expect(within(routing).getAllByText(/Prepare missing evidence for local counsel review/i).length).toBeGreaterThan(0);
       expect(within(routing).getByRole("button", { name: /Download Local Counsel Routing JSON/i })).toBeEnabled();
 
       fireEvent.click(within(routing).getByRole("button", { name: /Download Local Counsel Routing JSON/i }));
@@ -683,6 +683,9 @@ describe("App", () => {
         })
       );
       expect(parsed.routes.length).toBeGreaterThan(0);
+      expect(
+        parsed.routes.some((route: { localCounselRole?: string }) => route.localCounselRole === "US private offering / securities counsel")
+      ).toBe(true);
       expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b|raw KYC|private key/i);
 
       fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
@@ -1071,6 +1074,9 @@ describe("App", () => {
     expect(screen.getAllByText(/California CCPA \/ ADMT privacy counsel/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/California CCPA ADMT scope and risk-assessment evidence/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/California CCPA ADMT access, opt-out, and secure request evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Regulation \(EU\) 2024\/1689, Article 6\(2\), Articles 26-27, and Annex III point 8\(a\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU AI Act justice and ADR perimeter evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EU AI Act high-risk \/ administration-of-justice counsel/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   }, 20000);
 
@@ -3409,16 +3415,17 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Apply AI compliance workflow template/i }));
       fireEvent.click(await screen.findByRole("button", { name: /Sync Evidence Vault/i }));
 
-      expect(await screen.findByText(/Evidence Vault synced 12 records/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Evidence Vault synced 14 records/i)).toBeInTheDocument();
       const coverage = within(screen.getByRole("region", { name: /Evidence Vault Control Coverage/i }));
       expect(coverage.getByRole("heading", { name: /Evidence Vault Control Coverage/i })).toBeInTheDocument();
-      expect(coverage.getByText(/7 controls linked across 12 vault records and 12 manifest items/i)).toBeInTheDocument();
+      expect(coverage.getByText(/8 controls linked across 14 vault records and 14 manifest items/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-aba-formal-opinion-512-generative-ai-law-practice/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-nist-ai-rmf-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-nyc-local-law-144-aedt-employment-decision-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-colorado-admt-consequential-decision-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-us-california-ccpa-admt-consumer-rights-governance/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-eu-ai-act-ai-literacy-governance/i)).toBeInTheDocument();
+      expect(coverage.getByText(/control-eu-ai-act-administration-justice-adr-perimeter/i)).toBeInTheDocument();
       expect(coverage.getByText(/control-uk-ico-ai-data-protection-governance/i)).toBeInTheDocument();
       expect(coverage.getAllByText(/Needs review/i).length).toBeGreaterThan(0);
       expect(coverage.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
@@ -3433,12 +3440,13 @@ describe("App", () => {
       expect(screen.getByText(/control-us-colorado-admt-consequential-decision-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-us-california-ccpa-admt-consumer-rights-governance: needs-review/i)).toBeInTheDocument();
       expect(screen.getByText(/control-eu-ai-act-ai-literacy-governance: needs-review/i)).toBeInTheDocument();
+      expect(screen.getByText(/control-eu-ai-act-administration-justice-adr-perimeter: needs-review/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Move linked vault evidence through Human Review before export reliance/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/Not legal advice. Evidence Vault control coverage is audit preparation metadata only./i)).toBeInTheDocument();
       const checklist = within(screen.getByRole("region", { name: /Counsel Handoff Checklist/i }));
       expect(checklist.getByText(/Evidence Vault Control Coverage/i)).toBeInTheDocument();
-      expect(checklist.getByText(/0\/7 controls ready for handoff/i)).toBeInTheDocument();
-      expect(checklist.getByText(/needs review: 7/i)).toBeInTheDocument();
+      expect(checklist.getByText(/0\/8 controls ready for handoff/i)).toBeInTheDocument();
+      expect(checklist.getByText(/needs review: 8/i)).toBeInTheDocument();
       expect(checklist.getByText(/Move linked vault evidence through Human Review before export reliance/i)).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();

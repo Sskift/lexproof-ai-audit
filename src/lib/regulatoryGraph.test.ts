@@ -944,7 +944,7 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
-  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU, and UK AI legal workflow source controls without legal conclusions", () => {
+  it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU AI Act justice, and UK AI legal workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
 
@@ -956,6 +956,7 @@ describe("createRegulatoryGraph", () => {
         "us-colorado-admt-consequential-decision-governance",
         "us-california-ccpa-admt-consumer-rights-governance",
         "eu-ai-act-ai-literacy-governance",
+        "eu-ai-act-administration-justice-adr-perimeter",
         "uk-ico-ai-data-protection-governance"
       ])
     );
@@ -1015,6 +1016,15 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "missing",
       localCounselRole: "EU AI governance / data protection counsel"
     });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-administration-justice-adr-perimeter")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+      citation: "Regulation (EU) 2024/1689, Article 6(2), Articles 26-27, and Annex III point 8(a)",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "EU AI Act high-risk / administration-of-justice counsel"
+    });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "uk-ico-ai-data-protection-governance")).toMatchObject({
       jurisdiction: "United Kingdom",
       sourceUrl:
@@ -1036,6 +1046,8 @@ describe("createRegulatoryGraph", () => {
         "California CCPA ADMT access, opt-out, and secure request evidence",
         "EU AI use policy and human oversight evidence",
         "EU AI source lineage and risk-control evidence",
+        "EU AI Act justice and ADR perimeter evidence",
+        "EU AI Act high-risk oversight and fundamental-rights review evidence",
         "UK AI data-protection and redaction evidence",
         "UK AI explainability and reviewer decision log"
       ])
@@ -1070,6 +1082,15 @@ describe("createRegulatoryGraph", () => {
       coverageStatus: "covered",
       coveredEvidenceCount: 2,
       totalEvidenceRequestCount: 2
+    });
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-administration-justice-adr-perimeter")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "EU AI Act justice and ADR perimeter memo",
+        "EU AI Act high-risk oversight and fundamental-rights register"
+      ])
     });
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-nist-ai-rmf-governance")).toMatchObject({
       coverageStatus: "covered",
@@ -1120,6 +1141,7 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "us-colorado-admt-consequential-decision-governance" }),
         expect.objectContaining({ clauseId: "us-california-ccpa-admt-consumer-rights-governance" }),
         expect.objectContaining({ clauseId: "eu-ai-act-ai-literacy-governance" }),
+        expect.objectContaining({ clauseId: "eu-ai-act-administration-justice-adr-perimeter" }),
         expect.objectContaining({ clauseId: "uk-ico-ai-data-protection-governance" })
       ])
     );
@@ -1933,6 +1955,7 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining([
         "us-nist-ai-rmf-governance",
         "eu-ai-act-ai-literacy-governance",
+        "eu-ai-act-administration-justice-adr-perimeter",
         "uk-ico-ai-data-protection-governance"
       ])
     );

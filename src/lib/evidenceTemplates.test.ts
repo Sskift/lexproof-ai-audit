@@ -195,6 +195,8 @@ describe("evidence templates", () => {
         "Colorado ADMT notice and meaningful human review register",
         "California CCPA ADMT scope and risk assessment register",
         "California CCPA ADMT access and opt-out workflow register",
+        "EU AI Act justice and ADR perimeter memo",
+        "EU AI Act high-risk oversight and fundamental-rights register",
         "US legal AI ethics and professional responsibility register"
       ])
     );
@@ -204,6 +206,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-us-colorado-admt-consequential-decision-governance");
     expect(serializedSources).toContain("regulatory control: control-us-california-ccpa-admt-consumer-rights-governance");
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");
+    expect(serializedSources).toContain("regulatory control: control-eu-ai-act-administration-justice-adr-perimeter");
     expect(serializedSources).toContain("regulatory control: control-uk-ico-ai-data-protection-governance");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("private key");

@@ -400,6 +400,7 @@ describe("createExportSafetyInventory", () => {
         status: "ready",
         required: false,
         available: true,
+        artifactHash: auditLogExport.exportHash,
         metadataOnly: true,
         rawContentIncluded: false,
         recoveryAction: "Keep Audit Log Export JSON with the secure review handoff packet.",
@@ -408,6 +409,7 @@ describe("createExportSafetyInventory", () => {
     );
     expect(artifact?.warnings).toEqual([]);
     expect(artifact?.blockers).toEqual([]);
+    expect(artifact?.artifactHash).toMatch(/^[a-f0-9]{64}$/);
     expect(exportSafetyInventoryJson(inventory)).toContain("Audit Log Export JSON");
   });
 

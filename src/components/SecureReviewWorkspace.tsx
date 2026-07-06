@@ -356,6 +356,7 @@ function AuditLogExplorerPanel({
         <span className="workflow-status complete">{exportRecord.eventCount} events</span>
       </div>
       <p className="section-note">{exportRecord.notLegalAdviceBoundary}</p>
+      <p className="section-note">{exportRecord.integritySummary}</p>
       <div className="audit-log-filter-grid">
         <label>
           <span>Audit log actor</span>
@@ -415,6 +416,9 @@ function AuditLogExplorerPanel({
       ) : null}
       <div className="run-facts audit-log-facts">
         <JourneyFact label="Audit events" value={String(exportRecord.eventCount)} />
+        <JourneyFact label="Audit export hash" value={shortHash(exportRecord.exportHash)} />
+        <JourneyFact label="Integrity chain" value={shortHash(exportRecord.integrityChainHash)} />
+        <JourneyFact label="Integrity status" value={exportRecord.integrityStatus} />
         <JourneyFact label="Last audit action" value={latestAction} />
         <JourneyFact label="Audit actors" value={exportRecord.actors.join(", ") || "none"} />
         <JourneyFact label="Target types" value={exportRecord.targetTypes.join(", ") || "none"} />
@@ -434,6 +438,7 @@ function AuditLogExplorerPanel({
               <small>
                 before {shortHash(event.beforeHash)} · after {shortHash(event.afterHash)}
               </small>
+              <small>entry {shortHash(event.entryHash)}</small>
             </article>
           ))
         ) : (

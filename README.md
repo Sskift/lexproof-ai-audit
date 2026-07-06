@@ -461,7 +461,7 @@ Server Model Run Ledger refreshes persisted Model Gateway run summaries from `GE
 
 ![Model Run Receipt Download](docs/assets/screenshots/model-run-receipt-download.png)
 
-Server Audit Log Explorer turns Secure Review Journey audit-log records into a metadata-only timeline with actors, action counts, targets, before/after hashes, JSON download, and Phase 2 API refresh filters for actor, action, target type, and target ID. Not legal advice.
+Server Audit Log Explorer turns Secure Review Journey audit-log records into a metadata-only timeline with actors, action counts, targets, before/after hashes, per-event entry hashes, a stable export hash, an integrity chain hash, JSON download, and Phase 2 API refresh filters for actor, action, target type, and target ID. Not legal advice.
 
 ![Server Audit Log Explorer](docs/assets/screenshots/server-audit-log-explorer.png)
 

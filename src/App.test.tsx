@@ -4025,6 +4025,9 @@ describe("App", () => {
       expect(screen.getByText(/Audit log events 4/i)).toBeInTheDocument();
       const auditLogExplorer = within(screen.getByRole("region", { name: /Server Audit Log Explorer/i }));
       expect(auditLogExplorer.getByRole("heading", { name: /Server Audit Log Explorer/i })).toBeInTheDocument();
+      expect(auditLogExplorer.getByText(/Audit export hash [a-f0-9]{12}/i)).toBeInTheDocument();
+      expect(auditLogExplorer.getByText(/Integrity chain [a-f0-9]{12}/i)).toBeInTheDocument();
+      expect(auditLogExplorer.getByText(/Integrity status verified/i)).toBeInTheDocument();
       expect(screen.getByText(/Last audit action model.run.human-review-queued/i)).toBeInTheDocument();
       expect(screen.getByText(/Audit actors Compliance/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Download Audit Log JSON/i })).toBeInTheDocument();
@@ -4069,6 +4072,7 @@ describe("App", () => {
         expect(exportInventory.getByText("Keep Audit Log Export JSON with the secure review handoff packet.")).toBeInTheDocument();
       });
       expect(exportInventory.getAllByText(/Hash dddddddddddd/i).length).toBeGreaterThan(0);
+      expect(exportInventory.getAllByText(/Hash [a-f0-9]{12}/i).length).toBeGreaterThan(1);
       expect(screen.getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;

@@ -87,7 +87,7 @@ lexproof-ai-audit/
       grcDestinationPolicy.ts # Metadata-only GRC destination policy readiness reports and JSON export
       grcDestinationPolicyClient.ts # Browser client for GRC destination policy evaluation
       modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
-      auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts
+      auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts with integrity digest hashes
       integrationEnablementDossier.ts # Hashed metadata-only adapter/policy enablement dossier
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
@@ -960,7 +960,7 @@ Human review records are not signed legal opinions. They track audit preparation
 
 Audit logs are review metadata. They are not real chain anchors, signed approvals, or legal conclusions.
 
-`src/lib/auditLogFilters.ts` normalizes and validates server audit-log query filters for actor, action, target type, and target ID. `server/auditLogRoutes.ts` lists persisted audit-log records for a workspace through the repository and applies those filters while returning typed errors for unsupported filter values. Audit-log export shaping stays in `src/lib/auditLogExport.ts`; the route returns stored metadata records and does not expose raw evidence, raw model payloads, credentials, or legal conclusions.
+`src/lib/auditLogFilters.ts` normalizes and validates server audit-log query filters for actor, action, target type, and target ID. `server/auditLogRoutes.ts` lists persisted audit-log records for a workspace through the repository and applies those filters while returning typed errors for unsupported filter values. Audit-log export shaping stays in `src/lib/auditLogExport.ts`; it derives per-event entry hashes, a stable export hash, and an integrity chain hash from redacted metadata only. The route returns stored metadata records and does not expose raw evidence, raw model payloads, credentials, or legal conclusions.
 
 `server/reviewWorkspaceRepository.ts` provides both an in-memory adapter for tests and a Prisma/SQLite adapter for the API process. The Prisma schema covers only `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, `CounselPackExportRecord`, and `AuditLogRecord`.
 

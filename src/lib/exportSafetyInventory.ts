@@ -462,6 +462,7 @@ export function createAuditLogExportArtifact(
     exportMode: "metadata-only-json",
     required: false,
     available: hasExport,
+    artifactHash: auditLogExport?.exportHash,
     metadataOnly: true,
     rawContentIncluded: false,
     blockers: createAuditLogExportBlockers(auditLogExport),

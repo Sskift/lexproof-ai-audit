@@ -52,11 +52,16 @@ describe("createAuditLogExport", () => {
       actors: ["Compliance"],
       targetTypes: ["integration-policy", "model-run", "workspace"],
       dataBoundaryStatus: "clean",
+      integrityStatus: "verified",
       exportAllowed: true,
       boundaryBlockerCount: 0,
       boundaryWarningCount: 0,
       detectedClasses: []
     });
+    expect(exportRecord.exportHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exportRecord.integrityChainHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exportRecord.integritySummary).toContain("metadata-only event hashes");
+    expect(exportRecord.events.every((event) => /^[a-f0-9]{64}$/.test(event.entryHash))).toBe(true);
     expect(exportRecord.events.map((event) => event.id)).toEqual(["audit-log-1", "audit-log-2", "audit-log-3", "audit-log-4"]);
     expect(exportRecord.events[0].afterHash).toBe(afterHash);
     expect(exportRecord.events.at(-1)).toEqual(
@@ -67,6 +72,44 @@ describe("createAuditLogExport", () => {
       })
     );
     expect(exportRecord.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
+  it("keeps export and integrity chain hashes stable when only export time changes", () => {
+    const records = [
+      createRecord({ id: "audit-log-2", createdAt: "2026-06-30T00:00:02.000Z", action: "model.run.created" }),
+      createRecord({ id: "audit-log-1", createdAt: "2026-06-30T00:00:01.000Z", action: "workspace.created" })
+    ];
+    const first = createAuditLogExport({
+      workspaceId: "workspace-audit-export",
+      records,
+      exportedAt: "2026-06-30T00:01:00.000Z"
+    });
+    const second = createAuditLogExport({
+      workspaceId: "workspace-audit-export",
+      records: records.slice().reverse(),
+      exportedAt: "2026-06-30T00:02:00.000Z"
+    });
+
+    expect(first.exportHash).toBe(second.exportHash);
+    expect(first.integrityChainHash).toBe(second.integrityChainHash);
+    expect(first.events.map((event) => event.entryHash)).toEqual(second.events.map((event) => event.entryHash));
+  });
+
+  it("changes export and integrity chain hashes when event metadata changes", () => {
+    const first = createAuditLogExport({
+      workspaceId: "workspace-audit-export",
+      records: [createRecord({ id: "audit-log-1", summary: "Created secure review workspace." })],
+      exportedAt: "2026-06-30T00:01:00.000Z"
+    });
+    const second = createAuditLogExport({
+      workspaceId: "workspace-audit-export",
+      records: [createRecord({ id: "audit-log-1", summary: "Created secure review workspace with updated metadata." })],
+      exportedAt: "2026-06-30T00:01:00.000Z"
+    });
+
+    expect(first.events[0].entryHash).not.toBe(second.events[0].entryHash);
+    expect(first.integrityChainHash).not.toBe(second.integrityChainHash);
+    expect(first.exportHash).not.toBe(second.exportHash);
   });
 
   it("redacts secret-like text from summaries and identifiers before JSON export", () => {
@@ -87,6 +130,7 @@ describe("createAuditLogExport", () => {
     expect(exportRecord).toEqual(
       expect.objectContaining({
         dataBoundaryStatus: "blocked",
+        integrityStatus: "blocked",
         exportAllowed: false,
         boundaryBlockerCount: 7,
         boundaryWarningCount: 1,
@@ -130,6 +174,7 @@ describe("createAuditLogExport", () => {
     expect(exportRecord).toEqual(
       expect.objectContaining({
         dataBoundaryStatus: "needs-review",
+        integrityStatus: "needs-review",
         exportAllowed: true,
         boundaryBlockerCount: 0,
         boundaryWarningCount: 2,
@@ -154,6 +199,10 @@ describe("createAuditLogExport", () => {
     });
 
     expect(exportRecord.eventCount).toBe(0);
+    expect(exportRecord.exportHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exportRecord.integrityChainHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exportRecord.integrityStatus).toBe("empty");
+    expect(exportRecord.integritySummary).toContain("No server audit log events are available yet");
     expect(exportRecord.events).toEqual([]);
     expect(exportRecord.actionCounts).toEqual({});
     expect(exportRecord.firstEventAt).toBeUndefined();

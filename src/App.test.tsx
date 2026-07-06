@@ -1174,6 +1174,28 @@ describe("App", () => {
     expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
   });
 
+  it("starts the Hong Kong SFC tokenised product scenario with primary and secondary trading evidence gaps", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Start Hong Kong tokenised product review/i }));
+
+    expect(screen.getByLabelText(/Project name/i)).toHaveValue("HarborYield Tokenised Product Review");
+    expect(await screen.findByRole("heading", { name: /Jurisdiction Checklist/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Risk Audit/i }));
+
+    expect(
+      screen.getAllByText(
+        /SFC Circular Ref\. 26EC22, Tokenisation of SFC-authorised investment products, 20 April 2026; SFC Circular Ref\. 26EC23, Secondary trading of tokenised SFC-authorised investment products, 20 April 2026/i
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong SFC tokenised product authorisation and consultation evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong SFC tokenisation arrangement, ownership-record, and smart-contract evidence/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hong Kong SFC secondary trading fair-pricing, liquidity, and disclosure evidence/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Stablecoins Ordinance \(Cap\. 656\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/SFC Guidelines for Virtual Asset Trading Platform Operators, Part X/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Not legal advice. Regulatory graph output is audit preparation material only./i)).toBeInTheDocument();
+  });
+
   it("starts the Japan crypto custody scenario with FSA custody evidence gaps", async () => {
     render(<App />);
 

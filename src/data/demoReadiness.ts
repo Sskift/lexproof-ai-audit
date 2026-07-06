@@ -10,6 +10,7 @@ export const demoReadinessScreenshotRefs = [
   "docs/assets/screenshots/eu-ai-act-article-50-transparency-source-control.png",
   "docs/assets/screenshots/singapore-dpt-custody-source-graph.png",
   "docs/assets/screenshots/hong-kong-stablecoin-source-graph.png",
+  "docs/assets/screenshots/hong-kong-tokenised-product-source-graph.png",
   "docs/assets/screenshots/japan-crypto-custody-source-graph.png",
   "docs/assets/screenshots/canada-ctp-custody-source-graph.png",
   "docs/assets/screenshots/australia-digital-asset-source-graph.png",

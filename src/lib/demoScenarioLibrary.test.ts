@@ -354,6 +354,33 @@ describe("validateDemoScenarioLibrary", () => {
     expect(hongKongStablecoinScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
   });
 
+  it("keeps a seeded Hong Kong SFC tokenised product path for authorised product and secondary trading source demos", () => {
+    const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
+    const hongKongTokenisedProductScenario = findDemoScenarioById(
+      demoScenarios,
+      "hong-kong-tokenised-product-source-path"
+    );
+
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect(hongKongTokenisedProductScenario).toEqual(
+      expect.objectContaining({
+        title: "Hong Kong tokenised product review",
+        projectName: "HarborYield Tokenised Product Review",
+        recommendedStartTab: "jurisdiction",
+        focusTags: expect.arrayContaining(["Hong Kong", "SFC", "Tokenised products", "Secondary trading", "RWA"]),
+        expectedArtifacts: expect.arrayContaining(["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"])
+      })
+    );
+    expect(hongKongTokenisedProductScenario?.judgePath).toEqual(
+      expect.arrayContaining([
+        "Inspect SFC tokenised product source controls",
+        "Review authorisation, prior consultation, and ownership-record evidence gaps",
+        "Export counsel pack"
+      ])
+    );
+    expect(hongKongTokenisedProductScenario?.notLegalAdviceBoundary).toContain("Not legal advice");
+  });
+
   it("keeps a seeded Japan crypto custody path for FSA source demos", () => {
     const result = validateDemoScenarioLibrary(demoScenarios, sampleProfiles);
     const japanScenario = findDemoScenarioById(demoScenarios, "japan-crypto-custody-source-path");

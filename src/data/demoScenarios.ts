@@ -238,6 +238,24 @@ export const demoScenarios: DemoScenario[] = [
     notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
   },
   {
+    id: "hong-kong-tokenised-product-source-path",
+    projectName: "HarborYield Tokenised Product Review",
+    title: "Hong Kong tokenised product review",
+    summary:
+      "Hong Kong SFC tokenised authorised investment product and secondary-trading review with ownership records, smart-contract integrity, prior consultation, price-deviation alert, indicative NAV, market-maker, liquidity, disclosure, and counsel handoff evidence gaps.",
+    estimatedMinutes: 6,
+    recommendedStartTab: "jurisdiction",
+    judgePath: [
+      "Inspect SFC tokenised product source controls",
+      "Review authorisation, prior consultation, and ownership-record evidence gaps",
+      "Check secondary-trading fair-pricing, liquidity, disclosure, and notification evidence",
+      "Export counsel pack"
+    ],
+    expectedArtifacts: ["Regulatory Source Graph", "Regulatory Source Pack", "Counsel Pack Markdown"],
+    focusTags: ["Hong Kong", "SFC", "Tokenised products", "Secondary trading", "RWA"],
+    notLegalAdviceBoundary: DEMO_SCENARIO_BOUNDARY
+  },
+  {
     id: "japan-crypto-custody-source-path",
     projectName: "SakuraKey Crypto Custody Review",
     title: "Japan crypto custody review",

@@ -16,7 +16,21 @@ export const evidenceTemplates: EvidenceTemplate[] = [
     title: "Tokenized Yield / RWA Issuance",
     shortLabel: "tokenized yield / RWA",
     description: "Disclosure, eligibility, custody, and anchor evidence requests for tokenized yield or RWA launch review.",
-    triggerKeywords: ["yield", "rwa", "tokenized", "private credit", "note", "stablecoin", "fiat-referenced", "custody", "retail"],
+    triggerKeywords: [
+      "yield",
+      "rwa",
+      "tokenized",
+      "tokenised",
+      "private credit",
+      "note",
+      "stablecoin",
+      "fiat-referenced",
+      "custody",
+      "retail",
+      "sfc-authorised",
+      "sfc-authorized",
+      "secondary trading"
+    ],
     notLegalAdviceBoundary: "Not legal advice. These are evidence requests for counsel and compliance audit preparation.",
     items: [
       {
@@ -136,6 +150,36 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: summarize HKMA stablecoin reserve assets, full backing, redemption, reserve safekeeping, qualified custodian, attestation, reporting, supervisory guideline, AML CFT, ML TF risk assessment, customer due diligence, blockchain analytics, unhosted wallets, suspicious transaction reporting, record keeping, complaints handling, reviewer owner, and no raw KYC, credentials, wallet secrets, customer records, or personal data.",
         source:
           "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-hk-hkma-stablecoin-issuer-regime",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Hong Kong SFC tokenised product authorisation and consultation register",
+        kind: "Register",
+        content:
+          "Requested: summarize SFC-authorised investment product or SFC-authorized investment product scope, tokenised product or tokenized product structure, new or existing product status, product authorisation or authorization assumptions, prior consultation, prior approval, case team handoff, material-change owner, and no-legal-conclusion boundary.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-hk-sfc-tokenised-investment-products-secondary-trading",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "Hong Kong SFC tokenisation ownership and smart-contract control register",
+        kind: "Register",
+        content:
+          "Requested: summarize token-holder ownership records, operational soundness, service-provider compatibility, cybersecurity, data privacy, outage recovery, business continuity, smart contract integrity, permissioned control, third-party audit or verification owner, competent staff owner, and no wallet secrets, raw investor records, credentials, or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-hk-sfc-tokenised-investment-products-secondary-trading",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Hong Kong SFC secondary trading fair-pricing and liquidity register",
+        kind: "Register",
+        content:
+          "Requested: summarize secondary trading channel, pre-launch testing, price deviation alert, indicative NAV, last NAV, market maker and liquidity arrangements, trading suspension workflow, investor risk disclosure, client confirmation, notification workflow, contingency plan, and no raw investor records or personal data.",
+        source:
+          "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-hk-sfc-tokenised-investment-products-secondary-trading",
         status: "requested",
         owner: "Compliance"
       },

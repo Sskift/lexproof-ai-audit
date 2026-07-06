@@ -2156,6 +2156,102 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "hk-sfc-tokenised-investment-products-secondary-trading",
+    jurisdiction: "Hong Kong",
+    regulator: "Securities and Futures Commission of Hong Kong",
+    sourceName: "SFC tokenisation of authorised investment products and secondary trading circulars",
+    sourceUrl: "https://apps.sfc.hk/edistributionWeb/api/circular/list-content/circular/doc?lang=EN&refNo=26EC22",
+    citation:
+      "SFC Circular Ref. 26EC22, Tokenisation of SFC-authorised investment products, 20 April 2026; SFC Circular Ref. 26EC23, Secondary trading of tokenised SFC-authorised investment products, 20 April 2026",
+    topic: "activity-scope",
+    summary:
+      "Prepare Hong Kong tokenised SFC-authorised investment product, ownership-record, tokenisation-control, disclosure, consultation, and secondary-trading evidence for SFC counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "tokenised sfc-authorised investment product",
+      "tokenized sfc-authorised investment product",
+      "tokenised sfc-authorized investment product",
+      "tokenized sfc-authorized investment product",
+      "sfc-authorised investment product",
+      "sfc-authorized investment product",
+      "tokenised fund",
+      "tokenized fund",
+      "tokenised product",
+      "tokenized product",
+      "secondary trading",
+      "price deviation alert",
+      "indicative nav"
+    ],
+    evidenceRequests: [
+      {
+        id: "hk-sfc-tokenised-product-authorisation-consultation",
+        title: "Hong Kong SFC tokenised product authorisation and consultation evidence",
+        reason:
+          "Hong Kong tokenised-product review needs underlying product authorisation assumptions, new or existing product status, prior consultation or approval route, SFC case-team handoff, and no-legal-conclusion boundary before counsel reliance.",
+        priority: "P1",
+        keywords: [
+          "sfc-authorised investment product",
+          "sfc-authorized investment product",
+          "tokenised product",
+          "tokenized product",
+          "prior consultation",
+          "prior approval",
+          "case team",
+          "product authorisation",
+          "product authorization"
+        ]
+      },
+      {
+        id: "hk-sfc-tokenisation-arrangement-ownership-controls",
+        title: "Hong Kong SFC tokenisation arrangement, ownership-record, and smart-contract evidence",
+        reason:
+          "Product-provider review needs token-holder ownership recordkeeping, operational soundness, service-provider compatibility, cybersecurity, data privacy, outage recovery, business-continuity, smart-contract integrity, and permissioned-control evidence without wallet secrets.",
+        priority: "P1",
+        keywords: [
+          "ownership records",
+          "token holder",
+          "token-holder",
+          "operational soundness",
+          "cybersecurity",
+          "data privacy",
+          "business continuity",
+          "smart contract integrity",
+          "permissioned control"
+        ]
+      },
+      {
+        id: "hk-sfc-secondary-trading-fair-pricing-liquidity-disclosure",
+        title: "Hong Kong SFC secondary trading fair-pricing, liquidity, and disclosure evidence",
+        reason:
+          "Secondary-trading review needs trading-channel scope, pre-launch testing, price-deviation alert, indicative NAV, market-maker and liquidity arrangements, trading suspension workflow, investor risk disclosure, client confirmation, notification, and contingency-plan evidence.",
+        priority: "P1",
+        keywords: [
+          "secondary trading",
+          "pre-launch testing",
+          "price deviation alert",
+          "indicative nav",
+          "market maker",
+          "liquidity",
+          "trading suspension",
+          "risk disclosure",
+          "client confirmation",
+          "contingency plan"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which Hong Kong SFC-authorised product, tokenisation feature, prior consultation, prior approval, or material-change assumptions should SFC products counsel review?",
+      "What evidence shows ownership recordkeeping, operational soundness, smart-contract integrity, and permissioned controls without exposing wallet secrets or raw investor records?",
+      "What secondary-trading evidence shows price-deviation alerts, indicative NAV, market making, liquidity, disclosure, client confirmation, and notification workflows before public reliance?"
+    ],
+    localCounselRole: "Hong Kong SFC tokenised products counsel",
+    effectiveAsOf: "2026-04-20",
+    lastReviewedAt: "2026-07-06",
+    reviewerNotes:
+      "Source metadata reviewed against SFC Circular Ref. 26EC22 on tokenisation of SFC-authorised investment products and official SFC Circular Ref. 26EC23 PDF on secondary trading for product-provider responsibility, ownership recordkeeping, cybersecurity/data-privacy/BCP controls, smart-contract integrity, consultation/approval routing, price-deviation alert, indicative NAV, market-maker, disclosure, client-confirmation, notification, and contingency evidence; route interpretation to Hong Kong SFC products counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "hk-hkma-stablecoin-issuer-regime",
     jurisdiction: "Hong Kong",
     regulator: "Hong Kong Monetary Authority",
@@ -2177,7 +2273,6 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
       "hkma license",
       "regulated stablecoin activity",
       "reserve assets",
-      "redemption",
       "stablecoin manager"
     ],
     evidenceRequests: [

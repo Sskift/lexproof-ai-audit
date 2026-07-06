@@ -2285,6 +2285,105 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches Hong Kong SFC tokenised product controls without pulling in VATP custody or HKMA stablecoin controls", () => {
+    const hongKongTokenisedProductProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-hk-tokenised-product",
+      projectName: "HarborYield Tokenised Product Review",
+      jurisdictions: ["Hong Kong"],
+      entityType: "SFC-authorised investment product provider",
+      assetModel:
+        "Tokenised SFC-authorised investment product with primary subscription and redemption, ownership records, smart contract integrity review, price deviation alert planning, indicative NAV display, market maker and liquidity assumptions, and secondary trading readiness",
+      userType: "Hong Kong retail and professional investors, regulated distributors, product provider reviewers, and local counsel",
+      custodyModel:
+        "Product provider remains responsible for tokenisation arrangement and token-holder ownership recordkeeping; trading-channel records are metadata-only in the demo",
+      dataSensitivity: "Investor onboarding status summaries, token-holder ownership metadata, trading-interface test results, and risk-disclosure acknowledgements excluded",
+      aiUsage: "AI drafts tokenised product evidence summaries for human review and Hong Kong SFC products counsel routing",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-launch SFC tokenisation and secondary-trading review before public reliance",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(hongKongTokenisedProductProject);
+    const graph = createRegulatoryGraph(hongKongTokenisedProductProject, audit, hongKongTokenisedProductProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["hk-sfc-tokenised-investment-products-secondary-trading"])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["hk-sfc-vatp-client-asset-custody", "hk-hkma-stablecoin-issuer-regime"])
+    );
+    expect(
+      graph.matchedClauses.find((clause) => clause.clauseId === "hk-sfc-tokenised-investment-products-secondary-trading")
+    ).toMatchObject({
+      jurisdiction: "Hong Kong",
+      regulator: "Securities and Futures Commission of Hong Kong",
+      citation:
+        "SFC Circular Ref. 26EC22, Tokenisation of SFC-authorised investment products, 20 April 2026; SFC Circular Ref. 26EC23, Secondary trading of tokenised SFC-authorised investment products, 20 April 2026",
+      sourceUrl: "https://apps.sfc.hk/edistributionWeb/api/circular/list-content/circular/doc?lang=EN&refNo=26EC22",
+      topic: "activity-scope",
+      coverageStatus: "missing",
+      localCounselRole: "Hong Kong SFC tokenised products counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "Hong Kong SFC tokenised product authorisation and consultation evidence",
+        "Hong Kong SFC tokenisation arrangement, ownership-record, and smart-contract evidence",
+        "Hong Kong SFC secondary trading fair-pricing, liquidity, and disclosure evidence"
+      ])
+    );
+    expect(graph.jurisdictionSummaries.find((summary) => summary.jurisdiction === "Hong Kong")).toMatchObject({
+      matchedClauseCount: 1,
+      missingEvidenceCount: 3,
+      readiness: "evidence-gaps",
+      localCounselRole: "Hong Kong SFC tokenised products counsel"
+    });
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks Hong Kong SFC tokenised product controls covered when RWA tokenisation template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `hk-tokenised-product-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const hongKongTokenisedProductProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-hk-tokenised-product-covered",
+      jurisdictions: ["Hong Kong"],
+      entityType: "SFC-authorised investment product provider",
+      assetModel:
+        "Tokenised SFC-authorised investment product with ownership records, smart contract integrity review, price deviation alert planning, indicative NAV display, market maker and liquidity assumptions, and secondary trading readiness",
+      userType: "Hong Kong retail and professional investors, regulated distributors, product provider reviewers, and local counsel",
+      custodyModel: "Product provider owns tokenisation arrangement and ownership recordkeeping; no raw investor records in demo",
+      dataSensitivity: "Investor onboarding status summaries and token-holder ownership metadata excluded from exported demo evidence",
+      aiUsage: "AI drafts Hong Kong SFC tokenised product evidence summaries for human review",
+      blockchainUse: "Simulated evidence anchor only",
+      operatingStage: "Pre-launch SFC tokenisation and secondary-trading review before counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(hongKongTokenisedProductProject);
+    const graph = createRegulatoryGraph(hongKongTokenisedProductProject, audit, hongKongTokenisedProductProject.evidenceItems);
+
+    expect(
+      graph.matchedClauses.find((clause) => clause.clauseId === "hk-sfc-tokenised-investment-products-secondary-trading")
+    ).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 3,
+      totalEvidenceRequestCount: 3,
+      matchedEvidenceLabels: expect.arrayContaining([
+        "Hong Kong SFC tokenised product authorisation and consultation register",
+        "Hong Kong SFC tokenisation ownership and smart-contract control register",
+        "Hong Kong SFC secondary trading fair-pricing and liquidity register"
+      ])
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clauseId: "hk-sfc-tokenised-investment-products-secondary-trading" })
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks Singapore DPT safeguarding controls covered when RWA custody template evidence is verified", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,

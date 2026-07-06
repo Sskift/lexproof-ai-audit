@@ -318,6 +318,40 @@ export const sampleProfiles: AuditProfile[] = [
     ]
   },
   {
+    projectName: "HarborYield Tokenised Product Review",
+    entityType: "SFC-authorised investment product provider",
+    jurisdictions: ["Hong Kong"],
+    assetModel:
+      "Tokenised SFC-authorised investment product with primary subscription and redemption, token-holder ownership records, smart-contract integrity review, price deviation alert planning, indicative NAV display, market-maker and liquidity assumptions, and secondary trading readiness",
+    userType: "Hong Kong retail and professional investors, regulated distributors, product provider reviewers, and local counsel",
+    custodyModel:
+      "Product provider remains responsible for tokenisation arrangement and ownership recordkeeping; trading-channel and distributor records are metadata-only in the demo",
+    dataSensitivity:
+      "Investor onboarding status summaries, token-holder ownership metadata, trading-interface test results, and risk-disclosure acknowledgements excluded from default exports",
+    aiUsage: "AI drafts tokenised product evidence summaries for human review and Hong Kong SFC products counsel routing",
+    blockchainUse: "Simulated manifest anchor for metadata-only tokenised product counsel handoff",
+    operatingStage: "Pre-launch SFC tokenisation and secondary-trading review before public reliance",
+    evidenceItems: [
+      {
+        label: "SFC tokenisation source inventory",
+        kind: "CSV",
+        content: "Official-source citation, review date, reviewer notes, and next review date."
+      },
+      {
+        label: "Tokenisation arrangement scope note",
+        kind: "Markdown",
+        content:
+          "Synthetic product scope, ownership-record assumptions, operational-control owner, and counsel handoff timing; detailed control evidence remains requested."
+      },
+      {
+        label: "Market-structure readiness backlog",
+        kind: "Checklist",
+        content:
+          "Synthetic market-structure owners and unresolved launch-control placeholders; detailed official-source evidence remains requested without raw investor records."
+      }
+    ]
+  },
+  {
     projectName: "SakuraKey Crypto Custody Review",
     entityType: "Crypto-asset exchange custody operations team",
     jurisdictions: ["Japan"],

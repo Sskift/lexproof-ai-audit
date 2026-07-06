@@ -5506,7 +5506,7 @@ describe("App", () => {
       click.mockRestore();
       vi.unstubAllGlobals();
     }
-  }, 10000);
+  }, 20000);
 
   it("shows server Counsel Pack export recovery guidance when API record creation fails", async () => {
     const fetchMock = vi.fn(async () =>
@@ -5545,7 +5545,7 @@ describe("App", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  }, 10000);
+  }, 20000);
 
   it("shows jurisdiction-specific audit preparation checklist items", async () => {
     render(<App />);

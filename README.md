@@ -74,7 +74,7 @@ Key evidence:
 - Jurisdiction Packs with policy controls, evidence-ready status, and local-counsel routing for US, EU, UK, Singapore, Hong Kong, Japan, Canada, Australia, South Korea, India, Thailand, Indonesia, Malaysia, Philippines, South Africa, Germany, Switzerland, UAE, Brazil, and fallback jurisdictions.
 - Weighted legal/compliance risk audit with explicit flags, owner assignments, source links, “why this flag triggered” issue cards, per-risk evidence workflow coverage, and one-click missing evidence requests.
 - Editable Evidence Ledger with empty-state Evidence Intake Guidance, `draft/requested/received/under-review/verified/rejected` evidence status, owner, source notes, manual Evidence Draft Boundary Preview, local file SHA-256 metadata intake with pre-hash metadata boundary blocking for raw KYC, credentials, and private-key-like filenames, visible edit labels, long-row wrapping, item hashes, manifest bundle hash, Manifest Drift Guard, and local evidence change trail.
-- Evidence Retention Readiness panel that classifies metadata-only evidence, personal-data review needs, and vault-sync blockers for private-key-like material, API keys, and raw KYC references with metadata-only retention policy JSON plus a hashed remediation queue JSON export.
+- Evidence Retention Readiness panel that classifies metadata-only evidence, personal-data review needs, and vault-sync blockers for private-key-like material, API keys, and raw KYC references with metadata-only retention policy JSON, hashed remediation queue JSON, and Evidence Disposal Runbook JSON exports.
 - Evidence Recertification Queue that flags stale or expiring reliance-ready evidence from metadata timestamps, prioritizes source-linked controls, lets a reviewer mark evidence recertified, and downloads a metadata-only hashed queue. Not legal advice.
 - Evidence Vault versioning with duplicate-hash detection, rejected-record replacement, parent/superseded lineage, replacement reasons, linked regulatory control IDs, server-side persisted metadata manifests, downloadable Evidence Vault Lineage Digest JSON, server-enforced status transitions, local `under-review/rejected` ledger sync, and metadata-only recovery actions.
 - Evidence Templates for tokenized yield/RWA issuance, DAO governance/multisig execution, and AI legal/compliance workflows.
@@ -333,7 +333,7 @@ Source Evidence Gap Triage can request metadata-only Evidence Ledger items from 
 
 ![Source gap idempotent Evidence Ledger request](docs/assets/screenshots/source-gap-idempotent-request.png)
 
-Evidence Retention Readiness blocks Evidence Vault sync when evidence contains private-key-like material, API-key-like credentials, or raw KYC references, then builds a hashed Evidence Retention Remediation Queue with P0/P1/P2 actions and JSON export. Not legal advice.
+Evidence Retention Readiness blocks Evidence Vault sync when evidence contains private-key-like material, API-key-like credentials, or raw KYC references, then builds a hashed Evidence Retention Remediation Queue and Evidence Disposal Runbook with P0/P1/P2 actions, reviewer verification steps, no raw evidence, no performed deletion claim, and JSON export. Not legal advice.
 
 ![Evidence Retention Readiness](docs/assets/screenshots/evidence-retention-readiness.png)
 

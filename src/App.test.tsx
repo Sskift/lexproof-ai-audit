@@ -3093,34 +3093,71 @@ describe("App", () => {
   }, 30000);
 
   it("blocks Evidence Vault sync when retention policy detects private keys or raw KYC materials", async () => {
-    render(<App />);
-
-    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
-    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe retention packet" } });
-    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
-    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
-      target: {
-        value:
-          "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
-      }
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      capturedBlobs.push(blob as Blob);
+      return `blob:evidence-disposal-${capturedBlobs.length}`;
     });
-    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+    URL.revokeObjectURL = vi.fn();
 
-    const retentionHeading = await screen.findByRole("heading", { name: /Evidence Retention Readiness/i });
-    const retentionPanel = retentionHeading.closest("section");
+    try {
+      render(<App />);
 
-    expect(retentionPanel).not.toBeNull();
-    expect(screen.getByText(/Blocked retention/i)).toBeInTheDocument();
-    expect(screen.getByText(/Vault sync blocked until retention blockers are remediated/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Sync Evidence Vault/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Download Retention Policy JSON/i })).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: /Evidence Retention Remediation Queue/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/Delete or replace Unsafe retention packet before Evidence Vault sync/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /Download Remediation Queue JSON/i })).toBeEnabled();
-    const retention = within(retentionPanel as HTMLElement);
-    expect(retention.getAllByText(/\[redacted-private-key\]/i).length).toBeGreaterThan(0);
-    expect(retention.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
-    expect(retention.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe retention packet" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: {
+          value:
+            "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
+        }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      const retentionHeading = await screen.findByRole("heading", { name: /Evidence Retention Readiness/i });
+      const retentionPanel = retentionHeading.closest("section");
+
+      expect(retentionPanel).not.toBeNull();
+      expect(screen.getByText(/Blocked retention/i)).toBeInTheDocument();
+      expect(screen.getByText(/Vault sync blocked until retention blockers are remediated/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Sync Evidence Vault/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Download Retention Policy JSON/i })).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: /Evidence Retention Remediation Queue/i })).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: /Evidence Disposal Runbook/i })).toBeInTheDocument();
+      expect(screen.getAllByText(/Delete or replace Unsafe retention packet before Evidence Vault sync/i).length).toBeGreaterThan(0);
+      expect(screen.getByRole("button", { name: /Download Remediation Queue JSON/i })).toBeEnabled();
+      const disposalButton = screen.getByRole("button", { name: /Download Disposal Runbook JSON/i });
+      await waitFor(() => expect(disposalButton).toBeEnabled());
+      const retention = within(retentionPanel as HTMLElement);
+      expect(retention.getAllByText(/\[redacted-private-key\]/i).length).toBeGreaterThan(0);
+      expect(retention.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
+      expect(retention.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+
+      fireEvent.click(disposalButton);
+      await waitFor(() => expect(capturedBlobs.length).toBe(1));
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      const parsed = JSON.parse(payload);
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          runbookVersion: "lexproof-evidence-disposal-runbook-v1",
+          status: "delete-required",
+          rawEvidenceIncluded: false,
+          deletionPerformed: false,
+          notLegalAdviceBoundary:
+            "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."
+        })
+      );
+      expect(parsed.runbookHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(payload).toContain("delete-or-replace-before-vault-sync");
+      expect(payload).not.toMatch(/0xaaaaaaaa|sk-live-abcdef|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/i);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
   }, 30000);
 
   it("syncs Evidence Ledger metadata to the backend Evidence Vault and displays the vault manifest hash", async () => {

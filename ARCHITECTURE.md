@@ -97,6 +97,7 @@ lexproof-ai-audit/
       fileEvidence.ts        # Browser-side local file hashing and metadata evidence
       evidenceAuditTrail.ts  # Local evidence change events and JSON export
       retentionPolicy.ts     # Evidence retention readiness, vault-sync blockers, and JSON export
+      evidenceDisposalRunbook.ts # Metadata-only evidence disposal runbook and hash
       evidenceUploadBoundary.ts # Server Evidence Vault metadata boundary scanner
       evidenceVaultWorkflow.ts # Evidence Vault status transition guardrails
       missingEvidenceWorkflow.ts # Risk Audit requirement-to-ledger request helpers
@@ -193,6 +194,7 @@ demoScenarios, sampleProfiles, or blank project
   -> createEvidenceIntakeGuidance(project, evidenceItems, riskEvidenceCoverage, recommended templates)
   -> createEvidenceManifest(project, audit, evidenceItems)
   -> createEvidenceVaultManifest(workspace, persisted evidence records) in Phase 2 API
+  -> createEvidenceDisposalRunbook(retention report, retention remediation queue)
   -> createDataBoundaryReport(project, evidenceItems, questions, reviews, AI events)
   -> createSecurityReviewChecklist(model connect, retention report, data boundary report, manifest hash)
   -> createObjectStoragePolicyReport(retention context, manifest hash, object-storage policy draft)
@@ -344,6 +346,7 @@ Owns Evidence Retention Readiness behavior:
 - `createRetentionPolicyReport({ workspaceId, evidenceItems })` classifies ledger evidence as metadata-only, needs human retention review, or blocked before Evidence Vault sync.
 - Blockers include private-key-like material, API-key-like credentials, and raw KYC references. Warning classes include personal-data, KYC, and confidentiality references that require human confirmation before metadata-only sync.
 - `exportRetentionPolicyJson(report)` and `downloadRetentionPolicyJson(filename, report)` export a metadata-only retention policy report with redacted snippets, retention window, deletion trigger, and the Not legal advice boundary.
+- `src/lib/evidenceDisposalRunbook.ts` turns the retention report and remediation queue into a hashed, metadata-only disposal runbook with reviewer verification tasks. It never performs deletion and never includes raw evidence.
 
 The module does not delete user-entered ledger content, perform KYC, store files, or make legal conclusions. It controls whether Evidence Vault sync can run and gives recoverable remediation steps before metadata leaves the local ledger.
 
@@ -854,7 +857,7 @@ Components are intentionally presentational and interaction-focused:
 - AI Review Run Ledger displays local payload/response hash receipts for completed model calls.
 - `JurisdictionChecklistPanel` renders core US/EU/UK audit-prep prompts plus jurisdiction packs, policy controls, evidence-ready status, and local-counsel routing.
 - `RiskAuditPanel` renders per-risk evidence workflow coverage from `riskEvidence.ts` and creates requested ledger items from missing requirements.
-- `EvidenceLedger` renders Evidence Intake Guidance when a project has no evidence, applies scenario templates, pre-fills requested evidence rows, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, exposes recent local evidence audit trail events plus JSON export, renders Evidence Retention Readiness, exports retention policy JSON, and blocks Evidence Vault sync when retention blockers are present.
+- `EvidenceLedger` renders Evidence Intake Guidance when a project has no evidence, applies scenario templates, pre-fills requested evidence rows, hashes local files into metadata-only evidence, adds, edits, or removes local evidence records with visible field labels for long-row and mobile editing, exposes recent local evidence audit trail events plus JSON export, renders Evidence Retention Readiness, exports retention policy, remediation queue, and disposal runbook JSON, and blocks Evidence Vault sync when retention blockers are present.
 - `CounselPackPanel` selects an export template, renders the Export Safety Gate, previews and downloads Markdown output, opens browser Print / Save PDF, includes model intake summary and AI event hashes when present, edits counsel questions and review statuses, saves version-history metadata with diffs, creates metadata-only server export records from the latest Pack Version, and exports version JSON, manifest JSON, Regulatory Source Pack JSON, and simulated anchor receipt JSON.
 
 ### `src/styles.css`

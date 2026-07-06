@@ -50,6 +50,11 @@ import {
   type EvidenceRetentionRemediationQueue
 } from "../lib/evidenceRetentionRemediation";
 import {
+  createEvidenceDisposalRunbook,
+  downloadEvidenceDisposalRunbookJson,
+  type EvidenceDisposalRunbook
+} from "../lib/evidenceDisposalRunbook";
+import {
   createEvidenceRecertificationQueue,
   downloadEvidenceRecertificationJson,
   type EvidenceRecertificationQueue
@@ -133,6 +138,7 @@ export function EvidenceLedger({
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
   const [vaultLineageDigest, setVaultLineageDigest] = useState<EvidenceVaultLineageDigest | null>(null);
   const [retentionRemediationQueue, setRetentionRemediationQueue] = useState<EvidenceRetentionRemediationQueue | null>(null);
+  const [evidenceDisposalRunbook, setEvidenceDisposalRunbook] = useState<EvidenceDisposalRunbook | null>(null);
   const [recertificationQueue, setRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
   const vaultControlCoverage = useMemo(
     () =>
@@ -190,6 +196,26 @@ export function EvidenceLedger({
       isActive = false;
     };
   }, [retentionReport]);
+  useEffect(() => {
+    let isActive = true;
+    setEvidenceDisposalRunbook(null);
+
+    if (!retentionRemediationQueue) {
+      return () => {
+        isActive = false;
+      };
+    }
+
+    void createEvidenceDisposalRunbook(retentionReport, retentionRemediationQueue).then((runbook) => {
+      if (isActive) {
+        setEvidenceDisposalRunbook(runbook);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [retentionRemediationQueue, retentionReport]);
   useEffect(() => {
     let isActive = true;
     setRecertificationQueue(null);
@@ -514,7 +540,11 @@ export function EvidenceLedger({
         {fileBoundaryResult ? <LocalFileBoundaryPanel result={fileBoundaryResult} /> : null}
       </section>
 
-      <RetentionPolicyPanel report={retentionReport} remediationQueue={retentionRemediationQueue} />
+      <RetentionPolicyPanel
+        report={retentionReport}
+        remediationQueue={retentionRemediationQueue}
+        disposalRunbook={evidenceDisposalRunbook}
+      />
       <EvidenceRecertificationPanel
         queue={recertificationQueue}
         onMarkRecertified={(index) => onUpdateEvidence(index, { status: "verified" })}
@@ -948,15 +978,18 @@ function EvidenceRecertificationPanel({
 
 function RetentionPolicyPanel({
   report,
-  remediationQueue
+  remediationQueue,
+  disposalRunbook
 }: {
   report: RetentionPolicyReport;
   remediationQueue: EvidenceRetentionRemediationQueue | null;
+  disposalRunbook: EvidenceDisposalRunbook | null;
 }) {
   const statusLabel =
     report.status === "blocked" ? "Blocked retention" : report.status === "needs-review" ? "Needs retention review" : "Ready";
   const visibleActions = report.actions.slice(0, 5);
   const visibleRemediationItems = remediationQueue?.items.slice(0, 5) ?? [];
+  const visibleDisposalTasks = disposalRunbook?.tasks.slice(0, 5) ?? [];
 
   return (
     <section className={`retention-policy-panel ${report.status}`}>
@@ -1029,12 +1062,59 @@ function RetentionPolicyPanel({
           ))}
         </div>
       </section>
+      <section className="retention-remediation-panel" aria-label="Evidence Disposal Runbook">
+        <div className="split-title compact-title">
+          <div>
+            <Trash2 size={16} aria-hidden="true" />
+            <h3>Evidence Disposal Runbook</h3>
+          </div>
+          <span>{disposalRunbook?.status ?? "generating"}</span>
+        </div>
+        <p className="section-note">
+          {disposalRunbook?.notLegalAdviceBoundary ??
+            "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."}
+        </p>
+        <div className="retention-remediation-grid">
+          <RetentionFact label="Deletion tasks" value={String(disposalRunbook?.summary.deletionRequiredCount ?? 0)} />
+          <RetentionFact label="Review tasks" value={String(disposalRunbook?.summary.metadataReviewCount ?? 0)} />
+          <RetentionFact label="Raw evidence" value={disposalRunbook ? "excluded" : "calculating"} />
+          <RetentionFact label="Runbook SHA-256" value={disposalRunbook?.runbookHash ?? "calculating"} />
+        </div>
+        <div className="retention-remediation-list">
+          {visibleDisposalTasks.map((task) => (
+            <article key={task.id} className={`retention-remediation-item ${task.priority.toLowerCase()}`}>
+              <header>
+                <span className={`retention-priority ${task.priority.toLowerCase()}`}>{task.priority}</span>
+                <strong>{task.verificationEvidence}</strong>
+                <small>
+                  {task.dataClass} · {task.action} · {task.owner}
+                </small>
+              </header>
+              <code>{task.redactedSnippet}</code>
+              <small>
+                Retention: {task.retentionWindow}. Trigger: {task.deletionTrigger}.
+              </small>
+            </article>
+          ))}
+        </div>
+      </section>
       <div className="retention-footer">
         <ul>
-          {(remediationQueue?.nextSteps ?? report.nextSteps).map((step) => (
+          {(disposalRunbook?.nextSteps ?? remediationQueue?.nextSteps ?? report.nextSteps).map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ul>
+        <button
+          type="button"
+          className="secondary"
+          disabled={!disposalRunbook || report.evidenceCount === 0}
+          onClick={() =>
+            disposalRunbook ? downloadEvidenceDisposalRunbookJson("evidence-disposal-runbook.json", disposalRunbook) : undefined
+          }
+        >
+          <Download size={16} aria-hidden="true" />
+          Download Disposal Runbook JSON
+        </button>
         <button
           type="button"
           className="secondary"

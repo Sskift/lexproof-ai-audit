@@ -7,6 +7,7 @@ import type {
   DemoReadinessStatus,
   DemoSmokeChecklistSummary
 } from "./demoReadiness";
+import type { EvidenceDisposalRunbook } from "./evidenceDisposalRunbook";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
@@ -357,6 +358,41 @@ export function createEvidenceRecertificationQueueExportArtifact(
   };
 }
 
+export function createEvidenceDisposalRunbookExportArtifact(
+  runbook: EvidenceDisposalRunbook | null | undefined
+): ExportSafetyArtifactInput {
+  const hasRunbook = Boolean(runbook?.runbookHash);
+  const deletionRequiredCount = runbook?.summary.deletionRequiredCount ?? 0;
+  const metadataReviewCount = runbook?.summary.metadataReviewCount ?? 0;
+  const warnings =
+    hasRunbook && runbook?.status !== "retention-ready"
+      ? [
+          `Evidence Disposal Runbook status is ${runbook?.status ?? "missing"} with ${deletionRequiredCount} deletion task${
+            deletionRequiredCount === 1 ? "" : "s"
+          } and ${metadataReviewCount} metadata-review task${
+            metadataReviewCount === 1 ? "" : "s"
+          }; resolve disposal workflow before external handoff.`
+        ]
+      : [];
+
+  return {
+    id: "evidence-disposal-runbook",
+    label: "Evidence Disposal Runbook JSON",
+    category: "evidence",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasRunbook,
+    artifactHash: runbook?.runbookHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: createEvidenceDisposalRunbookRecoveryAction(runbook),
+    notLegalAdviceBoundary:
+      runbook?.notLegalAdviceBoundary ??
+      "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."
+  };
+}
+
 export function createModelGatewayEvaluationExportArtifact(
   evaluation: ModelGatewayEvaluationRecord | null | undefined
 ): ExportSafetyArtifactInput {
@@ -559,6 +595,22 @@ function createEvidenceRecertificationRecoveryAction(queue: EvidenceRecertificat
   }
 
   return "Keep Evidence Recertification Queue JSON with the final evidence handoff packet.";
+}
+
+function createEvidenceDisposalRunbookRecoveryAction(runbook: EvidenceDisposalRunbook | null | undefined): string {
+  if (!runbook) {
+    return "Open Evidence Ledger and wait for the Evidence Disposal Runbook hash before final handoff.";
+  }
+
+  if (runbook.status === "delete-required") {
+    return runbook.nextSteps[0] ?? "Complete P0 disposal tasks before Evidence Vault sync or external handoff.";
+  }
+
+  if (runbook.status === "metadata-review-required") {
+    return runbook.nextSteps[0] ?? "Capture metadata-only reviewer confirmation before external handoff.";
+  }
+
+  return "Keep Evidence Disposal Runbook JSON with the final evidence handoff packet.";
 }
 
 function createModelGatewayEvaluationWarnings(

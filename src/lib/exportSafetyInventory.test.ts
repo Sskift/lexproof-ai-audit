@@ -7,6 +7,7 @@ import {
   createExportSafetyInventory,
   createDemoRunbookExportArtifact,
   createDemoSmokeChecklistExportArtifact,
+  createEvidenceDisposalRunbookExportArtifact,
   createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createSourceApprovalQueueExportArtifact,
@@ -15,6 +16,7 @@ import {
   exportSafetyInventoryJson,
   type ExportSafetyArtifactInput
 } from "./exportSafetyInventory";
+import type { EvidenceDisposalRunbook } from "./evidenceDisposalRunbook";
 import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
@@ -579,6 +581,50 @@ describe("createExportSafetyInventory", () => {
     expect(exportSafetyInventoryJson(inventory)).toContain("Evidence Recertification Queue JSON");
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
+
+  it("adds Evidence Disposal Runbook as a hashed metadata-only evidence artifact", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-disposal",
+      projectName: "Disposal Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [
+        ...safeArtifacts(),
+        createEvidenceDisposalRunbookExportArtifact(
+          disposalRunbook({
+            status: "delete-required",
+            deletionRequiredCount: 2,
+            metadataReviewCount: 1,
+            nextSteps: ["Complete P0 disposal tasks before Evidence Vault sync."]
+          })
+        )
+      ],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "evidence-disposal-runbook");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Evidence Disposal Runbook JSON",
+        category: "evidence",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: "8".repeat(64),
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Complete P0 disposal tasks before Evidence Vault sync.",
+        notLegalAdviceBoundary:
+          "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Evidence Disposal Runbook status is delete-required with 2 deletion tasks and 1 metadata-review task; resolve disposal workflow before external handoff."
+    ]);
+    expect(exportSafetyInventoryJson(inventory)).toContain("Evidence Disposal Runbook JSON");
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
 });
 
 function recertificationQueue({
@@ -610,6 +656,39 @@ function recertificationQueue({
     items: [],
     nextSteps,
     notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+  };
+}
+
+function disposalRunbook({
+  status,
+  deletionRequiredCount,
+  metadataReviewCount,
+  nextSteps
+}: {
+  status: EvidenceDisposalRunbook["status"];
+  deletionRequiredCount: number;
+  metadataReviewCount: number;
+  nextSteps: string[];
+}): EvidenceDisposalRunbook {
+  return {
+    runbookVersion: "lexproof-evidence-disposal-runbook-v1",
+    workspaceId: "workspace-disposal",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    status,
+    runbookHash: "8".repeat(64),
+    rawEvidenceIncluded: false,
+    deletionPerformed: false,
+    summary: {
+      evidenceCount: 3,
+      deletionRequiredCount,
+      metadataReviewCount,
+      retainedMetadataCount: status === "retention-ready" ? 3 : 0,
+      vaultSyncAllowed: status === "retention-ready"
+    },
+    tasks: [],
+    nextSteps,
+    notLegalAdviceBoundary:
+      "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."
   };
 }
 

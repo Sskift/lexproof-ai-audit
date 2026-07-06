@@ -4650,6 +4650,7 @@ describe("App", () => {
       await waitFor(() => expect(inventory.getByText(/Source Freshness Board JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Source Update Approval Queue JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getAllByText(/Evidence Recertification Queue JSON/i).length).toBeGreaterThan(0));
+      await waitFor(() => expect(inventory.getByText(/Evidence Disposal Runbook JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Runbook JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Smoke Checklist JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
@@ -4673,6 +4674,7 @@ describe("App", () => {
       const recertificationArtifact = parsed.artifacts.find(
         (artifact: { id: string }) => artifact.id === "evidence-recertification-queue"
       );
+      const disposalArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "evidence-disposal-runbook");
       const demoRunbookArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-runbook");
       const demoSmokeArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-smoke-checklist");
 
@@ -4726,6 +4728,20 @@ describe("App", () => {
         })
       );
       expect(recertificationArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(disposalArtifact).toEqual(
+        expect.objectContaining({
+          label: "Evidence Disposal Runbook JSON",
+          category: "evidence",
+          exportMode: "metadata-only-json",
+          required: false,
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary:
+            "Not legal advice. Evidence disposal runbooks are audit preparation workflow metadata only and do not perform deletion."
+        })
+      );
+      expect(disposalArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
       expect(demoRunbookArtifact).toEqual(
         expect.objectContaining({
           label: "Demo Runbook JSON",

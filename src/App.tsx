@@ -111,11 +111,14 @@ import {
   createEvidenceRecertificationQueue,
   type EvidenceRecertificationQueue
 } from "./lib/evidenceRecertification";
+import { createEvidenceDisposalRunbook, type EvidenceDisposalRunbook } from "./lib/evidenceDisposalRunbook";
+import { createEvidenceRetentionRemediationQueue } from "./lib/evidenceRetentionRemediation";
 import {
   createApiPreflightExportArtifact,
   createAuditLogExportArtifact,
   createDemoRunbookExportArtifact,
   createDemoSmokeChecklistExportArtifact,
+  createEvidenceDisposalRunbookExportArtifact,
   createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
@@ -396,6 +399,7 @@ export default function App() {
   const [evidenceVaultManifest, setEvidenceVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [evidenceVaultRecords, setEvidenceVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
   const [evidenceRecertificationQueue, setEvidenceRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
+  const [evidenceDisposalRunbook, setEvidenceDisposalRunbook] = useState<EvidenceDisposalRunbook | null>(null);
   const [manifestDriftReport, setManifestDriftReport] = useState<ManifestDriftReport | null>(null);
   const [localCounselRoutingPlan, setLocalCounselRoutingPlan] = useState<LocalCounselRoutingPlan | null>(null);
   const [integrationEnablementDossier, setIntegrationEnablementDossier] = useState<IntegrationEnablementDossier | null>(null);
@@ -744,6 +748,29 @@ export default function App() {
     () => createRetentionPolicyReport({ workspaceId: project.id, evidenceItems: project.evidenceItems }),
     [project.evidenceItems, project.id]
   );
+
+  useEffect(() => {
+    let live = true;
+    setEvidenceDisposalRunbook(null);
+
+    createEvidenceRetentionRemediationQueue(retentionPolicyReport)
+      .then((nextQueue) => createEvidenceDisposalRunbook(retentionPolicyReport, nextQueue))
+      .then((nextRunbook) => {
+        if (live) {
+          setEvidenceDisposalRunbook(nextRunbook);
+        }
+      })
+      .catch(() => {
+        if (live) {
+          setEvidenceDisposalRunbook(null);
+        }
+      });
+
+    return () => {
+      live = false;
+    };
+  }, [retentionPolicyReport]);
+
   const securityReviewChecklist = useMemo(
     () =>
       createSecurityReviewChecklist({
@@ -1296,6 +1323,7 @@ export default function App() {
       },
       createEvidenceVaultLineageDigestExportArtifact(evidenceVaultLineageDigest),
       createEvidenceRecertificationQueueExportArtifact(evidenceRecertificationQueue),
+      createEvidenceDisposalRunbookExportArtifact(evidenceDisposalRunbook),
       {
         id: "regulatory-source-pack",
         label: "Regulatory Source Pack JSON",
@@ -1418,6 +1446,7 @@ export default function App() {
     demoApiPreflight,
     demoRunbookSummary,
     demoSmokeChecklistSummary,
+    evidenceDisposalRunbook,
     evidenceRecertificationQueue,
     evidenceVaultLineageDigest,
     grcTicketExport,

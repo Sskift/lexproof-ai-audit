@@ -106,6 +106,7 @@ import {
   type EvidenceRecertificationQueue
 } from "./lib/evidenceRecertification";
 import {
+  createApiPreflightExportArtifact,
   createAuditLogExportArtifact,
   createDemoRunbookExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
@@ -1311,6 +1312,7 @@ export default function App() {
       },
       createModelGatewayEvaluationExportArtifact(modelGatewayEvaluation),
       createAuditLogExportArtifact(auditLogExportRecord),
+      createApiPreflightExportArtifact(demoApiPreflight),
       createSourceFreshnessBoardExportArtifact(sourceFreshnessBoard),
       {
         id: "local-counsel-routing",
@@ -1372,6 +1374,7 @@ export default function App() {
     ];
   }, [
     currentCounselPackVersions,
+    demoApiPreflight,
     demoRunbookSummary,
     evidenceVaultLineageDigest,
     grcTicketExport,

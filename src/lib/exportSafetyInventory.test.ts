@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createAuditLogExport } from "./auditLogExport";
 import { createDataBoundaryReport } from "./dataBoundary";
 import {
+  createApiPreflightExportArtifact,
   createAuditLogExportArtifact,
   createExportSafetyInventory,
   createDemoRunbookExportArtifact,
@@ -168,6 +169,89 @@ describe("createExportSafetyInventory", () => {
     expect(artifact?.warnings).toEqual(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."]);
     expect(inventory.exportHandoffAllowed).toBe(true);
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("adds API Preflight Report as a metadata-only security artifact with report hash", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-api-preflight",
+      projectName: "API Preflight Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [
+        ...safeArtifacts(),
+        createApiPreflightExportArtifact({
+          status: "ready",
+          service: "lexproof-secure-review-workspace-api",
+          version: "lexproof-phase-2-backend-v1",
+          capabilities: ["modelGateway: mock-run-ready"],
+          apiPreflightReportHash: "f".repeat(64),
+          routeChecks: [
+            {
+              id: "api-preflight-report",
+              label: "API Preflight report",
+              status: "ready",
+              url: "http://127.0.0.1:8787/api/preflight",
+              detail: "API preflight report is reachable with a stable metadata hash.",
+              artifactHash: "f".repeat(64)
+            },
+            {
+              id: "audit-log",
+              label: "Audit Log",
+              status: "ready",
+              url: "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/audit-log",
+              detail: "Audit Log route is reachable."
+            }
+          ],
+          checkedAt: "2026-07-01T01:00:00.000Z",
+          notLegalAdviceBoundary: "Not legal advice. API preflight reports are audit preparation readiness metadata only."
+        })
+      ],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "api-preflight-report");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "API Preflight Report JSON",
+        category: "security",
+        exportMode: "metadata-only-json",
+        status: "ready",
+        required: false,
+        available: true,
+        artifactHash: "f".repeat(64),
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Keep API Preflight Report JSON with the judge handoff packet; 2/2 safe route checks passed.",
+        notLegalAdviceBoundary: "Not legal advice. API preflight reports are audit preparation readiness metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([]);
+    expect(exportSafetyInventoryJson(inventory)).toContain("API Preflight Report JSON");
+  });
+
+  it("surfaces API Preflight recovery when the demo API has not been checked", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-api-preflight-missing",
+      projectName: "API Preflight Missing Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [...safeArtifacts(), createApiPreflightExportArtifact({ status: "not-checked" })],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+    const artifact = inventory.artifacts.find((item) => item.id === "api-preflight-report");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "API Preflight Report JSON",
+        status: "needs-review",
+        required: false,
+        available: false,
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Open Judge Demo Readiness, start the Phase 2 API, and click Check Demo API before judge handoff."
+      })
+    );
+    expect(artifact?.warnings).toEqual(["Phase 2 API preflight has not been checked in this browser session."]);
+    expect(inventory.exportHandoffAllowed).toBe(true);
   });
 
   it("adds Evidence Vault Lineage Digest as a metadata-only evidence artifact with recovery warning", async () => {

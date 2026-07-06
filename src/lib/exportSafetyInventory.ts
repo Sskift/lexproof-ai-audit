@@ -1,7 +1,7 @@
 import type { AuditLogExportRecord } from "./auditLogExport";
 import type { DataBoundaryReport } from "./dataBoundary";
 import { redactDataBoundaryText } from "./dataBoundary";
-import type { DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
+import type { DemoApiPreflight, DemoReadinessCheckStatus, DemoReadinessStatus } from "./demoReadiness";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
@@ -96,6 +96,8 @@ export type ExportSafetyDemoRunbookSummary = {
 };
 
 const NOT_LEGAL_ADVICE = "Not legal advice. Export Safety Inventory is audit preparation handoff metadata only." as const;
+const API_PREFLIGHT_EXPORT_BOUNDARY =
+  "Not legal advice. API preflight reports are audit preparation readiness metadata only.";
 
 export async function createExportSafetyInventory({
   workspaceId,
@@ -195,6 +197,62 @@ export function createSourceFreshnessBoardExportArtifact(
     notLegalAdviceBoundary:
       sourceFreshnessBoard?.notLegalAdviceBoundary ??
       "Not legal advice. Source freshness boards are audit preparation scheduling metadata only."
+  };
+}
+
+export function createApiPreflightExportArtifact(apiPreflight: DemoApiPreflight): ExportSafetyArtifactInput {
+  if (apiPreflight.status === "ready") {
+    const routeReadyCount = apiPreflight.routeChecks.filter((check) => check.status === "ready").length;
+    const routeCheckCount = apiPreflight.routeChecks.length;
+
+    return {
+      id: "api-preflight-report",
+      label: "API Preflight Report JSON",
+      category: "security",
+      exportMode: "metadata-only-json",
+      required: false,
+      available: Boolean(apiPreflight.apiPreflightReportHash),
+      artifactHash: apiPreflight.apiPreflightReportHash,
+      metadataOnly: true,
+      rawContentIncluded: false,
+      warnings: apiPreflight.apiPreflightReportHash
+        ? []
+        : ["Phase 2 API preflight is ready but the /api/preflight report hash was not returned."],
+      recoveryAction: apiPreflight.apiPreflightReportHash
+        ? `Keep API Preflight Report JSON with the judge handoff packet; ${routeReadyCount}/${routeCheckCount} safe route checks passed.`
+        : "Retry Demo API preflight and confirm /api/preflight returns a metadata-only report hash.",
+      notLegalAdviceBoundary: apiPreflight.notLegalAdviceBoundary || API_PREFLIGHT_EXPORT_BOUNDARY
+    };
+  }
+
+  if (apiPreflight.status === "failed") {
+    return {
+      id: "api-preflight-report",
+      label: "API Preflight Report JSON",
+      category: "security",
+      exportMode: "metadata-only-json",
+      required: false,
+      available: false,
+      metadataOnly: true,
+      rawContentIncluded: false,
+      warnings: [`Phase 2 API preflight failed: ${apiPreflight.error}`],
+      recoveryAction: apiPreflight.recoveryAction,
+      notLegalAdviceBoundary: apiPreflight.notLegalAdviceBoundary || API_PREFLIGHT_EXPORT_BOUNDARY
+    };
+  }
+
+  return {
+    id: "api-preflight-report",
+    label: "API Preflight Report JSON",
+    category: "security",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: false,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings: ["Phase 2 API preflight has not been checked in this browser session."],
+    recoveryAction: "Open Judge Demo Readiness, start the Phase 2 API, and click Check Demo API before judge handoff.",
+    notLegalAdviceBoundary: API_PREFLIGHT_EXPORT_BOUNDARY
   };
 }
 

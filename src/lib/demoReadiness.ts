@@ -13,6 +13,7 @@ export type DemoApiPreflight =
       service: string;
       version: string;
       capabilities: string[];
+      apiPreflightReportHash?: string;
       routeChecks: DemoApiRouteCheck[];
       checkedAt: string;
       notLegalAdviceBoundary: string;
@@ -39,6 +40,7 @@ export type DemoApiRouteCheck = {
   status: "ready" | "failed";
   url: string;
   detail: string;
+  artifactHash?: string;
 };
 
 export type DemoReadinessCheck = {
@@ -141,6 +143,7 @@ const apiRoutePreflightSpecs: Array<{
   label: string;
   path: string;
   validate: (payload: unknown) => boolean;
+  extractArtifactHash?: (payload: unknown) => string | undefined;
   readyDetail: string;
 }> = [
   {
@@ -152,7 +155,9 @@ const apiRoutePreflightSpecs: Array<{
       payload.reportVersion === "lexproof-api-preflight-v1" &&
       payload.status === "ready" &&
       payload.externalSideEffectsAllowed === false &&
-      typeof payload.reportHash === "string",
+      typeof payload.reportHash === "string" &&
+      preserveSha256(payload.reportHash) !== undefined,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.reportHash) : undefined),
     readyDetail: "API preflight report is reachable with a stable metadata hash."
   },
   {
@@ -386,6 +391,7 @@ export async function checkDemoApiPreflight(input: DemoApiPreflightInput = {}): 
     if (failedRoute) {
       return createFailedPreflight(`${failedRoute.label}: ${failedRoute.detail}`, checkedAt);
     }
+    const apiPreflightReportHash = routeChecks.find((check) => check.id === "api-preflight-report")?.artifactHash;
 
     return {
       status: "ready",
@@ -394,6 +400,7 @@ export async function checkDemoApiPreflight(input: DemoApiPreflightInput = {}): 
       capabilities: capabilityOrder
         .filter((key) => payload.capabilities[key])
         .map((key) => sanitize(`${key}: ${payload.capabilities?.[key]}`)),
+      apiPreflightReportHash,
       routeChecks,
       checkedAt,
       notLegalAdviceBoundary: sanitize(payload.notLegalAdviceBoundary)
@@ -446,7 +453,8 @@ async function checkDemoApiRouteFamilies({
         label: spec.label,
         status: "ready",
         url,
-        detail: spec.readyDetail
+        detail: spec.readyDetail,
+        artifactHash: spec.extractArtifactHash?.(payload)
       });
     } catch (error) {
       routeChecks.push({
@@ -519,7 +527,9 @@ function createApiPreflightCheck(apiPreflight: DemoApiPreflight): DemoReadinessC
       id: "phase-2-api-preflight",
       label: "Phase 2 API preflight",
       status: "ready",
-      detail: `${apiPreflight.service} ${apiPreflight.version} is reachable with ${apiPreflight.capabilities.length} capabilities and ${readyRouteCount}/${apiPreflight.routeChecks.length} safe route checks.`,
+      detail: `${apiPreflight.service} ${apiPreflight.version} is reachable with ${apiPreflight.capabilities.length} capabilities, ${readyRouteCount}/${apiPreflight.routeChecks.length} safe route checks, and API preflight report hash ${
+        apiPreflight.apiPreflightReportHash ? `${apiPreflight.apiPreflightReportHash.slice(0, 12)}...` : "pending"
+      }.`,
       recoveryAction: "Keep the API process running while judges run the secure review path."
     };
   }
@@ -699,6 +709,15 @@ function resolveFetcher(fetcher: typeof fetch | undefined): typeof fetch {
 
 function sanitize(value: string): string {
   return redactClassifiedText(value.replace(/\s+/g, " ").trim());
+}
+
+function preserveSha256(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : undefined;
 }
 
 function unique(values: string[]): string[] {

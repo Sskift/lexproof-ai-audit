@@ -353,10 +353,12 @@ describe("demo readiness", () => {
         "exports: metadata-records-ready",
         "auditLog: repository-ready"
       ],
+      apiPreflightReportHash: "a".repeat(64),
       routeChecks: expect.arrayContaining([
         expect.objectContaining({
           id: "api-preflight-report",
-          status: "ready"
+          status: "ready",
+          artifactHash: "a".repeat(64)
         }),
         expect.objectContaining({
           id: "model-gateway-adapters",

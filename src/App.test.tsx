@@ -1624,6 +1624,14 @@ describe("App", () => {
       expect(payload).toContain("Model Connect");
       expect(payload).toContain("Evidence Vault");
       expect(payload).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
+
+      fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
+      const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
+      await waitFor(() => {
+        expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 8/8 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getAllByText(/Hash aaaaaaaaaaaa/i).length).toBeGreaterThan(0);
+      });
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

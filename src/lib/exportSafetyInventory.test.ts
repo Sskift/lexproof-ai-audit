@@ -7,12 +7,14 @@ import {
   createExportSafetyInventory,
   createDemoRunbookExportArtifact,
   createDemoSmokeChecklistExportArtifact,
+  createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createSourceFreshnessBoardExportArtifact,
   createModelGatewayEvaluationExportArtifact,
   exportSafetyInventoryJson,
   type ExportSafetyArtifactInput
 } from "./exportSafetyInventory";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { AuditLogRecord } from "./phase2Types";
@@ -498,7 +500,81 @@ describe("createExportSafetyInventory", () => {
     expect(exportSafetyInventoryJson(inventory)).toContain("Demo Smoke Checklist JSON");
     expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
   });
+
+  it("adds Evidence Recertification Queue as a hashed metadata-only evidence artifact", async () => {
+    const inventory = await createExportSafetyInventory({
+      workspaceId: "workspace-recertification",
+      projectName: "Recertification Desk",
+      dataBoundaryReport: cleanBoundaryReport(),
+      artifacts: [
+        ...safeArtifacts(),
+        createEvidenceRecertificationQueueExportArtifact(
+          recertificationQueue({
+            status: "needs-recertification",
+            totalActionCount: 2,
+            nextSteps: ["Recertify stale source-linked evidence before counsel/export reliance."]
+          })
+        )
+      ],
+      generatedAt: "2026-07-01T01:00:00.000Z"
+    });
+
+    const artifact = inventory.artifacts.find((item) => item.id === "evidence-recertification-queue");
+
+    expect(artifact).toEqual(
+      expect.objectContaining({
+        label: "Evidence Recertification Queue JSON",
+        category: "evidence",
+        exportMode: "metadata-only-json",
+        status: "needs-review",
+        required: false,
+        available: true,
+        artifactHash: "9".repeat(64),
+        metadataOnly: true,
+        rawContentIncluded: false,
+        recoveryAction: "Recertify stale source-linked evidence before counsel/export reliance.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+      })
+    );
+    expect(artifact?.warnings).toEqual([
+      "Evidence Recertification Queue status is needs-recertification with 2 open actions; resolve recertification before external handoff."
+    ]);
+    expect(exportSafetyInventoryJson(inventory)).toContain("Evidence Recertification Queue JSON");
+    expect(exportSafetyInventoryJson(inventory)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
 });
+
+function recertificationQueue({
+  status,
+  totalActionCount,
+  nextSteps
+}: {
+  status: EvidenceRecertificationQueue["status"];
+  totalActionCount: number;
+  nextSteps: string[];
+}): EvidenceRecertificationQueue {
+  return {
+    queueVersion: "lexproof-evidence-recertification-queue-v1",
+    workspaceId: "workspace-recertification",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    status,
+    queueHash: "9".repeat(64),
+    policy: {
+      recertificationIntervalDays: 90,
+      warningWindowDays: 14
+    },
+    summary: {
+      totalActionCount,
+      overdueCount: status === "needs-recertification" ? totalActionCount : 0,
+      expiringCount: status === "monitoring" ? totalActionCount : 0,
+      sourceLinkedCount: totalActionCount,
+      missingTimestampCount: 0
+    },
+    items: [],
+    nextSteps,
+    notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+  };
+}
 
 function safeArtifacts(): ExportSafetyArtifactInput[] {
   return [

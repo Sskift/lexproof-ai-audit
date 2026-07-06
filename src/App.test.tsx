@@ -3406,7 +3406,7 @@ describe("App", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("explains the Evidence Vault empty state before metadata sync", async () => {
     render(<App />);
@@ -4529,6 +4529,7 @@ describe("App", () => {
       const inventoryRegion = await screen.findByRole("region", { name: /Export Safety Inventory/i });
       const inventory = within(inventoryRegion);
       await waitFor(() => expect(inventory.getByText(/Source Freshness Board JSON/i)).toBeInTheDocument());
+      await waitFor(() => expect(inventory.getByText(/Evidence Recertification Queue JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Runbook JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Demo Smoke Checklist JSON/i)).toBeInTheDocument());
       await waitFor(() => expect(inventory.getByText(/Review the Source Freshness Board lanes before external handoff./i)).toBeInTheDocument());
@@ -4546,6 +4547,9 @@ describe("App", () => {
       const payload = await readAppBlobText(payloadBlob);
       const parsed = JSON.parse(payload);
       const sourceFreshnessArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "source-freshness-board");
+      const recertificationArtifact = parsed.artifacts.find(
+        (artifact: { id: string }) => artifact.id === "evidence-recertification-queue"
+      );
       const demoRunbookArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-runbook");
       const demoSmokeArtifact = parsed.artifacts.find((artifact: { id: string }) => artifact.id === "demo-smoke-checklist");
 
@@ -4565,6 +4569,19 @@ describe("App", () => {
       expect(sourceFreshnessArtifact.warnings).toEqual(
         expect.arrayContaining(["Source Freshness Board status is attention-needed; review lanes before counsel handoff."])
       );
+      expect(recertificationArtifact).toEqual(
+        expect.objectContaining({
+          label: "Evidence Recertification Queue JSON",
+          category: "evidence",
+          exportMode: "metadata-only-json",
+          required: false,
+          available: true,
+          metadataOnly: true,
+          rawContentIncluded: false,
+          notLegalAdviceBoundary: "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+        })
+      );
+      expect(recertificationArtifact.artifactHash).toMatch(/^[a-f0-9]{64}$/);
       expect(demoRunbookArtifact).toEqual(
         expect.objectContaining({
           label: "Demo Runbook JSON",
@@ -4786,7 +4803,7 @@ describe("App", () => {
 
     expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("routes AI review output through the Human Review workflow before Model Intake reliance", async () => {
     render(<App />);
@@ -4818,7 +4835,7 @@ describe("App", () => {
     expect(await screen.findByText(/1 events · 0 unresolved/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Review status for AI event 1/i)).toHaveValue("reviewed");
     expect(screen.getByDisplayValue("Outside counsel")).toBeInTheDocument();
-  }, 20000);
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("handles returned and rejected Human Review decisions as audit-prep workflow states", async () => {
     render(<App />);
@@ -5017,7 +5034,7 @@ describe("App", () => {
     expect(memo).toHaveTextContent(/reviewer: Outside counsel/i);
     expect(memo).toHaveTextContent(/Reviewed risk flag for audit-prep export/i);
     expect(memo).toHaveTextContent(/human-review-audit-/i);
-  }, 20000);
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("shows and downloads a Human Review timeline with saved status history", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;

@@ -7,6 +7,7 @@ import type {
   DemoReadinessStatus,
   DemoSmokeChecklistSummary
 } from "./demoReadiness";
+import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceVaultLineageDigest } from "./evidenceVaultLineageDigest";
 import type { ModelGatewayEvaluationRecord } from "./modelGatewayEvaluation";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
@@ -291,6 +292,38 @@ export function createEvidenceVaultLineageDigestExportArtifact(
   };
 }
 
+export function createEvidenceRecertificationQueueExportArtifact(
+  queue: EvidenceRecertificationQueue | null | undefined
+): ExportSafetyArtifactInput {
+  const hasQueue = Boolean(queue?.queueHash);
+  const totalActionCount = queue?.summary.totalActionCount ?? 0;
+  const warnings =
+    hasQueue && queue?.status !== "ready"
+      ? [
+          `Evidence Recertification Queue status is ${queue?.status ?? "missing"} with ${totalActionCount} open action${
+            totalActionCount === 1 ? "" : "s"
+          }; resolve recertification before external handoff.`
+        ]
+      : [];
+
+  return {
+    id: "evidence-recertification-queue",
+    label: "Evidence Recertification Queue JSON",
+    category: "evidence",
+    exportMode: "metadata-only-json",
+    required: false,
+    available: hasQueue,
+    artifactHash: queue?.queueHash,
+    metadataOnly: true,
+    rawContentIncluded: false,
+    warnings,
+    recoveryAction: createEvidenceRecertificationRecoveryAction(queue),
+    notLegalAdviceBoundary:
+      queue?.notLegalAdviceBoundary ??
+      "Not legal advice. Evidence recertification queues are audit preparation workflow metadata only."
+  };
+}
+
 export function createModelGatewayEvaluationExportArtifact(
   evaluation: ModelGatewayEvaluationRecord | null | undefined
 ): ExportSafetyArtifactInput {
@@ -455,6 +488,22 @@ function createAuditLogExportRecoveryAction(auditLogExport: AuditLogExportRecord
   }
 
   return "Keep Audit Log Export JSON with the secure review handoff packet.";
+}
+
+function createEvidenceRecertificationRecoveryAction(queue: EvidenceRecertificationQueue | null | undefined): string {
+  if (!queue) {
+    return "Open Evidence Ledger and wait for the Evidence Recertification Queue hash before final handoff.";
+  }
+
+  if (queue.status === "needs-recertification") {
+    return queue.nextSteps[0] ?? "Recertify stale or timestamp-missing reliance-ready evidence before final handoff.";
+  }
+
+  if (queue.status === "monitoring") {
+    return queue.nextSteps[0] ?? "Schedule due-soon evidence recertification before the next external handoff.";
+  }
+
+  return "Keep Evidence Recertification Queue JSON with the final evidence handoff packet.";
 }
 
 function createModelGatewayEvaluationWarnings(

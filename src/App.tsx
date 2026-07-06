@@ -116,6 +116,7 @@ import {
   createAuditLogExportArtifact,
   createDemoRunbookExportArtifact,
   createDemoSmokeChecklistExportArtifact,
+  createEvidenceRecertificationQueueExportArtifact,
   createEvidenceVaultLineageDigestExportArtifact,
   createExportSafetyInventory,
   createModelGatewayEvaluationExportArtifact,
@@ -1280,6 +1281,7 @@ export default function App() {
           "Not legal advice. Manifest drift reports are audit preparation export-readiness metadata only."
       },
       createEvidenceVaultLineageDigestExportArtifact(evidenceVaultLineageDigest),
+      createEvidenceRecertificationQueueExportArtifact(evidenceRecertificationQueue),
       {
         id: "regulatory-source-pack",
         label: "Regulatory Source Pack JSON",
@@ -1401,6 +1403,7 @@ export default function App() {
     demoApiPreflight,
     demoRunbookSummary,
     demoSmokeChecklistSummary,
+    evidenceRecertificationQueue,
     evidenceVaultLineageDigest,
     grcTicketExport,
     integrationEnablementDossier,

@@ -489,6 +489,10 @@ The Counsel Pack Markdown preview now carries the Source Review Ledger and Sourc
 
 ![Counsel Pack Source Update Approval Queue](docs/assets/screenshots/counsel-pack-source-approval-queue.png)
 
+The Counsel Pack Markdown preview also carries per-risk source citation controls from Risk Audit, including source URLs, open citation evidence requests, local counsel routes, and a source-lineage Not legal advice boundary. This keeps the export connected to the same regional source graph without turning citation coverage into a legal conclusion.
+
+![Counsel Pack Risk Source Citation Controls](docs/assets/screenshots/counsel-pack-risk-source-citation-controls.png)
+
 The Counsel Pack Markdown preview also carries Human Review Timeline metadata and Evidence Recertification Queue metadata, including stale evidence status, queue hash, source-linked controls, reviewer actions, saved decisions, reviewer names, decision notes, and audit log IDs. Review and recertification status remain audit preparation workflow metadata only, not legal approval.
 
 ![Counsel Pack Human Review Timeline](docs/assets/screenshots/counsel-pack-human-review-timeline-focus.png)

@@ -13,6 +13,7 @@ import type { ProjectProfile } from "./projectModel";
 import type { RegulatoryGraph } from "./regulatoryGraph";
 import type { RegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
 import type { RegulatorySourceReview } from "./regulatorySourceReview";
+import type { RiskSourceCitationControl } from "./sourceCitationControls";
 import type { SourceFreshnessBoard } from "./sourceFreshnessBoard";
 
 export type CounselPackModelIntake = {
@@ -37,7 +38,8 @@ export function buildMarkdownCounselPack(
   evidenceRecertificationQueue?: EvidenceRecertificationQueue,
   localCounselRoutingPlan?: LocalCounselRoutingPlan,
   sourceFreshnessBoard?: SourceFreshnessBoard,
-  evidenceVaultControlCoverage?: EvidenceVaultControlCoverage
+  evidenceVaultControlCoverage?: EvidenceVaultControlCoverage,
+  riskSourceCitationControls: RiskSourceCitationControl[] = []
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -50,6 +52,8 @@ export function buildMarkdownCounselPack(
   const reviews = counselReviews.map(formatReviewItem).join("\n");
   const modelIntakeSection = modelIntake ? formatModelIntakeSection(modelIntake) : "";
   const regulatoryGraphSection = regulatoryGraph ? formatRegulatoryGraphSection(regulatoryGraph) : "";
+  const riskSourceCitationControlsSection =
+    riskSourceCitationControls.length > 0 ? formatRiskSourceCitationControlsSection(riskSourceCitationControls) : "";
   const sourceReviewSection = regulatorySourceReview ? formatRegulatorySourceReviewSection(regulatorySourceReview) : "";
   const sourceFreshnessBoardSection = sourceFreshnessBoard ? formatSourceFreshnessBoardSection(sourceFreshnessBoard) : "";
   const localCounselRoutingSection =
@@ -106,6 +110,7 @@ export function buildMarkdownCounselPack(
     reviews || "- No counsel review statuses have been generated yet.",
     "",
     ...(regulatoryGraphSection ? ["## Regulatory Source Graph", regulatoryGraphSection, ""] : []),
+    ...(riskSourceCitationControlsSection ? ["## Risk Source Citation Controls", riskSourceCitationControlsSection, ""] : []),
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
     ...(sourceFreshnessBoardSection ? ["## Source Freshness Board", sourceFreshnessBoardSection, ""] : []),
     ...(localCounselRoutingSection ? ["## Local Counsel Routing Plan", localCounselRoutingSection, ""] : []),
@@ -125,6 +130,50 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatRiskSourceCitationControlsSection(controls: RiskSourceCitationControl[]): string {
+  const lines = controls
+    .map((control) => {
+      const localCounselRoutes = control.localCounselRoutes.length > 0 ? control.localCounselRoutes.join(", ") : "not routed";
+      const citations =
+        control.citations
+          .slice(0, 4)
+          .map(
+            (citation) =>
+              `  - citation ${safe(citation.jurisdiction)} [${safe(citation.citation)}] ${citation.coverageStatus}; open evidence requests: ${
+                citation.openEvidenceRequestCount
+              }; local counsel: ${safe(citation.localCounselRole)}; source: ${citation.sourceUrl}`
+          )
+          .join("\n") || "  - No jurisdiction citation controls mapped to this risk flag yet.";
+      const openRequests =
+        control.topOpenEvidenceRequests
+          .map(
+            (request) =>
+              `  - evidence ${request.priority} ${request.status} ${safe(request.jurisdiction)} [${safe(request.citation)}] ${safe(
+                request.title
+              )}`
+          )
+          .join("\n") || "  - No open source-linked evidence requests.";
+      return [
+        `- ${control.coverageStatus} [${safe(control.flagId)}] ${safe(control.flagTitle)}; citations: ${
+          control.citationCount
+        }; local counsel routes: ${safe(localCounselRoutes)}; next action: ${safe(control.nextAction)}`,
+        "  Citations:",
+        citations,
+        "  Open citation evidence:",
+        openRequests
+      ].join("\n");
+    })
+    .join("\n");
+
+  return [
+    "Not legal advice. Risk source citation controls are audit preparation source-lineage metadata only.",
+    `- Risk flags with citation controls: ${controls.length}`,
+    "",
+    "### Per-Risk Source Citations",
+    lines || "- No active risk source citation controls generated."
   ].join("\n");
 }
 

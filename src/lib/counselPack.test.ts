@@ -19,6 +19,7 @@ import { createSourceFreshnessBoard } from "./sourceFreshnessBoard";
 import { createDataBoundaryReport } from "./dataBoundary";
 import { createEvidenceRecertificationQueue } from "./evidenceRecertification";
 import { createLocalCounselRoutingPlan } from "./localCounselRouting";
+import { createRiskSourceCitationControls } from "./sourceCitationControls";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 
 const project: ProjectProfile = {
@@ -197,6 +198,52 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("FCA PS23/6 and FG23/3");
     expect(markdown).toContain("Evidence gaps");
     expect(markdown).toContain("Not legal advice. Regulatory graph output is audit preparation material only.");
+  });
+
+  it("includes per-risk source citation controls in Markdown handoff without legal conclusions", async () => {
+    const graphProject: ProjectProfile = {
+      ...project,
+      jurisdictions: ["United States", "European Union", "United Kingdom"],
+      assetModel: "Tokenized private credit note with yield",
+      userType: "Retail users and accredited investors",
+      custodyModel: "Platform controls omnibus wallet",
+      operatingStage: "Planned public launch",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(graphProject);
+    const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
+    const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
+    const citationControls = createRiskSourceCitationControls(audit, graph);
+
+    const markdown = buildMarkdownCounselPack(
+      graphProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      graph,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      citationControls
+    );
+
+    expect(markdown).toContain("## Risk Source Citation Controls");
+    expect(markdown).toContain("Not legal advice. Risk source citation controls are audit preparation source-lineage metadata only.");
+    expect(markdown).toContain("- Risk flags with citation controls:");
+    expect(markdown).toContain("Yield-bearing or investment-like asset");
+    expect(markdown).toContain("Regulation (EU) 2023/1114, Title II");
+    expect(markdown).toContain("17 C.F.R. 230.501(a), 230.506(c)");
+    expect(markdown).toContain("Open citation evidence");
+    expect(markdown).toContain("US private offering / securities counsel");
+    expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b|raw KYC|private key/i);
   });
 
   it("includes source update approval gates in Markdown handoff when source approvals are open", async () => {

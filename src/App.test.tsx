@@ -1031,6 +1031,22 @@ describe("App", () => {
     }
   });
 
+  it("includes risk source citation controls in the Counsel Pack preview without legal conclusions", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+    const memo = await screen.findByText(/## Risk Source Citation Controls/i);
+
+    expect(memo).toHaveClass("memo");
+    expect(memo).toHaveTextContent(/Not legal advice. Risk source citation controls are audit preparation source-lineage metadata only./i);
+    expect(memo).toHaveTextContent(/Yield-bearing or investment-like asset/i);
+    expect(memo).toHaveTextContent(/Regulation \(EU\) 2023\/1114, Title II/i);
+    expect(memo).toHaveTextContent(/Open citation evidence/i);
+    expect(memo).toHaveTextContent(/US private offering \/ securities counsel/i);
+    expect(memo.textContent ?? "").not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
+  });
+
   it("shows source citation controls on Risk Audit flags without legal conclusions", async () => {
     render(<App />);
 

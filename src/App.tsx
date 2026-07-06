@@ -1100,7 +1100,8 @@ export default function App() {
         evidenceRecertificationQueue ?? undefined,
         localCounselRoutingPlan ?? undefined,
         sourceFreshnessBoard ?? undefined,
-        evidenceVaultControlCoverage ?? undefined
+        evidenceVaultControlCoverage ?? undefined,
+        riskSourceCitationControls
       );
     },
     [
@@ -1120,6 +1121,7 @@ export default function App() {
       regulatoryGraph,
       regulatorySourceApprovalQueue,
       regulatorySourceReview,
+      riskSourceCitationControls,
       selectedCounselPackTemplate,
       sourceFreshnessBoard
     ]

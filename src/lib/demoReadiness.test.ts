@@ -361,7 +361,7 @@ describe("demo readiness", () => {
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(8);
+      expect(apiCheck.routeChecks).toHaveLength(10);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -410,12 +410,20 @@ describe("demo readiness", () => {
         expect.objectContaining({
           id: "integration-policy-evaluations",
           status: "ready"
+        }),
+        expect.objectContaining({
+          id: "source-review-ledger",
+          status: "ready"
+        }),
+        expect.objectContaining({
+          id: "source-approval-queue",
+          status: "ready"
         })
       ]),
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(8);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(10);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -478,7 +486,7 @@ function createDemoApiPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 7,
+      routeFamilyCount: 9,
       routeFamilies: [],
       implementedRouteCount: 24,
       implementedRoutes: [],
@@ -511,6 +519,8 @@ function createDemoApiPayload(url: string): unknown {
     };
   }
   if (
+    url.endsWith("/api/workspaces/demo-smoke-preflight/source-reviews") ||
+    url.endsWith("/api/workspaces/demo-smoke-preflight/source-approvals") ||
     url.endsWith("/api/workspaces/demo-smoke-preflight/exports") ||
     url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log") ||
     url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations")

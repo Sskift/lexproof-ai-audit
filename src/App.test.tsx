@@ -1669,7 +1669,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 8/8 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 10/10 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -5843,7 +5843,7 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 7,
+      routeFamilyCount: 9,
       routeFamilies: [],
       implementedRouteCount: 24,
       implementedRoutes: [],
@@ -5876,6 +5876,8 @@ function createDemoApiMockPayload(url: string): unknown {
     };
   }
   if (
+    url.endsWith("/api/workspaces/demo-smoke-preflight/source-reviews") ||
+    url.endsWith("/api/workspaces/demo-smoke-preflight/source-approvals") ||
     url.endsWith("/api/workspaces/demo-smoke-preflight/exports") ||
     url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log") ||
     url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations")

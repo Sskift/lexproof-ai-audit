@@ -33,6 +33,8 @@ export type DemoApiRouteCheck = {
     | "model-gateway-provider-policy"
     | "evidence-vault-manifest"
     | "human-review-queue"
+    | "source-review-ledger"
+    | "source-approval-queue"
     | "counsel-pack-exports"
     | "audit-log"
     | "integration-policy-evaluations";
@@ -197,6 +199,20 @@ const apiRoutePreflightSpecs: Array<{
     path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/queue`,
     validate: (payload) => isRecord(payload) && payload.queueVersion === "lexproof-server-human-review-queue-v1",
     readyDetail: "Human Review queue route is reachable for an empty demo workspace."
+  },
+  {
+    id: "source-review-ledger",
+    label: "Source Review Ledger",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/source-reviews`,
+    validate: Array.isArray,
+    readyDetail: "Source Review Ledger route is reachable for persisted metadata checks."
+  },
+  {
+    id: "source-approval-queue",
+    label: "Source Approval Queue",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/source-approvals`,
+    validate: Array.isArray,
+    readyDetail: "Source Approval Queue route is reachable for persisted metadata checks."
   },
   {
     id: "counsel-pack-exports",

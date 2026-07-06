@@ -47,7 +47,7 @@ describe("api preflight report", () => {
     expect(exported).not.toContain("sk-live");
     expect(exported).not.toContain("0x1111111111111111111111111111111111111111111111111111111111111111");
     expect(exported).toContain("Not legal advice");
-    expect(report.routeFamilyCount).toBe(7);
+    expect(report.routeFamilyCount).toBe(9);
     expect(report.implementedRouteCount).toBeGreaterThan(20);
   });
 });

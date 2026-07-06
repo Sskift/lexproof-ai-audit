@@ -8,6 +8,7 @@ export type ApiPreflightCapabilityId =
   | "human-review"
   | "exports"
   | "audit-log"
+  | "source-review"
   | "integration-policies";
 
 export type ApiPreflightCapability = {
@@ -21,6 +22,8 @@ export type ApiPreflightRouteFamilyId =
   | "model-gateway-provider-policy"
   | "evidence-vault-manifest"
   | "human-review-queue"
+  | "source-review-ledger"
+  | "source-approval-queue"
   | "counsel-pack-exports"
   | "audit-log"
   | "integration-policy-evaluations";
@@ -106,6 +109,11 @@ const defaultCapabilities: ApiPreflightCapability[] = [
     summary: "Audit Log routes expose filtered metadata records without raw payloads or legal conclusions."
   },
   {
+    id: "source-review",
+    status: "metadata-sync-ready",
+    summary: "Source Review Ledger and Source Approval Queue list persisted metadata without raw source bodies or matching changes."
+  },
+  {
     id: "integration-policies",
     status: "disabled-adapter-policy-ready",
     summary: "Object storage, document parser, chain anchor, and GRC destination policies evaluate metadata only."
@@ -140,6 +148,20 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     path: "/api/workspaces/:workspaceId/reviews/queue",
     responseContract: "ServerHumanReviewQueueView",
     sideEffectBoundary: "Queue view reads review workflow metadata and does not represent legal approval."
+  }),
+  createRouteFamily({
+    id: "source-review-ledger",
+    label: "Source Review Ledger",
+    path: "/api/workspaces/:workspaceId/source-reviews",
+    responseContract: "RegulatorySourceReviewRecord[]",
+    sideEffectBoundary: "Source review list returns persisted source metadata only and cannot change matching behavior."
+  }),
+  createRouteFamily({
+    id: "source-approval-queue",
+    label: "Source Approval Queue",
+    path: "/api/workspaces/:workspaceId/source-approvals",
+    responseContract: "RegulatorySourceApprovalRecord[]",
+    sideEffectBoundary: "Source approval list returns approval-gate metadata only and cannot approve legal conclusions."
   }),
   createRouteFamily({
     id: "counsel-pack-exports",

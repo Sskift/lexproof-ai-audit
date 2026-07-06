@@ -55,6 +55,20 @@ const apiRoutePreflightSpecs = [
     readyDetail: "Human Review queue route is reachable for an empty demo workspace."
   },
   {
+    id: "source-review-ledger",
+    label: "Source Review Ledger",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/source-reviews`,
+    validate: Array.isArray,
+    readyDetail: "Source Review Ledger route is reachable for persisted metadata checks."
+  },
+  {
+    id: "source-approval-queue",
+    label: "Source Approval Queue",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/source-approvals`,
+    validate: Array.isArray,
+    readyDetail: "Source Approval Queue route is reachable for persisted metadata checks."
+  },
+  {
     id: "counsel-pack-exports",
     label: "Counsel Pack exports",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/exports`,

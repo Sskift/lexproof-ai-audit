@@ -63,10 +63,12 @@ describe("System route module", () => {
         expect.objectContaining({ id: "model-gateway-provider-policy", path: "/api/model-gateway/provider-policy" }),
         expect.objectContaining({ id: "evidence-vault-manifest", path: "/api/workspaces/:workspaceId/evidence-manifest" }),
         expect.objectContaining({ id: "human-review-queue", path: "/api/workspaces/:workspaceId/reviews/queue" }),
+        expect.objectContaining({ id: "source-review-ledger", path: "/api/workspaces/:workspaceId/source-reviews" }),
+        expect.objectContaining({ id: "source-approval-queue", path: "/api/workspaces/:workspaceId/source-approvals" }),
         expect.objectContaining({ id: "integration-policy-evaluations" })
       ])
     );
-    expect(payload.routeFamilyCount).toBe(7);
+    expect(payload.routeFamilyCount).toBe(9);
     expect(payload.implementedRoutes).toEqual(expect.arrayContaining([expect.objectContaining({ path: "/api/preflight" })]));
     expect(JSON.stringify(payload)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
 

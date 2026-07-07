@@ -481,11 +481,13 @@ Counsel Pack export templates route the same project facts into launch, RWA/toke
 
 ![Counsel Pack export templates](docs/assets/screenshots/counsel-pack-export-templates.png)
 
-The Counsel Pack Markdown preview now carries the Source Review Ledger and Source Freshness Board from the Regulatory Command Center, including reviewed source counts, next review dates, reviewer notes, refresh actions, board hash, metadata-missing/overdue/due-soon/scheduled lanes, and Source Update Approval Queue gates when source updates need counsel or compliance review before matching behavior changes. It repeats the Not legal advice boundary because source freshness is audit-prep lineage and scheduling metadata only.
+The Counsel Pack Markdown preview now carries the Source Review Ledger, Source Freshness Board, and Jurisdiction Readiness Digest from the Regulatory Command Center, including reviewed source counts, next review dates, reviewer notes, refresh actions, board hash, digest hash, jurisdiction handoff blockers, metadata-missing/overdue/due-soon/scheduled lanes, and Source Update Approval Queue gates when source updates need counsel or compliance review before matching behavior changes. It repeats the Not legal advice boundary because source freshness and jurisdiction readiness are audit-prep lineage and workflow metadata only.
 
 ![Counsel Pack Source Review Ledger](docs/assets/screenshots/counsel-pack-source-review-ledger.png)
 
 ![Counsel Pack Source Freshness Board](docs/assets/screenshots/counsel-pack-source-freshness-board.png)
+
+![Counsel Pack Jurisdiction Readiness Digest](docs/assets/screenshots/counsel-pack-jurisdiction-readiness-digest.png)
 
 ![Counsel Pack Source Update Approval Queue](docs/assets/screenshots/counsel-pack-source-approval-queue.png)
 

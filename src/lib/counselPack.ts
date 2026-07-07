@@ -7,6 +7,7 @@ import type { EvidenceRecertificationQueue } from "./evidenceRecertification";
 import type { EvidenceManifest } from "./evidenceManifest";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 import type { HumanReviewTimelineEntry } from "./humanReviewWorkflow";
+import type { JurisdictionReadinessDigest } from "./jurisdictionReadinessDigest";
 import type { LocalCounselRoutingPlan } from "./localCounselRouting";
 import type { AIEventRecord, ModelConnectionProfile, ModelIntakeSummary } from "./modelIntake";
 import type { ProjectProfile } from "./projectModel";
@@ -39,7 +40,8 @@ export function buildMarkdownCounselPack(
   localCounselRoutingPlan?: LocalCounselRoutingPlan,
   sourceFreshnessBoard?: SourceFreshnessBoard,
   evidenceVaultControlCoverage?: EvidenceVaultControlCoverage,
-  riskSourceCitationControls: RiskSourceCitationControl[] = []
+  riskSourceCitationControls: RiskSourceCitationControl[] = [],
+  jurisdictionReadinessDigest?: JurisdictionReadinessDigest
 ): string {
   const flags = audit.flags.map((flag) => `- [${flag.severity}] ${safe(flag.title)}: ${safe(flag.rationale)}`).join("\n");
   const remediation = audit.remediation.map((item) => `- ${item.priority} ${safe(item.owner)}: ${safe(item.action)}`).join("\n");
@@ -56,6 +58,9 @@ export function buildMarkdownCounselPack(
     riskSourceCitationControls.length > 0 ? formatRiskSourceCitationControlsSection(riskSourceCitationControls) : "";
   const sourceReviewSection = regulatorySourceReview ? formatRegulatorySourceReviewSection(regulatorySourceReview) : "";
   const sourceFreshnessBoardSection = sourceFreshnessBoard ? formatSourceFreshnessBoardSection(sourceFreshnessBoard) : "";
+  const jurisdictionReadinessDigestSection = jurisdictionReadinessDigest
+    ? formatJurisdictionReadinessDigestSection(jurisdictionReadinessDigest)
+    : "";
   const localCounselRoutingSection =
     localCounselRoutingPlan && localCounselRoutingPlan.routeCount > 0
       ? formatLocalCounselRoutingPlanSection(localCounselRoutingPlan)
@@ -113,6 +118,7 @@ export function buildMarkdownCounselPack(
     ...(riskSourceCitationControlsSection ? ["## Risk Source Citation Controls", riskSourceCitationControlsSection, ""] : []),
     ...(sourceReviewSection ? ["## Source Review Ledger", sourceReviewSection, ""] : []),
     ...(sourceFreshnessBoardSection ? ["## Source Freshness Board", sourceFreshnessBoardSection, ""] : []),
+    ...(jurisdictionReadinessDigestSection ? ["## Jurisdiction Readiness Digest", jurisdictionReadinessDigestSection, ""] : []),
     ...(localCounselRoutingSection ? ["## Local Counsel Routing Plan", localCounselRoutingSection, ""] : []),
     ...(sourceApprovalSection ? ["## Source Update Approval Queue", sourceApprovalSection, ""] : []),
     ...(humanReviewSection ? ["## Human Review Timeline", humanReviewSection, ""] : []),
@@ -130,6 +136,43 @@ export function buildMarkdownCounselPack(
     "",
     "## Source Pack",
     sources
+  ].join("\n");
+}
+
+function formatJurisdictionReadinessDigestSection(digest: JurisdictionReadinessDigest): string {
+  const rows = digest.jurisdictions
+    .slice(0, 8)
+    .map((item) => {
+      const roles = item.localCounselRoles.length > 0 ? item.localCounselRoles.join(", ") : "not routed";
+      const evidence = item.topEvidenceRequests.slice(0, 3).join("; ") || "no open evidence requests";
+      const topics = item.topTopics.slice(0, 4).join(", ") || "no mapped topics";
+      return `- ${item.status} ${safe(item.jurisdiction)}; handoff: ${item.handoffState}; controls: ${item.controlCount}; open evidence: ${
+        item.openEvidenceRequestCount
+      }; source blockers: ${item.sourceFreshnessBlockerCount}; local counsel: ${safe(roles)}; topics: ${safe(topics)}; evidence: ${safe(
+        evidence
+      )}; next action: ${safe(item.nextAction)}`;
+    })
+    .join("\n");
+
+  return [
+    digest.notLegalAdviceBoundary,
+    `- Digest status: ${digest.status}`,
+    `- Digest hash: ${digest.digestHash}`,
+    `- Handoff allowed: ${digest.handoffAllowed ? "yes" : "no"}`,
+    `- Jurisdictions: ${digest.jurisdictionCount}`,
+    `- Ready for counsel: ${digest.summary.readyForCounselCount}`,
+    `- Needs evidence: ${digest.summary.needsEvidenceCount}`,
+    `- Needs source review: ${digest.summary.needsSourceReviewCount}`,
+    `- Metadata missing: ${digest.summary.metadataMissingCount}`,
+    `- Open evidence requests: ${digest.summary.openEvidenceRequestCount}`,
+    `- Source freshness blockers: ${digest.summary.sourceFreshnessBlockerCount}`,
+    `- Due soon sources: ${digest.summary.dueSoonSourceCount}`,
+    `- Source map hash: ${digest.sourceMapHash || "pending"}`,
+    `- Local counsel plan hash: ${digest.localCounselPlanHash || "pending"}`,
+    `- Source freshness board hash: ${digest.sourceFreshnessBoardHash || "pending"}`,
+    "",
+    "### Jurisdiction Handoff Rows",
+    rows || "- No jurisdiction readiness rows generated."
   ].join("\n");
 }
 

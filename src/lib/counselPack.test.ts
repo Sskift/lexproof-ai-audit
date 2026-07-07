@@ -18,7 +18,10 @@ import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval"
 import { createSourceFreshnessBoard } from "./sourceFreshnessBoard";
 import { createDataBoundaryReport } from "./dataBoundary";
 import { createEvidenceRecertificationQueue } from "./evidenceRecertification";
+import { createJurisdictionEvidenceMap } from "./jurisdictionEvidenceMap";
+import { createJurisdictionReadinessDigest } from "./jurisdictionReadinessDigest";
 import { createLocalCounselRoutingPlan } from "./localCounselRouting";
+import { createRegulatoryControlMatrix } from "./regulatoryControlMatrix";
 import { createRiskSourceCitationControls } from "./sourceCitationControls";
 import type { EvidenceVaultControlCoverage } from "./evidenceVaultControlCoverage";
 
@@ -337,6 +340,82 @@ describe("buildMarkdownCounselPack", () => {
     expect(markdown).toContain("- Due soon sources:");
     expect(markdown).toContain("Refresh");
     expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|raw KYC|private key/i);
+  });
+
+  it("includes jurisdiction readiness digest metadata in Markdown handoff without legal conclusions", async () => {
+    const graphProject: ProjectProfile = {
+      ...project,
+      jurisdictions: ["European Union", "United Kingdom", "United States"],
+      assetModel: "Tokenized private credit note with yield and public communications",
+      userType: "Retail users and accredited investors",
+      custodyModel: "Platform controls omnibus wallet",
+      operatingStage: "Planned public launch before local counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(graphProject);
+    const manifest = await createEvidenceManifest(graphProject, audit, graphProject.evidenceItems);
+    const graph = createRegulatoryGraph(graphProject, audit, graphProject.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, {
+      asOf: "2026-10-15T00:00:00.000Z"
+    });
+    const sourceFreshnessBoard = await createSourceFreshnessBoard({
+      sourceReview,
+      asOf: "2026-10-15T00:00:00.000Z",
+      generatedAt: "2026-10-15T00:00:00.000Z"
+    });
+    const localCounselRoutingPlan = await createLocalCounselRoutingPlan({
+      graph,
+      sourceReview,
+      generatedAt: "2026-10-15T00:00:00.000Z"
+    });
+    const controlMatrix = createRegulatoryControlMatrix({
+      graph,
+      sourceReview,
+      generatedAt: "2026-10-15T00:00:00.000Z"
+    });
+    const evidenceMap = await createJurisdictionEvidenceMap({
+      matrix: controlMatrix,
+      generatedAt: "2026-10-15T00:00:00.000Z"
+    });
+    const readinessDigest = await createJurisdictionReadinessDigest({
+      evidenceMap,
+      localCounselRoutingPlan,
+      sourceFreshnessBoard,
+      generatedAt: "2026-10-15T00:00:00.000Z"
+    });
+
+    const markdown = buildMarkdownCounselPack(
+      graphProject,
+      audit,
+      manifest,
+      [],
+      [],
+      undefined,
+      graph,
+      undefined,
+      undefined,
+      sourceReview,
+      undefined,
+      [],
+      undefined,
+      localCounselRoutingPlan,
+      sourceFreshnessBoard,
+      undefined,
+      [],
+      readinessDigest
+    );
+
+    expect(markdown).toContain("## Jurisdiction Readiness Digest");
+    expect(markdown).toContain("Not legal advice. Jurisdiction readiness digests are audit preparation workflow metadata only.");
+    expect(markdown).toContain(`- Digest hash: ${readinessDigest.digestHash}`);
+    expect(markdown).toContain("- Handoff allowed: no");
+    expect(markdown).toContain("- Needs evidence:");
+    expect(markdown).toContain("- Source freshness blockers:");
+    expect(markdown).toContain("United States");
+    expect(markdown).toContain("European Union");
+    expect(markdown).toContain("US private offering / securities counsel");
+    expect(markdown).toContain("Prepare");
+    expect(markdown).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b|raw KYC|private key/i);
   });
 
   it("includes local counsel routing plan metadata in Markdown handoff without legal conclusions", async () => {

@@ -1031,6 +1031,32 @@ describe("App", () => {
     }
   });
 
+  it("includes Jurisdiction Readiness Digest metadata in the Counsel Pack preview", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00.000Z"));
+
+    try {
+      render(<App />);
+      vi.useRealTimers();
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+      const memo = await screen.findByText(/## Jurisdiction Readiness Digest/i);
+
+      expect(memo).toHaveClass("memo");
+      expect(memo).toHaveTextContent(/Not legal advice. Jurisdiction readiness digests are audit preparation workflow metadata only./i);
+      expect(memo).toHaveTextContent(/- Digest status: needs-evidence/i);
+      expect(memo).toHaveTextContent(/- Digest hash: [a-f0-9]{64}/i);
+      expect(memo).toHaveTextContent(/- Handoff allowed: no/i);
+      expect(memo).toHaveTextContent(/### Jurisdiction Handoff Rows/i);
+      expect(memo).toHaveTextContent(/United States/i);
+      expect(memo).toHaveTextContent(/local counsel/i);
+      expect(memo.textContent ?? "").not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegally approved\b/i);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("includes risk source citation controls in the Counsel Pack preview without legal conclusions", async () => {
     render(<App />);
 

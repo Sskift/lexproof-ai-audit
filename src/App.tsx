@@ -1101,7 +1101,8 @@ export default function App() {
         localCounselRoutingPlan ?? undefined,
         sourceFreshnessBoard ?? undefined,
         evidenceVaultControlCoverage ?? undefined,
-        riskSourceCitationControls
+        riskSourceCitationControls,
+        jurisdictionReadinessDigest ?? undefined
       );
     },
     [
@@ -1113,6 +1114,7 @@ export default function App() {
       evidenceVaultControlCoverage,
       evidenceRecertificationQueue,
       humanReviewTimeline,
+      jurisdictionReadinessDigest,
       localCounselRoutingPlan,
       manifest,
       modelIntakeProfile,

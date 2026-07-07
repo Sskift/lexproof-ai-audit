@@ -45,6 +45,7 @@ type CounselPackPanelProps = {
   fit: SubmissionFit;
   manifest: EvidenceManifest | null;
   regulatorySourcePack: RegulatorySourcePack | null;
+  versionMetadataReady: boolean;
   markdown: string;
   counselQuestions: CounselQuestion[];
   counselReviews: CounselReviewItem[];
@@ -77,6 +78,7 @@ export function CounselPackPanel({
   fit,
   manifest,
   regulatorySourcePack,
+  versionMetadataReady,
   markdown,
   counselQuestions,
   counselReviews,
@@ -235,7 +237,7 @@ export function CounselPackPanel({
           <button
             type="button"
             className="secondary"
-            disabled={!manifest || isSavingVersion || exportBlocked}
+            disabled={!manifest || !versionMetadataReady || isSavingVersion || exportBlocked}
             onClick={saveVersion}
           >
             <Save size={16} aria-hidden="true" />
@@ -598,6 +600,20 @@ function ServerExportRecordsPanel({
                 <VersionFact label="Sources" value={String(record.sourceCount)} />
                 <VersionFact label="Source Pack" value={shortHash(record.sourcePackHash)} />
                 <VersionFact label="Source Review" value={record.sourceReviewStatus} />
+                <VersionFact
+                  label="Jurisdiction Digest"
+                  value={record.jurisdictionReadinessDigest ? shortHash(record.jurisdictionReadinessDigest.digestHash) : "missing"}
+                />
+                <VersionFact
+                  label="Jurisdiction Handoff"
+                  value={
+                    record.jurisdictionReadinessDigest
+                      ? record.jurisdictionReadinessDigest.handoffAllowed
+                        ? "allowed"
+                        : "blocked"
+                      : "missing"
+                  }
+                />
                 <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
               </div>
               <small>{record.notLegalAdviceBoundary}</small>
@@ -652,6 +668,20 @@ function CounselPackVersionsPanel({
                 <VersionFact label="Sources" value={String(record.sourcePack.length)} />
                 <VersionFact label="Source Pack" value={record.regulatorySourcePack ? shortHash(record.regulatorySourcePack.packHash) : "missing"} />
                 <VersionFact label="Source Review" value={record.regulatorySourcePack?.sourceReviewStatus ?? "metadata-missing"} />
+                <VersionFact
+                  label="Jurisdiction Digest"
+                  value={record.jurisdictionReadinessDigest ? shortHash(record.jurisdictionReadinessDigest.digestHash) : "missing"}
+                />
+                <VersionFact
+                  label="Jurisdiction Handoff"
+                  value={
+                    record.jurisdictionReadinessDigest
+                      ? record.jurisdictionReadinessDigest.handoffAllowed
+                        ? "allowed"
+                        : "blocked"
+                      : "missing"
+                  }
+                />
                 <VersionFact label="Reviewed" value={`${record.reviewSummary.reviewed}/${record.reviewSummary.total}`} />
               </div>
               <p className="counsel-version-diff">

@@ -68,6 +68,9 @@ export async function createServerCounselPackExportRecord({
       sourceCount: versionRecord.sourcePack.length,
       sourcePackHash: versionRecord.regulatorySourcePack.packHash,
       sourceReviewStatus: versionRecord.regulatorySourcePack.sourceReviewStatus,
+      ...(versionRecord.jurisdictionReadinessDigest
+        ? { jurisdictionReadinessDigest: mapJurisdictionReadinessDigest(versionRecord.jurisdictionReadinessDigest) }
+        : {}),
       createdBy: createdBy.trim() || "Compliance",
       includesRawKycOrPersonalData: false,
       includesCredentialMaterial: false
@@ -87,6 +90,26 @@ export async function createServerCounselPackExportRecord({
   }
 
   return payload as CounselPackExportRecord;
+}
+
+function mapJurisdictionReadinessDigest(
+  digest: NonNullable<CounselPackVersionRecord["jurisdictionReadinessDigest"]>
+): NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]> {
+  return {
+    digestHash: digest.digestHash,
+    status: digest.status,
+    handoffAllowed: digest.handoffAllowed,
+    jurisdictionCount: digest.jurisdictionCount,
+    readyForCounselCount: digest.readyForCounselCount,
+    needsEvidenceCount: digest.needsEvidenceCount,
+    needsSourceReviewCount: digest.needsSourceReviewCount,
+    metadataMissingCount: digest.metadataMissingCount,
+    openEvidenceRequestCount: digest.openEvidenceRequestCount,
+    sourceFreshnessBlockerCount: digest.sourceFreshnessBlockerCount,
+    dueSoonSourceCount: digest.dueSoonSourceCount,
+    notLegalAdviceBoundary:
+      "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+  };
 }
 
 function buildWorkspaceUrl(apiBaseUrl: string | undefined, workspaceId: string, route: string): string {

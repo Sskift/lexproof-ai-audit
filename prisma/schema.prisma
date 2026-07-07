@@ -87,26 +87,27 @@ model HumanReviewRecord {
 }
 
 model CounselPackExportRecord {
-  id                     String   @id
-  workspaceId            String
-  exportType             String
-  format                 String
-  version                Int
-  projectName            String
-  title                  String
-  artifactName           String
-  manifestHash           String
-  artifactHash           String
-  artifactSize           Int
-  riskLevel              String
-  reviewSummaryJson      String
-  sourceCount            Int
-  sourcePackHash         String   @default("")
-  sourceReviewStatus     String   @default("metadata-missing")
-  createdBy              String
-  status                 String
-  createdAt              DateTime
-  notLegalAdviceBoundary String
+  id                              String   @id
+  workspaceId                     String
+  exportType                      String
+  format                          String
+  version                         Int
+  projectName                     String
+  title                           String
+  artifactName                    String
+  manifestHash                    String
+  artifactHash                    String
+  artifactSize                    Int
+  riskLevel                       String
+  reviewSummaryJson               String
+  sourceCount                     Int
+  sourcePackHash                  String   @default("")
+  sourceReviewStatus              String   @default("metadata-missing")
+  jurisdictionReadinessDigestJson String   @default("")
+  createdBy                       String
+  status                          String
+  createdAt                       DateTime
+  notLegalAdviceBoundary          String
 
   @@index([workspaceId])
 }

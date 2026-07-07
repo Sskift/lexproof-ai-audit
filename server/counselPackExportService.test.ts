@@ -23,6 +23,21 @@ const baseInput = {
   sourceCount: 4,
   sourcePackHash: "c".repeat(64),
   sourceReviewStatus: "review-due" as const,
+  jurisdictionReadinessDigest: {
+    digestHash: "d".repeat(64),
+    status: "needs-evidence" as const,
+    handoffAllowed: false,
+    jurisdictionCount: 2,
+    readyForCounselCount: 0,
+    needsEvidenceCount: 2,
+    needsSourceReviewCount: 0,
+    metadataMissingCount: 0,
+    openEvidenceRequestCount: 8,
+    sourceFreshnessBlockerCount: 1,
+    dueSoonSourceCount: 0,
+    notLegalAdviceBoundary:
+      "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+  },
   createdBy: "Compliance",
   includesRawKycOrPersonalData: false,
   includesCredentialMaterial: false,
@@ -58,6 +73,21 @@ describe("counsel pack export service", () => {
       sourceCount: 4,
       sourcePackHash: "c".repeat(64),
       sourceReviewStatus: "review-due",
+      jurisdictionReadinessDigest: {
+        digestHash: "d".repeat(64),
+        status: "needs-evidence",
+        handoffAllowed: false,
+        jurisdictionCount: 2,
+        readyForCounselCount: 0,
+        needsEvidenceCount: 2,
+        needsSourceReviewCount: 0,
+        metadataMissingCount: 0,
+        openEvidenceRequestCount: 8,
+        sourceFreshnessBlockerCount: 1,
+        dueSoonSourceCount: 0,
+        notLegalAdviceBoundary:
+          "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+      },
       createdBy: "Compliance",
       status: "ready",
       createdAt: "2026-06-30T08:30:00.000Z",
@@ -74,6 +104,11 @@ describe("counsel pack export service", () => {
         manifestHash: "not-a-hash",
         artifactHash: "also-not-a-hash",
         sourcePackHash: "not-a-source-pack-hash",
+        jurisdictionReadinessDigest: {
+          ...baseInput.jurisdictionReadinessDigest,
+          digestHash: "not-a-digest-hash",
+          jurisdictionCount: -1
+        },
         includesRawKycOrPersonalData: true,
         includesCredentialMaterial: true,
         rawMarkdown: "# Counsel Pack\n\nsk-live-secret should never be accepted"
@@ -83,6 +118,8 @@ describe("counsel pack export service", () => {
         "Manifest hash must be a SHA-256 hex digest.",
         "Artifact hash must be a SHA-256 hex digest.",
         "Source pack hash must be a SHA-256 hex digest.",
+        "Jurisdiction readiness digest hash must be a SHA-256 hex digest.",
+        "Jurisdiction readiness jurisdiction count cannot be negative.",
         "Counsel Pack export records must not include raw KYC or personal data.",
         "Counsel Pack export records must not include API keys, private keys, or credential material.",
         "Server export records accept hashes and metadata only, not raw Markdown or PDF content."

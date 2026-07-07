@@ -33,7 +33,12 @@ describe("counsel pack export record receipt", () => {
         artifactHash: "b".repeat(64),
         sourcePackHash: "c".repeat(64)
       },
-      recoveryAction: "Resolve blocked or evidence-needed counsel review items before external handoff."
+      jurisdictionReadinessDigest: expect.objectContaining({
+        digestHash: "d".repeat(64),
+        status: "needs-evidence",
+        handoffAllowed: false
+      }),
+      recoveryAction: "Resolve jurisdiction readiness blockers before external handoff."
     } satisfies Partial<CounselPackExportRecordReceipt>);
     expect(first.notLegalAdviceBoundary).toContain("Not legal advice");
     expect(first.receiptHash).toMatch(/^[a-f0-9]{64}$/);
@@ -68,7 +73,9 @@ describe("counsel pack export record receipt", () => {
   });
 
   it("exports and downloads receipt JSON", async () => {
-    const receipt = await createCounselPackExportRecordReceipt(createRecord({ reviewSummary: cleanReviewSummary() }));
+    const receipt = await createCounselPackExportRecordReceipt(
+      createRecord({ reviewSummary: cleanReviewSummary(), jurisdictionReadinessDigest: cleanJurisdictionReadinessDigest() })
+    );
     const json = exportCounselPackExportRecordReceiptJson(receipt);
 
     expect(json).toContain("\"receiptVersion\": \"lexproof-counsel-pack-export-record-receipt-v1\"");
@@ -123,6 +130,21 @@ function createRecord(overrides: Partial<CounselPackExportRecord> = {}): Counsel
     sourceCount: 6,
     sourcePackHash: "c".repeat(64),
     sourceReviewStatus: "current",
+    jurisdictionReadinessDigest: {
+      digestHash: "d".repeat(64),
+      status: "needs-evidence",
+      handoffAllowed: false,
+      jurisdictionCount: 2,
+      readyForCounselCount: 0,
+      needsEvidenceCount: 2,
+      needsSourceReviewCount: 0,
+      metadataMissingCount: 0,
+      openEvidenceRequestCount: 8,
+      sourceFreshnessBlockerCount: 1,
+      dueSoonSourceCount: 0,
+      notLegalAdviceBoundary:
+        "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+    },
     createdBy: "Compliance",
     status: "ready",
     createdAt: "2026-07-04T00:00:00.000Z",
@@ -139,5 +161,23 @@ function cleanReviewSummary(): CounselPackExportRecord["reviewSummary"] {
     needsEvidence: 0,
     blocked: 0,
     open: 0
+  };
+}
+
+function cleanJurisdictionReadinessDigest(): NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]> {
+  return {
+    digestHash: "e".repeat(64),
+    status: "ready-for-counsel",
+    handoffAllowed: true,
+    jurisdictionCount: 2,
+    readyForCounselCount: 2,
+    needsEvidenceCount: 0,
+    needsSourceReviewCount: 0,
+    metadataMissingCount: 0,
+    openEvidenceRequestCount: 0,
+    sourceFreshnessBlockerCount: 0,
+    dueSoonSourceCount: 0,
+    notLegalAdviceBoundary:
+      "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
   };
 }

@@ -496,6 +496,7 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
       "sourceCount" INTEGER NOT NULL,
       "sourcePackHash" TEXT NOT NULL DEFAULT '',
       "sourceReviewStatus" TEXT NOT NULL DEFAULT 'metadata-missing',
+      "jurisdictionReadinessDigestJson" TEXT NOT NULL DEFAULT '',
       "createdBy" TEXT NOT NULL,
       "status" TEXT NOT NULL,
       "createdAt" DATETIME NOT NULL,
@@ -507,6 +508,7 @@ async function ensureReviewWorkspaceSchema(prisma: PrismaClient): Promise<void> 
   );
   await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourcePackHash", "TEXT NOT NULL DEFAULT ''");
   await addColumnIfMissing(prisma, "CounselPackExportRecord", "sourceReviewStatus", "TEXT NOT NULL DEFAULT 'metadata-missing'");
+  await addColumnIfMissing(prisma, "CounselPackExportRecord", "jurisdictionReadinessDigestJson", "TEXT NOT NULL DEFAULT ''");
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "IntegrationPolicyEvaluationRecord" (
@@ -935,6 +937,7 @@ function serializeCounselPackExportRecord(record: CounselPackExportRecord) {
     sourceCount: record.sourceCount,
     sourcePackHash: record.sourcePackHash,
     sourceReviewStatus: record.sourceReviewStatus,
+    jurisdictionReadinessDigestJson: JSON.stringify(record.jurisdictionReadinessDigest ?? null),
     createdBy: record.createdBy,
     status: record.status,
     createdAt: new Date(record.createdAt),
@@ -959,6 +962,7 @@ type PersistedCounselPackExportRecord = {
   sourceCount: number;
   sourcePackHash?: string | null;
   sourceReviewStatus?: string | null;
+  jurisdictionReadinessDigestJson?: string | null;
   createdBy: string;
   status: string;
   createdAt: Date;
@@ -984,6 +988,7 @@ function deserializeCounselPackExportRecord(record: PersistedCounselPackExportRe
     sourceCount: record.sourceCount,
     sourcePackHash: record.sourcePackHash ?? "",
     sourceReviewStatus: parseCounselPackExportSourceReviewStatus(record.sourceReviewStatus),
+    ...parseCounselPackExportJurisdictionReadinessDigest(record.jurisdictionReadinessDigestJson),
     createdBy: record.createdBy,
     status: "ready",
     createdAt: record.createdAt.toISOString(),
@@ -1014,6 +1019,56 @@ function parseCounselPackExportReviewSummary(payload: string): CounselPackExport
   } catch {
     return fallback;
   }
+}
+
+function parseCounselPackExportJurisdictionReadinessDigest(
+  payload: string | null | undefined
+): Pick<CounselPackExportRecord, "jurisdictionReadinessDigest"> {
+  if (!payload?.trim()) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(payload) as Partial<NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]> | null>;
+    if (!parsed?.digestHash) {
+      return {};
+    }
+
+    return {
+      jurisdictionReadinessDigest: {
+        digestHash: String(parsed.digestHash),
+        status: parseCounselPackExportJurisdictionReadinessStatus(parsed.status),
+        handoffAllowed: Boolean(parsed.handoffAllowed),
+        jurisdictionCount: Number(parsed.jurisdictionCount ?? 0),
+        readyForCounselCount: Number(parsed.readyForCounselCount ?? 0),
+        needsEvidenceCount: Number(parsed.needsEvidenceCount ?? 0),
+        needsSourceReviewCount: Number(parsed.needsSourceReviewCount ?? 0),
+        metadataMissingCount: Number(parsed.metadataMissingCount ?? 0),
+        openEvidenceRequestCount: Number(parsed.openEvidenceRequestCount ?? 0),
+        sourceFreshnessBlockerCount: Number(parsed.sourceFreshnessBlockerCount ?? 0),
+        dueSoonSourceCount: Number(parsed.dueSoonSourceCount ?? 0),
+        notLegalAdviceBoundary:
+          "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+      }
+    };
+  } catch {
+    return {};
+  }
+}
+
+function parseCounselPackExportJurisdictionReadinessStatus(
+  value: unknown
+): NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]>["status"] {
+  if (
+    value === "ready-for-counsel" ||
+    value === "needs-evidence" ||
+    value === "needs-source-review" ||
+    value === "metadata-missing" ||
+    value === "no-jurisdictions"
+  ) {
+    return value;
+  }
+  return "metadata-missing";
 }
 
 function parseCounselPackExportSourceReviewStatus(value: string | null | undefined): CounselPackExportRecord["sourceReviewStatus"] {

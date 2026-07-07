@@ -32,6 +32,21 @@ describe("Counsel Pack export route module", () => {
         sourceCount: 4,
         sourcePackHash: "c".repeat(64),
         sourceReviewStatus: "current",
+        jurisdictionReadinessDigest: {
+          digestHash: "d".repeat(64),
+          status: "needs-evidence",
+          handoffAllowed: false,
+          jurisdictionCount: 2,
+          readyForCounselCount: 0,
+          needsEvidenceCount: 2,
+          needsSourceReviewCount: 0,
+          metadataMissingCount: 0,
+          openEvidenceRequestCount: 8,
+          sourceFreshnessBlockerCount: 1,
+          dueSoonSourceCount: 0,
+          notLegalAdviceBoundary:
+            "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+        },
         createdBy: "Compliance",
         includesRawKycOrPersonalData: false,
         includesCredentialMaterial: false
@@ -51,6 +66,11 @@ describe("Counsel Pack export route module", () => {
         artifactHash: "b".repeat(64),
         sourcePackHash: "c".repeat(64),
         sourceReviewStatus: "current",
+        jurisdictionReadinessDigest: expect.objectContaining({
+          digestHash: "d".repeat(64),
+          status: "needs-evidence",
+          handoffAllowed: false
+        }),
         notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."
       })
     );

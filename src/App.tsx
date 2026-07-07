@@ -1990,6 +1990,9 @@ export default function App() {
     if (!regulatorySourcePack) {
       throw new Error("Regulatory Source Pack is still calculating.");
     }
+    if (!jurisdictionReadinessDigest) {
+      throw new Error("Jurisdiction Readiness Digest is still calculating.");
+    }
     if (!dataBoundaryReport.exportAllowed) {
       throw new Error("Export Safety Gate blocked this Counsel Pack. Remove blocked materials before saving a version.");
     }
@@ -1999,6 +2002,7 @@ export default function App() {
       audit,
       manifest,
       regulatorySourcePack,
+      jurisdictionReadinessDigest,
       markdown,
       counselReviews: currentCounselReviews,
       previousVersions: currentCounselPackVersions
@@ -2650,6 +2654,7 @@ export default function App() {
               fit={fit}
               manifest={manifest}
               regulatorySourcePack={regulatorySourcePack}
+              versionMetadataReady={Boolean(manifest && regulatorySourcePack && jurisdictionReadinessDigest)}
               markdown={markdown}
               counselQuestions={currentCounselQuestions}
               counselReviews={currentCounselReviews}

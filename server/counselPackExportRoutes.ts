@@ -31,6 +31,7 @@ export function registerCounselPackExportRoutes(server: FastifyInstance, options
           sourceCount: request.body.sourceCount,
           sourcePackHash: request.body.sourcePackHash,
           sourceReviewStatus: request.body.sourceReviewStatus,
+          jurisdictionReadinessDigest: request.body.jurisdictionReadinessDigest,
           createdBy: request.body.createdBy,
           includesRawKycOrPersonalData: request.body.includesRawKycOrPersonalData,
           includesCredentialMaterial: request.body.includesCredentialMaterial,
@@ -97,6 +98,7 @@ type CounselPackExportRequestBody = {
   sourceCount: number;
   sourcePackHash: string;
   sourceReviewStatus: CounselPackExportRecord["sourceReviewStatus"];
+  jurisdictionReadinessDigest?: CounselPackExportRecord["jurisdictionReadinessDigest"];
   createdBy: string;
   includesRawKycOrPersonalData: boolean;
   includesCredentialMaterial: boolean;

@@ -138,6 +138,28 @@ export type CounselPackExportReviewSummary = {
 
 export type CounselPackExportSourceReviewStatus = "current" | "review-due" | "metadata-missing";
 
+export type CounselPackExportJurisdictionReadinessStatus =
+  | "ready-for-counsel"
+  | "needs-evidence"
+  | "needs-source-review"
+  | "metadata-missing"
+  | "no-jurisdictions";
+
+export type CounselPackExportJurisdictionReadinessDigest = {
+  digestHash: string;
+  status: CounselPackExportJurisdictionReadinessStatus;
+  handoffAllowed: boolean;
+  jurisdictionCount: number;
+  readyForCounselCount: number;
+  needsEvidenceCount: number;
+  needsSourceReviewCount: number;
+  metadataMissingCount: number;
+  openEvidenceRequestCount: number;
+  sourceFreshnessBlockerCount: number;
+  dueSoonSourceCount: number;
+  notLegalAdviceBoundary: "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only.";
+};
+
 export type CounselPackExportRecord = {
   recordVersion: "lexproof-counsel-pack-export-record-v1";
   id: string;
@@ -156,6 +178,7 @@ export type CounselPackExportRecord = {
   sourceCount: number;
   sourcePackHash: string;
   sourceReviewStatus: CounselPackExportSourceReviewStatus;
+  jurisdictionReadinessDigest?: CounselPackExportJurisdictionReadinessDigest;
   createdBy: string;
   status: "ready";
   createdAt: string;

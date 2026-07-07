@@ -5783,7 +5783,12 @@ describe("App", () => {
           includesRawKycOrPersonalData: false,
           includesCredentialMaterial: false,
           sourcePackHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-          sourceReviewStatus: expect.stringMatching(/^(current|review-due|metadata-missing)$/)
+          sourceReviewStatus: expect.stringMatching(/^(current|review-due|metadata-missing)$/),
+          jurisdictionReadinessDigest: expect.objectContaining({
+            digestHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+            status: "needs-evidence",
+            handoffAllowed: false
+          })
         })
       );
       expect(JSON.stringify(body)).not.toContain("# Counsel Pack");
@@ -5807,6 +5812,7 @@ describe("App", () => {
           sourceCount: body.sourceCount,
           sourcePackHash: body.sourcePackHash,
           sourceReviewStatus: body.sourceReviewStatus,
+          jurisdictionReadinessDigest: body.jurisdictionReadinessDigest,
           createdBy: body.createdBy,
           status: "ready",
           createdAt: "2026-06-30T08:30:00.000Z",
@@ -5833,6 +5839,8 @@ describe("App", () => {
 
       expect(await screen.findByText(/Server Export Records/i)).toBeInTheDocument();
       expect(await screen.findByText(/counsel-pack-export-ui/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Jurisdiction Digest/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Jurisdiction Handoff/i).length).toBeGreaterThan(0);
       expect(
         screen.getByText(/Not legal advice. Counsel Pack export records are audit preparation metadata only./i)
       ).toBeInTheDocument();
@@ -5845,6 +5853,7 @@ describe("App", () => {
       const receiptPayload = await readAppBlobText(capturedBlobs[0]);
       expect(receiptPayload).toContain("lexproof-counsel-pack-export-record-receipt-v1");
       expect(receiptPayload).toContain("receiptHash");
+      expect(receiptPayload).toContain("jurisdictionReadinessDigest");
       expect(receiptPayload).toContain("Not legal advice");
       expect(receiptPayload).not.toContain("# Counsel Pack");
     } finally {

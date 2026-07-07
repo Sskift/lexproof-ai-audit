@@ -361,6 +361,7 @@ model CounselPackExportRecord {
   sourceCount            Int
   sourcePackHash         String
   sourceReviewStatus     String
+  jurisdictionReadinessDigestJson String
   createdBy              String
   status                 String
   createdAt              DateTime

@@ -16,6 +16,7 @@ export type CounselPackExportRecordReceipt = {
   reviewSummary: CounselPackExportRecord["reviewSummary"];
   sourceCount: number;
   sourceReviewStatus: CounselPackExportRecord["sourceReviewStatus"];
+  jurisdictionReadinessDigest?: CounselPackExportRecord["jurisdictionReadinessDigest"];
   hashes: {
     manifestHash: string;
     artifactHash: string;
@@ -91,6 +92,9 @@ function createReceiptSubject(record: CounselPackExportRecord): CounselPackExpor
     reviewSummary: { ...record.reviewSummary },
     sourceCount: record.sourceCount,
     sourceReviewStatus: record.sourceReviewStatus,
+    ...(record.jurisdictionReadinessDigest
+      ? { jurisdictionReadinessDigest: { ...record.jurisdictionReadinessDigest } }
+      : {}),
     hashes: {
       manifestHash: record.manifestHash,
       artifactHash: record.artifactHash,
@@ -105,6 +109,10 @@ function createReceiptSubject(record: CounselPackExportRecord): CounselPackExpor
 }
 
 function createRecoveryAction(record: CounselPackExportRecord): string {
+  if (record.jurisdictionReadinessDigest && !record.jurisdictionReadinessDigest.handoffAllowed) {
+    return "Resolve jurisdiction readiness blockers before external handoff.";
+  }
+
   if (record.sourceReviewStatus !== "current") {
     return "Refresh source review metadata before final external handoff.";
   }

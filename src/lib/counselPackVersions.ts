@@ -1,6 +1,7 @@
 import type { AuditResult } from "./auditEngine";
 import type { CounselReviewItem, CounselReviewStatus } from "./counselReview";
 import type { EvidenceManifest } from "./evidenceManifest";
+import type { JurisdictionReadinessDigest } from "./jurisdictionReadinessDigest";
 import type { ProjectProfile } from "./projectModel";
 import type { RegulatorySourcePack } from "./regulatorySourcePack";
 
@@ -39,6 +40,22 @@ export type CounselPackRegulatorySourcePackSnapshot = {
   notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only.";
 };
 
+export type CounselPackJurisdictionReadinessDigestSnapshot = {
+  digestVersion: JurisdictionReadinessDigest["digestVersion"];
+  digestHash: string;
+  status: JurisdictionReadinessDigest["status"];
+  handoffAllowed: boolean;
+  jurisdictionCount: number;
+  readyForCounselCount: number;
+  needsEvidenceCount: number;
+  needsSourceReviewCount: number;
+  metadataMissingCount: number;
+  openEvidenceRequestCount: number;
+  sourceFreshnessBlockerCount: number;
+  dueSoonSourceCount: number;
+  notLegalAdviceBoundary: "Not legal advice. Jurisdiction readiness digest snapshots are audit preparation workflow metadata only.";
+};
+
 export type CounselPackVersionDiff = {
   diffVersion: "lexproof-counsel-pack-version-diff-v1";
   previousVersion: number;
@@ -46,6 +63,7 @@ export type CounselPackVersionDiff = {
   manifestHashChanged: boolean;
   markdownHashChanged: boolean;
   regulatorySourcePackHashChanged: boolean;
+  jurisdictionReadinessDigestHashChanged: boolean;
   reviewStatusChanges: Array<{
     flagId: string;
     title: string;
@@ -73,6 +91,7 @@ export type CounselPackVersionRecord = {
   reviewStatuses: CounselPackReviewStatusSnapshot[];
   sourcePack: CounselPackSourceSnapshot[];
   regulatorySourcePack?: CounselPackRegulatorySourcePackSnapshot;
+  jurisdictionReadinessDigest?: CounselPackJurisdictionReadinessDigestSnapshot;
   exportedAt: string;
   diffFromPrevious?: CounselPackVersionDiff;
   notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only.";
@@ -83,6 +102,7 @@ export type CreateCounselPackVersionRecordInput = {
   audit: AuditResult;
   manifest: EvidenceManifest;
   regulatorySourcePack?: RegulatorySourcePack | null;
+  jurisdictionReadinessDigest?: JurisdictionReadinessDigest | null;
   markdown: string;
   counselReviews: CounselReviewItem[];
   previousVersions?: CounselPackVersionRecord[];
@@ -94,6 +114,7 @@ export async function createCounselPackVersionRecord({
   audit,
   manifest,
   regulatorySourcePack,
+  jurisdictionReadinessDigest,
   markdown,
   counselReviews,
   previousVersions = [],
@@ -106,6 +127,7 @@ export async function createCounselPackVersionRecord({
     stableStringify({
       exportedAt,
       manifestHash: manifest.bundleHash,
+      jurisdictionReadinessDigestHash: jurisdictionReadinessDigest?.digestHash ?? "",
       markdownHash,
       projectId: project.id,
       sourcePackHash: regulatorySourcePack?.packHash ?? "",
@@ -113,6 +135,9 @@ export async function createCounselPackVersionRecord({
     })
   );
   const regulatorySourcePackSnapshot = regulatorySourcePack ? snapshotRegulatorySourcePack(regulatorySourcePack) : undefined;
+  const jurisdictionReadinessDigestSnapshot = jurisdictionReadinessDigest
+    ? snapshotJurisdictionReadinessDigest(jurisdictionReadinessDigest)
+    : undefined;
   const baseRecord: CounselPackVersionRecord = {
     recordVersion: "lexproof-counsel-pack-version-v1",
     id: `counsel-pack-version-${idHash.slice(0, 16)}`,
@@ -131,6 +156,7 @@ export async function createCounselPackVersionRecord({
       url: source.url
     })),
     ...(regulatorySourcePackSnapshot ? { regulatorySourcePack: regulatorySourcePackSnapshot } : {}),
+    ...(jurisdictionReadinessDigestSnapshot ? { jurisdictionReadinessDigest: jurisdictionReadinessDigestSnapshot } : {}),
     exportedAt,
     notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
   };
@@ -173,6 +199,8 @@ export function createCounselPackDiff(
   const markdownHashChanged = previous.markdownHash !== next.markdownHash;
   const regulatorySourcePackHashChanged =
     (previous.regulatorySourcePack?.packHash ?? "") !== (next.regulatorySourcePack?.packHash ?? "");
+  const jurisdictionReadinessDigestHashChanged =
+    (previous.jurisdictionReadinessDigest?.digestHash ?? "") !== (next.jurisdictionReadinessDigest?.digestHash ?? "");
 
   return {
     diffVersion: "lexproof-counsel-pack-version-diff-v1",
@@ -181,6 +209,7 @@ export function createCounselPackDiff(
     manifestHashChanged,
     markdownHashChanged,
     regulatorySourcePackHashChanged,
+    jurisdictionReadinessDigestHashChanged,
     reviewStatusChanges,
     addedSourceCount,
     removedSourceCount,
@@ -188,6 +217,7 @@ export function createCounselPackDiff(
       manifestHashChanged ? "Manifest changed" : "Manifest unchanged",
       markdownHashChanged ? "Markdown changed" : "Markdown unchanged",
       regulatorySourcePackHashChanged ? "Source pack changed" : "Source pack unchanged",
+      jurisdictionReadinessDigestHashChanged ? "Jurisdiction digest changed" : "Jurisdiction digest unchanged",
       `${reviewStatusChanges.length} review status ${reviewStatusChanges.length === 1 ? "changed" : "changes"}`,
       `${addedSourceCount} sources added`,
       `${removedSourceCount} sources removed.`
@@ -272,6 +302,26 @@ function snapshotRegulatorySourcePack(pack: RegulatorySourcePack): CounselPackRe
     metadataMissingCount: pack.sourceReview.metadataMissingCount,
     reviewWindowDays: pack.sourceReview.reviewWindowDays,
     notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only."
+  };
+}
+
+function snapshotJurisdictionReadinessDigest(
+  digest: JurisdictionReadinessDigest
+): CounselPackJurisdictionReadinessDigestSnapshot {
+  return {
+    digestVersion: digest.digestVersion,
+    digestHash: digest.digestHash,
+    status: digest.status,
+    handoffAllowed: digest.handoffAllowed,
+    jurisdictionCount: digest.jurisdictionCount,
+    readyForCounselCount: digest.summary.readyForCounselCount,
+    needsEvidenceCount: digest.summary.needsEvidenceCount,
+    needsSourceReviewCount: digest.summary.needsSourceReviewCount,
+    metadataMissingCount: digest.summary.metadataMissingCount,
+    openEvidenceRequestCount: digest.summary.openEvidenceRequestCount,
+    sourceFreshnessBlockerCount: digest.summary.sourceFreshnessBlockerCount,
+    dueSoonSourceCount: digest.summary.dueSoonSourceCount,
+    notLegalAdviceBoundary: "Not legal advice. Jurisdiction readiness digest snapshots are audit preparation workflow metadata only."
   };
 }
 

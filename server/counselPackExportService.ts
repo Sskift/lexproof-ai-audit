@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import type {
   CounselPackExportRecord,
+  CounselPackExportJurisdictionReadinessDigest,
+  CounselPackExportJurisdictionReadinessStatus,
   CounselPackExportReviewSummary,
   CounselPackExportSourceReviewStatus
 } from "../src/lib/phase2Types.js";
@@ -20,6 +22,7 @@ export type CreateCounselPackExportInput = {
   sourceCount: number;
   sourcePackHash: string;
   sourceReviewStatus: CounselPackExportSourceReviewStatus;
+  jurisdictionReadinessDigest?: CounselPackExportJurisdictionReadinessDigest;
   createdBy: string;
   includesRawKycOrPersonalData: boolean;
   includesCredentialMaterial: boolean;
@@ -65,6 +68,9 @@ export function createCounselPackExportRecord(input: CreateCounselPackExportInpu
     sourceCount: input.sourceCount,
     sourcePackHash: input.sourcePackHash.trim(),
     sourceReviewStatus: input.sourceReviewStatus,
+    ...(input.jurisdictionReadinessDigest
+      ? { jurisdictionReadinessDigest: snapshotJurisdictionReadinessDigest(input.jurisdictionReadinessDigest) }
+      : {}),
     createdBy: input.createdBy.trim(),
     status: "ready",
     createdAt,
@@ -119,6 +125,10 @@ function validateCounselPackExportInput(input: CreateCounselPackExportInput): st
     errors.push("Source review status must be current, review-due, or metadata-missing.");
   }
 
+  if (input.jurisdictionReadinessDigest) {
+    errors.push(...validateJurisdictionReadinessDigest(input.jurisdictionReadinessDigest));
+  }
+
   if (!input.createdBy.trim()) {
     errors.push("Export creator is required.");
   }
@@ -136,6 +146,69 @@ function validateCounselPackExportInput(input: CreateCounselPackExportInput): st
   }
 
   return errors;
+}
+
+function validateJurisdictionReadinessDigest(digest: CounselPackExportJurisdictionReadinessDigest): string[] {
+  const errors: string[] = [];
+
+  if (!isSha256Hex(digest.digestHash)) {
+    errors.push("Jurisdiction readiness digest hash must be a SHA-256 hex digest.");
+  }
+
+  if (!isJurisdictionReadinessStatus(digest.status)) {
+    errors.push("Jurisdiction readiness status is invalid.");
+  }
+
+  if (typeof digest.handoffAllowed !== "boolean") {
+    errors.push("Jurisdiction readiness handoff flag must be boolean.");
+  }
+
+  for (const [label, value] of [
+    ["jurisdiction count", digest.jurisdictionCount],
+    ["ready for counsel count", digest.readyForCounselCount],
+    ["needs evidence count", digest.needsEvidenceCount],
+    ["needs source review count", digest.needsSourceReviewCount],
+    ["metadata missing count", digest.metadataMissingCount],
+    ["open evidence request count", digest.openEvidenceRequestCount],
+    ["source freshness blocker count", digest.sourceFreshnessBlockerCount],
+    ["due soon source count", digest.dueSoonSourceCount]
+  ] as const) {
+    if (!Number.isInteger(value) || value < 0) {
+      errors.push(`Jurisdiction readiness ${label} cannot be negative.`);
+    }
+  }
+
+  return errors;
+}
+
+function snapshotJurisdictionReadinessDigest(
+  digest: CounselPackExportJurisdictionReadinessDigest
+): CounselPackExportJurisdictionReadinessDigest {
+  return {
+    digestHash: digest.digestHash.trim(),
+    status: digest.status,
+    handoffAllowed: digest.handoffAllowed,
+    jurisdictionCount: digest.jurisdictionCount,
+    readyForCounselCount: digest.readyForCounselCount,
+    needsEvidenceCount: digest.needsEvidenceCount,
+    needsSourceReviewCount: digest.needsSourceReviewCount,
+    metadataMissingCount: digest.metadataMissingCount,
+    openEvidenceRequestCount: digest.openEvidenceRequestCount,
+    sourceFreshnessBlockerCount: digest.sourceFreshnessBlockerCount,
+    dueSoonSourceCount: digest.dueSoonSourceCount,
+    notLegalAdviceBoundary:
+      "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+  };
+}
+
+function isJurisdictionReadinessStatus(value: unknown): value is CounselPackExportJurisdictionReadinessStatus {
+  return (
+    value === "ready-for-counsel" ||
+    value === "needs-evidence" ||
+    value === "needs-source-review" ||
+    value === "metadata-missing" ||
+    value === "no-jurisdictions"
+  );
 }
 
 function hasRawArtifactContent(input: CreateCounselPackExportInput): boolean {

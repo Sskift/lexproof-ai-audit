@@ -38,6 +38,22 @@ const versionRecord: CounselPackVersionRecord = {
     reviewWindowDays: 90,
     notLegalAdviceBoundary: "Not legal advice. Regulatory source pack snapshot is audit preparation source-lineage metadata only."
   },
+  jurisdictionReadinessDigest: {
+    digestVersion: "lexproof-jurisdiction-readiness-digest-v1",
+    digestHash: "d".repeat(64),
+    status: "needs-evidence",
+    handoffAllowed: false,
+    jurisdictionCount: 2,
+    readyForCounselCount: 0,
+    needsEvidenceCount: 2,
+    needsSourceReviewCount: 0,
+    metadataMissingCount: 0,
+    openEvidenceRequestCount: 8,
+    sourceFreshnessBlockerCount: 1,
+    dueSoonSourceCount: 0,
+    notLegalAdviceBoundary:
+      "Not legal advice. Jurisdiction readiness digest snapshots are audit preparation workflow metadata only."
+  },
   exportedAt: "2026-06-30T08:30:00.000Z",
   notLegalAdviceBoundary: "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
 };
@@ -59,6 +75,21 @@ describe("counsel pack export client", () => {
         sourceCount: 2,
         sourcePackHash: "c".repeat(64),
         sourceReviewStatus: "review-due",
+        jurisdictionReadinessDigest: {
+          digestHash: "d".repeat(64),
+          status: "needs-evidence",
+          handoffAllowed: false,
+          jurisdictionCount: 2,
+          readyForCounselCount: 0,
+          needsEvidenceCount: 2,
+          needsSourceReviewCount: 0,
+          metadataMissingCount: 0,
+          openEvidenceRequestCount: 8,
+          sourceFreshnessBlockerCount: 1,
+          dueSoonSourceCount: 0,
+          notLegalAdviceBoundary:
+            "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+        },
         createdBy: "Compliance",
         includesRawKycOrPersonalData: false,
         includesCredentialMaterial: false

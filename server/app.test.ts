@@ -468,6 +468,21 @@ describe("Phase 2 backend app", () => {
         sourceCount: 4,
         sourcePackHash: "c".repeat(64),
         sourceReviewStatus: "current",
+        jurisdictionReadinessDigest: {
+          digestHash: "d".repeat(64),
+          status: "needs-evidence",
+          handoffAllowed: false,
+          jurisdictionCount: 2,
+          readyForCounselCount: 0,
+          needsEvidenceCount: 2,
+          needsSourceReviewCount: 0,
+          metadataMissingCount: 0,
+          openEvidenceRequestCount: 8,
+          sourceFreshnessBlockerCount: 1,
+          dueSoonSourceCount: 0,
+          notLegalAdviceBoundary:
+            "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+        },
         createdBy: "Compliance",
         includesRawKycOrPersonalData: false,
         includesCredentialMaterial: false
@@ -492,6 +507,11 @@ describe("Phase 2 backend app", () => {
         sourceCount: 4,
         sourcePackHash: "c".repeat(64),
         sourceReviewStatus: "current",
+        jurisdictionReadinessDigest: expect.objectContaining({
+          digestHash: "d".repeat(64),
+          status: "needs-evidence",
+          handoffAllowed: false
+        }),
         createdBy: "Compliance",
         status: "ready",
         notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."

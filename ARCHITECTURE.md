@@ -777,8 +777,8 @@ Templates are audit-preparation routing aids only. They must not hide missing ev
 
 Owns Counsel Pack export version metadata:
 
-- `createCounselPackVersionRecord(project, audit, manifest, regulatorySourcePack, markdown, counselReviews, previousVersions)` stores export metadata with manifest hash, Markdown hash, Regulatory Source Pack hash, source review status, review-status snapshot, source snapshot, export timestamp, and Not legal advice boundary.
-- `createCounselPackDiff(previous, next)` compares manifest hash, Markdown hash, Regulatory Source Pack hash, source changes, and review-status changes between saved exports.
+- `createCounselPackVersionRecord({ project, audit, manifest, regulatorySourcePack, jurisdictionReadinessDigest, markdown, counselReviews, previousVersions })` stores export metadata with manifest hash, Markdown hash, Regulatory Source Pack hash, source review status, Jurisdiction Readiness Digest hash/status/handoff flag, review-status snapshot, source snapshot, export timestamp, and Not legal advice boundary.
+- `createCounselPackDiff(previous, next)` compares manifest hash, Markdown hash, Regulatory Source Pack hash, Jurisdiction Readiness Digest hash, source changes, and review-status changes between saved exports.
 - `exportCounselPackVersionJson(record)` and `downloadCounselPackVersionJson(filename, record)` export metadata-only JSON.
 
 Version records intentionally do not store raw Markdown content, credentials, raw KYC, personal data, or legal conclusions. They are audit preparation export metadata only.
@@ -798,7 +798,7 @@ The checklist is an audit-prep handoff artifact. It does not create legal approv
 Owns the browser-to-Phase-2 API call for server export records:
 
 - `createServerCounselPackExportRecord(apiBaseUrl, workspaceId, versionRecord, createdBy)` maps the latest local Counsel Pack version into a metadata-only API request.
-- The request includes manifest hash, Markdown artifact hash, artifact size, review summary, source count, Regulatory Source Pack hash, source review status, and the Not legal advice boundary.
+- The request includes manifest hash, Markdown artifact hash, artifact size, review summary, source count, Regulatory Source Pack hash, source review status, Jurisdiction Readiness Digest hash/status/handoff flag, and the Not legal advice boundary.
 - It does not send raw Markdown, PDF bytes, credentials, raw KYC, or personal data.
 
 ### `src/data/sampleProfiles.ts`

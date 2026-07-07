@@ -10,8 +10,8 @@ Use these files as the single source of truth:
 
 | Question | Authority file | Purpose |
 | --- | --- | --- |
-| Where do I start? | `docs/constraints-index.md` | Quick map of the work universe, architecture, workflow, verification, and clean handoff constraint files |
-| What should be built? | `docs/work-universe.md` | Complete product, frontend, backend, data, security, integration, and demo work universe |
+| Where do I start? | `docs/constraints-index.md` | Quick map of the active plan, architecture, workflow, verification, and clean handoff constraint files |
+| What should be built? | `docs/plan.md` | Single product, frontend, backend, data, security, integration, and demo plan |
 | Where should it live? | `docs/architecture-guardrails.md` and `ARCHITECTURE.md` | Layer boundaries, module ownership, dependency direction, and anti-drift rules |
 | How should it be built and verified? | `docs/engineering-workflow.md` and `WORKFLOW.md` | Direct-to-main loop, targeted tests, full verification, screenshots, staging, and push rules |
 | What product boundaries are non-negotiable? | `CONTRIBUTING.md` and this file | Not legal advice, synthetic-safe demos, no secrets, no raw KYC, no private keys, no real chain claims unless real |
@@ -23,14 +23,14 @@ If two docs appear to conflict, preserve the stricter privacy, non-advice, archi
 
 Every agent or contributor must treat the four governance docs as constraints, not optional reading:
 
-1. `docs/work-universe.md` answers **what can be built** and the direction of future work.
+1. `docs/plan.md` answers **what can be built** and the direction of future work.
 2. `docs/architecture-guardrails.md` answers **where code belongs** and how to avoid structural drift.
 3. `docs/engineering-workflow.md` answers **how to test, run, stage, commit, push, and keep the repository clean**.
 4. This file answers **which rule wins** when scope, architecture, workflow, and product boundaries overlap.
 
 For any non-trivial task, the implementation note, issue, or agent prompt must include:
 
-- Workstream ID from `docs/work-universe.md`.
+- Workstream ID from `docs/plan.md`.
 - User journey step.
 - Owning modules by layer.
 - Privacy boundary.
@@ -48,7 +48,7 @@ Direct-to-main remains allowed only when the change is scoped, verified, and eas
 Before changing source code, data, docs, screenshots, or tests:
 
 1. Run `git status -sb`.
-2. Identify the smallest workstream slice from `docs/work-universe.md`.
+2. Identify the smallest workstream slice from `docs/plan.md`.
 3. Identify the owning layer from `docs/architecture-guardrails.md`.
 4. Decide the minimum targeted test from `docs/engineering-workflow.md`.
 5. Confirm whether a screenshot is required.
@@ -58,7 +58,7 @@ Do not begin broad implementation if the slice cannot answer these questions:
 
 | Field | Required answer |
 | --- | --- |
-| Workstream | One workstream ID from `docs/work-universe.md`, such as `W2 Evidence Vault and Provenance` |
+| Workstream | One workstream ID from `docs/plan.md`, such as `W2 Evidence operations` |
 | User journey | The exact path being improved, such as `Evidence Ledger -> Evidence Vault -> Counsel Pack` |
 | Product output | What the user can now do or verify |
 | Frontend owner | Existing or new component under `src/components` |
@@ -70,9 +70,9 @@ Do not begin broad implementation if the slice cannot answer these questions:
 | Verification | Targeted tests, `npm run verify`, screenshot yes/no |
 | Commit scope | Files expected in the commit |
 
-## Product Build Universe
+## Product Plan
 
-All feature work must fit the complete build universe in `docs/work-universe.md`. The allowed capability areas are:
+All feature work must fit the active plan in `docs/plan.md`. The allowed capability areas are:
 
 - Project intake and demo scenarios.
 - Regulatory source/control graph.
@@ -86,7 +86,7 @@ All feature work must fit the complete build universe in `docs/work-universe.md`
 - Professional workbench UI quality, empty states, error states, and screenshots.
 - Judge readiness, demo script, screenshots, and clean-clone runbook.
 
-Do not add a new capability area unless `docs/work-universe.md` is amended with:
+Do not add a new capability area unless `docs/plan.md` is amended with:
 
 - Product outcome.
 - Frontend surface.

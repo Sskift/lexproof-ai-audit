@@ -12,7 +12,7 @@ This is a hackathon MVP, so the codebase should stay easy to inspect, demo, and 
 
 ## Engineering Guardrails
 
-- Start from [docs/constraints-index.md](docs/constraints-index.md) to choose the correct work universe, architecture, workflow, and clean handoff rules.
+- Start from [docs/constraints-index.md](docs/constraints-index.md) to choose the correct plan slice, architecture, workflow, and clean handoff rules.
 - Start feature, backend, UI, test, and documentation work from [docs/project-governance.md](docs/project-governance.md) so scope, ownership, verification, and handoff stay aligned.
 - Put domain rules in `src/lib/auditEngine.ts`.
 - Put seeded demo profiles in `src/data/sampleProfiles.ts`.
@@ -21,7 +21,7 @@ This is a hackathon MVP, so the codebase should stay easy to inspect, demo, and 
 - Use TypeScript types rather than ad hoc object shapes.
 - Keep generated assets out of Git.
 - For new feature placement, follow [docs/architecture-guardrails.md](docs/architecture-guardrails.md).
-- For backlog direction and non-goals, follow [docs/work-universe.md](docs/work-universe.md).
+- For backlog direction and non-goals, follow [docs/plan.md](docs/plan.md).
 - For test selection, screenshots, and repository cleanliness, follow [docs/engineering-workflow.md](docs/engineering-workflow.md).
 
 ## Direct-to-Main Policy

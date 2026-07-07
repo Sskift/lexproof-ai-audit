@@ -8,7 +8,7 @@ Use it with:
 - `WORKFLOW.md` for direct-to-main policy.
 - `CONTRIBUTING.md` for product and engineering guardrails.
 - `ARCHITECTURE.md` and `docs/architecture-guardrails.md` for module boundaries.
-- `docs/work-universe.md` for the approved backlog direction.
+- `docs/plan.md` for the approved backlog direction.
 
 ## Start-of-Work Checklist
 
@@ -29,7 +29,7 @@ Do not stage unrelated files. If unrelated local changes exist, leave them out o
 
 The slice is not ready for implementation until it names:
 
-- workstream from `docs/work-universe.md`
+- workstream from `docs/plan.md`
 - user journey
 - owning layer from `docs/architecture-guardrails.md`
 - Not legal advice wording
@@ -41,7 +41,7 @@ The slice is not ready for implementation until it names:
 
 Every implementation prompt or issue should contain these fields before code changes begin:
 
-- **Workstream:** one ID from `docs/work-universe.md`, for example `W2 Evidence Vault and Provenance`.
+- **Workstream:** one ID from `docs/plan.md`, for example `W2 Evidence operations`.
 - **User journey:** the exact flow being improved, such as `Evidence Ledger -> Evidence Vault sync -> Manifest`.
 - **Layer placement:** files or modules expected in `src/lib`, `src/data`, `src/components`, `server`, `prisma`, and docs.
 - **Non-advice boundary:** the generated output wording or state that keeps the feature as audit preparation only.
@@ -588,7 +588,7 @@ Update docs when a user-visible workflow, API boundary, architecture rule, or de
 Use existing docs first:
 
 - Operating contract and authority order: `docs/project-governance.md`.
-- Backlog and product direction: `docs/work-universe.md`.
+- Backlog and product direction: `docs/plan.md`.
 - Feature placement and anti-drift: `docs/architecture-guardrails.md`.
 - Test commands, screenshot policy, and cleanliness: `docs/engineering-workflow.md`.
 - Public runnable overview: `README.md`.
@@ -610,7 +610,7 @@ A handoff is clean only when:
 
 When delegating work to an agent, include:
 
-- The exact slice from `docs/work-universe.md`.
+- The exact slice from `docs/plan.md`.
 - The relevant architecture boundary from `docs/architecture-guardrails.md`.
 - The test row from the verification matrix above.
 - The non-advice and privacy boundaries.

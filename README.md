@@ -6,9 +6,9 @@ This project is not legal advice. It is an audit preparation workflow for lawyer
 
 ## Operating Docs
 
-Start future agent or contributor work from [docs/constraints-index.md](docs/constraints-index.md). It points to the complete build universe, architecture guardrails, workflow/test rules, and clean repository handoff contract.
+Start future agent or contributor work from [docs/constraints-index.md](docs/constraints-index.md). It points to the active plan, architecture guardrails, workflow/test rules, and clean repository handoff contract.
 
-- [docs/work-universe.md](docs/work-universe.md) is the complete product, frontend, backend, data, security, integration, and demo work inventory.
+- [docs/plan.md](docs/plan.md) is the single backlog and product-direction plan.
 - [docs/architecture-guardrails.md](docs/architecture-guardrails.md) and [ARCHITECTURE.md](ARCHITECTURE.md) define where new functionality belongs so the app does not drift.
 - [docs/engineering-workflow.md](docs/engineering-workflow.md) and [WORKFLOW.md](WORKFLOW.md) define test launch recipes, screenshot policy, staging rules, and direct-to-main hygiene.
 - [docs/project-governance.md](docs/project-governance.md) resolves conflicts between scope, architecture, verification, privacy, and Not legal advice boundaries.
@@ -664,13 +664,10 @@ Workspace data is stored locally in browser `localStorage`. Local file evidence 
 - [WORKFLOW.md](WORKFLOW.md): direct-to-main development and push workflow.
 - [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, data flow, and extension points.
 - [CONTRIBUTING.md](CONTRIBUTING.md): product and engineering guardrails.
-- [docs/work-universe.md](docs/work-universe.md): complete build universe and product direction for future work.
+- [docs/plan.md](docs/plan.md): single backlog and product-direction plan for future work.
 - [docs/architecture-guardrails.md](docs/architecture-guardrails.md): placement rules that keep new features aligned with the existing structure.
 - [docs/engineering-workflow.md](docs/engineering-workflow.md): verification matrix, screenshot policy, cleanliness rules, and agent prompt contract.
 - [docs/research.md](docs/research.md): hackathon selection and audit research notes.
-- [docs/product-strategy.md](docs/product-strategy.md): competition fit, product outlook, gaps, and roadmap.
-- [docs/phase-2-secure-review-workspace.md](docs/phase-2-secure-review-workspace.md): near-term Secure Review Workspace plan and backend-boundary contracts.
-- [docs/phase-2-backend-design-spike.md](docs/phase-2-backend-design-spike.md): Week 2 backend stack decision, API contracts, schema draft, and security boundaries.
 - [docs/submission-pack.md](docs/submission-pack.md): screenshot-backed pitch, demo path, and submission narrative.
 
 ## Run Locally

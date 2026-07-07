@@ -8,7 +8,7 @@ LexProof is always **Not legal advice**. The product creates audit preparation m
 
 | Need | Start here | What it controls |
 | --- | --- | --- |
-| All work still to build | `docs/work-universe.md` | The complete product, frontend, backend, data, security, integration, and demo build universe |
+| Active backlog direction | `docs/plan.md` | The single product, frontend, backend, data, security, integration, and demo plan |
 | Project architecture | `docs/architecture-guardrails.md` and `ARCHITECTURE.md` | Layer boundaries, dependency direction, module ownership, API shape, and anti-drift rules |
 | Workflow and testing | `docs/engineering-workflow.md` and `WORKFLOW.md` | Start gate, test selection, launch recipes, screenshots, staging, commits, and push rules |
 | Rule conflicts | `docs/project-governance.md` | Authority order, required task metadata, rejection rules, and clean handoff contract |
@@ -21,7 +21,7 @@ When files conflict, use the stricter privacy, security, architecture, verificat
 Before editing code, data, tests, screenshots, or docs:
 
 1. Run `git status -sb`.
-2. Identify the workstream in `docs/work-universe.md`.
+2. Identify the workstream in `docs/plan.md`.
 3. Identify the owning layer in `docs/architecture-guardrails.md`.
 4. Choose the narrowest useful test from `docs/engineering-workflow.md`.
 5. Decide whether a screenshot is required.

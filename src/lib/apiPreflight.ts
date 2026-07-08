@@ -24,6 +24,7 @@ export type ApiPreflightRouteFamilyId =
   | "model-gateway-run-recovery"
   | "evidence-vault-manifest"
   | "evidence-vault-lineage-digest"
+  | "evidence-vault-lineage-recovery"
   | "human-review-queue"
   | "source-review-ledger"
   | "source-review-packet"
@@ -171,6 +172,14 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     responseContract: "EvidenceVaultLineageDigest",
     sideEffectBoundary:
       "Lineage digest returns active/replaced/rejected counts, manifest hash, lineage links, and linked control IDs without raw evidence."
+  }),
+  createRouteFamily({
+    id: "evidence-vault-lineage-recovery",
+    label: "Evidence Vault lineage recovery",
+    path: "/api/workspaces/:workspaceId/evidence-lineage-recovery",
+    responseContract: "EvidenceVaultLineageRecoveryPacket",
+    sideEffectBoundary:
+      "Lineage recovery packet returns rejected evidence IDs, manifest recovery status, hashes, and recovery actions without raw evidence."
   }),
   createRouteFamily({
     id: "human-review-queue",

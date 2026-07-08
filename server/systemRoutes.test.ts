@@ -74,6 +74,10 @@ describe("System route module", () => {
           id: "evidence-vault-lineage-digest",
           path: "/api/workspaces/:workspaceId/evidence-lineage-digest"
         }),
+        expect.objectContaining({
+          id: "evidence-vault-lineage-recovery",
+          path: "/api/workspaces/:workspaceId/evidence-lineage-recovery"
+        }),
         expect.objectContaining({ id: "human-review-queue", path: "/api/workspaces/:workspaceId/reviews/queue" }),
         expect.objectContaining({ id: "source-review-ledger", path: "/api/workspaces/:workspaceId/source-reviews" }),
         expect.objectContaining({ id: "source-review-packet", path: "/api/workspaces/:workspaceId/source-reviews/packet" }),
@@ -91,7 +95,7 @@ describe("System route module", () => {
         })
       ])
     );
-    expect(payload.routeFamilyCount).toBe(17);
+    expect(payload.routeFamilyCount).toBe(18);
     expect(payload.implementedRoutes).toEqual(expect.arrayContaining([expect.objectContaining({ path: "/api/preflight" })]));
     expect(JSON.stringify(payload)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
 

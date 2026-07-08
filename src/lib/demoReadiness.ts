@@ -35,6 +35,7 @@ export type DemoApiRouteCheck = {
     | "model-gateway-run-recovery"
     | "evidence-vault-manifest"
     | "evidence-vault-lineage-digest"
+    | "evidence-vault-lineage-recovery"
     | "human-review-queue"
     | "source-review-ledger"
     | "source-review-packet"
@@ -224,6 +225,14 @@ const apiRoutePreflightSpecs: Array<{
     validate: isDemoEvidenceVaultLineageDigestPayload,
     extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.digestHash) : undefined),
     readyDetail: "Evidence Vault lineage digest route is reachable with digest hash metadata for an empty demo workspace."
+  },
+  {
+    id: "evidence-vault-lineage-recovery",
+    label: "Evidence Vault lineage recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/evidence-lineage-recovery`,
+    validate: isDemoEvidenceVaultLineageRecoveryPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Evidence Vault lineage recovery route is reachable with packet hash metadata for an empty demo workspace."
   },
   {
     id: "human-review-queue",
@@ -1034,6 +1043,51 @@ function isDemoEvidenceVaultLineageDigestPayload(payload: unknown): boolean {
     preserveSha256(payload.digestHash) !== undefined &&
     payload.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
   );
+}
+
+function isDemoEvidenceVaultLineageRecoveryPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-evidence-vault-lineage-recovery-packet-v1") {
+    return false;
+  }
+
+  const summary = payload.summary;
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    isEvidenceLineageRecoveryStatus(payload.status) &&
+    preserveSha256(payload.lineageDigestHash) !== undefined &&
+    (payload.manifestHash === null || preserveSha256(payload.manifestHash) !== undefined) &&
+    isRecord(summary) &&
+    typeof summary.totalRecoveryCount === "number" &&
+    Number.isInteger(summary.totalRecoveryCount) &&
+    summary.totalRecoveryCount >= 0 &&
+    typeof summary.openRejectedCount === "number" &&
+    Number.isInteger(summary.openRejectedCount) &&
+    summary.openRejectedCount >= 0 &&
+    typeof summary.missingManifestCount === "number" &&
+    Number.isInteger(summary.missingManifestCount) &&
+    summary.missingManifestCount >= 0 &&
+    typeof summary.activeRecordCount === "number" &&
+    Number.isInteger(summary.activeRecordCount) &&
+    summary.activeRecordCount >= 0 &&
+    typeof summary.lineageLinkCount === "number" &&
+    Number.isInteger(summary.lineageLinkCount) &&
+    summary.lineageLinkCount >= 0 &&
+    typeof summary.nextAction === "string" &&
+    summary.nextAction.trim().length > 0 &&
+    summary.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only." &&
+    Array.isArray(payload.items) &&
+    payload.items.length === summary.totalRecoveryCount &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+  );
+}
+
+function isEvidenceLineageRecoveryStatus(value: unknown): boolean {
+  return value === "empty" || value === "ready" || value === "needs-replacement" || value === "needs-manifest";
 }
 
 function isDemoServerSourceReviewPacketPayload(payload: unknown): boolean {

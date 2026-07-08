@@ -1986,7 +1986,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 18/18 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 19/19 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -6883,7 +6883,7 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 17,
+      routeFamilyCount: 18,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -7048,6 +7048,29 @@ function createDemoApiMockPayload(url: string): unknown {
       nextActions: ["Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff."],
       digestHash: "8".repeat(64),
       notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/evidence-lineage-recovery")) {
+    return {
+      packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      status: "empty",
+      lineageDigestHash: "8".repeat(64),
+      manifestHash: "c".repeat(64),
+      summary: {
+        totalRecoveryCount: 0,
+        openRejectedCount: 0,
+        missingManifestCount: 0,
+        activeRecordCount: 0,
+        lineageLinkCount: 0,
+        nextAction: "Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+      },
+      items: [],
+      nextActions: ["Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff."],
+      packetHash: "5".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
     };
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/source-reviews/packet")) {

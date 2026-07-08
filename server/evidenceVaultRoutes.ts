@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { createEvidenceVaultManifest } from "../src/lib/evidenceVaultManifest.js";
 import { createEvidenceVaultLineageDigest } from "../src/lib/evidenceVaultLineageDigest.js";
+import { createEvidenceVaultLineageRecoveryPacket } from "../src/lib/evidenceVaultLineageRecoveryPacket.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
 import { redactClassifiedText } from "../src/lib/dataClassification.js";
 import { validateEvidenceMetadataBoundary } from "../src/lib/evidenceUploadBoundary.js";
@@ -109,6 +110,16 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
     const records = await repository.listEvidenceVaultRecords(request.params.workspaceId);
     const manifest = await createEvidenceVaultManifest({ workspaceId: request.params.workspaceId, records });
     return createEvidenceVaultLineageDigest({
+      workspaceId: request.params.workspaceId,
+      records,
+      manifest
+    });
+  });
+
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/evidence-lineage-recovery", async (request) => {
+    const records = await repository.listEvidenceVaultRecords(request.params.workspaceId);
+    const manifest = await createEvidenceVaultManifest({ workspaceId: request.params.workspaceId, records });
+    return createEvidenceVaultLineageRecoveryPacket({
       workspaceId: request.params.workspaceId,
       records,
       manifest

@@ -10,7 +10,7 @@ const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 const walletAddress = "0x1111111111111111111111111111111111111111";
 
 describe("Evidence Vault route module", () => {
-  it("registers metadata-only upload, list, update, manifest, lineage digest, and duplicate-blocker routes", async () => {
+  it("registers metadata-only upload, list, update, manifest, lineage digest, lineage recovery, and duplicate-blocker routes", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();
     await server.register(multipart);
@@ -119,6 +119,35 @@ describe("Evidence Vault route module", () => {
     );
     expect(lineageResponse.body.toLowerCase()).not.toContain("board approval memo");
 
+    const lineageRecoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-evidence-routes/evidence-lineage-recovery"
+    });
+    expect(lineageRecoveryResponse.statusCode).toBe(200);
+    expect(lineageRecoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+        workspaceId: "workspace-evidence-routes",
+        status: "ready",
+        lineageDigestHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        manifestHash: manifest.bundleHash,
+        summary: expect.objectContaining({
+          totalRecoveryCount: 0,
+          openRejectedCount: 0,
+          missingManifestCount: 0,
+          activeRecordCount: 1,
+          lineageLinkCount: 0,
+          nextAction: "Keep the Evidence Vault lineage recovery packet with the final manifest and Counsel Pack handoff.",
+          notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+        }),
+        items: [],
+        nextActions: ["Keep the Evidence Vault lineage recovery packet with the final manifest and Counsel Pack handoff."],
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(lineageRecoveryResponse.body.toLowerCase()).not.toContain("board approval memo");
+
     const duplicateForm = new FormData();
     duplicateForm.append("file", Buffer.from("board approval memo"), {
       filename: "approval-memo-copy.txt",
@@ -152,6 +181,85 @@ describe("Evidence Vault route module", () => {
         expect.objectContaining({ action: "evidence.duplicate.blocked", targetId: evidence.id })
       ])
     );
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("serves lineage recovery packet actions for open rejected vault records without raw evidence", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await server.register(multipart);
+    registerEvidenceVaultRoutes(server, { repository });
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", Buffer.from("raw rejected custody memo body must not be returned"), {
+      filename: "rejected-custody-memo.txt",
+      contentType: "text/plain"
+    });
+    uploadForm.append("owner", "Compliance");
+    uploadForm.append("sourceNote", "Metadata-only rejected custody memo for replacement testing.");
+    uploadForm.append("linkedRiskFlagIds", "custody");
+    uploadForm.append("linkedControlIds", "control-sg-mas-dpt-customer-asset-safeguards");
+    uploadForm.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-lineage-recovery/evidence",
+      headers: uploadForm.getHeaders(),
+      payload: uploadForm
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const evidence = uploadResponse.json();
+
+    const rejectedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-evidence-lineage-recovery/evidence/${evidence.id}`,
+      payload: {
+        status: "rejected",
+        sourceNote: "Reviewer rejected this metadata summary; replacement evidence is required."
+      }
+    });
+    expect(rejectedResponse.statusCode).toBe(200);
+
+    const recoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-evidence-lineage-recovery/evidence-lineage-recovery"
+    });
+
+    expect(recoveryResponse.statusCode).toBe(200);
+    expect(recoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+        workspaceId: "workspace-evidence-lineage-recovery",
+        status: "needs-replacement",
+        summary: expect.objectContaining({
+          totalRecoveryCount: 1,
+          openRejectedCount: 1,
+          missingManifestCount: 0,
+          nextAction: "Create metadata-only replacement records for rejected vault evidence before final counsel handoff."
+        }),
+        nextActions: ["Create metadata-only replacement records for rejected vault evidence before final counsel handoff."],
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(recoveryResponse.json().items).toEqual([
+      expect.objectContaining({
+        evidenceId: evidence.id,
+        filename: "rejected-custody-memo.txt",
+        evidenceStatus: "rejected",
+        linkedRiskFlagIds: ["custody"],
+        linkedControlIds: ["control-sg-mas-dpt-customer-asset-safeguards"],
+        recoveryStatus: "needs-replacement",
+        priority: "P0",
+        recoveryAction: "Create metadata-only replacement evidence for this rejected vault record before final counsel handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery items are audit preparation metadata only."
+      })
+    ]);
+    expect(recoveryResponse.body).not.toContain("raw rejected custody memo body");
+    expect(recoveryResponse.body).not.toContain("Reviewer rejected this metadata summary");
+    expect(recoveryResponse.body).not.toMatch(/raw KYC|private key|legal opinion|final legal decision/i);
 
     await server.close();
     await repository.close();

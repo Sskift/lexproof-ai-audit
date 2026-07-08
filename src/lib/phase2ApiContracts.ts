@@ -81,6 +81,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "EvidenceVaultLineageDigest",
       true
     ),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/evidence-lineage-recovery",
+      "evidence-vault",
+      "EvidenceVaultLineageRecoveryRequest",
+      "EvidenceVaultLineageRecoveryPacket",
+      true
+    ),
     createRoute("GET", "/api/model-gateway/adapters", "model-gateway", "ModelGatewayAdapterListRequest", "ModelGatewayAdapterDescriptor[]", true),
     createRoute(
       "GET",

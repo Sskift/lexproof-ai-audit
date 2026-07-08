@@ -470,6 +470,7 @@ describe("demo readiness", () => {
             expect.objectContaining({ id: "model-gateway-run-recovery", status: "ready", artifactHash: "6".repeat(64) }),
             expect.objectContaining({ id: "evidence-vault-manifest", status: "ready", artifactHash: "c".repeat(64) }),
             expect.objectContaining({ id: "evidence-vault-lineage-digest", status: "ready", artifactHash: "8".repeat(64) }),
+            expect.objectContaining({ id: "evidence-vault-lineage-recovery", status: "ready", artifactHash: "5".repeat(64) }),
             expect.objectContaining({ id: "source-review-packet", status: "ready", artifactHash: "9".repeat(64) }),
             expect.objectContaining({ id: "source-approval-packet", status: "ready", artifactHash: "4".repeat(64) }),
             expect.objectContaining({ id: "counsel-pack-export-recovery", status: "ready", artifactHash: "f".repeat(64) }),
@@ -479,7 +480,7 @@ describe("demo readiness", () => {
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(18);
+      expect(apiCheck.routeChecks).toHaveLength(19);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -510,6 +511,9 @@ describe("demo readiness", () => {
       method: "GET"
     });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-lineage-digest", {
+      method: "GET"
+    });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-lineage-recovery", {
       method: "GET"
     });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/source-reviews/packet", {
@@ -554,6 +558,12 @@ describe("demo readiness", () => {
           status: "ready",
           artifactHash: "8".repeat(64),
           detail: "Evidence Vault lineage digest route is reachable with digest hash metadata for an empty demo workspace."
+        }),
+        expect.objectContaining({
+          id: "evidence-vault-lineage-recovery",
+          status: "ready",
+          artifactHash: "5".repeat(64),
+          detail: "Evidence Vault lineage recovery route is reachable with packet hash metadata for an empty demo workspace."
         }),
         expect.objectContaining({
           id: "model-gateway-adapters",
@@ -626,7 +636,7 @@ describe("demo readiness", () => {
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(18);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(19);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -702,6 +712,11 @@ describe("demo readiness", () => {
     {
       label: "Evidence Vault lineage digest",
       path: "/api/workspaces/demo-smoke-preflight/evidence-lineage-digest",
+      updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
+    },
+    {
+      label: "Evidence Vault lineage recovery",
+      path: "/api/workspaces/demo-smoke-preflight/evidence-lineage-recovery",
       updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
     },
     {
@@ -1169,7 +1184,7 @@ function createDemoApiPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 17,
+      routeFamilyCount: 18,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -1334,6 +1349,29 @@ function createDemoApiPayload(url: string): unknown {
       nextActions: ["Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff."],
       digestHash: "8".repeat(64),
       notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/evidence-lineage-recovery")) {
+    return {
+      packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      status: "empty",
+      lineageDigestHash: "8".repeat(64),
+      manifestHash: "c".repeat(64),
+      summary: {
+        totalRecoveryCount: 0,
+        openRejectedCount: 0,
+        missingManifestCount: 0,
+        activeRecordCount: 0,
+        lineageLinkCount: 0,
+        nextAction: "Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+      },
+      items: [],
+      nextActions: ["Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff."],
+      packetHash: "5".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
     };
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/source-reviews/packet")) {

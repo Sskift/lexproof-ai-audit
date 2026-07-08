@@ -92,6 +92,14 @@ const apiRoutePreflightSpecs = [
     readyDetail: "Evidence Vault lineage digest route is reachable with digest hash metadata for an empty demo workspace."
   },
   {
+    id: "evidence-vault-lineage-recovery",
+    label: "Evidence Vault lineage recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/evidence-lineage-recovery`,
+    validate: isDemoEvidenceVaultLineageRecoveryPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Evidence Vault lineage recovery route is reachable with packet hash metadata for an empty demo workspace."
+  },
+  {
     id: "human-review-queue",
     label: "Human Review queue",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/queue`,
@@ -790,6 +798,40 @@ function isDemoEvidenceVaultLineageDigestPayload(payload) {
     isSha256(payload.digestHash) &&
     payload.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
   );
+}
+
+function isDemoEvidenceVaultLineageRecoveryPayload(payload) {
+  const summary = isRecord(payload) ? payload.summary : null;
+
+  return (
+    isRecord(payload) &&
+    payload.packetVersion === "lexproof-evidence-vault-lineage-recovery-packet-v1" &&
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    isEvidenceLineageRecoveryStatus(payload.status) &&
+    isSha256(payload.lineageDigestHash) &&
+    (payload.manifestHash === null || isSha256(payload.manifestHash)) &&
+    isRecord(summary) &&
+    isNonNegativeInteger(summary.totalRecoveryCount) &&
+    isNonNegativeInteger(summary.openRejectedCount) &&
+    isNonNegativeInteger(summary.missingManifestCount) &&
+    isNonNegativeInteger(summary.activeRecordCount) &&
+    isNonNegativeInteger(summary.lineageLinkCount) &&
+    typeof summary.nextAction === "string" &&
+    summary.nextAction.trim().length > 0 &&
+    summary.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only." &&
+    Array.isArray(payload.items) &&
+    payload.items.length === summary.totalRecoveryCount &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    isSha256(payload.packetHash) &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+  );
+}
+
+function isEvidenceLineageRecoveryStatus(value) {
+  return value === "empty" || value === "ready" || value === "needs-replacement" || value === "needs-manifest";
 }
 
 function isDemoServerSourceReviewPacketPayload(payload) {

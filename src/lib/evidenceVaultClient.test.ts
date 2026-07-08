@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  buildEvidenceVaultLineageRecoveryPacketUrl,
   createEvidenceVaultSnapshot,
   EvidenceVaultClientError,
+  fetchEvidenceVaultLineageRecoveryPacket,
   fetchEvidenceVaultManifest,
   listEvidenceVaultRecords,
   replaceEvidenceVaultRecord,
@@ -9,6 +11,7 @@ import {
   type EvidenceVaultManifestResponse,
   type EvidenceVaultRecordResponse
 } from "./evidenceVaultClient";
+import type { EvidenceVaultLineageRecoveryPacket } from "./evidenceVaultLineageRecoveryPacket";
 import type { EvidenceItem } from "./projectModel";
 
 const evidenceItem: EvidenceItem = {
@@ -323,6 +326,92 @@ describe("evidence vault client", () => {
     expect(serialized).not.toMatch(/\blegal conclusion\b/i);
   });
 
+  it("fetches metadata-only Evidence Vault lineage recovery packets from the server route", async () => {
+    const packet = createLineageRecoveryPacket();
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/workspace%20vault/evidence-lineage-recovery");
+      expect(init).toEqual({ method: "GET" });
+      return jsonResponse(packet, 200);
+    });
+
+    expect(buildEvidenceVaultLineageRecoveryPacketUrl("https://api.lexproof.test/", "workspace vault")).toBe(
+      "https://api.lexproof.test/api/workspaces/workspace%20vault/evidence-lineage-recovery"
+    );
+
+    const result = await fetchEvidenceVaultLineageRecoveryPacket({
+      workspaceId: "workspace vault",
+      apiBaseUrl: "https://api.lexproof.test/",
+      fetcher
+    });
+
+    expect(result).toEqual(packet);
+    expect(result.summary.totalRecoveryCount).toBe(1);
+    expect(result.nextActions).toEqual([
+      "Create metadata-only replacement records for rejected vault evidence before final counsel handoff."
+    ]);
+    expect(result.notLegalAdviceBoundary).toBe(
+      "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+    );
+  });
+
+  it("redacts classified text from otherwise valid Evidence Vault lineage recovery packets before UI use", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    const packet = createLineageRecoveryPacket({
+      workspaceId: `workspace-vault apiKey=${apiKey}`,
+      items: [
+        {
+          ...createLineageRecoveryPacket().items[0],
+          evidenceId: `evidence-vault-rejected ${privateKey}`,
+          filename: "rejected raw_KYC passport A1234567.metadata.json",
+          recoveryAction: "Remove reviewer@example.com and legal conclusion before handoff."
+        }
+      ],
+      nextActions: [`Remove apiKey=${apiKey} and private key ${privateKey} from recovery metadata.`]
+    });
+    const fetcher = vi.fn(async () => jsonResponse(packet, 200));
+
+    const result = await fetchEvidenceVaultLineageRecoveryPacket({
+      workspaceId: "workspace-vault",
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher
+    });
+    const serialized = JSON.stringify(result);
+
+    expect(result.workspaceId).toBe("workspace-vault [redacted-secret]");
+    expect(result.items[0].evidenceId).toContain("[redacted-private-key]");
+    expect(result.items[0].filename).toContain("[redacted-raw-kyc]");
+    expect(result.items[0].filename).toContain("[redacted-passport-id]");
+    expect(result.items[0].recoveryAction).toContain("[redacted-email]");
+    expect(result.items[0].recoveryAction).toContain("[redacted-legal-conclusion]");
+    expect(result.nextActions[0]).toContain("[redacted-secret]");
+    expect(result.nextActions[0]).toContain("[redacted-private-key]");
+    expect(result.packetHash).toBe("f".repeat(64));
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toContain("A1234567");
+    expect(serialized).not.toContain("reviewer@example.com");
+    expect(serialized).not.toMatch(/\blegal conclusion\b/i);
+  });
+
+  it("rejects Evidence Vault lineage recovery packets without non-empty next actions", async () => {
+    const fetcher = vi.fn(async () => jsonResponse({ ...createLineageRecoveryPacket(), nextActions: [] }, 200));
+
+    await expect(
+      fetchEvidenceVaultLineageRecoveryPacket({
+        workspaceId: "workspace-vault",
+        apiBaseUrl: "https://api.lexproof.test",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      message: "Evidence Vault lineage recovery packet response did not match the metadata-only contract.",
+      code: "EVIDENCE_VAULT_LINEAGE_RECOVERY_RESPONSE_INVALID",
+      recoveryAction:
+        "Verify the Phase 2 API is returning metadata-only Evidence Vault lineage recovery packets with non-empty next actions.",
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+    });
+  });
+
   it("preserves structured duplicate-hash recovery metadata from Evidence Vault errors", async () => {
     const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
@@ -622,6 +711,49 @@ describe("evidence vault client", () => {
     expect(serialized).not.toMatch(/\blegal conclusion\b/i);
   });
 });
+
+function createLineageRecoveryPacket(
+  overrides: Partial<EvidenceVaultLineageRecoveryPacket> = {}
+): EvidenceVaultLineageRecoveryPacket {
+  const base: EvidenceVaultLineageRecoveryPacket = {
+    packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+    workspaceId: "workspace-vault",
+    generatedAt: "2026-06-30T00:00:00.000Z",
+    status: "needs-replacement",
+    lineageDigestHash: "d".repeat(64),
+    manifestHash: "e".repeat(64),
+    summary: {
+      totalRecoveryCount: 1,
+      openRejectedCount: 1,
+      missingManifestCount: 0,
+      activeRecordCount: 1,
+      lineageLinkCount: 0,
+      nextAction: "Create metadata-only replacement records for rejected vault evidence before final counsel handoff.",
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+    },
+    items: [
+      {
+        itemVersion: "lexproof-evidence-vault-lineage-recovery-item-v1",
+        evidenceId: "evidence-vault-rejected",
+        filename: "launch-approval-memo.metadata.json",
+        evidenceStatus: "rejected",
+        version: 2,
+        fileHash: "c".repeat(64),
+        linkedRiskFlagIds: ["governance-approval"],
+        linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
+        recoveryStatus: "needs-replacement",
+        priority: "P0",
+        recoveryAction: "Create metadata-only replacement evidence for this rejected vault record before final counsel handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery items are audit preparation metadata only."
+      }
+    ],
+    nextActions: ["Create metadata-only replacement records for rejected vault evidence before final counsel handoff."],
+    packetHash: "f".repeat(64),
+    notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+  };
+
+  return { ...base, ...overrides };
+}
 
 function jsonResponse(payload: unknown, status = 200): Response {
   return {

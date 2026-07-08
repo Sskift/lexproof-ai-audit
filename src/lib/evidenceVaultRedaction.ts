@@ -5,10 +5,17 @@ import type {
   EvidenceVaultReplacementResult,
   EvidenceVaultSyncResult
 } from "./evidenceVaultClient";
+import type {
+  EvidenceVaultLineageRecoveryPacket,
+  EvidenceVaultLineageRecoveryPacketItem,
+  EvidenceVaultLineageRecoverySummary
+} from "./evidenceVaultLineageRecoveryPacket";
 
 const SYNC_BOUNDARY = "Not legal advice. Evidence Vault sync creates audit preparation metadata only." as const;
 const MANIFEST_BOUNDARY = "Not legal advice. Evidence manifests summarize audit preparation metadata only." as const;
 const REPLACEMENT_BOUNDARY = "Not legal advice. Evidence replacement records are audit preparation metadata only." as const;
+const PACKET_BOUNDARY = "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only." as const;
+const ITEM_BOUNDARY = "Not legal advice. Evidence Vault lineage recovery items are audit preparation metadata only." as const;
 const legalConclusionPattern =
   /\b(final legal decision|legal opinion|legal conclusion|legally compliant|legally non-compliant|compliance decision|legal approval)\b/gi;
 
@@ -89,6 +96,83 @@ export function redactEvidenceVaultReplacementResult(result: EvidenceVaultReplac
     superseded,
     replacement,
     notLegalAdviceBoundary: REPLACEMENT_BOUNDARY
+  };
+}
+
+export function redactEvidenceVaultLineageRecoveryPacket(
+  packet: EvidenceVaultLineageRecoveryPacket
+): EvidenceVaultLineageRecoveryPacket {
+  const workspaceId = redactEvidenceVaultText(packet.workspaceId);
+  const generatedAt = redactEvidenceVaultText(packet.generatedAt);
+  const lineageDigestHash = redactEvidenceVaultHash(packet.lineageDigestHash);
+  const manifestHash = packet.manifestHash ? redactEvidenceVaultHash(packet.manifestHash) : packet.manifestHash;
+  const packetHash = redactEvidenceVaultHash(packet.packetHash);
+  const summary = redactEvidenceVaultLineageRecoverySummary(packet.summary);
+  const items = mapPossiblyChanged(packet.items, redactEvidenceVaultLineageRecoveryItem);
+  const nextActions = mapPossiblyChanged(packet.nextActions, redactEvidenceVaultText);
+  const changed =
+    workspaceId !== packet.workspaceId ||
+    generatedAt !== packet.generatedAt ||
+    lineageDigestHash !== packet.lineageDigestHash ||
+    manifestHash !== packet.manifestHash ||
+    packetHash !== packet.packetHash ||
+    summary !== packet.summary ||
+    items.changed ||
+    nextActions.changed ||
+    packet.notLegalAdviceBoundary !== PACKET_BOUNDARY;
+
+  if (!changed) {
+    return packet;
+  }
+
+  return {
+    ...packet,
+    workspaceId,
+    generatedAt,
+    lineageDigestHash,
+    manifestHash,
+    summary,
+    items: items.value,
+    nextActions: nextActions.value,
+    packetHash,
+    notLegalAdviceBoundary: PACKET_BOUNDARY
+  };
+}
+
+function redactEvidenceVaultLineageRecoverySummary(
+  summary: EvidenceVaultLineageRecoverySummary
+): EvidenceVaultLineageRecoverySummary {
+  const nextAction = redactEvidenceVaultText(summary.nextAction);
+  const changed = nextAction !== summary.nextAction || summary.notLegalAdviceBoundary !== PACKET_BOUNDARY;
+
+  if (!changed) {
+    return summary;
+  }
+
+  return {
+    ...summary,
+    nextAction,
+    notLegalAdviceBoundary: PACKET_BOUNDARY
+  };
+}
+
+function redactEvidenceVaultLineageRecoveryItem(
+  item: EvidenceVaultLineageRecoveryPacketItem
+): { value: EvidenceVaultLineageRecoveryPacketItem; changed: boolean } {
+  const redacted: EvidenceVaultLineageRecoveryPacketItem = {
+    ...item,
+    evidenceId: redactEvidenceVaultText(item.evidenceId),
+    filename: redactEvidenceVaultText(item.filename),
+    fileHash: redactEvidenceVaultHash(item.fileHash),
+    linkedRiskFlagIds: item.linkedRiskFlagIds.map(redactEvidenceVaultText),
+    linkedControlIds: item.linkedControlIds.map(redactEvidenceVaultText),
+    recoveryAction: redactEvidenceVaultText(item.recoveryAction),
+    notLegalAdviceBoundary: ITEM_BOUNDARY
+  };
+
+  return {
+    value: redacted,
+    changed: JSON.stringify(redacted) !== JSON.stringify(item)
   };
 }
 

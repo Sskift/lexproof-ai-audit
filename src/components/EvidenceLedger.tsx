@@ -23,6 +23,7 @@ import { downloadEvidenceVaultManifestJson } from "../lib/evidenceVaultManifestD
 import type { EvidenceTemplate } from "../lib/evidenceTemplates";
 import {
   EvidenceVaultClientError,
+  fetchEvidenceVaultLineageRecoveryPacket,
   fetchEvidenceVaultManifest,
   listEvidenceVaultRecords,
   replaceEvidenceVaultRecord,
@@ -36,6 +37,10 @@ import {
   downloadEvidenceVaultLineageDigestJson,
   type EvidenceVaultLineageDigest
 } from "../lib/evidenceVaultLineageDigest";
+import {
+  downloadEvidenceVaultLineageRecoveryPacketJson,
+  type EvidenceVaultLineageRecoveryPacket
+} from "../lib/evidenceVaultLineageRecoveryPacket";
 import {
   validateEvidenceDraftBoundary,
   validateLocalFileEvidenceMetadata,
@@ -137,6 +142,8 @@ export function EvidenceLedger({
   const [vaultManifest, setVaultManifest] = useState<EvidenceVaultManifestResponse | null>(null);
   const [vaultRecords, setVaultRecords] = useState<EvidenceVaultRecordResponse[]>([]);
   const [vaultLineageDigest, setVaultLineageDigest] = useState<EvidenceVaultLineageDigest | null>(null);
+  const [vaultLineageRecoveryPacket, setVaultLineageRecoveryPacket] = useState<EvidenceVaultLineageRecoveryPacket | null>(null);
+  const [vaultLineageRecoveryStatus, setVaultLineageRecoveryStatus] = useState<"idle" | "refreshing" | "ready" | "error">("idle");
   const [retentionRemediationQueue, setRetentionRemediationQueue] = useState<EvidenceRetentionRemediationQueue | null>(null);
   const [evidenceDisposalRunbook, setEvidenceDisposalRunbook] = useState<EvidenceDisposalRunbook | null>(null);
   const [recertificationQueue, setRecertificationQueue] = useState<EvidenceRecertificationQueue | null>(null);
@@ -342,6 +349,8 @@ export function EvidenceLedger({
 
       setVaultRecords(result.records);
       setVaultManifest(result.manifest);
+      setVaultLineageRecoveryPacket(null);
+      setVaultLineageRecoveryStatus("idle");
       setVaultStatus("synced");
     } catch (error) {
       setVaultStatus("error");
@@ -372,10 +381,36 @@ export function EvidenceLedger({
       ]);
       setVaultManifest(nextManifest);
       setVaultRecords(nextRecords);
+      setVaultLineageRecoveryPacket(null);
+      setVaultLineageRecoveryStatus("idle");
       setVaultStatus("synced");
     } catch (error) {
       setVaultStatus("error");
       captureVaultError(error, "Evidence Vault manifest refresh failed.");
+    }
+  };
+
+  const refreshVaultLineageRecoveryPacket = async () => {
+    if (!projectId.trim() || vaultLineageRecoveryStatus === "refreshing") {
+      return;
+    }
+
+    setVaultLineageRecoveryStatus("refreshing");
+    setVaultError("");
+    setVaultErrorDetails(null);
+    setVaultRecoveryState("");
+
+    try {
+      const packet = await fetchEvidenceVaultLineageRecoveryPacket({
+        workspaceId: projectId,
+        apiBaseUrl: vaultApiBaseUrl
+      });
+      setVaultLineageRecoveryPacket(packet);
+      setVaultLineageRecoveryStatus("ready");
+      setVaultRecoveryState(`Lineage recovery packet refreshed with ${packet.summary.totalRecoveryCount} recovery items.`);
+    } catch (error) {
+      setVaultLineageRecoveryStatus("error");
+      captureVaultError(error, "Evidence Vault lineage recovery packet refresh failed.");
     }
   };
 
@@ -409,6 +444,8 @@ export function EvidenceLedger({
 
       setVaultRecords((current) => upsertVaultRecords(current, [result.superseded, result.replacement]));
       setVaultManifest(nextManifest);
+      setVaultLineageRecoveryPacket(null);
+      setVaultLineageRecoveryStatus("idle");
       setVaultStatus("synced");
       setVaultRecoveryState(`Replacement evidence created for ${record.filename}.`);
     } catch (error) {
@@ -616,6 +653,12 @@ export function EvidenceLedger({
           </p>
         ) : null}
         {vaultLineageDigest ? <VaultLineageDigestPanel digest={vaultLineageDigest} /> : null}
+        <VaultLineageRecoveryPacketPanel
+          packet={vaultLineageRecoveryPacket}
+          status={vaultLineageRecoveryStatus}
+          disabled={!projectId.trim() || vaultStatus === "syncing"}
+          onRefresh={() => void refreshVaultLineageRecoveryPacket()}
+        />
         {vaultControlCoverage.controlCount > 0 ? <VaultControlCoveragePanel coverage={vaultControlCoverage} /> : null}
         {vaultRecoveryState ? <p className="save-state vault-recovery-state">{vaultRecoveryState} Not legal advice.</p> : null}
         {vaultError ? <p className="error-text">{vaultError}</p> : null}
@@ -1298,6 +1341,80 @@ function VaultLineageDigestPanel({ digest }: { digest: EvidenceVaultLineageDiges
               <strong>{link.parentEvidenceId}</strong>
               <span>
                 replaced by {link.replacementEvidenceId} · v{link.replacementVersion} · {link.replacementStatus}
+              </span>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function VaultLineageRecoveryPacketPanel({
+  packet,
+  status,
+  disabled,
+  onRefresh
+}: {
+  packet: EvidenceVaultLineageRecoveryPacket | null;
+  status: "idle" | "refreshing" | "ready" | "error";
+  disabled: boolean;
+  onRefresh: () => void;
+}) {
+  const displayStatus = packet ? formatLineageStatus(packet.status) : status === "idle" ? "not refreshed" : status;
+
+  return (
+    <section className={`vault-lineage-digest vault-lineage-recovery ${packet?.status ?? status}`} aria-label="Evidence Vault Lineage Recovery Packet">
+      <div className="split-title compact-title">
+        <div>
+          <ShieldAlert size={17} aria-hidden="true" />
+          <h3>Evidence Vault Lineage Recovery Packet</h3>
+        </div>
+        <span>{displayStatus}</span>
+      </div>
+      <p>
+        {packet?.notLegalAdviceBoundary ??
+          "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."}
+      </p>
+      {packet ? (
+        <div className="vault-lineage-summary">
+          <VaultMetric label="Packet hash" value={shortHash(packet.packetHash)} />
+          <VaultMetric label="Open rejected" value={String(packet.summary.openRejectedCount)} />
+          <VaultMetric label="Missing manifest" value={String(packet.summary.missingManifestCount)} />
+          <VaultMetric label="Recovery items" value={String(packet.summary.totalRecoveryCount)} />
+          <VaultMetric label="Lineage links" value={String(packet.summary.lineageLinkCount)} />
+        </div>
+      ) : null}
+      <div className="vault-lineage-actions">
+        <div>
+          <strong>Next action</strong>
+          <span>{packet?.summary.nextAction ?? "Refresh server lineage recovery metadata before final evidence handoff."}</span>
+        </div>
+        <div className="vault-lineage-button-row">
+          <button type="button" className="secondary" disabled={disabled || status === "refreshing"} onClick={onRefresh}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            Refresh Lineage Recovery Packet
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            disabled={!packet}
+            onClick={() => packet && downloadEvidenceVaultLineageRecoveryPacketJson("evidence-vault-lineage-recovery-packet.json", packet)}
+          >
+            <Download size={16} aria-hidden="true" />
+            Download Recovery Packet JSON
+          </button>
+        </div>
+      </div>
+      {packet && packet.items.length > 0 ? (
+        <div className="vault-lineage-links" aria-label="Vault lineage recovery items">
+          {packet.items.slice(0, 3).map((item) => (
+            <article key={`${item.evidenceId}-${item.recoveryStatus}`}>
+              <strong>
+                {item.priority} · {item.evidenceId}
+              </strong>
+              <span>
+                {item.recoveryStatus} · {item.recoveryAction}
               </span>
             </article>
           ))}

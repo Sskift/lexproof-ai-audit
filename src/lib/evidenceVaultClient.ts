@@ -1,7 +1,12 @@
 import { hashEvidenceItem } from "./evidenceManifest";
 import type { EvidenceItem } from "./projectModel";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import type {
+  EvidenceVaultLineageRecoveryPacket,
+  EvidenceVaultLineageRecoveryPacketItem
+} from "./evidenceVaultLineageRecoveryPacket";
 import {
+  redactEvidenceVaultLineageRecoveryPacket,
   redactEvidenceVaultManifestResponse,
   redactEvidenceVaultRecordResponse,
   redactEvidenceVaultRecordResponses,
@@ -104,6 +109,11 @@ export type EvidenceVaultReplacementResult = {
 };
 
 type EvidenceVaultFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+const LINEAGE_RECOVERY_PACKET_BOUNDARY =
+  "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only." as const;
+const LINEAGE_RECOVERY_ITEM_BOUNDARY =
+  "Not legal advice. Evidence Vault lineage recovery items are audit preparation metadata only." as const;
 
 type ErrorResponse = {
   error?: string;
@@ -224,6 +234,28 @@ export async function fetchEvidenceVaultManifest(input: EvidenceVaultClientOptio
   const response = await fetcher(buildEvidenceVaultUrl(input.apiBaseUrl, workspaceId, "evidence-manifest"), { method: "GET" });
 
   return redactEvidenceVaultManifestResponse(await readJsonResponse<EvidenceVaultManifestResponse>(response, "Evidence Vault manifest fetch failed."));
+}
+
+export async function fetchEvidenceVaultLineageRecoveryPacket(
+  input: EvidenceVaultClientOptions
+): Promise<EvidenceVaultLineageRecoveryPacket> {
+  const workspaceId = normalizeWorkspaceId(input.workspaceId, "refreshing Evidence Vault lineage recovery packet");
+  const fetcher = resolveFetcher(input.fetcher, "Evidence Vault lineage recovery packet refresh");
+  const response = await fetcher(buildEvidenceVaultLineageRecoveryPacketUrl(input.apiBaseUrl, workspaceId), { method: "GET" });
+
+  return redactEvidenceVaultLineageRecoveryPacket(
+    validateEvidenceVaultLineageRecoveryPacket(
+      await readJsonResponse<unknown>(response, "Evidence Vault lineage recovery packet fetch failed.")
+    )
+  );
+}
+
+export function buildEvidenceVaultLineageRecoveryPacketUrl(apiBaseUrl: string | undefined, workspaceId: string): string {
+  return buildEvidenceVaultUrl(
+    apiBaseUrl,
+    normalizeWorkspaceId(workspaceId, "refreshing Evidence Vault lineage recovery packet"),
+    "evidence-lineage-recovery"
+  );
 }
 
 export async function listEvidenceVaultRecords(input: EvidenceVaultClientOptions): Promise<EvidenceVaultRecordResponse[]> {
@@ -347,21 +379,137 @@ async function readJsonResponse<T>(response: Response, fallbackMessage: string):
   return payload as T;
 }
 
-function normalizeWorkspaceId(workspaceId: string): string {
+function validateEvidenceVaultLineageRecoveryPacket(payload: unknown): EvidenceVaultLineageRecoveryPacket {
+  if (!isEvidenceVaultLineageRecoveryPacket(payload)) {
+    throw new EvidenceVaultClientError({
+      message: "Evidence Vault lineage recovery packet response did not match the metadata-only contract.",
+      code: "EVIDENCE_VAULT_LINEAGE_RECOVERY_RESPONSE_INVALID",
+      recoveryAction:
+        "Verify the Phase 2 API is returning metadata-only Evidence Vault lineage recovery packets with non-empty next actions.",
+      notLegalAdviceBoundary: LINEAGE_RECOVERY_PACKET_BOUNDARY
+    });
+  }
+
+  return payload;
+}
+
+function isEvidenceVaultLineageRecoveryPacket(value: unknown): value is EvidenceVaultLineageRecoveryPacket {
+  if (!isRecord(value) || !isRecord(value.summary) || !Array.isArray(value.items)) {
+    return false;
+  }
+
+  return (
+    value.packetVersion === "lexproof-evidence-vault-lineage-recovery-packet-v1" &&
+    typeof value.workspaceId === "string" &&
+    typeof value.generatedAt === "string" &&
+    isLineageRecoveryStatus(value.status) &&
+    isSha256Hex(value.lineageDigestHash) &&
+    (value.manifestHash === null || isSha256Hex(value.manifestHash)) &&
+    isEvidenceVaultLineageRecoverySummary(value.summary, value.items.length) &&
+    value.items.every(isEvidenceVaultLineageRecoveryPacketItem) &&
+    isNonEmptyStringArray(value.nextActions) &&
+    isSha256Hex(value.packetHash) &&
+    value.notLegalAdviceBoundary === LINEAGE_RECOVERY_PACKET_BOUNDARY
+  );
+}
+
+function isEvidenceVaultLineageRecoverySummary(value: Record<string, unknown>, itemCount: number): boolean {
+  return (
+    isNonNegativeInteger(value.totalRecoveryCount) &&
+    value.totalRecoveryCount === itemCount &&
+    isNonNegativeInteger(value.openRejectedCount) &&
+    isNonNegativeInteger(value.missingManifestCount) &&
+    isNonNegativeInteger(value.activeRecordCount) &&
+    isNonNegativeInteger(value.lineageLinkCount) &&
+    typeof value.nextAction === "string" &&
+    value.nextAction.trim().length > 0 &&
+    value.notLegalAdviceBoundary === LINEAGE_RECOVERY_PACKET_BOUNDARY
+  );
+}
+
+function isEvidenceVaultLineageRecoveryPacketItem(value: unknown): value is EvidenceVaultLineageRecoveryPacketItem {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    value.itemVersion === "lexproof-evidence-vault-lineage-recovery-item-v1" &&
+    typeof value.evidenceId === "string" &&
+    typeof value.filename === "string" &&
+    isLineageRecoveryEvidenceStatus(value.evidenceStatus) &&
+    isNonNegativeInteger(value.version) &&
+    (value.evidenceStatus === "manifest-missing" ? value.fileHash === "" : isSha256Hex(value.fileHash)) &&
+    isStringArray(value.linkedRiskFlagIds) &&
+    isStringArray(value.linkedControlIds) &&
+    isLineageRecoveryItemStatus(value.recoveryStatus) &&
+    isLineageRecoveryPriority(value.priority) &&
+    typeof value.recoveryAction === "string" &&
+    value.recoveryAction.trim().length > 0 &&
+    value.notLegalAdviceBoundary === LINEAGE_RECOVERY_ITEM_BOUNDARY
+  );
+}
+
+function isLineageRecoveryStatus(value: unknown): value is EvidenceVaultLineageRecoveryPacket["status"] {
+  return value === "empty" || value === "ready" || value === "needs-replacement" || value === "needs-manifest";
+}
+
+function isLineageRecoveryEvidenceStatus(value: unknown): value is EvidenceVaultLineageRecoveryPacketItem["evidenceStatus"] {
+  return (
+    value === "draft" ||
+    value === "requested" ||
+    value === "received" ||
+    value === "submitted" ||
+    value === "under-review" ||
+    value === "verified" ||
+    value === "rejected" ||
+    value === "superseded" ||
+    value === "manifest-missing"
+  );
+}
+
+function isLineageRecoveryItemStatus(value: unknown): value is EvidenceVaultLineageRecoveryPacketItem["recoveryStatus"] {
+  return value === "needs-replacement" || value === "needs-manifest";
+}
+
+function isLineageRecoveryPriority(value: unknown): value is EvidenceVaultLineageRecoveryPacketItem["priority"] {
+  return value === "P0" || value === "P1" || value === "P2";
+}
+
+function isSha256Hex(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === "string" && item.trim().length > 0);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeWorkspaceId(workspaceId: string, action = "Evidence Vault sync"): string {
   const normalized = workspaceId.trim();
 
   if (!normalized) {
-    throw new Error("Workspace ID is required before Evidence Vault sync.");
+    throw new Error(`Workspace ID is required before ${action}.`);
   }
 
   return normalized;
 }
 
-function resolveFetcher(fetcher: EvidenceVaultFetch | undefined): EvidenceVaultFetch {
+function resolveFetcher(fetcher: EvidenceVaultFetch | undefined, action = "Evidence Vault sync"): EvidenceVaultFetch {
   const resolved = fetcher ?? globalThis.fetch?.bind(globalThis);
 
   if (!resolved) {
-    throw new Error("Fetch is required for Evidence Vault sync.");
+    throw new Error(`Fetch is required for ${action}.`);
   }
 
   return resolved;

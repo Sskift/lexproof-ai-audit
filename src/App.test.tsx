@@ -3681,6 +3681,27 @@ describe("App", () => {
       createdAt: "2026-06-30T00:00:00.000Z",
       updatedAt: "2026-06-30T00:00:00.000Z"
     };
+    const lineageRecoveryPacket = {
+      packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+      workspaceId: "workspace-ui",
+      generatedAt: "2026-06-30T00:00:00.000Z",
+      status: "ready",
+      lineageDigestHash: "d".repeat(64),
+      manifestHash: "a".repeat(64),
+      summary: {
+        totalRecoveryCount: 0,
+        openRejectedCount: 0,
+        missingManifestCount: 0,
+        activeRecordCount: 1,
+        lineageLinkCount: 0,
+        nextAction: "Keep the Evidence Vault lineage recovery packet with the final manifest and Counsel Pack handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+      },
+      items: [],
+      nextActions: ["Keep the Evidence Vault lineage recovery packet with the final manifest and Counsel Pack handoff."],
+      packetHash: "c".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+    };
     URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
       if (blob instanceof Blob) {
         capturedBlobs.push(blob);
@@ -3719,6 +3740,10 @@ describe("App", () => {
           },
           200
         );
+      }
+
+      if (path.endsWith("/evidence-lineage-recovery") && init?.method === "GET") {
+        return appJsonResponse(lineageRecoveryPacket, 200);
       }
 
       throw new Error(`Unexpected request ${path}`);
@@ -3803,6 +3828,33 @@ describe("App", () => {
       expect(parsedLineage.digestHash).toMatch(/^[a-f0-9]{64}$/);
       expect(lineagePayload).not.toContain("Raw board approval facts stay local");
 
+      const recoveryPacketPanel = await screen.findByRole("region", { name: /Evidence Vault Lineage Recovery Packet/i });
+      expect(within(recoveryPacketPanel).getByText(/not refreshed/i)).toBeInTheDocument();
+      fireEvent.click(within(recoveryPacketPanel).getByRole("button", { name: /Refresh Lineage Recovery Packet/i }));
+      await waitFor(() => expect(within(recoveryPacketPanel).getByText(/cccccccccc...cccccc/i)).toBeInTheDocument());
+      expect(within(recoveryPacketPanel).getByText(/Recovery items/i)).toBeInTheDocument();
+      expect(
+        within(recoveryPacketPanel).getByText(/Keep the Evidence Vault lineage recovery packet with the final manifest/i)
+      ).toBeInTheDocument();
+      fireEvent.click(within(recoveryPacketPanel).getByRole("button", { name: /Download Recovery Packet JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(3);
+      const recoveryPacketPayload = await readAppBlobText(capturedBlobs[2]);
+      const parsedRecoveryPacket = JSON.parse(recoveryPacketPayload);
+      expect(parsedRecoveryPacket).toEqual(
+        expect.objectContaining({
+          packetVersion: "lexproof-evidence-vault-lineage-recovery-packet-v1",
+          status: "ready",
+          manifestHash: "a".repeat(64),
+          packetHash: "c".repeat(64),
+          notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage recovery packets are audit preparation metadata only."
+        })
+      );
+      expect(parsedRecoveryPacket.nextActions).toEqual([
+        "Keep the Evidence Vault lineage recovery packet with the final manifest and Counsel Pack handoff."
+      ]);
+      expect(recoveryPacketPayload).not.toContain("Raw board approval facts stay local");
+
       fireEvent.click(screen.getByRole("button", { name: /Sources/i }));
       const exportInventoryRegion = await screen.findByRole("region", { name: /Export Safety Inventory/i });
       await waitFor(() =>
@@ -3813,8 +3865,8 @@ describe("App", () => {
       ).toBeInTheDocument();
       fireEvent.click(within(exportInventoryRegion).getByRole("button", { name: /Download Export Inventory JSON/i }));
 
-      expect(click).toHaveBeenCalledTimes(3);
-      const inventoryPayload = await readAppBlobText(capturedBlobs[2]);
+      expect(click).toHaveBeenCalledTimes(4);
+      const inventoryPayload = await readAppBlobText(capturedBlobs[3]);
       const parsedInventory = JSON.parse(inventoryPayload);
       const lineageArtifact = parsedInventory.artifacts.find(
         (artifact: { id: string }) => artifact.id === "evidence-vault-lineage-digest"

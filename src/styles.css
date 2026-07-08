@@ -6468,6 +6468,16 @@ textarea {
   background: #fffaf0;
 }
 
+.vault-lineage-recovery.refreshing {
+  border-color: #b9c9df;
+  background: #f7fbff;
+}
+
+.vault-lineage-recovery.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
 .vault-lineage-digest p {
   margin: 0;
   color: #40515f;
@@ -6509,6 +6519,13 @@ textarea {
 .vault-lineage-actions div {
   display: grid;
   gap: 4px;
+}
+
+.vault-lineage-actions .vault-lineage-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .vault-lineage-actions strong {

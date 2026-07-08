@@ -131,7 +131,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Screenshot: `docs/assets/screenshots/source-update-approval-queue.png`.
    - Screenshot: `docs/assets/screenshots/source-approval-api-sync.png`.
    - Optional DAO path screenshot after **Start DAO proposal review**: `docs/assets/screenshots/dao-governance-source-graph.png`.
-   - Optional RWA Regulation D screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/us-reg-d-rwa-source-control.png`.
+   - Optional RWA Regulation D screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/us-reg-d-rwa-source-control.png`; in **Jurisdiction Checklist**, confirm the US Regulation D eligibility and accredited-investor verification control can become evidence-ready from the metadata-only investor eligibility template.
    - Optional RWA OFAC virtual-currency sanctions screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/us-ofac-rwa-source-control.png`.
    - Optional RWA NYDFS BitLicense/custody screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/nydfs-rwa-source-control.png`.
    - Optional RWA custody screenshot after **Start High-risk RWA launch**: `docs/assets/screenshots/eu-mica-casp-custody-source-graph.png`.

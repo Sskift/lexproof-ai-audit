@@ -93,6 +93,7 @@ describe("evidence templates", () => {
   it("instantiates requested evidence items without raw KYC or private data", () => {
     const items = createEvidenceItemsFromTemplate("tokenized-yield-rwa");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
+    const investorEligibilityReview = items.find((item) => item.label === "Investor eligibility review");
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -128,6 +129,10 @@ describe("evidence templates", () => {
       ])
     );
     expect(items.every((item) => item.status === "requested")).toBe(true);
+    expect(investorEligibilityReview?.content).toContain("Regulation D");
+    expect(investorEligibilityReview?.content).toContain("Rule 506(c)");
+    expect(investorEligibilityReview?.content).toContain("accredited investor verification");
+    expect(investorEligibilityReview?.content).toContain("without customer identity records");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

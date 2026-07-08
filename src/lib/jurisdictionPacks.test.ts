@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
+import { createEvidenceItemsFromTemplate } from "./evidenceTemplates";
 import { createJurisdictionPacks } from "./jurisdictionPacks";
 import type { ProjectProfile } from "./projectModel";
 
@@ -139,6 +140,11 @@ describe("createJurisdictionPacks", () => {
           title: "Offering and disclosure control",
           status: "evidence-ready",
           evidenceLabels: ["US launch approval memo"]
+        }),
+        expect.objectContaining({
+          id: "us-reg-d-accredited-investor-verification-control",
+          title: "Regulation D eligibility and accredited-investor verification control",
+          status: "needs-evidence"
         }),
         expect.objectContaining({
           id: "us-custody-control",
@@ -427,5 +433,43 @@ describe("createJurisdictionPacks", () => {
     );
     expect(brazilPack?.source).toBe("LexProof jurisdiction pack v1 for audit preparation. Not legal advice.");
     expect(JSON.stringify(packs)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US Regulation D eligibility control ready from verified RWA template evidence only", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-rwa-reg-d-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-reg-d-ready",
+      jurisdictions: ["United States"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [usPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-reg-d-accredited-investor-verification-control",
+          title: "Regulation D eligibility and accredited-investor verification control",
+          owner: "Counsel",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["Investor eligibility review"]
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|identity files|personal financial records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

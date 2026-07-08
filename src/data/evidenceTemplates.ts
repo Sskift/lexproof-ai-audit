@@ -87,7 +87,7 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         label: "Investor eligibility review",
         kind: "Checklist",
         content:
-          "Requested: summarize eligibility assumptions, investor communication, risk factor coverage, approval route, distribution boundary, retail restrictions, user restrictions, screening boundary, and marketing approval status.",
+          "Requested: summarize Regulation D, Rule 506(c), offering exemption, private placement, investor eligibility, accredited investor verification, purchaser status, subscription flow, general solicitation controls, investor communication, risk factor coverage, approval route, distribution boundary, retail restrictions, user restrictions, screening boundary, and marketing approval status without customer identity records, personal financial records, credentials, or legal conclusions.",
         source:
           "LexProof template: Tokenized Yield / RWA Issuance; regulatory control: control-us-sec-cftc-crypto-asset-interpretation; regulatory control: control-us-sec-reg-d-accredited-investor-verification; regulatory control: control-br-cvm-crypto-asset-securities-guidance",
         status: "requested",

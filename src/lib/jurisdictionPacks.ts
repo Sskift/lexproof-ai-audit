@@ -78,6 +78,25 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["disclosure approval", "offering memo", "eligibility review", "go-live signoff", "token terms"]
       },
       {
+        id: "us-reg-d-accredited-investor-verification-control",
+        title: "Regulation D eligibility and accredited-investor verification control",
+        owner: "Counsel",
+        priority: "P0",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        evidenceKeywords: [
+          "control-us-sec-reg-d-accredited-investor-verification",
+          "regulation d",
+          "rule 506",
+          "offering exemption",
+          "private placement",
+          "investor eligibility",
+          "accredited investor",
+          "purchaser status",
+          "subscription",
+          "solicitation"
+        ]
+      },
+      {
         id: "us-cftc-dao-derivatives-platform-control",
         title: "DAO derivatives-platform and FCM/BSA control",
         owner: "Counsel",

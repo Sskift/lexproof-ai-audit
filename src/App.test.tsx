@@ -2835,6 +2835,120 @@ describe("App", () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       expect(init).toEqual({ method: "GET" });
+      if (String(url).endsWith("/integration-policy-evaluations/recovery")) {
+        return appJsonResponse(
+          {
+            packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+            workspaceId: "sample-yieldpassport",
+            generatedAt: "2026-07-01T00:00:00.000Z",
+            status: "missing-receipts",
+            recordCount: 1,
+            policyCount: 1,
+            externalEnablementAllowed: false,
+            summary: {
+              totalRecoveryCount: 4,
+              missingPolicyCount: 3,
+              blockedCount: 0,
+              needsPolicyCount: 1,
+              staleReceiptCount: 0,
+              readyPolicyCount: 0,
+              latestReceiptCount: 1,
+              nextAction: "Evaluate every missing server integration policy before any adapter enablement review.",
+              notLegalAdviceBoundary:
+                "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+            },
+            items: [
+              {
+                itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+                policyId: "document-parser",
+                policyLabel: "Document Parser Policy",
+                recordId: "integration-policy-evaluation-persisted-ui",
+                supersededByRecordId: null,
+                reportVersion: "lexproof-document-parser-policy-v1",
+                overallStatus: "needs-policy",
+                reportHash: "a".repeat(64),
+                contextHash: "b".repeat(64),
+                policyHash: "c".repeat(64),
+                externalCapabilityAllowed: false,
+                externalCapabilityStatus: "needs-policy",
+                recoveryStatus: "needs-policy",
+                priority: "P1",
+                recoveryAction: "Approve parser retention and access logging before adapter enablement review.",
+                notLegalAdviceBoundary:
+                  "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+              },
+              {
+                itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+                policyId: "object-storage",
+                policyLabel: "Object Storage Policy",
+                recordId: null,
+                supersededByRecordId: null,
+                reportVersion: null,
+                overallStatus: "missing",
+                reportHash: null,
+                contextHash: null,
+                policyHash: null,
+                externalCapabilityAllowed: false,
+                externalCapabilityStatus: "missing-server-receipt",
+                recoveryStatus: "missing-receipt",
+                priority: "P0",
+                recoveryAction: "Evaluate Object Storage Policy on the server before any adapter enablement review.",
+                notLegalAdviceBoundary:
+                  "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+              },
+              {
+                itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+                policyId: "chain-anchor",
+                policyLabel: "Chain Anchor Policy",
+                recordId: null,
+                supersededByRecordId: null,
+                reportVersion: null,
+                overallStatus: "missing",
+                reportHash: null,
+                contextHash: null,
+                policyHash: null,
+                externalCapabilityAllowed: false,
+                externalCapabilityStatus: "missing-server-receipt",
+                recoveryStatus: "missing-receipt",
+                priority: "P0",
+                recoveryAction: "Evaluate Chain Anchor Policy on the server before any adapter enablement review.",
+                notLegalAdviceBoundary:
+                  "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+              },
+              {
+                itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+                policyId: "grc-destination",
+                policyLabel: "GRC Destination Policy",
+                recordId: null,
+                supersededByRecordId: null,
+                reportVersion: null,
+                overallStatus: "missing",
+                reportHash: null,
+                contextHash: null,
+                policyHash: null,
+                externalCapabilityAllowed: false,
+                externalCapabilityStatus: "missing-server-receipt",
+                recoveryStatus: "missing-receipt",
+                priority: "P0",
+                recoveryAction: "Evaluate GRC Destination Policy on the server before any adapter enablement review.",
+                notLegalAdviceBoundary:
+                  "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+              }
+            ],
+            nextActions: [
+              "Evaluate Object Storage Policy on the server before any adapter enablement review.",
+              "Evaluate Chain Anchor Policy on the server before any adapter enablement review.",
+              "Evaluate GRC Destination Policy on the server before any adapter enablement review.",
+              "Evaluate every missing server integration policy before any adapter enablement review.",
+              "Keep external providers, storage, parsers, GRC destinations, and chain writes disabled until a separate enablement review."
+            ],
+            packetHash: "e".repeat(64),
+            notLegalAdviceBoundary:
+              "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+          },
+          200
+        );
+      }
       if (String(url).endsWith("/integration-policy-evaluations/bundle")) {
         return appJsonResponse(
           {
@@ -2977,6 +3091,34 @@ describe("App", () => {
         })
       );
       expect(JSON.stringify(serverBundlePayload)).not.toMatch(/apiKey|raw KYC|private key|external write command/i);
+      fireEvent.click(receipts.getByRole("button", { name: /Refresh Receipt Recovery Packet/i }));
+      await waitFor(() => expect(receipts.getByText(/4 recovery items/i)).toBeInTheDocument());
+      expect(
+        receipts.getByText(/1 persisted integration policy receipt checked while external enablement remains disabled/i)
+      ).toBeInTheDocument();
+      const serverRecoveryActions = within(receipts.getByRole("status", { name: /Server Receipt Recovery Packet actions/i }));
+      expect(serverRecoveryActions.getByText(/Receipt recovery actions/i)).toBeInTheDocument();
+      expect(
+        serverRecoveryActions.getByText(/Evaluate Object Storage Policy on the server before any adapter enablement review./i)
+      ).toBeInTheDocument();
+      expect(
+        serverRecoveryActions.getByText(/Keep external providers, storage, parsers, GRC destinations, and chain writes disabled/i)
+      ).toBeInTheDocument();
+      fireEvent.click(receipts.getByRole("button", { name: /Download Receipt Recovery Packet JSON/i }));
+      await waitFor(() => expect(click).toHaveBeenCalledTimes(3));
+      const recoveryPacketPayload = JSON.parse(await readAppBlobText(capturedBlobs[2])) as Record<string, unknown>;
+      expect(recoveryPacketPayload).toEqual(
+        expect.objectContaining({
+          packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+          workspaceId: "sample-yieldpassport",
+          status: "missing-receipts",
+          externalEnablementAllowed: false,
+          packetHash: "e".repeat(64),
+          notLegalAdviceBoundary:
+            "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+        })
+      );
+      expect(JSON.stringify(recoveryPacketPayload)).not.toMatch(/apiKey|raw KYC|private key|external write command/i);
       await waitFor(() => {
         expect(registry.getByText(/Server receipts/i).parentElement).toHaveTextContent("1");
       });
@@ -2988,7 +3130,7 @@ describe("App", () => {
       expect(coverage.getByText(/Server receipt integration-policy-evaluation-persisted-ui/i)).toBeInTheDocument();
       expect(coverage.getAllByText(/missing server receipt/i).length).toBeGreaterThanOrEqual(3);
       expect(coverage.getByText(/Not legal advice. Server policy receipts are audit preparation evidence/i)).toBeInTheDocument();
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

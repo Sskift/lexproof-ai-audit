@@ -2,10 +2,16 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildIntegrationPolicyEvaluationReceiptBundleUrl,
   buildIntegrationPolicyEvaluationRecordsUrl,
+  buildIntegrationPolicyReceiptRecoveryPacketUrl,
   fetchIntegrationPolicyEvaluationReceiptBundle,
-  fetchIntegrationPolicyEvaluationRecords
+  fetchIntegrationPolicyEvaluationRecords,
+  fetchIntegrationPolicyReceiptRecoveryPacket
 } from "./integrationPolicyEvaluationClient";
-import type { IntegrationPolicyEvaluationReceiptBundle, IntegrationPolicyEvaluationRecord } from "./integrationPolicyEvaluation";
+import type {
+  IntegrationPolicyEvaluationReceiptBundle,
+  IntegrationPolicyEvaluationRecord,
+  IntegrationPolicyReceiptRecoveryPacket
+} from "./integrationPolicyEvaluation";
 
 const policyReceipt: IntegrationPolicyEvaluationRecord = {
   recordVersion: "lexproof-integration-policy-evaluation-record-v1",
@@ -103,6 +109,9 @@ describe("integration policy evaluation client", () => {
     expect(buildIntegrationPolicyEvaluationReceiptBundleUrl("https://api.lexproof.test///", "workspace with spaces")).toBe(
       "https://api.lexproof.test/api/workspaces/workspace%20with%20spaces/integration-policy-evaluations/bundle"
     );
+    expect(buildIntegrationPolicyReceiptRecoveryPacketUrl("https://api.lexproof.test///", "workspace with spaces")).toBe(
+      "https://api.lexproof.test/api/workspaces/workspace%20with%20spaces/integration-policy-evaluations/recovery"
+    );
   });
 
   it("fetches a persisted metadata-only policy receipt bundle without enabling external adapters", async () => {
@@ -174,6 +183,72 @@ describe("integration policy evaluation client", () => {
     expect(result.externalEnablementAllowed).toBe(false);
     expect(result.notLegalAdviceBoundary).toBe(
       "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+    );
+  });
+
+  it("fetches a metadata-only policy receipt recovery packet without enabling external adapters", async () => {
+    const packet = createReceiptRecoveryPacket();
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit): Promise<Response> => ({
+      ok: true,
+      json: async () => packet
+    }) as Response);
+
+    const result = await fetchIntegrationPolicyReceiptRecoveryPacket({
+      apiBaseUrl: "https://api.lexproof.test/",
+      workspaceId: "workspace-policy",
+      fetcher: fetcher as unknown as typeof fetch
+    });
+
+    expect(result).toEqual(packet);
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://api.lexproof.test/api/workspaces/workspace-policy/integration-policy-evaluations/recovery",
+      { method: "GET" }
+    );
+    expect(result.externalEnablementAllowed).toBe(false);
+    expect(result.summary.missingPolicyCount).toBe(3);
+    expect(result.nextActions).toEqual(["Evaluate missing server integration policies before adapter enablement review."]);
+  });
+
+  it("redacts classified text from otherwise valid policy receipt recovery packets before UI use", async () => {
+    const unsafePacket = createReceiptRecoveryPacket();
+    unsafePacket.workspaceId = "workspace-policy apiKey=sk-live-abcdef1234567890abcdef1234567890";
+    unsafePacket.generatedAt = "2026-07-01T00:00:00.000Z raw KYC passport A1234567";
+    unsafePacket.summary.nextAction = "Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef.";
+    unsafePacket.nextActions = ["Do not treat this receipt as a legal opinion."];
+    unsafePacket.items = unsafePacket.items.map((item, index) =>
+      index === 0
+        ? {
+            ...item,
+            policyLabel: "Object Storage reviewer@example.com",
+            recordId: "integration-policy-evaluation-record-ui apiKey=sk-live-abcdef1234567890abcdef1234567890",
+            reportVersion: "lexproof-object-storage-policy-v1 legal conclusion",
+            externalCapabilityStatus: "missing-server-receipt raw KYC passport A1234567",
+            recoveryAction: "Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef."
+          }
+        : item
+    );
+    const fetcher = vi.fn(async (): Promise<Response> => ({
+      ok: true,
+      json: async () => unsafePacket
+    }) as Response);
+
+    const result = await fetchIntegrationPolicyReceiptRecoveryPacket({
+      workspaceId: "workspace-policy",
+      fetcher: fetcher as unknown as typeof fetch
+    });
+
+    expect(result.workspaceId).toContain("[redacted-secret]");
+    expect(result.generatedAt).toContain("[redacted-raw-kyc]");
+    expect(result.generatedAt).toContain("[redacted-passport-id]");
+    expect(result.summary.nextAction).toContain("[redacted-private-key]");
+    expect(result.nextActions[0]).toContain("[redacted-legal-conclusion]");
+    expect(result.items[0].policyLabel).toContain("[redacted-email]");
+    expect(result.items[0].recordId).toContain("[redacted-secret]");
+    expect(result.items[0].reportVersion).toContain("[redacted-legal-conclusion]");
+    expect(result.items[0].externalCapabilityStatus).toContain("[redacted-raw-kyc]");
+    expect(result.items[0].recoveryAction).toContain("[redacted-private-key]");
+    expect(JSON.stringify(result)).not.toMatch(
+      /sk-live-abcdef|raw KYC|passport A1234567|reviewer@example\.com|private key 0x123456|legal opinion|legal conclusion/i
     );
   });
 
@@ -293,6 +368,39 @@ describe("integration policy evaluation client", () => {
     }
   });
 
+  it("rejects malformed receipt recovery packets before the UI trusts them", async () => {
+    const fetchers = [
+      vi.fn(async (): Promise<Response> => ({
+        ok: true,
+        json: async () => ({ ...createReceiptRecoveryPacket(), externalEnablementAllowed: true })
+      }) as Response),
+      vi.fn(async (): Promise<Response> => ({
+        ok: true,
+        json: async () => ({ ...createReceiptRecoveryPacket(), nextActions: ["   "] })
+      }) as Response),
+      vi.fn(async (): Promise<Response> => ({
+        ok: true,
+        json: async () => ({
+          ...createReceiptRecoveryPacket(),
+          summary: { ...createReceiptRecoveryPacket().summary, missingPolicyCount: 99 }
+        })
+      }) as Response)
+    ];
+
+    for (const fetcher of fetchers) {
+      await expect(
+        fetchIntegrationPolicyReceiptRecoveryPacket({
+          workspaceId: "workspace-policy",
+          fetcher: fetcher as unknown as typeof fetch
+        })
+      ).rejects.toMatchObject({
+        code: "INTEGRATION_POLICY_EVALUATION_INVALID_RESPONSE",
+        recoveryAction: "Verify the Phase 2 API is returning metadata-only policy evaluation receipt records.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      });
+    }
+  });
+
   it("redacts unsafe API error payloads while preserving recovery guidance", async () => {
     const fetcher = vi.fn(async (): Promise<Response> => ({
       ok: false,
@@ -353,5 +461,105 @@ function createReceiptBundle(): IntegrationPolicyEvaluationReceiptBundle {
       }
     ],
     notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+  };
+}
+
+function createReceiptRecoveryPacket(): IntegrationPolicyReceiptRecoveryPacket {
+  return {
+    packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+    workspaceId: "workspace-policy",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    status: "missing-receipts",
+    recordCount: 1,
+    policyCount: 1,
+    externalEnablementAllowed: false,
+    summary: {
+      totalRecoveryCount: 3,
+      missingPolicyCount: 3,
+      blockedCount: 0,
+      needsPolicyCount: 0,
+      staleReceiptCount: 0,
+      readyPolicyCount: 1,
+      latestReceiptCount: 1,
+      nextAction: "Evaluate every missing server integration policy before any adapter enablement review.",
+      notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+    },
+    items: [
+      {
+        itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+        policyId: "object-storage",
+        policyLabel: "Object Storage Policy",
+        recordId: policyReceipt.id,
+        supersededByRecordId: null,
+        reportVersion: policyReceipt.reportVersion,
+        overallStatus: "ready",
+        reportHash: policyReceipt.reportHash,
+        contextHash: policyReceipt.contextHash,
+        policyHash: policyReceipt.policyHash,
+        externalCapabilityAllowed: false,
+        externalCapabilityStatus: policyReceipt.externalCapabilityStatus,
+        recoveryStatus: "ready",
+        priority: "P2",
+        recoveryAction: "Keep the latest Object Storage Policy receipt with the disabled-adapter enablement dossier.",
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+      },
+      {
+        itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+        policyId: "document-parser",
+        policyLabel: "Document Parser Policy",
+        recordId: null,
+        supersededByRecordId: null,
+        reportVersion: null,
+        overallStatus: "missing",
+        reportHash: null,
+        contextHash: null,
+        policyHash: null,
+        externalCapabilityAllowed: false,
+        externalCapabilityStatus: "missing-server-receipt",
+        recoveryStatus: "missing-receipt",
+        priority: "P0",
+        recoveryAction: "Evaluate Document Parser Policy on the server before any adapter enablement review.",
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+      },
+      {
+        itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+        policyId: "chain-anchor",
+        policyLabel: "Chain Anchor Policy",
+        recordId: null,
+        supersededByRecordId: null,
+        reportVersion: null,
+        overallStatus: "missing",
+        reportHash: null,
+        contextHash: null,
+        policyHash: null,
+        externalCapabilityAllowed: false,
+        externalCapabilityStatus: "missing-server-receipt",
+        recoveryStatus: "missing-receipt",
+        priority: "P0",
+        recoveryAction: "Evaluate Chain Anchor Policy on the server before any adapter enablement review.",
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+      },
+      {
+        itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+        policyId: "grc-destination",
+        policyLabel: "GRC Destination Policy",
+        recordId: null,
+        supersededByRecordId: null,
+        reportVersion: null,
+        overallStatus: "missing",
+        reportHash: null,
+        contextHash: null,
+        policyHash: null,
+        externalCapabilityAllowed: false,
+        externalCapabilityStatus: "missing-server-receipt",
+        recoveryStatus: "missing-receipt",
+        priority: "P0",
+        recoveryAction: "Evaluate GRC Destination Policy on the server before any adapter enablement review.",
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+      }
+    ],
+    nextActions: ["Evaluate missing server integration policies before adapter enablement review."],
+    packetHash: "e".repeat(64),
+    notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
   };
 }

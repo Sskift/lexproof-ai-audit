@@ -61,12 +61,15 @@ import {
 } from "../lib/objectStoragePolicy";
 import {
   createIntegrationPolicyEvaluationReceiptBundle,
+  downloadIntegrationPolicyReceiptRecoveryPacketJson,
   downloadIntegrationPolicyEvaluationReceiptBundleJson,
   type IntegrationPolicyEvaluationReceiptBundle,
-  type IntegrationPolicyEvaluationRecord
+  type IntegrationPolicyEvaluationRecord,
+  type IntegrationPolicyReceiptRecoveryPacket
 } from "../lib/integrationPolicyEvaluation";
 import {
   fetchIntegrationPolicyEvaluationReceiptBundle,
+  fetchIntegrationPolicyReceiptRecoveryPacket,
   IntegrationPolicyEvaluationClientError
 } from "../lib/integrationPolicyEvaluationClient";
 
@@ -531,6 +534,10 @@ function IntegrationPolicyEvaluationReceiptsPanel({
   const [serverBundleStatus, setServerBundleStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [serverBundleError, setServerBundleError] = useState("");
   const [serverBundleRecoveryAction, setServerBundleRecoveryAction] = useState("");
+  const [serverRecoveryPacket, setServerRecoveryPacket] = useState<IntegrationPolicyReceiptRecoveryPacket | null>(null);
+  const [serverRecoveryPacketStatus, setServerRecoveryPacketStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [serverRecoveryPacketError, setServerRecoveryPacketError] = useState("");
+  const [serverRecoveryPacketRecoveryAction, setServerRecoveryPacketRecoveryAction] = useState("");
   const latestRecords = records.slice(0, 4);
 
   useEffect(() => {
@@ -538,6 +545,10 @@ function IntegrationPolicyEvaluationReceiptsPanel({
     setServerBundleStatus("idle");
     setServerBundleError("");
     setServerBundleRecoveryAction("");
+    setServerRecoveryPacket(null);
+    setServerRecoveryPacketStatus("idle");
+    setServerRecoveryPacketError("");
+    setServerRecoveryPacketRecoveryAction("");
   }, [workspaceId]);
 
   const downloadReceiptBundle = async () => {
@@ -561,6 +572,8 @@ function IntegrationPolicyEvaluationReceiptsPanel({
         workspaceId
       });
       setServerBundle(bundle);
+      setServerRecoveryPacket(null);
+      setServerRecoveryPacketStatus("idle");
       setServerBundleStatus("synced");
     } catch (error) {
       setServerBundle(null);
@@ -580,6 +593,40 @@ function IntegrationPolicyEvaluationReceiptsPanel({
     }
 
     downloadIntegrationPolicyEvaluationReceiptBundleJson("server-integration-policy-receipt-bundle.json", serverBundle);
+  };
+  const refreshServerRecoveryPacket = async () => {
+    setServerRecoveryPacketStatus("syncing");
+    setServerRecoveryPacketError("");
+    setServerRecoveryPacketRecoveryAction("");
+
+    try {
+      const packet = await fetchIntegrationPolicyReceiptRecoveryPacket({
+        apiBaseUrl,
+        workspaceId
+      });
+      setServerRecoveryPacket(packet);
+      setServerRecoveryPacketStatus("synced");
+    } catch (error) {
+      setServerRecoveryPacket(null);
+      setServerRecoveryPacketStatus("error");
+      if (error instanceof IntegrationPolicyEvaluationClientError) {
+        setServerRecoveryPacketError(error.message);
+        setServerRecoveryPacketRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setServerRecoveryPacketError(error instanceof Error ? error.message : "Policy receipt recovery packet refresh failed.");
+      setServerRecoveryPacketRecoveryAction("Start the Phase 2 API and retry policy receipt recovery packet refresh.");
+    }
+  };
+  const downloadServerRecoveryPacket = () => {
+    if (!serverRecoveryPacket) {
+      return;
+    }
+
+    downloadIntegrationPolicyReceiptRecoveryPacketJson(
+      "server-integration-policy-receipt-recovery-packet.json",
+      serverRecoveryPacket
+    );
   };
 
   return (
@@ -681,6 +728,75 @@ function IntegrationPolicyEvaluationReceiptsPanel({
           </button>
         </div>
         <small>{serverBundle?.notLegalAdviceBoundary ?? "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."}</small>
+      </div>
+      <div className={`integration-policy-server-bundle server-receipt-recovery ${serverRecoveryPacketStatus}`}>
+        <div className="split-title compact-title">
+          <div>
+            <ReceiptText size={16} aria-hidden="true" />
+            <strong>Server Receipt Recovery Packet</strong>
+          </div>
+          <span className="workflow-status disabled">
+            {serverRecoveryPacket
+              ? `${serverRecoveryPacket.summary.totalRecoveryCount} recovery item${
+                  serverRecoveryPacket.summary.totalRecoveryCount === 1 ? "" : "s"
+                }`
+              : "not refreshed"}
+          </span>
+        </div>
+        <p>
+          {serverRecoveryPacket
+            ? `${serverRecoveryPacket.recordCount} persisted integration policy receipt${
+                serverRecoveryPacket.recordCount === 1 ? "" : "s"
+              } checked while external enablement remains disabled.`
+            : "Refresh the server recovery packet to verify missing, blocked, needs-policy, or stale receipts before adapter enablement review."}
+        </p>
+        {serverRecoveryPacket ? (
+          <div className="integration-policy-server-bundle-facts">
+            <ProviderPolicyFact label="Packet" value={`${serverRecoveryPacket.packetHash.slice(0, 12)}...`} />
+            <ProviderPolicyFact label="Missing" value={String(serverRecoveryPacket.summary.missingPolicyCount)} />
+            <ProviderPolicyFact label="Blocked" value={String(serverRecoveryPacket.summary.blockedCount)} />
+            <ProviderPolicyFact label="Needs policy" value={String(serverRecoveryPacket.summary.needsPolicyCount)} />
+            <ProviderPolicyFact label="Stale" value={String(serverRecoveryPacket.summary.staleReceiptCount)} />
+          </div>
+        ) : null}
+        {serverRecoveryPacket ? (
+          <div
+            className="integration-policy-server-bundle-actions"
+            role="status"
+            aria-label="Server Receipt Recovery Packet actions"
+          >
+            <strong>Receipt recovery actions</strong>
+            {serverRecoveryPacket.nextActions.map((action) => (
+              <span key={action}>{action}</span>
+            ))}
+          </div>
+        ) : null}
+        {serverRecoveryPacketError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{serverRecoveryPacketError}</strong>
+            {serverRecoveryPacketRecoveryAction ? <span>{serverRecoveryPacketRecoveryAction}</span> : null}
+            <small>Not legal advice. Receipt recovery refresh is metadata-only and does not enable adapters.</small>
+          </div>
+        ) : null}
+        <div className="inline-actions provider-policy-actions">
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => void refreshServerRecoveryPacket()}
+            disabled={serverRecoveryPacketStatus === "syncing"}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {serverRecoveryPacketStatus === "syncing" ? "Refreshing Receipt Recovery Packet" : "Refresh Receipt Recovery Packet"}
+          </button>
+          <button type="button" className="secondary" onClick={downloadServerRecoveryPacket} disabled={!serverRecoveryPacket}>
+            <Download size={16} aria-hidden="true" />
+            Download Receipt Recovery Packet JSON
+          </button>
+        </div>
+        <small>
+          {serverRecoveryPacket?.notLegalAdviceBoundary ??
+            "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."}
+        </small>
       </div>
       {latestRecords.length ? (
         <div className="integration-policy-receipt-list">

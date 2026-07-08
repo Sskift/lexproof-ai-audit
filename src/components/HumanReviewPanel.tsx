@@ -17,11 +17,10 @@ import {
 import { createHumanReviewQueueFilterOptions, filterHumanReviewQueueItems } from "../lib/humanReviewQueueFilters";
 import {
   exportServerHumanReviewRecoveryPacketJson,
-  type ServerHumanReviewRecoveryPacket,
-  type ServerHumanReviewQueueView
+  type ServerHumanReviewRecoveryPacket
 } from "../lib/serverHumanReviewQueue";
 import {
-  fetchServerHumanReviewQueueView,
+  fetchServerHumanReviewRecoveryPacket,
   ServerHumanReviewQueueClientError
 } from "../lib/serverHumanReviewQueueClient";
 
@@ -46,7 +45,7 @@ export function HumanReviewPanel({ queue, decisions, projectId, projectName, onS
   const [recoveryPacket, setRecoveryPacket] = useState<HumanReviewRecoveryPacket | null>(null);
   const [buildingRecoveryPacket, setBuildingRecoveryPacket] = useState(false);
   const [serverQueueApiBaseUrl, setServerQueueApiBaseUrl] = useState("");
-  const [serverQueueView, setServerQueueView] = useState<ServerHumanReviewQueueView | null>(null);
+  const [serverRecoveryPacket, setServerRecoveryPacket] = useState<ServerHumanReviewRecoveryPacket | null>(null);
   const [serverQueueRefreshStatus, setServerQueueRefreshStatus] = useState<ServerQueueRefreshStatus>("idle");
   const [serverQueueRefreshError, setServerQueueRefreshError] = useState("");
   const [serverQueueRefreshRecoveryAction, setServerQueueRefreshRecoveryAction] = useState("");
@@ -74,7 +73,7 @@ export function HumanReviewPanel({ queue, decisions, projectId, projectName, onS
     targetTypeFilter !== "all" || statusFilter !== "all" || reviewerFilter !== "all" || reviewQuery.trim().length > 0;
 
   useEffect(() => {
-    setServerQueueView(null);
+    setServerRecoveryPacket(null);
     setServerQueueRefreshStatus("idle");
     setServerQueueRefreshError("");
     setServerQueueRefreshRecoveryAction("");
@@ -109,39 +108,39 @@ export function HumanReviewPanel({ queue, decisions, projectId, projectName, onS
     }
   };
 
-  const refreshServerHumanReviewQueue = async () => {
+  const refreshServerHumanReviewRecoveryPacket = async () => {
     setServerQueueRefreshStatus("syncing");
     setServerQueueRefreshError("");
     setServerQueueRefreshRecoveryAction("");
 
     try {
-      const queueView = await fetchServerHumanReviewQueueView({
+      const packet = await fetchServerHumanReviewRecoveryPacket({
         apiBaseUrl: serverQueueApiBaseUrl,
         workspaceId: projectId
       });
-      setServerQueueView(queueView);
+      setServerRecoveryPacket(packet);
       setServerQueueRefreshStatus("synced");
     } catch (error) {
-      setServerQueueView(null);
+      setServerRecoveryPacket(null);
       setServerQueueRefreshStatus("error");
       if (error instanceof ServerHumanReviewQueueClientError) {
         setServerQueueRefreshError(error.message);
         setServerQueueRefreshRecoveryAction(error.recoveryAction);
         return;
       }
-      setServerQueueRefreshError(error instanceof Error ? error.message : "Human Review queue refresh failed.");
-      setServerQueueRefreshRecoveryAction("Start the Phase 2 API and retry Human Review queue refresh.");
+      setServerQueueRefreshError(error instanceof Error ? error.message : "Human Review recovery packet refresh failed.");
+      setServerQueueRefreshRecoveryAction("Start the Phase 2 API and retry Human Review recovery packet refresh.");
     }
   };
 
   const downloadServerRecoveryPacket = () => {
-    if (!serverQueueView) {
+    if (!serverRecoveryPacket) {
       return;
     }
 
     downloadServerHumanReviewRecoveryPacketJson(
       `${slug(projectName)}-server-human-review-recovery-packet.json`,
-      serverQueueView.recoveryPacket
+      serverRecoveryPacket
     );
   };
 
@@ -176,12 +175,12 @@ export function HumanReviewPanel({ queue, decisions, projectId, projectName, onS
 
       <ServerHumanReviewRecoveryPacketPanel
         apiBaseUrl={serverQueueApiBaseUrl}
-        queueView={serverQueueView}
+        packet={serverRecoveryPacket}
         status={serverQueueRefreshStatus}
         error={serverQueueRefreshError}
         recoveryAction={serverQueueRefreshRecoveryAction}
         onApiBaseUrlChange={setServerQueueApiBaseUrl}
-        onRefresh={() => void refreshServerHumanReviewQueue()}
+        onRefresh={() => void refreshServerHumanReviewRecoveryPacket()}
         onDownload={downloadServerRecoveryPacket}
       />
 
@@ -276,7 +275,7 @@ export function HumanReviewPanel({ queue, decisions, projectId, projectName, onS
 
 function ServerHumanReviewRecoveryPacketPanel({
   apiBaseUrl,
-  queueView,
+  packet,
   status,
   error,
   recoveryAction,
@@ -285,7 +284,7 @@ function ServerHumanReviewRecoveryPacketPanel({
   onDownload
 }: {
   apiBaseUrl: string;
-  queueView: ServerHumanReviewQueueView | null;
+  packet: ServerHumanReviewRecoveryPacket | null;
   status: ServerQueueRefreshStatus;
   error: string;
   recoveryAction: string;
@@ -293,7 +292,6 @@ function ServerHumanReviewRecoveryPacketPanel({
   onRefresh: () => void;
   onDownload: () => void;
 }) {
-  const packet = queueView?.recoveryPacket ?? null;
   const recoveryCount = packet?.summary.totalRecoveryCount ?? 0;
   const isSyncing = status === "syncing";
 
@@ -309,14 +307,14 @@ function ServerHumanReviewRecoveryPacketPanel({
           <p>
             {packet
               ? `${recoveryCount} persisted returned or rejected review item${recoveryCount === 1 ? "" : "s"} need recovery.`
-              : "Refresh the Phase 2 Human Review queue to verify persisted review recovery before handoff."}
+              : "Refresh the Phase 2 Human Review recovery packet to verify persisted review recovery before handoff."}
           </p>
           <small>{packet?.notLegalAdviceBoundary ?? "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."}</small>
         </div>
       </div>
       {packet ? (
         <div className="server-human-review-recovery-facts">
-          <SummaryStat label="Server queue" value={queueView?.totalCount ?? 0} />
+          <SummaryStat label="Recovery" value={packet.summary.totalRecoveryCount} />
           <SummaryStat label="Returned" value={packet.summary.returnedCount} />
           <SummaryStat label="Rejected" value={packet.summary.rejectedCount} />
         </div>
@@ -339,7 +337,7 @@ function ServerHumanReviewRecoveryPacketPanel({
         <p className="save-state server-human-review-error" role="status">
           {error}
           {recoveryAction ? <small>{recoveryAction}</small> : null}
-          <small>Not legal advice. Human Review queue refresh is metadata-only.</small>
+          <small>Not legal advice. Human Review recovery refresh is metadata-only.</small>
         </p>
       ) : null}
       <div className="server-human-review-controls">
@@ -354,7 +352,7 @@ function ServerHumanReviewRecoveryPacketPanel({
         </label>
         <button type="button" className="secondary" onClick={onRefresh} disabled={isSyncing}>
           <RefreshCw size={15} aria-hidden="true" />
-          {isSyncing ? "Refreshing Server Queue" : "Refresh Server Human Review Queue"}
+          {isSyncing ? "Refreshing Recovery Packet" : "Refresh Server Recovery Packet"}
         </button>
         <button type="button" className="secondary" onClick={onDownload} disabled={!packet}>
           <Download size={15} aria-hidden="true" />

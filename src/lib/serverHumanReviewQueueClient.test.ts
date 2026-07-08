@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  buildServerHumanReviewRecoveryPacketUrl,
   buildServerHumanReviewQueueUrl,
+  fetchServerHumanReviewRecoveryPacket,
   fetchServerHumanReviewQueueView,
   ServerHumanReviewQueueClientError
 } from "./serverHumanReviewQueueClient";
@@ -16,6 +18,12 @@ describe("server human review queue client", () => {
       })
     ).toBe(
       "https://api.lexproof.test/api/workspaces/workspace%20human%20review/reviews/queue?targetType=evidence&status=needs-more-evidence&reviewerId=Counsel"
+    );
+  });
+
+  it("builds a standalone server Human Review recovery packet URL", () => {
+    expect(buildServerHumanReviewRecoveryPacketUrl("https://api.lexproof.test/", "workspace human review")).toBe(
+      "https://api.lexproof.test/api/workspaces/workspace%20human%20review/reviews/recovery"
     );
   });
 
@@ -44,6 +52,33 @@ describe("server human review queue client", () => {
       notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
     });
     expect(JSON.stringify(view)).not.toMatch(/raw KYC|private key|legal approval/i);
+  });
+
+  it("fetches a metadata-only server recovery packet from the standalone route", async () => {
+    const fetcher = vi.fn(async () => jsonResponse(createQueuePayload().recoveryPacket));
+
+    const packet = await fetchServerHumanReviewRecoveryPacket({
+      apiBaseUrl: "https://api.lexproof.test",
+      workspaceId: "workspace-review",
+      fetcher
+    });
+
+    expect(fetcher).toHaveBeenCalledWith("https://api.lexproof.test/api/workspaces/workspace-review/reviews/recovery", {
+      method: "GET"
+    });
+    expect(packet).toMatchObject({
+      packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+      workspaceId: "workspace-review",
+      status: "needs-recovery",
+      summary: {
+        totalRecoveryCount: 1,
+        returnedCount: 1,
+        rejectedCount: 0,
+        nextAction: "evidence evidence-1: Return the linked Evidence Vault record to requested status."
+      },
+      nextActions: ["evidence evidence-1: Return the linked Evidence Vault record to requested status."],
+      notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+    });
   });
 
   it("redacts classified text from otherwise valid server queue and recovery packet responses before UI use", async () => {
@@ -122,6 +157,47 @@ describe("server human review queue client", () => {
     );
   });
 
+  it("redacts classified text from standalone server recovery packets before UI use", async () => {
+    const payload = createQueuePayload().recoveryPacket;
+    payload.workspaceId = "workspace-review raw KYC passport A1234567";
+    payload.generatedAt = "2026-07-08T00:00:00.000Z legal opinion";
+    payload.summary.nextAction = "Do not treat this returned review as a final legal decision.";
+    payload.nextActions = ["Remove apiKey=sk-live-abcdef1234567890abcdef1234567890 before retry."];
+    payload.items[0] = {
+      ...payload.items[0],
+      id: "review-1 apiKey=sk-live-abcdef1234567890abcdef1234567890",
+      workspaceId: "workspace-review raw KYC passport A1234567",
+      targetId: "evidence-1 passport file",
+      targetLabel: "evidence evidence-1 passport file",
+      reviewerId: "reviewer@example.com",
+      reviewerComment: "Needs raw KYC passport A1234567 and apiKey=sk-live-abcdef1234567890abcdef1234567890.",
+      createdAt: "2026-07-08T00:00:00.000Z legal conclusion",
+      updatedAt: "2026-07-08T00:00:00.000Z legal approval",
+      recoveryAction:
+        "Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef before counsel handoff."
+    };
+    const fetcher = vi.fn(async () => jsonResponse(payload));
+
+    const packet = await fetchServerHumanReviewRecoveryPacket({
+      workspaceId: "workspace-review",
+      fetcher
+    });
+
+    expect(packet.workspaceId).toContain("[redacted-raw-kyc]");
+    expect(packet.generatedAt).toContain("[redacted-legal-conclusion]");
+    expect(packet.summary.nextAction).toContain("[redacted-legal-conclusion]");
+    expect(packet.nextActions.join(" ")).toContain("[redacted-secret]");
+    expect(packet.items[0].id).toContain("[redacted-secret]");
+    expect(packet.items[0].targetId).toContain("[redacted-identity-document]");
+    expect(packet.items[0].reviewerId).toBe("[redacted-email]");
+    expect(packet.items[0].reviewerComment).toContain("[redacted-raw-kyc]");
+    expect(packet.items[0].reviewerComment).toContain("[redacted-secret]");
+    expect(packet.items[0].recoveryAction).toContain("[redacted-private-key]");
+    expect(JSON.stringify(packet)).not.toMatch(
+      /sk-live-abcdef|raw KYC|passport A1234567|passport file|reviewer@example\.com|private key|legal opinion|legal conclusion|legal approval|final legal decision/i
+    );
+  });
+
   it("rejects queue responses that omit the recovery packet boundary", async () => {
     const payload = createQueuePayload();
     (payload.recoveryPacket as { notLegalAdviceBoundary: string }).notLegalAdviceBoundary = "Legal approval.";
@@ -129,6 +205,22 @@ describe("server human review queue client", () => {
 
     await expect(
       fetchServerHumanReviewQueueView({
+        workspaceId: "workspace-review",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "SERVER_HUMAN_REVIEW_QUEUE_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning metadata-only Human Review queue and recovery packet records."
+    });
+  });
+
+  it("rejects standalone recovery packet responses that omit non-empty next actions", async () => {
+    const payload = createQueuePayload().recoveryPacket;
+    payload.nextActions = [];
+    const fetcher = vi.fn(async () => jsonResponse(payload));
+
+    await expect(
+      fetchServerHumanReviewRecoveryPacket({
         workspaceId: "workspace-review",
         fetcher
       })

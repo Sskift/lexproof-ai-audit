@@ -210,7 +210,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Open **Human Review**.
    - Set one evidence item to `needs-more-evidence`, adjust the due date if useful for narration, save the decision, and show the return message.
    - Show **Human Review Recovery Packet**, click **Download Recovery Packet JSON**, and point out the stable packet hash, returned/rejected counts, recovery actions, redacted reviewer notes, and Not legal advice boundary.
-   - Mention that the Phase 2 API also exposes the redacted server recovery packet at `GET /api/workspaces/:workspaceId/reviews/recovery`, and demo smoke validates the packet hash plus non-empty recovery actions.
+   - Click **Refresh Server Recovery Packet** to fetch the redacted server packet from `GET /api/workspaces/:workspaceId/reviews/recovery`, then mention that demo smoke validates the packet hash plus non-empty recovery actions.
    - Show **Human Review Timeline** with the saved decision, audit log ID, and **Download Review Timeline JSON**.
    - Return to **Evidence Ledger** and show the linked evidence status moved back to `requested`.
    - Screenshot: `docs/assets/screenshots/demo-04-human-review-return.png`.

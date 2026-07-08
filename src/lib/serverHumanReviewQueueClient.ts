@@ -6,12 +6,21 @@ import type {
   ServerHumanReviewRecoveryPacket
 } from "./serverHumanReviewQueue";
 import type { HumanReviewRecord } from "./phase2Types";
-import { redactServerHumanReviewQueueView } from "./serverHumanReviewQueueRedaction";
+import {
+  redactServerHumanReviewQueueView,
+  redactServerHumanReviewRecoveryPacket
+} from "./serverHumanReviewQueueRedaction";
 
 export type FetchServerHumanReviewQueueViewInput = {
   apiBaseUrl?: string;
   workspaceId: string;
   filters?: ServerHumanReviewQueueFilters;
+  fetcher?: typeof fetch;
+};
+
+export type FetchServerHumanReviewRecoveryPacketInput = {
+  apiBaseUrl?: string;
+  workspaceId: string;
   fetcher?: typeof fetch;
 };
 
@@ -68,6 +77,33 @@ export async function fetchServerHumanReviewQueueView({
   return redactServerHumanReviewQueueView(validateServerHumanReviewQueueView(payload));
 }
 
+export async function fetchServerHumanReviewRecoveryPacket({
+  apiBaseUrl,
+  workspaceId,
+  fetcher = globalThis.fetch?.bind(globalThis)
+}: FetchServerHumanReviewRecoveryPacketInput): Promise<ServerHumanReviewRecoveryPacket> {
+  if (!fetcher) {
+    throw new ServerHumanReviewQueueClientError("Fetch is required to refresh the server Human Review recovery packet.", {
+      code: "SERVER_HUMAN_REVIEW_RECOVERY_FETCH_UNAVAILABLE",
+      recoveryAction: "Run this action in a browser or provide a fetch-compatible API client."
+    });
+  }
+
+  const response = await fetcher(buildServerHumanReviewRecoveryPacketUrl(apiBaseUrl, workspaceId), { method: "GET" });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorPayload = asSafeApiErrorResponse(payload);
+    throw new ServerHumanReviewQueueClientError(errorPayload.error ?? "Human Review recovery packet refresh failed.", {
+      code: errorPayload.code ?? "SERVER_HUMAN_REVIEW_RECOVERY_REFRESH_FAILED",
+      recoveryAction: errorPayload.recoveryAction ?? "Start the Phase 2 API and retry Human Review recovery packet refresh.",
+      notLegalAdviceBoundary: errorPayload.notLegalAdviceBoundary ?? DEFAULT_API_ERROR_BOUNDARY
+    });
+  }
+
+  return redactServerHumanReviewRecoveryPacket(validateServerHumanReviewRecoveryPacket(payload));
+}
+
 export function buildServerHumanReviewQueueUrl(
   apiBaseUrl: string | undefined,
   workspaceId: string,
@@ -84,6 +120,19 @@ export function buildServerHumanReviewQueueUrl(
   const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
   const query = buildQueueQuery(filters);
   return `${base}/api/workspaces/${encodeURIComponent(workspace)}/reviews/queue${query}`;
+}
+
+export function buildServerHumanReviewRecoveryPacketUrl(apiBaseUrl: string | undefined, workspaceId: string): string {
+  const workspace = workspaceId.trim();
+  if (!workspace) {
+    throw new ServerHumanReviewQueueClientError("Workspace ID is required to refresh the server Human Review recovery packet.", {
+      code: "SERVER_HUMAN_REVIEW_RECOVERY_WORKSPACE_REQUIRED",
+      recoveryAction: "Create or select a workspace before refreshing persisted Human Review recovery metadata."
+    });
+  }
+
+  const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
+  return `${base}/api/workspaces/${encodeURIComponent(workspace)}/reviews/recovery`;
 }
 
 function buildQueueQuery(filters: ServerHumanReviewQueueFilters | undefined): string {
@@ -106,6 +155,14 @@ function buildQueueQuery(filters: ServerHumanReviewQueueFilters | undefined): st
 function validateServerHumanReviewQueueView(payload: unknown): ServerHumanReviewQueueView {
   if (!isServerHumanReviewQueueView(payload)) {
     throw invalidResponseError("Human Review queue response has invalid metadata.");
+  }
+
+  return payload;
+}
+
+function validateServerHumanReviewRecoveryPacket(payload: unknown): ServerHumanReviewRecoveryPacket {
+  if (!isServerHumanReviewRecoveryPacket(payload)) {
+    throw invalidResponseError("Human Review recovery packet response has invalid metadata.");
   }
 
   return payload;

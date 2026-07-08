@@ -31,7 +31,7 @@ function redactServerHumanReviewQueueFilters(
   };
 }
 
-function redactServerHumanReviewRecoveryPacket(
+export function redactServerHumanReviewRecoveryPacket(
   packet: ServerHumanReviewRecoveryPacket
 ): ServerHumanReviewRecoveryPacket {
   return {

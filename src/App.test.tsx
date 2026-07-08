@@ -5874,75 +5874,40 @@ describe("App", () => {
     const capturedBlobs: Blob[] = [];
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      expect(String(input)).toMatch(/\/api\/workspaces\/.+\/reviews\/queue$/);
+      expect(String(input)).toMatch(/\/api\/workspaces\/.+\/reviews\/recovery$/);
       return appJsonResponse({
-        queueVersion: "lexproof-server-human-review-queue-v1",
+        packetVersion: "lexproof-server-human-review-recovery-packet-v1",
         workspaceId: "server-review-workspace",
-        filters: {},
-        totalCount: 1,
-        openCount: 1,
-        reviewedCount: 0,
-        blockedCount: 0,
-        targetTypeCounts: {
-          evidence: 1
-        },
-        statusCounts: {
-          "needs-more-evidence": 1
-        },
-        reviewerCounts: {
-          Counsel: 1
-        },
-        nextActions: ["1 review item needs more evidence before counsel handoff."],
-        recoveryPacket: {
-          packetVersion: "lexproof-server-human-review-recovery-packet-v1",
-          workspaceId: "server-review-workspace",
-          generatedAt: "2026-07-08T00:00:00.000Z",
-          packetHash: "b".repeat(64),
-          status: "needs-recovery",
-          summary: {
-            totalRecoveryCount: 1,
-            returnedCount: 1,
-            rejectedCount: 0,
-            nextAction: "evidence evidence-server-1: Return the linked Evidence Vault record to requested status.",
-            notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
-          },
-          nextActions: ["evidence evidence-server-1: Return the linked Evidence Vault record to requested status."],
-          items: [
-            {
-              itemVersion: "lexproof-server-human-review-recovery-item-v1",
-              id: "review-server-1",
-              workspaceId: "server-review-workspace",
-              targetType: "evidence",
-              targetId: "evidence-server-1",
-              targetLabel: "evidence evidence-server-1",
-              reviewerId: "Counsel",
-              status: "needs-more-evidence",
-              severity: "needs-action",
-              reviewerComment: "Needs metadata-only replacement; [redacted-raw-kyc] and [redacted-private-key] removed.",
-              createdAt: "2026-07-08T00:00:00.000Z",
-              updatedAt: "2026-07-08T00:00:00.000Z",
-              recoveryAction: "Return the linked Evidence Vault record to requested status.",
-              notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery items are audit preparation workflow metadata only."
-            }
-          ],
+        generatedAt: "2026-07-08T00:00:00.000Z",
+        packetHash: "b".repeat(64),
+        status: "needs-recovery",
+        summary: {
+          totalRecoveryCount: 1,
+          returnedCount: 1,
+          rejectedCount: 0,
+          nextAction: "evidence evidence-server-1: Return the linked Evidence Vault record to requested status.",
           notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
         },
+        nextActions: ["evidence evidence-server-1: Return the linked Evidence Vault record to requested status."],
         items: [
           {
-            recordVersion: "lexproof-human-review-record-v1",
+            itemVersion: "lexproof-server-human-review-recovery-item-v1",
             id: "review-server-1",
             workspaceId: "server-review-workspace",
             targetType: "evidence",
             targetId: "evidence-server-1",
+            targetLabel: "evidence evidence-server-1",
             reviewerId: "Counsel",
             status: "needs-more-evidence",
-            comment: "Needs metadata-only replacement.",
+            severity: "needs-action",
+            reviewerComment: "Needs metadata-only replacement; [redacted-raw-kyc] and [redacted-private-key] removed.",
             createdAt: "2026-07-08T00:00:00.000Z",
             updatedAt: "2026-07-08T00:00:00.000Z",
-            notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+            recoveryAction: "Return the linked Evidence Vault record to requested status.",
+            notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery items are audit preparation workflow metadata only."
           }
         ],
-        notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+        notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
       });
     });
 
@@ -6001,7 +5966,7 @@ describe("App", () => {
       await waitFor(() => expect(recoveryPacketPanel.getByText(/Recovery packet hash/i)).toBeInTheDocument());
 
       const serverRecoveryPacketPanel = within(screen.getByRole("region", { name: /^Server Human Review Recovery Packet$/i }));
-      fireEvent.click(serverRecoveryPacketPanel.getByRole("button", { name: /Refresh Server Human Review Queue/i }));
+      fireEvent.click(serverRecoveryPacketPanel.getByRole("button", { name: /Refresh Server Recovery Packet/i }));
       expect(await serverRecoveryPacketPanel.findByText(/Server recovery active/i)).toBeInTheDocument();
       const serverRecoveryActions = within(
         serverRecoveryPacketPanel.getByRole("status", { name: /Server Human Review recovery actions/i })

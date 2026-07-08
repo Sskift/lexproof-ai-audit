@@ -20,12 +20,19 @@ npm run dev
 
 Open `http://127.0.0.1:5173`. Use `http://127.0.0.1:8787` anywhere the UI asks for a Secure Review or Evidence Vault API base URL.
 
+If port `8787` is already occupied, use the same alternate port for the API, smoke CLI, and UI API base URL fields:
+
+```bash
+PORT=8791 DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+DEMO_API_BASE_URL=http://127.0.0.1:8791 npm run demo:smoke
+```
+
 ## End-To-End Demo Path
 
 Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
 
 - Confirm **Scenario library**, **Clean clone commands**, **Private credentials not required**, and **Screenshot set** are ready.
-- Confirm the terminal `npm run demo:smoke` result is `ready`; it checks `/api/health` plus safe GET route families for Model Gateway adapters, provider policy disabled-adapter recovery metadata, and non-empty run recovery next actions, Evidence Vault manifest bundle hashes plus lineage digest hashes and non-empty next actions, Human Review queue recovery metadata and non-empty next actions, Source Review Ledger packet hashes and non-empty next actions, Source Approval Queue packet hashes and non-empty next actions, Counsel Pack exports plus non-empty export recovery next actions, Audit Log export integrity metadata and non-empty next actions, and Integration Policy Evaluation receipts plus receipt bundle metadata and non-empty next actions. Use `npm run demo:smoke -- --skip-api` only for offline repository checks.
+- Confirm the terminal `npm run demo:smoke` result is `ready`; it checks `/api/health` plus safe GET route families for Model Gateway adapters, provider policy disabled-adapter recovery metadata, and non-empty run recovery next actions, Evidence Vault manifest bundle hashes plus lineage digest hashes and non-empty next actions, Human Review queue recovery metadata and non-empty next actions, Source Review Ledger packet hashes and non-empty next actions, Source Approval Queue packet hashes and non-empty next actions, Counsel Pack exports plus non-empty export recovery next actions, Audit Log export integrity metadata and non-empty next actions, and Integration Policy Evaluation receipts plus receipt bundle metadata and non-empty next actions. If `/api/health` fails because the default port is occupied, restart with `PORT=<free-port>` and rerun with the same `DEMO_API_BASE_URL`. Use `npm run demo:smoke -- --skip-api` only for offline repository checks.
 - Enter `http://127.0.0.1:8787` in **Demo API base URL**, click **Check Demo API**, and confirm **Phase 2 API preflight ready**.
 - Click **Download Demo Runbook JSON** and show the stable runbook hash, scenario count, API preflight status, screenshot references, limitations, and Not legal advice boundary.
 - Screenshot: `docs/assets/screenshots/judge-demo-readiness.png`.

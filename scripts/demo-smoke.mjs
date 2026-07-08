@@ -28,6 +28,8 @@ const markdownScreenshotRefPattern = /(?:\(|`|")((?:docs\/)?assets\/screenshots\
 const screenshotPathPrefix = "docs/assets/screenshots/";
 const screenshotExtensionPattern = /\.(?:png|jpe?g|webp)$/i;
 const demoPreflightWorkspaceId = "demo-smoke-preflight";
+const apiPortRecoveryAction =
+  "Start the Phase 2 API, confirm /api/health is reachable, and rerun the smoke check. If port 8787 is already in use, start the API with PORT=<free-port> and rerun with DEMO_API_BASE_URL=http://127.0.0.1:<free-port>.";
 const apiRoutePreflightSpecs = [
   {
     id: "api-preflight-report",
@@ -487,7 +489,7 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
       "Phase 2 API health",
       "ready",
       "API preflight skipped by --skip-api for offline clean-clone file checks.",
-      "Run with DEMO_API_BASE_URL=http://127.0.0.1:8787 when the local API is available."
+      "Run with DEMO_API_BASE_URL=http://127.0.0.1:8787 when the local API is available, or use the same alternate port passed to PORT if 8787 is occupied."
     );
   }
 
@@ -497,7 +499,7 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
       "Phase 2 API health",
       "not-checked",
       "No DEMO_API_BASE_URL was provided, so /api/health was not checked.",
-      "Start the API and rerun with DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke."
+      "Start the API and rerun with DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke. If 8787 is occupied, start the API with PORT=<free-port> and use that same port in DEMO_API_BASE_URL."
     );
   }
 
@@ -512,7 +514,7 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
         "Phase 2 API health",
         "blocked",
         sanitize(`API health check failed with ${response.status}: ${readErrorMessage(payload)}.`),
-        "Start the Phase 2 API, confirm /api/health is reachable, and rerun the smoke check."
+        apiPortRecoveryAction
       );
     }
 
@@ -522,7 +524,7 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
         "Phase 2 API health",
         "blocked",
         "API health response is missing required demo readiness metadata.",
-        "Confirm the Phase 2 API build is current and exposes /api/health."
+        "Confirm DEMO_API_BASE_URL points at the LexProof Phase 2 API, rebuild with npm run build:server, and verify the chosen port exposes /api/health."
       );
     }
 
@@ -535,7 +537,7 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
         "Phase 2 API health",
         "blocked",
         `${failedRoute.label}: ${failedRoute.detail}`,
-        "Start the Phase 2 API, confirm route modules are registered, and rerun the smoke check.",
+        "Start the current Phase 2 API build, confirm route modules are registered on the same port used by DEMO_API_BASE_URL, and rerun the smoke check.",
         { routeChecks }
       );
     }
@@ -562,7 +564,7 @@ async function checkApiHealth({ apiBaseUrl, skipApi }) {
       "Phase 2 API health",
       "blocked",
       sanitize(`API health check failed: ${error instanceof Error ? error.message : "unknown error"}.`),
-      "Start the Phase 2 API, confirm /api/health is reachable, and rerun the smoke check."
+      apiPortRecoveryAction
     );
   }
 }

@@ -573,6 +573,13 @@ DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
 npm run dev
 ```
 
+If `8787` is already occupied on the judging machine, start the API with a free port and pass the same base URL to the smoke CLI and UI fields:
+
+```bash
+PORT=8791 DATABASE_URL=file:./demo-review-workspace.db npm run start:api
+DEMO_API_BASE_URL=http://127.0.0.1:8791 npm run demo:smoke
+```
+
 1. Demo Scenario Library launch from a synthetic profile such as **High-risk RWA launch**, **DAO proposal review**, **Brazil VASP source review**, **Swiss FINMA stablecoin review**, **US GENIUS Act stablecoin review**, **EU MiCA ART/EMT stablecoin review**, **UK qualifying stablecoin issuer review**, **Hong Kong VATP custody review**, **Hong Kong HKMA stablecoin issuer review**, **Hong Kong tokenised product review**, **Japan crypto custody review**, **Canada CTP custody review**, **Australia digital asset review**, **Korea VASP user protection review**, **India VDA PMLA review**, **Thailand digital asset custody review**, **Indonesia OJK crypto trading review**, **Malaysia digital asset exchange review**, **Philippines VASP custody review**, **South Africa CASP Travel Rule review**, **UK cryptoasset AML review**, **Germany MiCAR custody review**, or **Marketing claims review**.
 2. Workspace Journey review on the command center to show the full path and next blocked/review action.
 3. Model Connect validation with the mock local reviewer.
@@ -692,6 +699,8 @@ Once the API is running, the judge smoke CLI checks required npm scripts, demo f
 ```bash
 DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke
 ```
+
+If another local service is already bound to `8787`, set `PORT` when starting the API and use that same port in `DEMO_API_BASE_URL`; the smoke CLI reports this recovery action when `/api/health` is unreachable or points at the wrong service.
 
 For offline repository-only checks, use:
 

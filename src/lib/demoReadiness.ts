@@ -46,6 +46,7 @@ export type DemoApiRouteCheck = {
     | "counsel-pack-export-recovery"
     | "audit-log"
     | "audit-log-export"
+    | "audit-log-recovery"
     | "integration-policy-evaluations"
     | "integration-policy-receipt-bundle"
     | "integration-policy-receipt-recovery";
@@ -310,6 +311,14 @@ const apiRoutePreflightSpecs: Array<{
     validate: isDemoAuditLogExportPayload,
     extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.exportHash) : undefined),
     readyDetail: "Audit Log export route is reachable with integrity chain metadata for an empty demo workspace."
+  },
+  {
+    id: "audit-log-recovery",
+    label: "Audit Log recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/audit-log/recovery`,
+    validate: isDemoAuditLogRecoveryPacketPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Audit Log recovery route is reachable with packet hash metadata for an empty demo workspace."
   },
   {
     id: "integration-policy-evaluations",
@@ -1250,6 +1259,61 @@ function isDemoAuditLogExportPayload(payload: unknown): boolean {
   );
 }
 
+function isDemoAuditLogRecoveryPacketPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-audit-log-recovery-packet-v1") {
+    return false;
+  }
+
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    isAuditLogRecoveryStatus(payload.status) &&
+    typeof payload.eventCount === "number" &&
+    Number.isInteger(payload.eventCount) &&
+    payload.eventCount >= 0 &&
+    typeof payload.recoveryItemCount === "number" &&
+    Number.isInteger(payload.recoveryItemCount) &&
+    payload.recoveryItemCount >= 0 &&
+    typeof payload.blockedCount === "number" &&
+    Number.isInteger(payload.blockedCount) &&
+    payload.blockedCount >= 0 &&
+    typeof payload.needsReviewCount === "number" &&
+    Number.isInteger(payload.needsReviewCount) &&
+    payload.needsReviewCount >= 0 &&
+    typeof payload.emptyExportCount === "number" &&
+    Number.isInteger(payload.emptyExportCount) &&
+    payload.emptyExportCount >= 0 &&
+    typeof payload.readyEventCount === "number" &&
+    Number.isInteger(payload.readyEventCount) &&
+    payload.readyEventCount >= 0 &&
+    typeof payload.exportAllowed === "boolean" &&
+    preserveSha256(payload.exportHash) !== undefined &&
+    preserveSha256(payload.integrityChainHash) !== undefined &&
+    isRecord(payload.appliedFilters) &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    Array.isArray(payload.items) &&
+    payload.items.length === payload.recoveryItemCount &&
+    payload.items.every(isDemoAuditLogRecoveryPacketItem) &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Audit Log recovery packets are review workspace metadata only."
+  );
+}
+
+function isDemoAuditLogRecoveryPacketItem(item: unknown): boolean {
+  return (
+    isRecord(item) &&
+    typeof item.itemId === "string" &&
+    (item.source === "export" || item.source === "boundary-finding") &&
+    (item.recoveryStatus === "empty" || item.recoveryStatus === "blocked" || item.recoveryStatus === "needs-review") &&
+    typeof item.priority === "string" &&
+    typeof item.recoveryAction === "string" &&
+    item.recoveryAction.trim().length > 0 &&
+    item.notLegalAdviceBoundary === "Not legal advice. Audit Log recovery items are review workspace metadata only."
+  );
+}
+
 function isDemoIntegrationPolicyReceiptBundlePayload(payload: unknown): boolean {
   if (!isRecord(payload) || payload.bundleVersion !== "lexproof-integration-policy-evaluation-receipt-bundle-v1") {
     return false;
@@ -1337,6 +1401,10 @@ function isIntegrationPolicyReceiptRecoveryPacketStatus(value: unknown): boolean
 
 function isAuditLogExportIntegrityStatus(value: unknown): boolean {
   return value === "verified" || value === "needs-review" || value === "blocked" || value === "empty";
+}
+
+function isAuditLogRecoveryStatus(value: unknown): boolean {
+  return value === "empty" || value === "blocked" || value === "needs-review" || value === "ready";
 }
 
 function isAuditLogExportBoundaryStatus(value: unknown): boolean {

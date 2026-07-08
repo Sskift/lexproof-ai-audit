@@ -1,9 +1,14 @@
 import { redactClassifiedText } from "./dataClassification.js";
 import type { AuditLogExportRecord } from "./auditLogExport.js";
+import type { AuditLogRecoveryPacket } from "./auditLogRecoveryPacket.js";
 import type { AuditLogRecord } from "./phase2Types.js";
 
 const AUDIT_LOG_BOUNDARY = "Not legal advice. Audit log records are review workspace metadata." as const;
 const AUDIT_LOG_EXPORT_BOUNDARY = "Not legal advice. Audit Log exports are review workspace metadata only." as const;
+const AUDIT_LOG_RECOVERY_PACKET_BOUNDARY =
+  "Not legal advice. Audit Log recovery packets are review workspace metadata only." as const;
+const AUDIT_LOG_RECOVERY_ITEM_BOUNDARY =
+  "Not legal advice. Audit Log recovery items are review workspace metadata only." as const;
 const legalConclusionPattern =
   /\b(final[_\-\s]+legal[_\-\s]+decision|legal[_\-\s]+opinion|legal[_\-\s]+conclusion|legal[_\-\s]+approval|legally[_\-\s]+compliant|legally[_\-\s]+non[_\-\s]+compliant|compliance[_\-\s]+decision)\b/gi;
 
@@ -56,6 +61,27 @@ export function redactAuditLogExportRecord(record: AuditLogExportRecord): AuditL
       summary: redactAuditLogText(event.summary)
     })),
     notLegalAdviceBoundary: AUDIT_LOG_EXPORT_BOUNDARY
+  };
+}
+
+export function redactAuditLogRecoveryPacket(packet: AuditLogRecoveryPacket): AuditLogRecoveryPacket {
+  return {
+    ...packet,
+    workspaceId: redactAuditLogText(packet.workspaceId),
+    appliedFilters: Object.fromEntries(
+      Object.entries(packet.appliedFilters).map(([key, value]) => [key, redactAuditLogText(value)])
+    ),
+    nextActions: packet.nextActions.map(redactAuditLogText).filter(Boolean),
+    items: packet.items.map((item) => ({
+      ...item,
+      itemId: redactAuditLogText(item.itemId),
+      recoveryAction: redactAuditLogText(item.recoveryAction),
+      ...(item.eventId ? { eventId: redactAuditLogText(item.eventId) } : {}),
+      ...(item.action ? { action: redactAuditLogText(item.action) } : {}),
+      ...(item.targetId ? { targetId: redactAuditLogText(item.targetId) } : {}),
+      notLegalAdviceBoundary: AUDIT_LOG_RECOVERY_ITEM_BOUNDARY
+    })),
+    notLegalAdviceBoundary: AUDIT_LOG_RECOVERY_PACKET_BOUNDARY
   };
 }
 

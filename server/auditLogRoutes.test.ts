@@ -157,6 +157,37 @@ describe("Audit Log route module", () => {
     expect(exportResponse.body.toLowerCase()).not.toContain("api_key");
     expect(exportResponse.body.toLowerCase()).not.toContain("private_key");
 
+    const recoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-audit-routes/audit-log/recovery?targetType=source-review"
+    });
+    expect(recoveryResponse.statusCode).toBe(200);
+    expect(recoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-audit-log-recovery-packet-v1",
+        workspaceId: "workspace-audit-routes",
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        status: "empty",
+        eventCount: 0,
+        recoveryItemCount: 1,
+        emptyExportCount: 1,
+        appliedFilters: { targetType: "source-review" },
+        nextActions: [
+          "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+          "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+        ],
+        notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
+      })
+    );
+    expect(recoveryResponse.json().items).toEqual([
+      expect.objectContaining({
+        source: "export",
+        recoveryStatus: "empty",
+        recoveryAction: "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+        notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+      })
+    ]);
+
     const emptyExportResponse = await server.inject({
       method: "GET",
       url: "/api/workspaces/workspace-empty/audit-log/export"
@@ -199,6 +230,19 @@ describe("Audit Log route module", () => {
         "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, integration-policy, or export.",
       code: "AUDIT_LOG_EXPORT_FAILED",
       recoveryAction: "Use supported audit log filters before exporting audit-log metadata.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+
+    const invalidRecoveryFilterResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-audit-routes/audit-log/recovery?targetType=legal-opinion"
+    });
+    expect(invalidRecoveryFilterResponse.statusCode).toBe(400);
+    expect(invalidRecoveryFilterResponse.json()).toEqual({
+      error:
+        "Audit log target type must be workspace, evidence, model-run, human-review, source-approval, source-review, integration-policy, or export.",
+      code: "AUDIT_LOG_RECOVERY_FAILED",
+      recoveryAction: "Use supported audit log filters before refreshing recovery metadata.",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
 
@@ -312,6 +356,49 @@ describe("Audit Log route module", () => {
     expect(exportResponse.body).not.toContain("A1234567");
     expect(exportResponse.body).not.toContain("passport data");
     expect(exportResponse.body).not.toContain("final-legal-decision");
+
+    const recoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-audit-redacted-routes/audit-log/recovery"
+    });
+
+    expect(recoveryResponse.statusCode).toBe(200);
+    expect(recoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-audit-log-recovery-packet-v1",
+        workspaceId: "workspace-audit-redacted-routes",
+        status: "blocked",
+        eventCount: 1,
+        recoveryItemCount: expect.any(Number),
+        blockedCount: expect.any(Number),
+        exportAllowed: false,
+        nextActions: expect.arrayContaining([
+          "Remove Audit Log data-boundary blockers before downloading or sharing the export.",
+          "Resolve Audit Log data-boundary blockers before downloading or sharing the export."
+        ]),
+        notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
+      })
+    );
+    expect(recoveryResponse.json().items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: "boundary-finding",
+          recoveryStatus: "blocked",
+          priority: "P0",
+          recoveryAction: "Remove Audit Log data-boundary blockers before downloading or sharing the export.",
+          eventId: pollutedRecord.id,
+          notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+        })
+      ])
+    );
+    expect(recoveryResponse.body).not.toContain(apiKey);
+    expect(recoveryResponse.body).not.toContain(privateKey);
+    expect(recoveryResponse.body).not.toContain("apiKey");
+    expect(recoveryResponse.body).not.toContain("raw_KYC");
+    expect(recoveryResponse.body).not.toContain("raw-KYC");
+    expect(recoveryResponse.body).not.toContain("A1234567");
+    expect(recoveryResponse.body).not.toContain("passport data");
+    expect(recoveryResponse.body).not.toContain("final-legal-decision");
 
     await server.close();
     await repository.close();

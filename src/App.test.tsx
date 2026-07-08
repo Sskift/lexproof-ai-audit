@@ -1935,6 +1935,9 @@ describe("App", () => {
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/source-approvals/packet", {
         method: "GET"
       });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/audit-log/recovery", {
+        method: "GET"
+      });
       expect(fetchMock).toHaveBeenCalledWith(
         "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle",
         { method: "GET" }
@@ -1990,7 +1993,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 21/21 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 22/22 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -4756,6 +4759,44 @@ describe("App", () => {
         );
       }
 
+      if (path.endsWith("/audit-log/recovery?targetType=source-review") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            packetVersion: "lexproof-audit-log-recovery-packet-v1",
+            workspaceId: "project-ui",
+            generatedAt: "2026-06-30T00:03:00.000Z",
+            packetHash: "7".repeat(64),
+            status: "empty",
+            eventCount: 0,
+            recoveryItemCount: 1,
+            blockedCount: 0,
+            needsReviewCount: 0,
+            emptyExportCount: 1,
+            readyEventCount: 0,
+            exportAllowed: true,
+            exportHash: "9".repeat(64),
+            integrityChainHash: "8".repeat(64),
+            appliedFilters: { targetType: "source-review" },
+            nextActions: [
+              "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+              "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+            ],
+            items: [
+              {
+                itemId: "audit-log-empty-export",
+                source: "export",
+                recoveryStatus: "empty",
+                priority: "P1",
+                recoveryAction: "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+                notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+              }
+            ],
+            notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
+          },
+          200
+        );
+      }
+
       if (path.endsWith("/audit-log") && init?.method === "GET") {
         return appJsonResponse(
           [
@@ -4880,6 +4921,41 @@ describe("App", () => {
         auditLogRecovery.getByText(/Not legal advice. Audit Log exports are review workspace metadata only./i)
       ).toBeInTheDocument();
       expect(auditLogExplorer.getByText(/No Audit Log records match the current filters. Not legal advice./i)).toBeInTheDocument();
+      const auditLogRecoveryPacket = within(
+        auditLogExplorer.getByRole("region", { name: /Server Audit Log Recovery Packet/i })
+      );
+      expect(auditLogRecoveryPacket.getByText(/not refreshed/i)).toBeInTheDocument();
+      expect(auditLogRecoveryPacket.getByRole("button", { name: /Download Audit Log Recovery Packet JSON/i })).toBeDisabled();
+      fireEvent.click(auditLogRecoveryPacket.getByRole("button", { name: /Refresh Audit Log Recovery Packet/i }));
+      expect(
+        await auditLogRecoveryPacket.findByText(/0 filtered Audit Log events checked for empty, blocked, and review-needed recovery/i)
+      ).toBeInTheDocument();
+      const auditLogRecoveryPacketActions = within(
+        auditLogRecoveryPacket.getByRole("status", { name: /Audit Log Recovery Packet actions/i })
+      );
+      expect(auditLogRecoveryPacketActions.getByText(/Run Secure Review Journey or clear Audit Log filters/i)).toBeInTheDocument();
+      expect(auditLogRecoveryPacketActions.getByText(/Keep Audit Log exports metadata-only/i)).toBeInTheDocument();
+      expect(
+        auditLogRecoveryPacket.getByText(/Not legal advice. Audit Log recovery packets are review workspace metadata only./i)
+      ).toBeInTheDocument();
+      fireEvent.click(auditLogRecoveryPacket.getByRole("button", { name: /Download Audit Log Recovery Packet JSON/i }));
+      await waitFor(() => expect(createObjectUrl).toHaveBeenCalledTimes(2));
+      expect(click).toHaveBeenCalledTimes(2);
+      const auditLogRecoveryPayload = JSON.parse(await readAppBlobText(createdBlobs[1])) as Record<string, unknown>;
+      expect(auditLogRecoveryPayload).toEqual(
+        expect.objectContaining({
+          packetVersion: "lexproof-audit-log-recovery-packet-v1",
+          workspaceId: "project-ui",
+          status: "empty",
+          eventCount: 0,
+          recoveryItemCount: 1,
+          packetHash: "7".repeat(64),
+          appliedFilters: { targetType: "source-review" },
+          notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
+        })
+      );
+      expect(JSON.stringify(auditLogRecoveryPayload)).toContain("Run Secure Review Journey");
+      expect(JSON.stringify(auditLogRecoveryPayload)).not.toMatch(/Approval summary represented by metadata hash|apiKey|raw KYC|private key/i);
       fireEvent.change(auditLogExplorer.getByLabelText(/Audit log target type/i), { target: { value: "human-review" } });
       fireEvent.click(auditLogExplorer.getByRole("button", { name: /Refresh Server Audit Log/i }));
       expect(await auditLogExplorer.findByText(/Audit Log export refreshed: 1 metadata-only event/i)).toBeInTheDocument();
@@ -4893,9 +4969,9 @@ describe("App", () => {
       expect(modelRunLedger.getAllByText(/AI-assisted draft for audit preparation only. Not legal advice./i).length).toBeGreaterThan(0);
       fireEvent.click(modelRunLedger.getByRole("button", { name: /Download Model Run Receipt JSON/i }));
       await waitFor(() => expect(modelRunLedger.getByText(/Model Run receipt ready:/i)).toBeInTheDocument());
-      expect(createObjectUrl).toHaveBeenCalledTimes(2);
-      expect(click).toHaveBeenCalledTimes(2);
-      const modelRunReceipt = JSON.parse(await readAppBlobText(createdBlobs[1])) as Record<string, unknown>;
+      expect(createObjectUrl).toHaveBeenCalledTimes(3);
+      expect(click).toHaveBeenCalledTimes(3);
+      const modelRunReceipt = JSON.parse(await readAppBlobText(createdBlobs[2])) as Record<string, unknown>;
       expect(modelRunReceipt.receiptVersion).toBe("lexproof-model-gateway-run-receipt-v1");
       expect(modelRunReceipt.runId).toBe("model-gateway-run-full");
       expect(modelRunReceipt.receiptHash).toMatch(/^[a-f0-9]{64}$/);
@@ -4919,9 +4995,9 @@ describe("App", () => {
         modelRunRecoveryPacket.getByText(/Not legal advice. Model Gateway run recovery packets are audit preparation metadata only./i)
       ).toBeInTheDocument();
       fireEvent.click(modelRunRecoveryPacket.getByRole("button", { name: /Download Model Run Recovery Packet JSON/i }));
-      await waitFor(() => expect(createObjectUrl).toHaveBeenCalledTimes(3));
-      expect(click).toHaveBeenCalledTimes(3);
-      const modelRunRecoveryPayload = JSON.parse(await readAppBlobText(createdBlobs[2])) as Record<string, unknown>;
+      await waitFor(() => expect(createObjectUrl).toHaveBeenCalledTimes(4));
+      expect(click).toHaveBeenCalledTimes(4);
+      const modelRunRecoveryPayload = JSON.parse(await readAppBlobText(createdBlobs[3])) as Record<string, unknown>;
       expect(modelRunRecoveryPayload).toEqual(
         expect.objectContaining({
           packetVersion: "lexproof-model-gateway-run-recovery-packet-v1",
@@ -7062,7 +7138,7 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 20,
+      routeFamilyCount: 21,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -7367,6 +7443,40 @@ function createDemoApiMockPayload(url: string): unknown {
       ],
       events: [],
       notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log/recovery")) {
+    return {
+      packetVersion: "lexproof-audit-log-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      packetHash: "3".repeat(64),
+      status: "empty",
+      eventCount: 0,
+      recoveryItemCount: 1,
+      blockedCount: 0,
+      needsReviewCount: 0,
+      emptyExportCount: 1,
+      readyEventCount: 0,
+      exportAllowed: true,
+      exportHash: "d".repeat(64),
+      integrityChainHash: "e".repeat(64),
+      appliedFilters: {},
+      nextActions: [
+        "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+        "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+      ],
+      items: [
+        {
+          itemId: "audit-log-empty-export",
+          source: "export",
+          recoveryStatus: "empty",
+          priority: "P1",
+          recoveryAction: "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+          notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+        }
+      ],
+      notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
     };
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle")) {

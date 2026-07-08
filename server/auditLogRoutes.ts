@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { createAuditLogExport } from "../src/lib/auditLogExport.js";
 import { filterAuditLogRecords, normalizeAuditLogFilters } from "../src/lib/auditLogFilters.js";
+import { createAuditLogRecoveryPacket } from "../src/lib/auditLogRecoveryPacket.js";
 import { redactAuditLogRecord } from "../src/lib/auditLogRedaction.js";
 import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
@@ -54,6 +55,31 @@ export function registerAuditLogRoutes(server: FastifyInstance, options: AuditLo
         workspaceId: request.params.workspaceId,
         records: filterAuditLogRecords(records, validation.filters)
       });
+    }
+  );
+
+  server.get<{ Params: { workspaceId: string }; Querystring: AuditLogQuery }>(
+    "/api/workspaces/:workspaceId/audit-log/recovery",
+    async (request, reply) => {
+      const validation = normalizeAuditLogFilters(request.query);
+
+      if (!validation.valid) {
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error: new Error(validation.errors.join(" ")),
+            code: "AUDIT_LOG_RECOVERY_FAILED",
+            fallbackMessage: "Audit Log recovery packet lookup failed.",
+            recoveryAction: "Use supported audit log filters before refreshing recovery metadata."
+          })
+        );
+      }
+
+      const records = await repository.listAuditLogRecords(request.params.workspaceId);
+      const exportRecord = createAuditLogExport({
+        workspaceId: request.params.workspaceId,
+        records: filterAuditLogRecords(records, validation.filters)
+      });
+      return createAuditLogRecoveryPacket(exportRecord, { filters: validation.filters });
     }
   );
 }

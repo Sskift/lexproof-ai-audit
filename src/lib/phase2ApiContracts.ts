@@ -266,6 +266,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       "AuditLogExportRequest",
       "AuditLogExportRecord",
       true
+    ),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/audit-log/recovery",
+      "audit-log",
+      "AuditLogRecoveryRequest",
+      "AuditLogRecoveryPacket",
+      true
     )
   ];
 }

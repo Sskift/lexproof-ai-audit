@@ -300,6 +300,16 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/audit-log/recovery",
+        domain: "audit-log",
+        requestContract: "AuditLogRecoveryRequest",
+        responseContract: "AuditLogRecoveryPacket",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "POST",
         path: "/api/workspaces/:workspaceId/exports/counsel-pack",
         domain: "exports",

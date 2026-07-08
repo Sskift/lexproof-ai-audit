@@ -475,6 +475,7 @@ describe("demo readiness", () => {
             expect.objectContaining({ id: "source-approval-packet", status: "ready", artifactHash: "4".repeat(64) }),
             expect.objectContaining({ id: "counsel-pack-export-recovery", status: "ready", artifactHash: "f".repeat(64) }),
             expect.objectContaining({ id: "audit-log-export", status: "ready", artifactHash: "d".repeat(64) }),
+            expect.objectContaining({ id: "audit-log-recovery", status: "ready", artifactHash: "3".repeat(64) }),
             expect.objectContaining({ id: "human-review-recovery", status: "ready", artifactHash: "b".repeat(64) }),
             expect.objectContaining({ id: "integration-policy-evaluations", status: "ready" }),
             expect.objectContaining({ id: "integration-policy-receipt-bundle", status: "ready", artifactHash: "7".repeat(64) }),
@@ -482,7 +483,7 @@ describe("demo readiness", () => {
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(21);
+      expect(apiCheck.routeChecks).toHaveLength(22);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -528,6 +529,9 @@ describe("demo readiness", () => {
       method: "GET"
     });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/audit-log/export", {
+      method: "GET"
+    });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/audit-log/recovery", {
       method: "GET"
     });
     expect(fetcher).toHaveBeenCalledWith(
@@ -623,6 +627,12 @@ describe("demo readiness", () => {
           detail: "Audit Log export route is reachable with integrity chain metadata for an empty demo workspace."
         }),
         expect.objectContaining({
+          id: "audit-log-recovery",
+          status: "ready",
+          artifactHash: "3".repeat(64),
+          detail: "Audit Log recovery route is reachable with packet hash metadata for an empty demo workspace."
+        }),
+        expect.objectContaining({
           id: "source-review-ledger",
           status: "ready"
         }),
@@ -657,7 +667,7 @@ describe("demo readiness", () => {
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(21);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(22);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -753,6 +763,11 @@ describe("demo readiness", () => {
     {
       label: "Audit Log export",
       path: "/api/workspaces/demo-smoke-preflight/audit-log/export",
+      updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
+    },
+    {
+      label: "Audit Log recovery",
+      path: "/api/workspaces/demo-smoke-preflight/audit-log/recovery",
       updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
     },
     {
@@ -1554,6 +1569,40 @@ function createDemoApiPayload(url: string): unknown {
       ],
       events: [],
       notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log/recovery")) {
+    return {
+      packetVersion: "lexproof-audit-log-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      packetHash: "3".repeat(64),
+      status: "empty",
+      eventCount: 0,
+      recoveryItemCount: 1,
+      blockedCount: 0,
+      needsReviewCount: 0,
+      emptyExportCount: 1,
+      readyEventCount: 0,
+      exportAllowed: true,
+      exportHash: "d".repeat(64),
+      integrityChainHash: "e".repeat(64),
+      appliedFilters: {},
+      nextActions: [
+        "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+        "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+      ],
+      items: [
+        {
+          itemId: "audit-log-empty-export",
+          source: "export",
+          recoveryStatus: "empty",
+          priority: "P1",
+          recoveryAction: "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+          notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+        }
+      ],
+      notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
     };
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle")) {

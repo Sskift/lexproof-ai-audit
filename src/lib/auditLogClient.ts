@@ -1,7 +1,8 @@
 import { asSafeApiErrorResponse } from "./apiErrorClient";
 import { normalizeAuditLogFilters, type AuditLogFilterInput } from "./auditLogFilters";
 import type { AuditLogExportRecord } from "./auditLogExport";
-import { redactAuditLogExportRecord, redactAuditLogRecord } from "./auditLogRedaction";
+import type { AuditLogRecoveryPacket, AuditLogRecoveryPacketItem } from "./auditLogRecoveryPacket";
+import { redactAuditLogExportRecord, redactAuditLogRecord, redactAuditLogRecoveryPacket } from "./auditLogRedaction";
 import type { AuditLogRecord } from "./phase2Types";
 
 export type FetchAuditLogRecordsInput = {
@@ -12,10 +13,13 @@ export type FetchAuditLogRecordsInput = {
 };
 
 export type FetchAuditLogExportInput = FetchAuditLogRecordsInput;
+export type FetchAuditLogRecoveryPacketInput = FetchAuditLogRecordsInput;
 
 const DEFAULT_API_ERROR_BOUNDARY = "Not legal advice. This API creates audit preparation workflow records only." as const;
 const AUDIT_LOG_BOUNDARY = "Not legal advice. Audit log records are review workspace metadata." as const;
 const AUDIT_LOG_EXPORT_BOUNDARY = "Not legal advice. Audit Log exports are review workspace metadata only." as const;
+const AUDIT_LOG_RECOVERY_PACKET_BOUNDARY = "Not legal advice. Audit Log recovery packets are review workspace metadata only." as const;
+const AUDIT_LOG_RECOVERY_ITEM_BOUNDARY = "Not legal advice. Audit Log recovery items are review workspace metadata only." as const;
 
 export class AuditLogClientError extends Error {
   code: string;
@@ -94,6 +98,36 @@ export async function fetchAuditLogExport({
   return validateAuditLogExport(payload);
 }
 
+export async function fetchAuditLogRecoveryPacket({
+  apiBaseUrl,
+  workspaceId,
+  filters,
+  fetcher = globalThis.fetch?.bind(globalThis)
+}: FetchAuditLogRecoveryPacketInput): Promise<AuditLogRecoveryPacket> {
+  if (!fetcher) {
+    throw new AuditLogClientError("Fetch is required to refresh Audit Log recovery metadata.", {
+      code: "AUDIT_LOG_FETCH_UNAVAILABLE",
+      recoveryAction: "Run this action in a browser or provide a fetch-compatible API client."
+    });
+  }
+
+  const response = await fetcher(buildAuditLogRecoveryPacketUrl(apiBaseUrl, workspaceId, filters), {
+    method: "GET"
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorPayload = asSafeApiErrorResponse(payload);
+    throw new AuditLogClientError(errorPayload.error ?? "Audit Log recovery packet refresh failed.", {
+      code: errorPayload.code ?? "AUDIT_LOG_RECOVERY_REFRESH_FAILED",
+      recoveryAction: errorPayload.recoveryAction ?? "Use supported audit log recovery filters and retry.",
+      notLegalAdviceBoundary: errorPayload.notLegalAdviceBoundary ?? DEFAULT_API_ERROR_BOUNDARY
+    });
+  }
+
+  return redactAuditLogRecoveryPacket(validateAuditLogRecoveryPacket(payload));
+}
+
 export function buildAuditLogRecordsUrl(
   apiBaseUrl: string | undefined,
   workspaceId: string,
@@ -110,11 +144,19 @@ export function buildAuditLogExportUrl(
   return buildAuditLogUrl(apiBaseUrl, workspaceId, filters, "/export");
 }
 
+export function buildAuditLogRecoveryPacketUrl(
+  apiBaseUrl: string | undefined,
+  workspaceId: string,
+  filters: AuditLogFilterInput = {}
+): string {
+  return buildAuditLogUrl(apiBaseUrl, workspaceId, filters, "/recovery");
+}
+
 function buildAuditLogUrl(
   apiBaseUrl: string | undefined,
   workspaceId: string,
   filters: AuditLogFilterInput,
-  suffix: "" | "/export"
+  suffix: "" | "/export" | "/recovery"
 ): string {
   const validation = normalizeAuditLogFilters(filters);
   if (!validation.valid) {
@@ -156,6 +198,17 @@ function validateAuditLogExport(payload: unknown): AuditLogExportRecord {
   }
 
   return redactAuditLogExportRecord(payload);
+}
+
+function validateAuditLogRecoveryPacket(payload: unknown): AuditLogRecoveryPacket {
+  if (!isAuditLogRecoveryPacket(payload)) {
+    throw invalidResponseError(
+      "Audit Log recovery packet response contains invalid metadata.",
+      "Verify the Phase 2 API is returning metadata-only Audit Log recovery packets with non-empty recovery actions."
+    );
+  }
+
+  return payload;
 }
 
 function isAuditLogRecord(value: unknown): value is AuditLogRecord {
@@ -252,6 +305,69 @@ function isAuditLogExportBoundaryFinding(value: unknown): value is AuditLogExpor
   );
 }
 
+function isAuditLogRecoveryPacket(value: unknown): value is AuditLogRecoveryPacket {
+  if (!isRecord(value) || !isRecord(value.appliedFilters)) {
+    return false;
+  }
+
+  const items = Array.isArray(value.items) ? value.items : [];
+  const blockedCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "blocked").length;
+  const needsReviewCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "needs-review").length;
+  const emptyExportCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "empty").length;
+  const recoveryItemCount = items.length;
+  const eventCount = typeof value.eventCount === "number" ? value.eventCount : -1;
+
+  return (
+    value.packetVersion === "lexproof-audit-log-recovery-packet-v1" &&
+    typeof value.workspaceId === "string" &&
+    typeof value.generatedAt === "string" &&
+    isSha256Hex(value.packetHash) &&
+    isAuditLogRecoveryStatus(value.status) &&
+    isNonNegativeInteger(value.eventCount) &&
+    isNonNegativeInteger(value.recoveryItemCount) &&
+    value.recoveryItemCount === recoveryItemCount &&
+    isNonNegativeInteger(value.blockedCount) &&
+    value.blockedCount === blockedCount &&
+    isNonNegativeInteger(value.needsReviewCount) &&
+    value.needsReviewCount === needsReviewCount &&
+    isNonNegativeInteger(value.emptyExportCount) &&
+    value.emptyExportCount === emptyExportCount &&
+    isNonNegativeInteger(value.readyEventCount) &&
+    value.readyEventCount <= eventCount &&
+    typeof value.exportAllowed === "boolean" &&
+    isSha256Hex(value.exportHash) &&
+    isSha256Hex(value.integrityChainHash) &&
+    isAuditLogAppliedFilters(value.appliedFilters) &&
+    isNonEmptyStringArray(value.nextActions) &&
+    items.every(isAuditLogRecoveryPacketItem) &&
+    value.notLegalAdviceBoundary === AUDIT_LOG_RECOVERY_PACKET_BOUNDARY
+  );
+}
+
+function isAuditLogRecoveryPacketItem(value: unknown): value is AuditLogRecoveryPacketItem {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.itemId === "string" &&
+    (value.source === "export" || value.source === "boundary-finding") &&
+    isAuditLogRecoveryItemStatus(value.recoveryStatus) &&
+    isAuditLogRecoveryPriority(value.priority) &&
+    typeof value.recoveryAction === "string" &&
+    value.recoveryAction.trim().length > 0 &&
+    (value.eventId === undefined || typeof value.eventId === "string") &&
+    (value.action === undefined || typeof value.action === "string") &&
+    (value.targetType === undefined || isAuditLogTargetType(value.targetType)) &&
+    (value.targetId === undefined || typeof value.targetId === "string") &&
+    (value.entryHash === undefined || isSha256Hex(value.entryHash)) &&
+    (value.field === undefined || isAuditLogExportBoundaryField(value.field)) &&
+    (value.dataClass === undefined || isClassifiedDataClass(value.dataClass)) &&
+    (value.severity === undefined || isClassifiedDataSeverity(value.severity)) &&
+    value.notLegalAdviceBoundary === AUDIT_LOG_RECOVERY_ITEM_BOUNDARY
+  );
+}
+
 function isAuditLogTargetType(value: unknown): value is AuditLogRecord["targetType"] {
   return (
     value === "workspace" ||
@@ -271,6 +387,31 @@ function isAuditLogExportBoundaryStatus(value: unknown): value is AuditLogExport
 
 function isAuditLogExportIntegrityStatus(value: unknown): value is AuditLogExportRecord["integrityStatus"] {
   return value === "verified" || value === "needs-review" || value === "blocked" || value === "empty";
+}
+
+function isAuditLogRecoveryStatus(value: unknown): value is AuditLogRecoveryPacket["status"] {
+  return value === "empty" || value === "blocked" || value === "needs-review" || value === "ready";
+}
+
+function isAuditLogRecoveryItemStatus(value: unknown): value is AuditLogRecoveryPacketItem["recoveryStatus"] {
+  return value === "empty" || value === "blocked" || value === "needs-review";
+}
+
+function isAuditLogRecoveryPriority(value: unknown): value is AuditLogRecoveryPacketItem["priority"] {
+  return value === "P0" || value === "P1" || value === "P2" || value === "P3";
+}
+
+function isAuditLogAppliedFilters(value: unknown): value is AuditLogRecoveryPacket["appliedFilters"] {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return Object.entries(value).every(
+    ([key, filterValue]) =>
+      (key === "actorId" || key === "action" || key === "targetType" || key === "targetId") &&
+      typeof filterValue === "string" &&
+      filterValue.trim().length > 0
+  );
 }
 
 function isAuditLogExportBoundaryField(value: unknown): value is AuditLogExportRecord["boundaryFindings"][number]["field"] {

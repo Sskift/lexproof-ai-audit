@@ -35,6 +35,7 @@ export type ApiPreflightRouteFamilyId =
   | "counsel-pack-export-recovery"
   | "audit-log"
   | "audit-log-export"
+  | "audit-log-recovery"
   | "integration-policy-evaluations"
   | "integration-policy-receipt-bundle"
   | "integration-policy-receipt-recovery";
@@ -252,6 +253,14 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     path: "/api/workspaces/:workspaceId/audit-log/export",
     responseContract: "AuditLogExportRecord",
     sideEffectBoundary: "Audit log export returns redacted event hashes, integrity chain hash, and boundary findings only."
+  }),
+  createRouteFamily({
+    id: "audit-log-recovery",
+    label: "Audit Log recovery",
+    path: "/api/workspaces/:workspaceId/audit-log/recovery",
+    responseContract: "AuditLogRecoveryPacket",
+    sideEffectBoundary:
+      "Audit log recovery packet returns empty, blocked, and review-needed recovery actions with event hashes only."
   }),
   createRouteFamily({
     id: "integration-policy-evaluations",

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, RefreshCcw, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
-import { AuditLogClientError, fetchAuditLogExport } from "../lib/auditLogClient";
+import { AuditLogClientError, fetchAuditLogExport, fetchAuditLogRecoveryPacket } from "../lib/auditLogClient";
 import {
   createAuditLogExport,
   downloadAuditLogJson,
   type AuditLogExportRecord
 } from "../lib/auditLogExport";
 import type { AuditLogFilterInput } from "../lib/auditLogFilters";
+import { downloadAuditLogRecoveryPacketJson, type AuditLogRecoveryPacket } from "../lib/auditLogRecoveryPacket";
 import {
   createModelGatewayEvaluationRecord,
   downloadModelGatewayEvaluationJson,
@@ -295,6 +296,10 @@ function AuditLogExplorerPanel({
   const [refreshStatus, setRefreshStatus] = useState<AuditLogExplorerStatus>("idle");
   const [refreshError, setRefreshError] = useState("");
   const [refreshRecoveryAction, setRefreshRecoveryAction] = useState("");
+  const [serverRecoveryPacket, setServerRecoveryPacket] = useState<AuditLogRecoveryPacket | null>(null);
+  const [serverRecoveryPacketStatus, setServerRecoveryPacketStatus] = useState<AuditLogExplorerStatus>("idle");
+  const [serverRecoveryPacketError, setServerRecoveryPacketError] = useState("");
+  const [serverRecoveryPacketRecoveryAction, setServerRecoveryPacketRecoveryAction] = useState("");
   const localExportRecord = useMemo(
     () =>
       createAuditLogExport({
@@ -321,6 +326,10 @@ function AuditLogExplorerPanel({
     setRefreshStatus("idle");
     setRefreshError("");
     setRefreshRecoveryAction("");
+    setServerRecoveryPacket(null);
+    setServerRecoveryPacketStatus("idle");
+    setServerRecoveryPacketError("");
+    setServerRecoveryPacketRecoveryAction("");
   }, [initialRecords, workspaceId]);
 
   const updateFilter = (key: keyof AuditLogFilterInput, value: string) => {
@@ -343,6 +352,10 @@ function AuditLogExplorerPanel({
       });
       setServerExportRecord(nextExportRecord);
       setRefreshStatus("synced");
+      setServerRecoveryPacket(null);
+      setServerRecoveryPacketStatus("idle");
+      setServerRecoveryPacketError("");
+      setServerRecoveryPacketRecoveryAction("");
     } catch (error) {
       setRefreshStatus("error");
       if (error instanceof AuditLogClientError) {
@@ -353,6 +366,40 @@ function AuditLogExplorerPanel({
       setRefreshError(error instanceof Error ? error.message : "Audit Log refresh failed.");
       setRefreshRecoveryAction("Start the Phase 2 API, use supported filters, and retry Audit Log refresh.");
     }
+  };
+
+  const refreshAuditLogRecoveryPacket = async () => {
+    setServerRecoveryPacketStatus("syncing");
+    setServerRecoveryPacketError("");
+    setServerRecoveryPacketRecoveryAction("");
+
+    try {
+      const packet = await fetchAuditLogRecoveryPacket({
+        apiBaseUrl,
+        workspaceId,
+        filters
+      });
+      setServerRecoveryPacket(packet);
+      setServerRecoveryPacketStatus("synced");
+    } catch (error) {
+      setServerRecoveryPacket(null);
+      setServerRecoveryPacketStatus("error");
+      if (error instanceof AuditLogClientError) {
+        setServerRecoveryPacketError(error.message);
+        setServerRecoveryPacketRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setServerRecoveryPacketError(error instanceof Error ? error.message : "Audit Log recovery packet refresh failed.");
+      setServerRecoveryPacketRecoveryAction("Start the Phase 2 API, use supported filters, and retry Audit Log recovery refresh.");
+    }
+  };
+
+  const downloadAuditLogRecoveryPacket = () => {
+    if (!serverRecoveryPacket) {
+      return;
+    }
+
+    downloadAuditLogRecoveryPacketJson(`audit-log-${safeFilenamePart(workspaceId)}-recovery-packet.json`, serverRecoveryPacket);
   };
 
   return (
@@ -447,6 +494,69 @@ function AuditLogExplorerPanel({
           <small>{exportRecord.notLegalAdviceBoundary}</small>
         </div>
       ) : null}
+      <section className={`audit-log-recovery-packet ${serverRecoveryPacketStatus}`} aria-label="Server Audit Log Recovery Packet">
+        <div className="split-title compact-title">
+          <div>
+            <ClipboardList size={16} aria-hidden="true" />
+            <h4>Server Audit Log Recovery Packet</h4>
+          </div>
+          <span className="workflow-status disabled">
+            {serverRecoveryPacket
+              ? `${serverRecoveryPacket.recoveryItemCount} recovery item${serverRecoveryPacket.recoveryItemCount === 1 ? "" : "s"}`
+              : "not refreshed"}
+          </span>
+        </div>
+        <p>
+          {serverRecoveryPacket
+            ? `${serverRecoveryPacket.eventCount} filtered Audit Log event${serverRecoveryPacket.eventCount === 1 ? "" : "s"} checked for empty, blocked, and review-needed recovery.`
+            : "Refresh the persisted server packet to verify Audit Log recovery state after filtering or reload."}
+        </p>
+        {serverRecoveryPacket ? (
+          <div className="run-facts audit-log-recovery-facts">
+            <JourneyFact label="Packet" value={shortHash(serverRecoveryPacket.packetHash)} />
+            <JourneyFact label="Status" value={serverRecoveryPacket.status} />
+            <JourneyFact label="Events" value={String(serverRecoveryPacket.eventCount)} />
+            <JourneyFact label="Recovery" value={String(serverRecoveryPacket.recoveryItemCount)} />
+            <JourneyFact label="Blocked" value={String(serverRecoveryPacket.blockedCount)} />
+            <JourneyFact label="Needs review" value={String(serverRecoveryPacket.needsReviewCount)} />
+            <JourneyFact label="Empty exports" value={String(serverRecoveryPacket.emptyExportCount)} />
+          </div>
+        ) : null}
+        {serverRecoveryPacket ? (
+          <div className="model-run-recovery-actions" role="status" aria-label="Audit Log Recovery Packet actions">
+            <strong>Recovery actions</strong>
+            {serverRecoveryPacket.nextActions.map((action) => (
+              <span key={action}>{action}</span>
+            ))}
+          </div>
+        ) : null}
+        {serverRecoveryPacketError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{serverRecoveryPacketError}</strong>
+            {serverRecoveryPacketRecoveryAction ? <span>{serverRecoveryPacketRecoveryAction}</span> : null}
+            <small>Not legal advice. Audit Log recovery packets are review workspace metadata only.</small>
+          </div>
+        ) : null}
+        <div className="model-evaluation-actions">
+          <button
+            type="button"
+            className="secondary"
+            disabled={serverRecoveryPacketStatus === "syncing"}
+            onClick={() => void refreshAuditLogRecoveryPacket()}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {serverRecoveryPacketStatus === "syncing" ? "Refreshing Audit Log Recovery Packet" : "Refresh Audit Log Recovery Packet"}
+          </button>
+          <button type="button" className="secondary" disabled={!serverRecoveryPacket} onClick={downloadAuditLogRecoveryPacket}>
+            <Download size={16} aria-hidden="true" />
+            Download Audit Log Recovery Packet JSON
+          </button>
+        </div>
+        <small>
+          {serverRecoveryPacket?.notLegalAdviceBoundary ??
+            "Not legal advice. Audit Log recovery packets are review workspace metadata only."}
+        </small>
+      </section>
       <div className="audit-log-event-list" aria-label="Audit Log Events">
         {visibleEvents.length ? (
           visibleEvents.map((event) => (

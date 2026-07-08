@@ -3,10 +3,13 @@ import {
   AuditLogClientError,
   buildAuditLogExportUrl,
   buildAuditLogRecordsUrl,
+  buildAuditLogRecoveryPacketUrl,
   fetchAuditLogExport,
+  fetchAuditLogRecoveryPacket,
   fetchAuditLogRecords
 } from "./auditLogClient";
 import type { AuditLogExportRecord } from "./auditLogExport";
+import type { AuditLogRecoveryPacket } from "./auditLogRecoveryPacket";
 import type { AuditLogRecord } from "./phase2Types";
 
 const auditLogRecord: AuditLogRecord = {
@@ -64,6 +67,39 @@ const auditLogExportRecord: AuditLogExportRecord = {
     }
   ],
   notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+};
+
+const auditLogRecoveryPacket: AuditLogRecoveryPacket = {
+  packetVersion: "lexproof-audit-log-recovery-packet-v1",
+  workspaceId: "workspace-audit-client",
+  generatedAt: "2026-07-03T00:02:00.000Z",
+  packetHash: "d".repeat(64),
+  status: "empty",
+  eventCount: 0,
+  recoveryItemCount: 1,
+  blockedCount: 0,
+  needsReviewCount: 0,
+  emptyExportCount: 1,
+  readyEventCount: 0,
+  exportAllowed: true,
+  exportHash: "a".repeat(64),
+  integrityChainHash: "b".repeat(64),
+  appliedFilters: { targetType: "source-review" },
+  nextActions: [
+    "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+    "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+  ],
+  items: [
+    {
+      itemId: "audit-log-empty-export",
+      source: "export",
+      recoveryStatus: "empty",
+      priority: "P1",
+      recoveryAction: "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+      notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+    }
+  ],
+  notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
 };
 
 describe("audit log client", () => {
@@ -125,6 +161,35 @@ describe("audit log client", () => {
     expect(JSON.stringify(init)).not.toContain("rawKyc");
   });
 
+  it("fetches filtered Audit Log recovery packet metadata with non-empty actions", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => auditLogRecoveryPacket
+    })) as unknown as typeof fetch;
+
+    const packet = await fetchAuditLogRecoveryPacket({
+      apiBaseUrl: "https://api.lexproof.test/",
+      workspaceId: "workspace-audit-client",
+      filters: { targetType: " source-review " },
+      fetcher
+    });
+
+    expect(packet).toEqual(auditLogRecoveryPacket);
+    expect(packet.packetHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(packet.recoveryItemCount).toBe(1);
+    expect(packet.nextActions.every((action) => action.trim().length > 0)).toBe(true);
+    const [url, init] = (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+    expect(url).toBe(
+      "https://api.lexproof.test/api/workspaces/workspace-audit-client/audit-log/recovery?targetType=source-review"
+    );
+    expect(init).toEqual({ method: "GET" });
+    expect(JSON.stringify(init)).not.toContain("apiKey");
+    expect(JSON.stringify(init)).not.toContain("rawKyc");
+    expect(buildAuditLogRecoveryPacketUrl("", "workspace-audit-client", { targetType: "source-review" })).toBe(
+      "/api/workspaces/workspace-audit-client/audit-log/recovery?targetType=source-review"
+    );
+  });
+
   it("rejects unsupported target filters before calling the API", async () => {
     const fetcher = vi.fn() as unknown as typeof fetch;
 
@@ -142,6 +207,9 @@ describe("audit log client", () => {
     ).toThrow(/target type must be workspace/i);
     expect(() =>
       buildAuditLogExportUrl("https://api.lexproof.test", "workspace-audit-client", { targetType: "legal-opinion" })
+    ).toThrow(/target type must be workspace/i);
+    expect(() =>
+      buildAuditLogRecoveryPacketUrl("https://api.lexproof.test", "workspace-audit-client", { targetType: "legal-opinion" })
     ).toThrow(/target type must be workspace/i);
   });
 
@@ -241,6 +309,48 @@ describe("audit log client", () => {
     ).rejects.toMatchObject({
       code: "AUDIT_LOG_INVALID_RESPONSE",
       recoveryAction: "Verify the Phase 2 API is returning a metadata-only Audit Log export artifact."
+    });
+  });
+
+  it("rejects malformed Audit Log recovery packets before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...auditLogRecoveryPacket,
+        recoveryItemCount: 2
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchAuditLogRecoveryPacket({
+        workspaceId: "workspace-audit-client",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "AUDIT_LOG_INVALID_RESPONSE",
+      recoveryAction:
+        "Verify the Phase 2 API is returning metadata-only Audit Log recovery packets with non-empty recovery actions."
+    });
+  });
+
+  it("rejects Audit Log recovery packets with blank next actions", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...auditLogRecoveryPacket,
+        nextActions: ["Run Secure Review Journey or clear Audit Log filters before final handoff.", "  "]
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchAuditLogRecoveryPacket({
+        workspaceId: "workspace-audit-client",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "AUDIT_LOG_INVALID_RESPONSE",
+      recoveryAction:
+        "Verify the Phase 2 API is returning metadata-only Audit Log recovery packets with non-empty recovery actions."
     });
   });
 
@@ -349,6 +459,70 @@ describe("audit log client", () => {
     expect(serialized).not.toContain("A1234567");
     expect(serialized).not.toContain("passport data");
     expect(serialized).not.toContain("legal conclusion");
+    expect(serialized).not.toContain("final-legal-decision");
+  });
+
+  it("redacts classified text from otherwise valid Audit Log recovery packets before UI use", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...auditLogRecoveryPacket,
+        workspaceId: `workspace-audit-client ${apiKey} legal conclusion`,
+        appliedFilters: { actorId: `Compliance ${apiKey}`, targetType: "human-review" },
+        nextActions: [
+          `Resolve apiKey=${apiKey}, private key ${privateKey}, final-legal-decision, and passport data before sharing.`
+        ],
+        items: [
+          {
+            ...auditLogRecoveryPacket.items[0],
+            itemId: `audit-log-empty-${apiKey}`,
+            recoveryAction: `Remove private key ${privateKey}, raw_KYC data, legal conclusion, and passport data before handoff.`,
+            eventId: `audit-log-client-${privateKey}`,
+            action: `human-review.updated ${apiKey}`,
+            targetType: "human-review",
+            targetId: `human-review-${privateKey}`,
+            entryHash: "e".repeat(64)
+          }
+        ]
+      })
+    })) as unknown as typeof fetch;
+
+    const packet = await fetchAuditLogRecoveryPacket({
+      workspaceId: "workspace-audit-client",
+      fetcher
+    });
+    const serialized = JSON.stringify(packet);
+
+    expect(packet).toEqual(
+      expect.objectContaining({
+        workspaceId: "workspace-audit-client [redacted-api-key] [redacted-legal-conclusion]",
+        appliedFilters: { actorId: "Compliance [redacted-api-key]", targetType: "human-review" },
+        nextActions: [
+          "Resolve [redacted-secret], [redacted-private-key], [redacted-legal-conclusion], and [redacted-identity-document] before sharing."
+        ],
+        notLegalAdviceBoundary: "Not legal advice. Audit Log recovery packets are review workspace metadata only."
+      })
+    );
+    expect(packet.items[0]).toEqual(
+      expect.objectContaining({
+        itemId: "audit-log-empty-[redacted-api-key]",
+        recoveryAction:
+          "Remove [redacted-private-key], [redacted-raw-kyc], [redacted-legal-conclusion], and [redacted-identity-document] before handoff.",
+        eventId: "audit-log-client-[redacted-private-key]",
+        action: "human-review.updated [redacted-api-key]",
+        targetId: "human-review-[redacted-private-key]",
+        notLegalAdviceBoundary: "Not legal advice. Audit Log recovery items are review workspace metadata only."
+      })
+    );
+    expect(serialized).toContain("[redacted-api-key]");
+    expect(serialized).toContain("[redacted-private-key]");
+    expect(serialized).toContain("[redacted-raw-kyc]");
+    expect(serialized).toContain("[redacted-legal-conclusion]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toContain("apiKey");
+    expect(serialized).not.toContain("raw_KYC");
+    expect(serialized).not.toContain("passport data");
     expect(serialized).not.toContain("final-legal-decision");
   });
 

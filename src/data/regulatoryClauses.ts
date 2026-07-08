@@ -797,6 +797,85 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {
+    id: "us-sec-investment-adviser-marketing-rule",
+    jurisdiction: "United States",
+    regulator: "U.S. Securities and Exchange Commission",
+    sourceName: "Investment Adviser Marketing Rule",
+    sourceUrl: "https://www.sec.gov/resources-small-businesses/small-business-compliance-guides/investment-adviser-marketing",
+    citation: "17 C.F.R. 275.206(4)-1; SEC Investment Adviser Marketing Rule compliance guide",
+    topic: "marketing",
+    summary:
+      "Prepare investment adviser advertisement, private-fund investor, testimonial, endorsement, third-party rating, performance presentation, and recordkeeping evidence for US investment adviser counsel review.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "investment adviser",
+      "investment advisor",
+      "investment advisory",
+      "advisory services",
+      "private fund",
+      "private fund investor",
+      "adviser marketing",
+      "advisor marketing",
+      "rule 206(4)-1",
+      "performance results",
+      "hypothetical performance",
+      "gross performance",
+      "net performance",
+      "third-party rating",
+      "promoter compensation",
+      "form adv"
+    ],
+    evidenceRequests: [
+      {
+        id: "us-sec-adviser-advertisement-testimonial-endorsement-controls",
+        title: "US SEC adviser advertisement, testimonial, and endorsement evidence",
+        reason:
+          "Investment adviser marketing review needs advertisement inventory, testimonial or endorsement scope, promoter compensation, disclosure, oversight, written agreement, disqualification-screening, and Form ADV reporting evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "investment adviser advertisement",
+          "adviser marketing",
+          "testimonial",
+          "endorsement",
+          "promoter compensation",
+          "material conflict",
+          "written agreement",
+          "disqualification",
+          "form adv"
+        ]
+      },
+      {
+        id: "us-sec-adviser-performance-recordkeeping-controls",
+        title: "US SEC adviser performance presentation and recordkeeping evidence",
+        reason:
+          "If adviser advertisements include performance results, counsel needs gross/net, extracted, hypothetical, related, predecessor, time-period, books-and-records, review-owner, and substantiation evidence.",
+        priority: "P0",
+        keywords: [
+          "performance results",
+          "gross performance",
+          "net performance",
+          "hypothetical performance",
+          "extracted performance",
+          "related performance",
+          "predecessor performance",
+          "time period",
+          "books and records",
+          "recordkeeping"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Does the US-facing campaign offer investment advisory services, private-fund investor communications, testimonials, endorsements, third-party ratings, or performance results that should be routed to US investment adviser counsel?",
+      "What advertisement inventory, promoter-compensation, conflict-disclosure, performance-calculation, Form ADV, and books-and-records evidence can be prepared without raw investor records or implying legal approval?"
+    ],
+    localCounselRole: "US investment adviser marketing counsel",
+    effectiveAsOf: "2021-05-04",
+    lastReviewedAt: "2026-07-08",
+    reviewerNotes:
+      "Source metadata reviewed against SEC Investment Adviser Marketing Rule compliance guide and 17 C.F.R. 275.206(4)-1 for adviser advertisement, testimonial, endorsement, rating, performance, Form ADV, and recordkeeping evidence routing; route interpretation to US investment adviser counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
     id: "eu-mica-marketing-communications",
     jurisdiction: "European Union",
     regulator: "European Union / ESMA",
@@ -1168,6 +1247,77 @@ export const REGULATORY_CLAUSES: RegulatoryClause[] = [
     lastReviewedAt: "2026-07-01",
     reviewerNotes:
       "Source metadata reviewed for citation, URL, Article 4 AI literacy, Chapter III high-risk governance context, and evidence-request routing; route interpretation to local counsel.",
+    notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
+  },
+  {
+    id: "eu-ai-act-high-risk-provider-quality-documentation",
+    jurisdiction: "European Union",
+    regulator: "European Union",
+    sourceName: "Regulation (EU) 2024/1689 high-risk AI provider obligations",
+    sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+    citation: "Regulation (EU) 2024/1689, Articles 9-14 and 17",
+    topic: "ai-governance",
+    summary:
+      "Prepare high-risk AI provider role, quality-management, risk-management, data-governance, technical-documentation, logging, instructions-for-use, and human-oversight evidence for EU AI Act counsel review without deciding system status.",
+    triggerFlagIds: [],
+    triggerKeywords: [
+      "high-risk ai provider",
+      "ai provider quality management",
+      "quality management system",
+      "risk management system",
+      "technical documentation",
+      "data governance",
+      "training data governance",
+      "record-keeping logs",
+      "instructions for use",
+      "provider conformity file"
+    ],
+    evidenceRequests: [
+      {
+        id: "eu-ai-act-provider-qms-risk-management",
+        title: "EU AI Act high-risk provider QMS and risk-management evidence",
+        reason:
+          "EU AI Act provider review needs intended-purpose, provider role, risk-management system, quality-management system, instructions-for-use, human-oversight, and governance-owner evidence before counsel reliance.",
+        priority: "P0",
+        keywords: [
+          "high-risk ai provider",
+          "provider role",
+          "intended purpose",
+          "risk management system",
+          "quality management system",
+          "instructions for use",
+          "human oversight",
+          "governance owner"
+        ]
+      },
+      {
+        id: "eu-ai-act-provider-technical-data-logging",
+        title: "EU AI Act technical documentation, data governance, and logging evidence",
+        reason:
+          "Counsel needs technical-documentation, training/validation/test data governance, record-keeping, logging, accuracy/robustness/cybersecurity, and no-raw-personal-data boundaries for high-risk AI provider handoff.",
+        priority: "P0",
+        keywords: [
+          "technical documentation",
+          "data governance",
+          "training data governance",
+          "validation data",
+          "test data",
+          "record-keeping logs",
+          "logging",
+          "accuracy robustness cybersecurity",
+          "no raw personal data"
+        ]
+      }
+    ],
+    counselQuestions: [
+      "Which provider-role, high-risk AI system, intended-purpose, QMS, risk-management, instructions-for-use, or human-oversight facts should EU AI Act counsel review?",
+      "What technical-documentation, data-governance, logging, accuracy, robustness, cybersecurity, and raw-data exclusion evidence can be prepared without deciding legal status?"
+    ],
+    localCounselRole: "EU AI Act high-risk provider / quality-system counsel",
+    effectiveAsOf: "2024-08-01",
+    lastReviewedAt: "2026-07-07",
+    reviewerNotes:
+      "Source metadata reviewed against Regulation (EU) 2024/1689 Articles 9-14 and 17 for high-risk AI provider quality management, risk management, data governance, technical documentation, logging, instructions-for-use, and human-oversight evidence routing; route interpretation to EU local counsel.",
     notLegalAdviceBoundary: "Not legal advice. Regulatory clauses are audit preparation references only."
   },
   {

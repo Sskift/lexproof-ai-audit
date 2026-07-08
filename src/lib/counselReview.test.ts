@@ -3,6 +3,8 @@ import { analyzeAuditProfile } from "./auditEngine";
 import {
   createDefaultCounselReviewItems,
   mergeCounselReviewQueues,
+  parseStoredCounselReviews,
+  sanitizeCounselReviewItem,
   type CounselReviewItem
 } from "./counselReview";
 import { createRiskEvidenceCoverage } from "./riskEvidence";
@@ -111,5 +113,100 @@ describe("mergeCounselReviewQueues", () => {
     const merged = mergeCounselReviewQueues([...incoming, stale], incoming);
 
     expect(merged.map((item) => item.flagId)).not.toContain("removed-risk");
+  });
+});
+
+describe("stored counsel review recovery", () => {
+  it("sanitizes persisted counsel review text fields before restoring them", () => {
+    const restored = parseStoredCounselReviews(
+      JSON.stringify([
+        {
+          id: "review-secret-sk-live123456789012",
+          projectId: "project-review",
+          flagId: "sensitive-data",
+          title: "Final legal decision after raw KYC packet review",
+          severity: "critical",
+          owner: "Compliance",
+          priority: "P0",
+          status: "needs-evidence",
+          evidenceSummary:
+            "Passport file and 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef were attached.",
+          reviewer: "ana@example.com",
+          reviewerNote: "apiKey=supersecretvalue; legal opinion says legally compliant.",
+          updatedAt: "2026-06-29T08:00:00.000Z",
+          rawEvidenceAttachment: "must not survive",
+          notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow only."
+        }
+      ])
+    );
+
+    expect(restored).toHaveLength(1);
+    expect(JSON.stringify(restored[0])).not.toContain("sk-live123456789012");
+    expect(JSON.stringify(restored[0])).not.toContain("supersecretvalue");
+    expect(JSON.stringify(restored[0])).not.toContain("0x1234567890abcdef");
+    expect(JSON.stringify(restored[0])).not.toContain("raw KYC packet");
+    expect(JSON.stringify(restored[0])).not.toContain("Passport file");
+    expect(JSON.stringify(restored[0])).not.toContain("legal opinion");
+    expect(JSON.stringify(restored[0])).not.toContain("ana@example.com");
+    expect(restored[0]).not.toHaveProperty("rawEvidenceAttachment");
+    expect(restored[0]?.notLegalAdviceBoundary).toBe("Not legal advice. Counsel review status is audit preparation workflow only.");
+  });
+
+  it("drops malformed stored counsel reviews and invalid workflow enums", () => {
+    const valid: CounselReviewItem = {
+      id: "review-valid",
+      projectId: "project-review",
+      flagId: "asset-yield",
+      title: "Yield-bearing or investment-like asset",
+      severity: "material",
+      owner: "Counsel",
+      priority: "P1",
+      status: "ready-for-counsel",
+      evidenceSummary: "1/2 evidence requirements covered",
+      reviewer: "",
+      reviewerNote: "",
+      updatedAt: "2026-06-29T08:00:00.000Z",
+      notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow only."
+    };
+
+    expect(
+      parseStoredCounselReviews(
+        JSON.stringify([
+          valid,
+          { ...valid, id: "bad-boundary", notLegalAdviceBoundary: "Legal advice approved." },
+          { ...valid, id: "bad-status", status: "approved" },
+          { ...valid, id: "bad-severity", severity: "urgent" },
+          { ...valid, id: "bad-owner", owner: "Outside Counsel" },
+          { ...valid, id: "bad-priority", priority: "P3" },
+          { ...valid, id: "", title: "Missing id" }
+        ])
+      )
+    ).toEqual([valid]);
+    expect(parseStoredCounselReviews("{not-json")).toEqual([]);
+  });
+
+  it("sanitizes counsel review edits without changing workflow metadata", () => {
+    const item = sanitizeCounselReviewItem({
+      id: "review-valid",
+      projectId: "project-review",
+      flagId: "asset-yield",
+      title: "Legal approval requested",
+      severity: "material",
+      owner: "Counsel",
+      priority: "P1",
+      status: "blocked",
+      evidenceSummary: "Passport document cannot be shared.",
+      reviewer: "Counsel reviewer",
+      reviewerNote: "Compliance decision references raw KYC dump.",
+      updatedAt: "2026-06-29T08:00:00.000Z",
+      notLegalAdviceBoundary: "Not legal advice. Counsel review status is audit preparation workflow only."
+    });
+
+    expect(item.title).toContain("[redacted-legal-conclusion]");
+    expect(item.evidenceSummary).toContain("[redacted-identity-document]");
+    expect(item.reviewerNote).toContain("[redacted-legal-conclusion]");
+    expect(item.reviewerNote).toContain("[redacted-raw-kyc]");
+    expect(item.status).toBe("blocked");
+    expect(item.notLegalAdviceBoundary).toBe("Not legal advice. Counsel review status is audit preparation workflow only.");
   });
 });

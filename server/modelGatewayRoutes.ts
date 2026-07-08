@@ -10,6 +10,7 @@ import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 import { createAuditLogRecord, createModelGatewayRunSummary } from "../src/lib/phase2Types.js";
+import { createModelGatewayRunRecoveryPacket } from "../src/lib/modelGatewayRunReceipt.js";
 import type { ModelGatewayProviderPolicyModelConnectReceipt } from "../src/lib/modelGatewayProviderPolicy.js";
 import type { ModelGatewaySecretPolicyAccessReviewCadence, ModelGatewaySecretPolicyDraft } from "../src/lib/modelGatewaySecretPolicy.js";
 
@@ -17,32 +18,80 @@ export type ModelGatewayRoutesOptions = {
   repository: ReviewWorkspaceRepository;
 };
 
+const MODEL_GATEWAY_SECRET_POLICY_NUMERIC_FIELD_ERROR =
+  "Model Gateway secret policy numeric fields must be non-negative integers." as const;
+
 export function registerModelGatewayRoutes(server: FastifyInstance, options: ModelGatewayRoutesOptions): void {
   const { repository } = options;
 
   server.get("/api/model-gateway/adapters", async () => listModelGatewayAdapters());
   server.get("/api/model-gateway/provider-policy", async () => createServerModelGatewayProviderPolicyReport());
-  server.post<{ Body: ModelGatewayProviderPolicyRequestBody }>("/api/model-gateway/provider-policy", async (request) =>
-    createServerModelGatewayProviderPolicyReport(toModelGatewayProviderPolicyReceipt(request.body?.modelConnectReceipt))
-  );
-  server.post<{ Body: ModelGatewaySecretPolicyRequestBody }>("/api/model-gateway/secret-policy", async (request) =>
-    createServerModelGatewaySecretPolicyReport(toModelGatewaySecretPolicyDraft(request.body?.policy))
-  );
+  server.post<{ Body: ModelGatewayProviderPolicyRequestBody }>("/api/model-gateway/provider-policy", async (request, reply) => {
+    try {
+      const payload = parseModelGatewayProviderPolicyRequestBody(request.body);
+      return createServerModelGatewayProviderPolicyReport(payload.modelConnectReceipt);
+    } catch (error) {
+      return reply.status(400).send(
+        createApiErrorResponse({
+          error,
+          code: "MODEL_GATEWAY_PROVIDER_POLICY_INVALID_PAYLOAD",
+          fallbackMessage: "Model Gateway provider policy payload could not be evaluated safely.",
+          recoveryAction:
+            "Send metadata-only Model Connect receipt JSON without provider credentials, private keys, raw KYC, personal data, or legal conclusions."
+        })
+      );
+    }
+  });
+  server.post<{ Body: ModelGatewaySecretPolicyRequestBody }>("/api/model-gateway/secret-policy", async (request, reply) => {
+    try {
+      const payload = parseModelGatewaySecretPolicyRequestBody(request.body);
+      return createServerModelGatewaySecretPolicyReport(toModelGatewaySecretPolicyDraft(payload.policy));
+    } catch (error) {
+      return reply.status(400).send(
+        createApiErrorResponse({
+          error:
+            error instanceof Error && isModelGatewaySecretPolicySafePayloadError(error.message)
+              ? error
+              : new Error("Model Gateway secret policy payload could not be evaluated safely."),
+          code: "MODEL_GATEWAY_SECRET_POLICY_INVALID_PAYLOAD",
+          fallbackMessage: "Model Gateway secret policy payload could not be evaluated safely.",
+          recoveryAction:
+            "Send metadata-only Model Gateway secret policy JSON with non-negative integer numeric fields and without provider credentials, private keys, raw KYC, personal data, or legal conclusions."
+        })
+      );
+    }
+  });
 
   server.post<{ Params: { workspaceId: string }; Body: ModelGatewayRequestBody }>(
     "/api/workspaces/:workspaceId/model-runs",
     async (request, reply) => {
+      let payload: ParsedModelGatewayRequestBody;
+
+      try {
+        payload = parseModelGatewayRunRequestBody(request.body);
+      } catch (error) {
+        return reply.status(400).send(
+          createApiErrorResponse({
+            error,
+            code: "MODEL_GATEWAY_INVALID_PAYLOAD",
+            fallbackMessage: "Model Gateway run payload could not be evaluated safely.",
+            recoveryAction:
+              "Send metadata-only Model Gateway run JSON with a supported provider, clean redaction status, explicit booleans, safe allowed data classes, human review owner, and no credentials, private keys, raw KYC, personal data, or legal conclusions."
+          })
+        );
+      }
+
       const result = createModelGatewayRun({
         workspaceId: request.params.workspaceId,
-        provider: request.body.provider,
-        model: request.body.model,
-        purpose: request.body.purpose,
-        redactionStatus: request.body.redactionStatus,
-        includesCredentialMaterial: request.body.includesCredentialMaterial,
-        includesRawKycOrPersonalData: request.body.includesRawKycOrPersonalData,
-        humanReviewOwner: request.body.humanReviewOwner,
-        allowedDataClasses: request.body.allowedDataClasses ?? [],
-        payload: request.body.payload
+        provider: payload.provider,
+        model: payload.model,
+        purpose: payload.purpose,
+        redactionStatus: payload.redactionStatus,
+        includesCredentialMaterial: payload.includesCredentialMaterial,
+        includesRawKycOrPersonalData: payload.includesRawKycOrPersonalData,
+        humanReviewOwner: payload.humanReviewOwner,
+        allowedDataClasses: payload.allowedDataClasses,
+        payload: payload.payload
       });
 
       if (!result.valid) {
@@ -99,7 +148,7 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
         workspaceId: request.params.workspaceId,
         targetType: "model-run",
         targetId: result.run.id,
-        reviewerId: request.body.humanReviewOwner,
+        reviewerId: payload.humanReviewOwner,
         comment: "Review Model Gateway output before audit-prep reliance. AI-assisted draft only. Not legal advice.",
         createdAt: result.run.createdAt
       });
@@ -133,6 +182,13 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
     (await repository.listModelGatewayRuns(request.params.workspaceId)).map(createModelGatewayRunSummary)
   );
 
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/model-runs/recovery", async (request) =>
+    createModelGatewayRunRecoveryPacket(
+      request.params.workspaceId,
+      await repository.listModelGatewayRuns(request.params.workspaceId)
+    )
+  );
+
   server.get<{ Params: { workspaceId: string; runId: string } }>(
     "/api/workspaces/:workspaceId/model-runs/:runId",
     async (request, reply) => {
@@ -145,7 +201,9 @@ export function registerModelGatewayRoutes(server: FastifyInstance, options: Mod
   );
 }
 
-type ModelGatewayRequestBody = {
+type ModelGatewayRequestBody = unknown;
+
+type ParsedModelGatewayRequestBody = {
   provider: "mock" | "openai-compatible" | "enterprise-proxy";
   model: string;
   purpose: string;
@@ -153,17 +211,34 @@ type ModelGatewayRequestBody = {
   includesCredentialMaterial: boolean;
   includesRawKycOrPersonalData: boolean;
   humanReviewOwner: string;
-  allowedDataClasses?: string[];
+  allowedDataClasses: string[];
   payload: unknown;
 };
 
-type ModelGatewayProviderPolicyRequestBody = {
-  modelConnectReceipt?: unknown;
+type ModelGatewayProviderPolicyRequestBody = unknown;
+
+type ParsedModelGatewayProviderPolicyRequestBody = {
+  modelConnectReceipt: ModelGatewayProviderPolicyModelConnectReceipt;
 };
 
-type ModelGatewaySecretPolicyRequestBody = {
-  policy?: unknown;
+type ModelGatewaySecretPolicyRequestBody = unknown;
+
+type ParsedModelGatewaySecretPolicyRequestBody = {
+  policy: Record<string, unknown>;
 };
+
+function parseModelGatewayProviderPolicyRequestBody(value: unknown): ParsedModelGatewayProviderPolicyRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Model Gateway provider policy payload must be a JSON object.");
+  }
+
+  const modelConnectReceipt = toModelGatewayProviderPolicyReceipt(value.modelConnectReceipt);
+  if (!modelConnectReceipt) {
+    throw new Error("Model Gateway provider policy Model Connect receipt must be a metadata-only JSON object.");
+  }
+
+  return { modelConnectReceipt };
+}
 
 function toModelGatewayProviderPolicyReceipt(value: unknown): ModelGatewayProviderPolicyModelConnectReceipt | null {
   if (!isRecord(value)) {
@@ -204,6 +279,90 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function parseModelGatewayRunRequestBody(value: unknown): ParsedModelGatewayRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Model Gateway run payload must be a JSON object.");
+  }
+
+  return {
+    provider: modelGatewayProviderField(value.provider),
+    model: stringField(value.model, "Model Gateway model must be a string."),
+    purpose: stringField(value.purpose, "Model Gateway purpose must be a string."),
+    redactionStatus: modelGatewayRedactionStatusField(value.redactionStatus),
+    includesCredentialMaterial: booleanField(
+      value.includesCredentialMaterial,
+      "Model Gateway credential material flag must be a boolean."
+    ),
+    includesRawKycOrPersonalData: booleanField(
+      value.includesRawKycOrPersonalData,
+      "Model Gateway raw KYC or personal data flag must be a boolean."
+    ),
+    humanReviewOwner: stringField(value.humanReviewOwner, "Model Gateway human review owner must be a string."),
+    allowedDataClasses: stringArrayField(value.allowedDataClasses, "Model Gateway allowed data classes must be an array of strings."),
+    payload: jsonPayloadField(value.payload)
+  };
+}
+
+function modelGatewayProviderField(value: unknown): ParsedModelGatewayRequestBody["provider"] {
+  if (value === "mock" || value === "openai-compatible" || value === "enterprise-proxy") {
+    return value;
+  }
+
+  throw new Error("Model Gateway provider must be mock, openai-compatible, or enterprise-proxy.");
+}
+
+function modelGatewayRedactionStatusField(value: unknown): ParsedModelGatewayRequestBody["redactionStatus"] {
+  if (value === "clean" || value === "needs-review" || value === "blocked") {
+    return value;
+  }
+
+  throw new Error("Model Gateway redaction status must be clean, needs-review, or blocked.");
+}
+
+function booleanField(value: unknown, message: string): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  throw new Error(message);
+}
+
+function stringArrayField(value: unknown, message: string): string[] {
+  if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+    return value;
+  }
+
+  throw new Error(message);
+}
+
+function jsonPayloadField(value: unknown): unknown {
+  if (value !== undefined) {
+    return value;
+  }
+
+  throw new Error("Model Gateway metadata payload is required.");
+}
+
+function parseModelGatewaySecretPolicyRequestBody(value: unknown): ParsedModelGatewaySecretPolicyRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Model Gateway secret policy payload must be a JSON object.");
+  }
+
+  if (!isRecord(value.policy)) {
+    throw new Error("Model Gateway secret policy draft must be a JSON object.");
+  }
+
+  return { policy: value.policy };
+}
+
+function isModelGatewaySecretPolicySafePayloadError(message: string): boolean {
+  return (
+    message === MODEL_GATEWAY_SECRET_POLICY_NUMERIC_FIELD_ERROR ||
+    message === "Model Gateway secret policy payload must be a JSON object." ||
+    message === "Model Gateway secret policy draft must be a JSON object."
+  );
+}
+
 function toModelGatewaySecretPolicyDraft(value: unknown): ModelGatewaySecretPolicyDraft {
   const policy = isRecord(value) ? value : {};
 
@@ -225,21 +384,28 @@ function isAccessReviewCadence(value: unknown): value is ModelGatewaySecretPolic
   return value === "none" || value === "monthly" || value === "quarterly" || value === "annual";
 }
 
-function stringField(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function numberField(value: unknown): number {
-  if (typeof value === "number") {
+function stringField(value: unknown, invalidMessage?: string): string {
+  if (typeof value === "string") {
     return value;
   }
 
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
+  if (invalidMessage) {
+    throw new Error(invalidMessage);
   }
 
-  return 0;
+  return "";
+}
+
+function numberField(value: unknown): number {
+  if (value === undefined || value === null) {
+    return 0;
+  }
+
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+
+  throw new Error(MODEL_GATEWAY_SECRET_POLICY_NUMERIC_FIELD_ERROR);
 }
 
 function createModelGatewayRunNotFoundError() {

@@ -195,6 +195,8 @@ describe("evidence templates", () => {
         "Colorado ADMT notice and meaningful human review register",
         "California CCPA ADMT scope and risk assessment register",
         "California CCPA ADMT access and opt-out workflow register",
+        "EU AI Act provider QMS and risk-management register",
+        "EU AI Act technical documentation and data-governance register",
         "EU AI Act justice and ADR perimeter memo",
         "EU AI Act high-risk oversight and fundamental-rights register",
         "US legal AI ethics and professional responsibility register"
@@ -206,6 +208,7 @@ describe("evidence templates", () => {
     expect(serializedSources).toContain("regulatory control: control-us-colorado-admt-consequential-decision-governance");
     expect(serializedSources).toContain("regulatory control: control-us-california-ccpa-admt-consumer-rights-governance");
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-ai-literacy-governance");
+    expect(serializedSources).toContain("regulatory control: control-eu-ai-act-high-risk-provider-quality-documentation");
     expect(serializedSources).toContain("regulatory control: control-eu-ai-act-administration-justice-adr-perimeter");
     expect(serializedSources).toContain("regulatory control: control-uk-ico-ai-data-protection-governance");
     expect(JSON.stringify(items).toLowerCase()).not.toContain("passport");
@@ -226,6 +229,8 @@ describe("evidence templates", () => {
       expect.arrayContaining([
         "Claims substantiation and risk disclosure register",
         "Creator endorsement and material connection log",
+        "Investment adviser advertisement and promoter review file",
+        "Investment adviser performance presentation support file",
         "UK financial promotion approval pack",
         "EU MiCA marketing communication review pack",
         "UAE VARA approval and risk-warning archive",
@@ -233,6 +238,7 @@ describe("evidence templates", () => {
       ])
     );
     expect(serializedSources).toContain("regulatory control: control-us-ftc-endorsement-advertising-guides");
+    expect(serializedSources).toContain("regulatory control: control-us-sec-investment-adviser-marketing-rule");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-marketing-communications");
     expect(serializedSources).toContain("regulatory control: control-uk-fca-crypto-financial-promotions");
     expect(serializedSources).toContain("regulatory control: control-uae-vara-va-regulations-activity-scope");

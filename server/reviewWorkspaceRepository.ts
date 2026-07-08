@@ -9,6 +9,8 @@ import type {
   RegulatorySourceReviewRecord,
   WorkspaceRecord
 } from "../src/lib/phase2Types.js";
+import { redactClassifiedText } from "../src/lib/dataClassification.js";
+import { sanitizeCounselPackExportRecord } from "../src/lib/counselPackExportRecords.js";
 import type { IntegrationPolicyEvaluationRecord } from "../src/lib/integrationPolicyEvaluation.js";
 
 export type ReviewWorkspaceRepository = {
@@ -56,102 +58,139 @@ export function createMemoryReviewWorkspaceRepository(): ReviewWorkspaceReposito
 
   return {
     async saveWorkspaceRecord(record) {
-      workspaces.set(record.id, record);
+      const sanitizedRecord = sanitizeWorkspaceRecord(record);
+      workspaces.set(sanitizedRecord.id, sanitizedRecord);
     },
 
     async updateWorkspaceRecord(record) {
-      workspaces.set(record.id, record);
+      const sanitizedRecord = sanitizeWorkspaceRecord(record);
+      workspaces.set(sanitizedRecord.id, sanitizedRecord);
     },
 
     async findWorkspaceRecord(workspaceId) {
-      return workspaces.get(workspaceId) ?? null;
+      const record = workspaces.get(workspaceId);
+      return record ? sanitizeWorkspaceRecord(record) : null;
     },
 
     async saveEvidenceVaultRecord(record) {
-      evidenceRecords.set(record.workspaceId, upsertById(evidenceRecords.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeEvidenceVaultRecord(record);
+      evidenceRecords.set(
+        sanitizedRecord.workspaceId,
+        upsertById(evidenceRecords.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async updateEvidenceVaultRecord(record) {
-      evidenceRecords.set(record.workspaceId, upsertById(evidenceRecords.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeEvidenceVaultRecord(record);
+      evidenceRecords.set(
+        sanitizedRecord.workspaceId,
+        upsertById(evidenceRecords.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async listEvidenceVaultRecords(workspaceId) {
-      return evidenceRecords.get(workspaceId) ?? [];
+      return (evidenceRecords.get(workspaceId) ?? []).map(sanitizeEvidenceVaultRecord);
     },
 
     async findEvidenceVaultRecord(workspaceId, evidenceId) {
-      return (evidenceRecords.get(workspaceId) ?? []).find((record) => record.id === evidenceId) ?? null;
+      const record = (evidenceRecords.get(workspaceId) ?? []).find((current) => current.id === evidenceId);
+      return record ? sanitizeEvidenceVaultRecord(record) : null;
     },
 
     async saveModelGatewayRun(run) {
-      modelRuns.set(run.workspaceId, upsertById(modelRuns.get(run.workspaceId) ?? [], run));
+      const sanitizedRun = sanitizeModelGatewayRun(run);
+      modelRuns.set(sanitizedRun.workspaceId, upsertById(modelRuns.get(sanitizedRun.workspaceId) ?? [], sanitizedRun));
     },
 
     async listModelGatewayRuns(workspaceId) {
-      return modelRuns.get(workspaceId) ?? [];
+      return (modelRuns.get(workspaceId) ?? []).map(sanitizeModelGatewayRun);
     },
 
     async findModelGatewayRun(workspaceId, runId) {
-      return (modelRuns.get(workspaceId) ?? []).find((run) => run.id === runId) ?? null;
+      const run = (modelRuns.get(workspaceId) ?? []).find((current) => current.id === runId);
+      return run ? sanitizeModelGatewayRun(run) : null;
     },
 
     async saveHumanReviewRecord(record) {
-      humanReviews.set(record.workspaceId, upsertById(humanReviews.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeHumanReviewRecord(record);
+      humanReviews.set(
+        sanitizedRecord.workspaceId,
+        upsertById(humanReviews.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async updateHumanReviewRecord(record) {
-      humanReviews.set(record.workspaceId, upsertById(humanReviews.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeHumanReviewRecord(record);
+      humanReviews.set(
+        sanitizedRecord.workspaceId,
+        upsertById(humanReviews.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async listHumanReviewRecords(workspaceId) {
-      return humanReviews.get(workspaceId) ?? [];
+      return (humanReviews.get(workspaceId) ?? []).map(sanitizeHumanReviewRecord);
     },
 
     async saveCounselPackExportRecord(record) {
-      counselPackExports.set(record.workspaceId, upsertById(counselPackExports.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeCounselPackExportRecord(record);
+      counselPackExports.set(
+        sanitizedRecord.workspaceId,
+        upsertById(counselPackExports.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async listCounselPackExportRecords(workspaceId) {
-      return counselPackExports.get(workspaceId) ?? [];
+      return (counselPackExports.get(workspaceId) ?? []).map(sanitizeCounselPackExportRecord);
     },
 
     async findCounselPackExportRecord(workspaceId, exportId) {
-      return (counselPackExports.get(workspaceId) ?? []).find((record) => record.id === exportId) ?? null;
+      const record = (counselPackExports.get(workspaceId) ?? []).find((current) => current.id === exportId);
+      return record ? sanitizeCounselPackExportRecord(record) : null;
     },
 
     async saveIntegrationPolicyEvaluationRecord(record) {
+      const sanitizedRecord = sanitizeIntegrationPolicyEvaluationRecord(record);
       integrationPolicyEvaluations.set(
-        record.workspaceId,
-        upsertById(integrationPolicyEvaluations.get(record.workspaceId) ?? [], record)
+        sanitizedRecord.workspaceId,
+        upsertById(integrationPolicyEvaluations.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
       );
     },
 
     async listIntegrationPolicyEvaluationRecords(workspaceId) {
-      return integrationPolicyEvaluations.get(workspaceId) ?? [];
+      return (integrationPolicyEvaluations.get(workspaceId) ?? []).map(sanitizeIntegrationPolicyEvaluationRecord);
     },
 
     async saveRegulatorySourceApprovalRecord(record) {
-      sourceApprovals.set(record.workspaceId, upsertById(sourceApprovals.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeRegulatorySourceApprovalRecord(record);
+      sourceApprovals.set(
+        sanitizedRecord.workspaceId,
+        upsertById(sourceApprovals.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async listRegulatorySourceApprovalRecords(workspaceId) {
-      return sourceApprovals.get(workspaceId) ?? [];
+      return (sourceApprovals.get(workspaceId) ?? []).map(sanitizeRegulatorySourceApprovalRecord);
     },
 
     async saveRegulatorySourceReviewRecord(record) {
-      sourceReviews.set(record.workspaceId, upsertById(sourceReviews.get(record.workspaceId) ?? [], record));
+      const sanitizedRecord = sanitizeRegulatorySourceReviewRecord(record);
+      sourceReviews.set(
+        sanitizedRecord.workspaceId,
+        upsertById(sourceReviews.get(sanitizedRecord.workspaceId) ?? [], sanitizedRecord)
+      );
     },
 
     async listRegulatorySourceReviewRecords(workspaceId) {
-      return sourceReviews.get(workspaceId) ?? [];
+      return (sourceReviews.get(workspaceId) ?? []).map(sanitizeRegulatorySourceReviewRecord);
     },
 
     async appendAuditLogRecord(record) {
-      auditLogs.set(record.workspaceId, [...(auditLogs.get(record.workspaceId) ?? []), record]);
+      const sanitizedRecord = sanitizeAuditLogRecord(record);
+      auditLogs.set(sanitizedRecord.workspaceId, [...(auditLogs.get(sanitizedRecord.workspaceId) ?? []), sanitizedRecord]);
     },
 
     async listAuditLogRecords(workspaceId) {
-      return auditLogs.get(workspaceId) ?? [];
+      return (auditLogs.get(workspaceId) ?? []).map(sanitizeAuditLogRecord);
     },
 
     async close() {
@@ -175,17 +214,19 @@ export async function createPrismaReviewWorkspaceRepository(
 
   return {
     async saveWorkspaceRecord(record) {
+      const sanitizedRecord = sanitizeWorkspaceRecord(record);
       await prisma.workspaceRecord.upsert({
-        where: { id: record.id },
-        update: serializeWorkspaceRecord(record),
-        create: serializeWorkspaceRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeWorkspaceRecord(sanitizedRecord),
+        create: serializeWorkspaceRecord(sanitizedRecord)
       });
     },
 
     async updateWorkspaceRecord(record) {
+      const sanitizedRecord = sanitizeWorkspaceRecord(record);
       await prisma.workspaceRecord.update({
-        where: { id: record.id },
-        data: serializeWorkspaceRecord(record)
+        where: { id: sanitizedRecord.id },
+        data: serializeWorkspaceRecord(sanitizedRecord)
       });
     },
 
@@ -197,17 +238,19 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveEvidenceVaultRecord(record) {
+      const sanitizedRecord = sanitizeEvidenceVaultRecord(record);
       await prisma.evidenceVaultRecord.upsert({
-        where: { id: record.id },
-        update: serializeEvidenceVaultRecord(record),
-        create: serializeEvidenceVaultRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeEvidenceVaultRecord(sanitizedRecord),
+        create: serializeEvidenceVaultRecord(sanitizedRecord)
       });
     },
 
     async updateEvidenceVaultRecord(record) {
+      const sanitizedRecord = sanitizeEvidenceVaultRecord(record);
       await prisma.evidenceVaultRecord.update({
-        where: { id: record.id },
-        data: serializeEvidenceVaultRecord(record)
+        where: { id: sanitizedRecord.id },
+        data: serializeEvidenceVaultRecord(sanitizedRecord)
       });
     },
 
@@ -227,10 +270,11 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveModelGatewayRun(run) {
+      const sanitizedRun = sanitizeModelGatewayRun(run);
       await prisma.modelGatewayRun.upsert({
-        where: { id: run.id },
-        update: serializeModelGatewayRun(run),
-        create: serializeModelGatewayRun(run)
+        where: { id: sanitizedRun.id },
+        update: serializeModelGatewayRun(sanitizedRun),
+        create: serializeModelGatewayRun(sanitizedRun)
       });
     },
 
@@ -250,17 +294,19 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveHumanReviewRecord(record) {
+      const sanitizedRecord = sanitizeHumanReviewRecord(record);
       await prisma.humanReviewRecord.upsert({
-        where: { id: record.id },
-        update: serializeHumanReviewRecord(record),
-        create: serializeHumanReviewRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeHumanReviewRecord(sanitizedRecord),
+        create: serializeHumanReviewRecord(sanitizedRecord)
       });
     },
 
     async updateHumanReviewRecord(record) {
+      const sanitizedRecord = sanitizeHumanReviewRecord(record);
       await prisma.humanReviewRecord.update({
-        where: { id: record.id },
-        data: serializeHumanReviewRecord(record)
+        where: { id: sanitizedRecord.id },
+        data: serializeHumanReviewRecord(sanitizedRecord)
       });
     },
 
@@ -273,10 +319,11 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveCounselPackExportRecord(record) {
+      const sanitizedRecord = sanitizeCounselPackExportRecord(record);
       await prisma.counselPackExportRecord.upsert({
-        where: { id: record.id },
-        update: serializeCounselPackExportRecord(record),
-        create: serializeCounselPackExportRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeCounselPackExportRecord(sanitizedRecord),
+        create: serializeCounselPackExportRecord(sanitizedRecord)
       });
     },
 
@@ -296,10 +343,11 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveIntegrationPolicyEvaluationRecord(record) {
+      const sanitizedRecord = sanitizeIntegrationPolicyEvaluationRecord(record);
       await prisma.integrationPolicyEvaluationRecord.upsert({
-        where: { id: record.id },
-        update: serializeIntegrationPolicyEvaluationRecord(record),
-        create: serializeIntegrationPolicyEvaluationRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeIntegrationPolicyEvaluationRecord(sanitizedRecord),
+        create: serializeIntegrationPolicyEvaluationRecord(sanitizedRecord)
       });
     },
 
@@ -312,10 +360,11 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveRegulatorySourceApprovalRecord(record) {
+      const sanitizedRecord = sanitizeRegulatorySourceApprovalRecord(record);
       await prisma.regulatorySourceApprovalRecord.upsert({
-        where: { id: record.id },
-        update: serializeRegulatorySourceApprovalRecord(record),
-        create: serializeRegulatorySourceApprovalRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeRegulatorySourceApprovalRecord(sanitizedRecord),
+        create: serializeRegulatorySourceApprovalRecord(sanitizedRecord)
       });
     },
 
@@ -328,10 +377,11 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async saveRegulatorySourceReviewRecord(record) {
+      const sanitizedRecord = sanitizeRegulatorySourceReviewRecord(record);
       await prisma.regulatorySourceReviewRecord.upsert({
-        where: { id: record.id },
-        update: serializeRegulatorySourceReviewRecord(record),
-        create: serializeRegulatorySourceReviewRecord(record)
+        where: { id: sanitizedRecord.id },
+        update: serializeRegulatorySourceReviewRecord(sanitizedRecord),
+        create: serializeRegulatorySourceReviewRecord(sanitizedRecord)
       });
     },
 
@@ -344,8 +394,9 @@ export async function createPrismaReviewWorkspaceRepository(
     },
 
     async appendAuditLogRecord(record) {
+      const sanitizedRecord = sanitizeAuditLogRecord(record);
       await prisma.auditLogRecord.create({
-        data: serializeAuditLogRecord(record)
+        data: serializeAuditLogRecord(sanitizedRecord)
       });
     },
 
@@ -643,14 +694,32 @@ function deserializeWorkspaceRecord(record: PersistedWorkspaceRecord): Workspace
   return {
     recordVersion: "lexproof-workspace-record-v1",
     id: record.id,
-    name: record.name,
-    organizationName: record.organizationName,
-    ownerId: record.ownerId,
-    status: record.status as WorkspaceRecord["status"],
+    name: sanitizePersistedText(record.name),
+    organizationName: sanitizePersistedText(record.organizationName),
+    ownerId: sanitizePersistedText(record.ownerId),
+    status: parseWorkspaceStatus(record.status),
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only."
   };
+}
+
+function sanitizeWorkspaceRecord(record: WorkspaceRecord): WorkspaceRecord {
+  return {
+    ...record,
+    name: sanitizePersistedText(record.name),
+    organizationName: sanitizePersistedText(record.organizationName),
+    ownerId: sanitizePersistedText(record.ownerId),
+    status: parseWorkspaceStatus(record.status),
+    notLegalAdviceBoundary: "Not legal advice. Workspaces organize audit preparation materials only."
+  };
+}
+
+function parseWorkspaceStatus(value: string): WorkspaceRecord["status"] {
+  if (value === "draft" || value === "active" || value === "archived") {
+    return value;
+  }
+  throw new Error("Workspace status is invalid.");
 }
 
 function serializeEvidenceVaultRecord(record: EvidenceVaultRecord) {
@@ -706,25 +775,115 @@ function deserializeEvidenceVaultRecord(record: PersistedEvidenceVaultRecord): E
     recordVersion: "lexproof-evidence-vault-record-v1",
     id: record.id,
     workspaceId: record.workspaceId,
-    filename: record.filename,
-    mimeType: record.mimeType,
-    byteSize: record.byteSize,
-    fileHash: record.fileHash,
-    storageMode: record.storageMode as EvidenceVaultRecord["storageMode"],
-    status: record.status as EvidenceVaultRecord["status"],
-    owner: record.owner,
-    sourceNote: record.sourceNote,
-    version: record.version,
-    linkedRiskFlagIds: parseStringArray(record.linkedRiskFlagIdsJson),
-    linkedControlIds: parseStringArray(record.linkedControlIdsJson ?? "[]"),
+    filename: sanitizePersistedText(record.filename),
+    mimeType: sanitizePersistedText(record.mimeType),
+    byteSize: parseEvidenceVaultNonNegativeInteger(record.byteSize, "byte size"),
+    fileHash: parseSha256Hex(record.fileHash, "Evidence Vault file hash"),
+    storageMode: parseEvidenceVaultStorageMode(record.storageMode),
+    status: parseEvidenceVaultStatus(record.status),
+    owner: sanitizePersistedText(record.owner),
+    sourceNote: sanitizePersistedText(record.sourceNote),
+    version: parseEvidenceVaultPositiveInteger(record.version, "version"),
+    linkedRiskFlagIds: parseEvidenceVaultStringArray(record.linkedRiskFlagIdsJson, "linked risk flag ids"),
+    linkedControlIds: parseEvidenceVaultStringArray(record.linkedControlIdsJson ?? "[]", "linked control ids"),
     containsRawKycOrPersonalData: record.containsRawKycOrPersonalData,
     ...parseMetadataBoundaryWarnings(record.metadataBoundaryWarningsJson ?? "[]"),
-    parentEvidenceId: record.parentEvidenceId ?? undefined,
-    supersededByEvidenceId: record.supersededByEvidenceId ?? undefined,
-    replacementReason: record.replacementReason ?? undefined,
+    parentEvidenceId: sanitizeOptionalPersistedText(record.parentEvidenceId),
+    supersededByEvidenceId: sanitizeOptionalPersistedText(record.supersededByEvidenceId),
+    replacementReason: sanitizeOptionalPersistedText(record.replacementReason),
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString()
   };
+}
+
+function sanitizeEvidenceVaultRecord(record: EvidenceVaultRecord): EvidenceVaultRecord {
+  return {
+    ...record,
+    filename: sanitizePersistedText(record.filename),
+    mimeType: sanitizePersistedText(record.mimeType),
+    byteSize: parseEvidenceVaultNonNegativeInteger(record.byteSize, "byte size"),
+    fileHash: parseSha256Hex(record.fileHash, "Evidence Vault file hash"),
+    storageMode: parseEvidenceVaultStorageMode(record.storageMode),
+    status: parseEvidenceVaultStatus(record.status),
+    owner: sanitizePersistedText(record.owner),
+    sourceNote: sanitizePersistedText(record.sourceNote),
+    version: parseEvidenceVaultPositiveInteger(record.version, "version"),
+    linkedRiskFlagIds: sanitizeEvidenceVaultStringArray(record.linkedRiskFlagIds, "linked risk flag ids"),
+    linkedControlIds: sanitizeEvidenceVaultStringArray(record.linkedControlIds, "linked control ids"),
+    metadataBoundaryWarnings: sanitizeEvidenceVaultMetadataBoundaryWarnings(record.metadataBoundaryWarnings),
+    parentEvidenceId: sanitizeOptionalPersistedText(record.parentEvidenceId),
+    supersededByEvidenceId: sanitizeOptionalPersistedText(record.supersededByEvidenceId),
+    replacementReason: sanitizeOptionalPersistedText(record.replacementReason)
+  };
+}
+
+function parseEvidenceVaultStorageMode(value: string): EvidenceVaultRecord["storageMode"] {
+  if (value === "local-metadata" || value === "server-vault" || value === "external-reference") {
+    return value;
+  }
+  throw new Error("Evidence Vault storage mode is invalid.");
+}
+
+function parseEvidenceVaultStatus(value: string): EvidenceVaultRecord["status"] {
+  if (
+    value === "draft" ||
+    value === "requested" ||
+    value === "received" ||
+    value === "submitted" ||
+    value === "under-review" ||
+    value === "verified" ||
+    value === "rejected" ||
+    value === "superseded"
+  ) {
+    return value;
+  }
+  throw new Error("Evidence Vault status is invalid.");
+}
+
+function parseEvidenceVaultStringArray(payload: string, label: string): string[] {
+  try {
+    const parsed = JSON.parse(payload);
+    if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
+      throw new Error("invalid array");
+    }
+    return parsed.map(sanitizePersistedText).filter(Boolean);
+  } catch {
+    throw new Error(`Evidence Vault ${label} are invalid.`);
+  }
+}
+
+function parseEvidenceVaultNonNegativeInteger(value: number, label: string): number {
+  if (Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+  throw new Error(`Evidence Vault ${label} is invalid.`);
+}
+
+function parseEvidenceVaultPositiveInteger(value: number, label: string): number {
+  if (Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  throw new Error(`Evidence Vault ${label} is invalid.`);
+}
+
+function sanitizeEvidenceVaultStringArray(values: string[], label: string): string[] {
+  if (!Array.isArray(values) || values.some((item) => typeof item !== "string")) {
+    throw new Error(`Evidence Vault ${label} are invalid.`);
+  }
+  return values.map(sanitizePersistedText).filter(Boolean);
+}
+
+function sanitizeEvidenceVaultMetadataBoundaryWarnings(
+  warnings: EvidenceVaultRecord["metadataBoundaryWarnings"]
+): EvidenceVaultRecord["metadataBoundaryWarnings"] {
+  if (!warnings) {
+    return undefined;
+  }
+  if (!Array.isArray(warnings) || warnings.some((warning) => !isMetadataBoundaryWarning(warning))) {
+    throw new Error("Evidence Vault metadata boundary warnings are invalid.");
+  }
+  const sanitizedWarnings = warnings.map(sanitizeMetadataBoundaryWarning);
+  return sanitizedWarnings.length > 0 ? sanitizedWarnings : undefined;
 }
 
 async function addColumnIfMissing(prisma: PrismaClient, tableName: string, columnName: string, definition: string): Promise<void> {
@@ -747,10 +906,13 @@ function parseStringArray(payload: string): string[] {
 function parseMetadataBoundaryWarnings(payload: string): Pick<EvidenceVaultRecord, "metadataBoundaryWarnings"> {
   try {
     const parsed = JSON.parse(payload);
-    const metadataBoundaryWarnings = Array.isArray(parsed) ? parsed.filter(isMetadataBoundaryWarning) : [];
+    if (!Array.isArray(parsed) || parsed.some((item) => !isMetadataBoundaryWarning(item))) {
+      throw new Error("invalid warnings");
+    }
+    const metadataBoundaryWarnings = parsed.map(sanitizeMetadataBoundaryWarning);
     return metadataBoundaryWarnings.length > 0 ? { metadataBoundaryWarnings } : {};
   } catch {
-    return {};
+    throw new Error("Evidence Vault metadata boundary warnings are invalid.");
   }
 }
 
@@ -760,13 +922,28 @@ function isMetadataBoundaryWarning(value: unknown): value is NonNullable<Evidenc
   }
 
   const candidate = value as Record<string, unknown>;
+  const matchCount = candidate.matchCount;
   return (
     (candidate.dataClass === "wallet-address" || candidate.dataClass === "personal-data" || candidate.dataClass === "confidential") &&
     candidate.severity === "warn" &&
-    typeof candidate.matchCount === "number" &&
+    typeof matchCount === "number" &&
+    Number.isInteger(matchCount) &&
+    matchCount >= 0 &&
     typeof candidate.redactedSnippet === "string" &&
     typeof candidate.message === "string"
   );
+}
+
+function sanitizeMetadataBoundaryWarning(
+  warning: NonNullable<EvidenceVaultRecord["metadataBoundaryWarnings"]>[number]
+): NonNullable<EvidenceVaultRecord["metadataBoundaryWarnings"]>[number] {
+  return {
+    dataClass: warning.dataClass,
+    severity: warning.severity,
+    matchCount: warning.matchCount,
+    redactedSnippet: sanitizePersistedText(warning.redactedSnippet),
+    message: sanitizePersistedText(warning.message)
+  };
 }
 
 function serializeModelGatewayRun(run: ModelGatewayRun) {
@@ -822,57 +999,203 @@ type PersistedModelGatewayRun = {
 };
 
 function deserializeModelGatewayRun(run: PersistedModelGatewayRun): ModelGatewayRun {
+  const attempt = parseModelGatewayPositiveInteger(run.attempt, "attempt");
+  const maxAttempts = parseModelGatewayPositiveInteger(run.maxAttempts, "max attempts");
+  if (attempt > maxAttempts) {
+    throw new Error("Model Gateway attempt cannot exceed max attempts.");
+  }
+
   return {
     recordVersion: "lexproof-model-gateway-run-v1",
     id: run.id,
     workspaceId: run.workspaceId,
-    provider: run.provider as ModelGatewayRun["provider"],
-    providerLabel: run.providerLabel,
-    model: run.model,
-    purpose: run.purpose,
-    status: run.status as ModelGatewayRun["status"],
-    redactionStatus: run.redactionStatus as ModelGatewayRun["redactionStatus"],
-    payloadHash: run.payloadHash,
-    responseHash: run.responseHash,
-    sourceEvidenceHash: run.sourceEvidenceHash,
+    provider: parseModelGatewayProvider(run.provider),
+    providerLabel: sanitizePersistedText(run.providerLabel),
+    model: sanitizePersistedText(run.model),
+    purpose: sanitizePersistedText(run.purpose),
+    status: parseModelGatewayRunStatus(run.status),
+    redactionStatus: parseModelGatewayRedactionStatus(run.redactionStatus),
+    payloadHash: parseModelGatewayHash(run.payloadHash, "payload hash"),
+    responseHash: parseModelGatewayHash(run.responseHash, "response hash", { allowEmpty: true }),
+    sourceEvidenceHash: parseModelGatewayHash(run.sourceEvidenceHash, "source evidence hash"),
     providerMetadata: parseModelGatewayProviderMetadata(run.providerMetadataJson),
-    humanReviewStatus: run.humanReviewStatus as ModelGatewayRun["humanReviewStatus"],
-    attempt: run.attempt,
-    maxAttempts: run.maxAttempts,
-    retryState: run.retryState as ModelGatewayRun["retryState"],
-    ...(run.errorCode ? { errorCode: run.errorCode } : {}),
-    ...(run.errorMessage ? { errorMessage: run.errorMessage } : {}),
-    remediationSteps: parseStringArray(run.remediationStepsJson),
+    humanReviewStatus: parseModelGatewayHumanReviewStatus(run.humanReviewStatus),
+    attempt,
+    maxAttempts,
+    retryState: parseModelGatewayRetryState(run.retryState),
+    ...(run.errorCode ? { errorCode: sanitizePersistedText(run.errorCode) } : {}),
+    ...(run.errorMessage ? { errorMessage: sanitizePersistedText(run.errorMessage) } : {}),
+    remediationSteps: parseModelGatewayRemediationSteps(run.remediationStepsJson),
     createdAt: run.createdAt.toISOString(),
     completedAt: run.completedAt?.toISOString(),
     notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
   };
 }
 
-function parseModelGatewayProviderMetadata(payload: string): ModelGatewayRun["providerMetadata"] {
-  const fallback: ModelGatewayRun["providerMetadata"] = {
-    adapterMode: "external-provider-placeholder",
-    credentialPolicy: "deferred until server-side secret policy is approved",
-    secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
-    allowedDataClasses: []
-  };
+function sanitizeModelGatewayRun(run: ModelGatewayRun): ModelGatewayRun {
+  const attempt = parseModelGatewayPositiveInteger(run.attempt, "attempt");
+  const maxAttempts = parseModelGatewayPositiveInteger(run.maxAttempts, "max attempts");
+  if (attempt > maxAttempts) {
+    throw new Error("Model Gateway attempt cannot exceed max attempts.");
+  }
 
+  return {
+    recordVersion: "lexproof-model-gateway-run-v1",
+    id: run.id,
+    workspaceId: run.workspaceId,
+    provider: parseModelGatewayProvider(run.provider),
+    providerLabel: sanitizePersistedText(run.providerLabel),
+    model: sanitizePersistedText(run.model),
+    purpose: sanitizePersistedText(run.purpose),
+    status: parseModelGatewayRunStatus(run.status),
+    redactionStatus: parseModelGatewayRedactionStatus(run.redactionStatus),
+    payloadHash: parseModelGatewayHash(run.payloadHash, "payload hash"),
+    responseHash: parseModelGatewayHash(run.responseHash, "response hash", { allowEmpty: true }),
+    sourceEvidenceHash: parseModelGatewayHash(run.sourceEvidenceHash, "source evidence hash"),
+    providerMetadata: sanitizeModelGatewayProviderMetadata(run.providerMetadata),
+    humanReviewStatus: parseModelGatewayHumanReviewStatus(run.humanReviewStatus),
+    attempt,
+    maxAttempts,
+    retryState: parseModelGatewayRetryState(run.retryState),
+    ...(run.errorCode ? { errorCode: sanitizePersistedText(run.errorCode) } : {}),
+    ...(run.errorMessage ? { errorMessage: sanitizePersistedText(run.errorMessage) } : {}),
+    remediationSteps: sanitizeModelGatewayRemediationSteps(run.remediationSteps),
+    createdAt: run.createdAt,
+    ...(run.completedAt ? { completedAt: run.completedAt } : {}),
+    notLegalAdviceBoundary: "AI-assisted draft for audit preparation only. Not legal advice."
+  };
+}
+
+function parseModelGatewayProvider(value: string): ModelGatewayRun["provider"] {
+  if (value === "mock" || value === "openai-compatible" || value === "enterprise-proxy") {
+    return value;
+  }
+  throw new Error("Model Gateway provider is invalid.");
+}
+
+function parseModelGatewayRunStatus(value: string): ModelGatewayRun["status"] {
+  if (value === "queued" || value === "blocked" || value === "completed" || value === "failed") {
+    return value;
+  }
+  throw new Error("Model Gateway run status is invalid.");
+}
+
+function parseModelGatewayRedactionStatus(value: string): ModelGatewayRun["redactionStatus"] {
+  if (value === "clean" || value === "needs-review" || value === "blocked") {
+    return value;
+  }
+  throw new Error("Model Gateway redaction status is invalid.");
+}
+
+function parseModelGatewayHumanReviewStatus(value: string): ModelGatewayRun["humanReviewStatus"] {
+  if (value === "not-required" || value === "needs-review" || value === "reviewed" || value === "rejected") {
+    return value;
+  }
+  throw new Error("Model Gateway human review status is invalid.");
+}
+
+function parseModelGatewayRetryState(value: string): ModelGatewayRun["retryState"] {
+  if (
+    value === "not-needed" ||
+    value === "retry-available" ||
+    value === "blocked-until-remediated" ||
+    value === "blocked-until-policy-change"
+  ) {
+    return value;
+  }
+  throw new Error("Model Gateway retry state is invalid.");
+}
+
+function parseModelGatewayHash(value: string, label: string, options: { allowEmpty?: boolean } = {}): string {
+  if (options.allowEmpty && value === "") {
+    return "";
+  }
+  if (/^[a-f0-9]{64}$/.test(value)) {
+    return value;
+  }
+  throw new Error(`Model Gateway ${label} is invalid.`);
+}
+
+function parseModelGatewayPositiveInteger(value: number, label: string): number {
+  if (Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  throw new Error(`Model Gateway ${label} is invalid.`);
+}
+
+function sanitizeModelGatewayRemediationSteps(steps: string[]): string[] {
+  if (!Array.isArray(steps) || steps.some((item) => typeof item !== "string")) {
+    throw new Error("Model Gateway remediation steps are invalid.");
+  }
+  return steps.map(sanitizePersistedText).filter(Boolean);
+}
+
+function parseModelGatewayRemediationSteps(payload: string): string[] {
+  try {
+    const parsed = JSON.parse(payload);
+    if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
+      throw new Error("invalid remediation steps");
+    }
+    return parsed.map(sanitizePersistedText).filter(Boolean);
+  } catch {
+    throw new Error("Model Gateway remediation steps are invalid.");
+  }
+}
+
+function parseModelGatewayProviderMetadata(payload: string): ModelGatewayRun["providerMetadata"] {
   try {
     const parsed = JSON.parse(payload) as Partial<ModelGatewayRun["providerMetadata"]>;
+    const adapterMode = parseModelGatewayAdapterMode(parsed.adapterMode);
+    const credentialPolicy = parseModelGatewayCredentialPolicy(parsed.credentialPolicy);
+    const allowedDataClasses = Array.isArray(parsed.allowedDataClasses)
+      ? parsed.allowedDataClasses.filter((item): item is string => typeof item === "string").map(sanitizePersistedText).filter(Boolean)
+      : undefined;
+    if (!allowedDataClasses) {
+      throw new Error("Model Gateway provider metadata allowed data classes are invalid.");
+    }
     return {
-      adapterMode: parsed.adapterMode === "local-mock" ? "local-mock" : "external-provider-placeholder",
-      credentialPolicy:
-        parsed.credentialPolicy === "no credentials accepted"
-          ? "no credentials accepted"
-          : "deferred until server-side secret policy is approved",
+      adapterMode,
+      credentialPolicy,
       secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
-      allowedDataClasses: Array.isArray(parsed.allowedDataClasses)
-        ? parsed.allowedDataClasses.filter((item): item is string => typeof item === "string")
-        : []
+      allowedDataClasses
     };
   } catch {
-    return fallback;
+    throw new Error("Model Gateway provider metadata is invalid.");
   }
+}
+
+function sanitizeModelGatewayProviderMetadata(
+  metadata: ModelGatewayRun["providerMetadata"]
+): ModelGatewayRun["providerMetadata"] {
+  try {
+    const adapterMode = parseModelGatewayAdapterMode(metadata.adapterMode);
+    const credentialPolicy = parseModelGatewayCredentialPolicy(metadata.credentialPolicy);
+    if (!Array.isArray(metadata.allowedDataClasses) || metadata.allowedDataClasses.some((item) => typeof item !== "string")) {
+      throw new Error("Model Gateway provider metadata allowed data classes are invalid.");
+    }
+    return {
+      adapterMode,
+      credentialPolicy,
+      secretPolicy: "No model provider secrets are accepted or persisted by the server gateway.",
+      allowedDataClasses: metadata.allowedDataClasses.map(sanitizePersistedText).filter(Boolean)
+    };
+  } catch {
+    throw new Error("Model Gateway provider metadata is invalid.");
+  }
+}
+
+function parseModelGatewayAdapterMode(value: unknown): ModelGatewayRun["providerMetadata"]["adapterMode"] {
+  if (value === "local-mock" || value === "external-provider-placeholder") {
+    return value;
+  }
+  throw new Error("Model Gateway provider metadata adapter mode is invalid.");
+}
+
+function parseModelGatewayCredentialPolicy(value: unknown): ModelGatewayRun["providerMetadata"]["credentialPolicy"] {
+  if (value === "no credentials accepted" || value === "deferred until server-side secret policy is approved") {
+    return value;
+  }
+  throw new Error("Model Gateway provider metadata credential policy is invalid.");
 }
 
 function serializeHumanReviewRecord(record: HumanReviewRecord) {
@@ -908,15 +1231,53 @@ function deserializeHumanReviewRecord(record: PersistedHumanReviewRecord): Human
     recordVersion: "lexproof-human-review-record-v1",
     id: record.id,
     workspaceId: record.workspaceId,
-    targetType: record.targetType as HumanReviewRecord["targetType"],
-    targetId: record.targetId,
-    reviewerId: record.reviewerId,
-    status: record.status as HumanReviewRecord["status"],
-    comment: record.comment,
+    targetType: parseHumanReviewTargetType(record.targetType),
+    targetId: sanitizePersistedText(record.targetId),
+    reviewerId: sanitizePersistedText(record.reviewerId),
+    status: parseHumanReviewStatus(record.status),
+    comment: sanitizePersistedText(record.comment),
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
   };
+}
+
+function sanitizeHumanReviewRecord(record: HumanReviewRecord): HumanReviewRecord {
+  return {
+    ...record,
+    targetType: parseHumanReviewTargetType(record.targetType),
+    targetId: sanitizePersistedText(record.targetId),
+    reviewerId: sanitizePersistedText(record.reviewerId),
+    status: parseHumanReviewStatus(record.status),
+    comment: sanitizePersistedText(record.comment),
+    notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+  };
+}
+
+function parseHumanReviewTargetType(value: string): HumanReviewRecord["targetType"] {
+  if (
+    value === "risk-flag" ||
+    value === "evidence" ||
+    value === "model-run" ||
+    value === "clause-match" ||
+    value === "counsel-pack"
+  ) {
+    return value;
+  }
+  throw new Error("Human review target type is invalid.");
+}
+
+function parseHumanReviewStatus(value: string): HumanReviewRecord["status"] {
+  if (
+    value === "requested" ||
+    value === "under-review" ||
+    value === "reviewed" ||
+    value === "rejected" ||
+    value === "needs-more-evidence"
+  ) {
+    return value;
+  }
+  throw new Error("Human review status is invalid.");
 }
 
 function serializeCounselPackExportRecord(record: CounselPackExportRecord) {
@@ -974,50 +1335,69 @@ function deserializeCounselPackExportRecord(record: PersistedCounselPackExportRe
     recordVersion: "lexproof-counsel-pack-export-record-v1",
     id: record.id,
     workspaceId: record.workspaceId,
-    exportType: "counsel-pack",
-    format: record.format as CounselPackExportRecord["format"],
-    version: record.version,
-    projectName: record.projectName,
-    title: record.title,
-    artifactName: record.artifactName,
-    manifestHash: record.manifestHash,
-    artifactHash: record.artifactHash,
-    artifactSize: record.artifactSize,
-    riskLevel: record.riskLevel as CounselPackExportRecord["riskLevel"],
+    exportType: parseCounselPackExportType(record.exportType),
+    format: parseCounselPackExportFormat(record.format),
+    version: parseCounselPackExportPositiveInteger(record.version, "version"),
+    projectName: sanitizePersistedText(record.projectName),
+    title: sanitizePersistedText(record.title),
+    artifactName: sanitizePersistedText(record.artifactName),
+    manifestHash: parseSha256Hex(record.manifestHash, "Counsel Pack export manifest hash"),
+    artifactHash: parseSha256Hex(record.artifactHash, "Counsel Pack export artifact hash"),
+    artifactSize: parseCounselPackExportPositiveInteger(record.artifactSize, "artifact size"),
+    riskLevel: parseCounselPackExportRiskLevel(record.riskLevel),
     reviewSummary: parseCounselPackExportReviewSummary(record.reviewSummaryJson),
-    sourceCount: record.sourceCount,
-    sourcePackHash: record.sourcePackHash ?? "",
+    sourceCount: parseCounselPackExportCount(record.sourceCount, "source count"),
+    sourcePackHash: parseSha256Hex(record.sourcePackHash ?? "", "Counsel Pack export source pack hash"),
     sourceReviewStatus: parseCounselPackExportSourceReviewStatus(record.sourceReviewStatus),
     ...parseCounselPackExportJurisdictionReadinessDigest(record.jurisdictionReadinessDigestJson),
-    createdBy: record.createdBy,
-    status: "ready",
+    createdBy: sanitizePersistedText(record.createdBy),
+    status: parseCounselPackExportStatus(record.status),
     createdAt: record.createdAt.toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."
   };
 }
 
-function parseCounselPackExportReviewSummary(payload: string): CounselPackExportRecord["reviewSummary"] {
-  const fallback: CounselPackExportRecord["reviewSummary"] = {
-    total: 0,
-    reviewed: 0,
-    readyForCounsel: 0,
-    needsEvidence: 0,
-    blocked: 0,
-    open: 0
-  };
+function parseCounselPackExportType(value: string): CounselPackExportRecord["exportType"] {
+  if (value === "counsel-pack") {
+    return value;
+  }
+  throw new Error("Counsel Pack export type is invalid.");
+}
 
+function parseCounselPackExportFormat(value: string): CounselPackExportRecord["format"] {
+  if (value === "markdown" || value === "print-pdf") {
+    return value;
+  }
+  throw new Error("Counsel Pack export format is invalid.");
+}
+
+function parseCounselPackExportRiskLevel(value: string): CounselPackExportRecord["riskLevel"] {
+  if (value === "low" || value === "moderate" || value === "high" || value === "critical") {
+    return value;
+  }
+  throw new Error("Counsel Pack export risk level is invalid.");
+}
+
+function parseCounselPackExportStatus(value: string): CounselPackExportRecord["status"] {
+  if (value === "ready") {
+    return value;
+  }
+  throw new Error("Counsel Pack export status is invalid.");
+}
+
+function parseCounselPackExportReviewSummary(payload: string): CounselPackExportRecord["reviewSummary"] {
   try {
     const parsed = JSON.parse(payload) as Partial<CounselPackExportRecord["reviewSummary"]>;
     return {
-      total: Number(parsed.total ?? fallback.total),
-      reviewed: Number(parsed.reviewed ?? fallback.reviewed),
-      readyForCounsel: Number(parsed.readyForCounsel ?? fallback.readyForCounsel),
-      needsEvidence: Number(parsed.needsEvidence ?? fallback.needsEvidence),
-      blocked: Number(parsed.blocked ?? fallback.blocked),
-      open: Number(parsed.open ?? fallback.open)
+      total: parseCounselPackExportCount(parsed.total, "review summary total"),
+      reviewed: parseCounselPackExportCount(parsed.reviewed, "review summary reviewed count"),
+      readyForCounsel: parseCounselPackExportCount(parsed.readyForCounsel, "review summary ready for counsel count"),
+      needsEvidence: parseCounselPackExportCount(parsed.needsEvidence, "review summary needs evidence count"),
+      blocked: parseCounselPackExportCount(parsed.blocked, "review summary blocked count"),
+      open: parseCounselPackExportCount(parsed.open, "review summary open count")
     };
   } catch {
-    return fallback;
+    throw new Error("Counsel Pack export review summary is invalid.");
   }
 }
 
@@ -1030,29 +1410,44 @@ function parseCounselPackExportJurisdictionReadinessDigest(
 
   try {
     const parsed = JSON.parse(payload) as Partial<NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]> | null>;
-    if (!parsed?.digestHash) {
+    if (parsed === null) {
       return {};
     }
 
     return {
       jurisdictionReadinessDigest: {
-        digestHash: String(parsed.digestHash),
+        digestHash: parseSha256Hex(parsed.digestHash, "Counsel Pack export jurisdiction readiness digest hash"),
         status: parseCounselPackExportJurisdictionReadinessStatus(parsed.status),
-        handoffAllowed: Boolean(parsed.handoffAllowed),
-        jurisdictionCount: Number(parsed.jurisdictionCount ?? 0),
-        readyForCounselCount: Number(parsed.readyForCounselCount ?? 0),
-        needsEvidenceCount: Number(parsed.needsEvidenceCount ?? 0),
-        needsSourceReviewCount: Number(parsed.needsSourceReviewCount ?? 0),
-        metadataMissingCount: Number(parsed.metadataMissingCount ?? 0),
-        openEvidenceRequestCount: Number(parsed.openEvidenceRequestCount ?? 0),
-        sourceFreshnessBlockerCount: Number(parsed.sourceFreshnessBlockerCount ?? 0),
-        dueSoonSourceCount: Number(parsed.dueSoonSourceCount ?? 0),
+        handoffAllowed: parseCounselPackExportBoolean(parsed.handoffAllowed, "jurisdiction readiness handoff allowed"),
+        jurisdictionCount: parseCounselPackExportCount(parsed.jurisdictionCount, "jurisdiction readiness jurisdiction count"),
+        readyForCounselCount: parseCounselPackExportCount(
+          parsed.readyForCounselCount,
+          "jurisdiction readiness ready for counsel count"
+        ),
+        needsEvidenceCount: parseCounselPackExportCount(parsed.needsEvidenceCount, "jurisdiction readiness needs evidence count"),
+        needsSourceReviewCount: parseCounselPackExportCount(
+          parsed.needsSourceReviewCount,
+          "jurisdiction readiness needs source review count"
+        ),
+        metadataMissingCount: parseCounselPackExportCount(
+          parsed.metadataMissingCount,
+          "jurisdiction readiness metadata missing count"
+        ),
+        openEvidenceRequestCount: parseCounselPackExportCount(
+          parsed.openEvidenceRequestCount,
+          "jurisdiction readiness open evidence request count"
+        ),
+        sourceFreshnessBlockerCount: parseCounselPackExportCount(
+          parsed.sourceFreshnessBlockerCount,
+          "jurisdiction readiness source freshness blocker count"
+        ),
+        dueSoonSourceCount: parseCounselPackExportCount(parsed.dueSoonSourceCount, "jurisdiction readiness due soon source count"),
         notLegalAdviceBoundary:
           "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
       }
     };
   } catch {
-    return {};
+    throw new Error("Counsel Pack export jurisdiction readiness digest is invalid.");
   }
 }
 
@@ -1068,14 +1463,42 @@ function parseCounselPackExportJurisdictionReadinessStatus(
   ) {
     return value;
   }
-  return "metadata-missing";
+  throw new Error("Counsel Pack export jurisdiction readiness status is invalid.");
 }
 
 function parseCounselPackExportSourceReviewStatus(value: string | null | undefined): CounselPackExportRecord["sourceReviewStatus"] {
   if (value === "current" || value === "review-due" || value === "metadata-missing") {
     return value;
   }
-  return "metadata-missing";
+  throw new Error("Counsel Pack export source review status is invalid.");
+}
+
+function parseCounselPackExportPositiveInteger(value: unknown, label: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  throw new Error(`Counsel Pack export ${label} is invalid.`);
+}
+
+function parseCounselPackExportCount(value: unknown, label: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+  throw new Error(`Counsel Pack export ${label} is invalid.`);
+}
+
+function parseCounselPackExportBoolean(value: unknown, label: string): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  throw new Error(`Counsel Pack export ${label} is invalid.`);
+}
+
+function parseSha256Hex(value: unknown, label: string): string {
+  if (typeof value === "string" && /^[a-f0-9]{64}$/.test(value)) {
+    return value;
+  }
+  throw new Error(`${label} is invalid.`);
 }
 
 function serializeIntegrationPolicyEvaluationRecord(record: IntegrationPolicyEvaluationRecord) {
@@ -1128,19 +1551,30 @@ function deserializeIntegrationPolicyEvaluationRecord(
     id: record.id,
     workspaceId: record.workspaceId,
     policyId: parseIntegrationPolicyId(record.policyId),
-    reportVersion: record.reportVersion,
+    reportVersion: sanitizePersistedText(record.reportVersion),
     overallStatus: parseIntegrationPolicyStatus(record.overallStatus),
-    approvedControlCount: record.approvedControlCount,
-    requiredControlCount: record.requiredControlCount,
-    externalCapabilityAllowed: false,
-    externalCapabilityStatus: record.externalCapabilityStatus,
-    reportHash: record.reportHash,
-    contextHash: record.contextHash,
-    policyHash: record.policyHash,
-    evaluatorId: record.evaluatorId,
-    source: "server",
+    approvedControlCount: parseIntegrationPolicyCount(record.approvedControlCount, "approved control count"),
+    requiredControlCount: parseIntegrationPolicyCount(record.requiredControlCount, "required control count"),
+    externalCapabilityAllowed: parseIntegrationPolicyExternalCapabilityAllowed(record.externalCapabilityAllowed),
+    externalCapabilityStatus: sanitizePersistedText(record.externalCapabilityStatus),
+    reportHash: parseSha256Hex(record.reportHash, "Integration policy report hash"),
+    contextHash: parseSha256Hex(record.contextHash, "Integration policy context hash"),
+    policyHash: parseSha256Hex(record.policyHash, "Integration policy policy hash"),
+    evaluatorId: sanitizePersistedText(record.evaluatorId) || "Integration policy evaluator",
+    source: parseIntegrationPolicySource(record.source),
     createdAt: record.createdAt.toISOString(),
-    nextActions: parseStringArray(record.nextActionsJson),
+    nextActions: parseIntegrationPolicyNextActions(record.nextActionsJson),
+    notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+  };
+}
+
+function sanitizeIntegrationPolicyEvaluationRecord(record: IntegrationPolicyEvaluationRecord): IntegrationPolicyEvaluationRecord {
+  return {
+    ...record,
+    reportVersion: sanitizePersistedText(record.reportVersion),
+    externalCapabilityStatus: sanitizePersistedText(record.externalCapabilityStatus),
+    evaluatorId: sanitizePersistedText(record.evaluatorId) || "Integration policy evaluator",
+    nextActions: record.nextActions.map(sanitizePersistedText).filter(Boolean),
     notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
   };
 }
@@ -1149,14 +1583,58 @@ function parseIntegrationPolicyId(value: string): IntegrationPolicyEvaluationRec
   if (value === "object-storage" || value === "document-parser" || value === "chain-anchor" || value === "grc-destination") {
     return value;
   }
-  return "object-storage";
+  throw new Error("Integration policy id is invalid.");
 }
 
 function parseIntegrationPolicyStatus(value: string): IntegrationPolicyEvaluationRecord["overallStatus"] {
   if (value === "ready" || value === "needs-policy" || value === "blocked") {
     return value;
   }
-  return "blocked";
+  throw new Error("Integration policy status is invalid.");
+}
+
+function parseIntegrationPolicyCount(value: number, label: string): number {
+  if (Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+  throw new Error(`Integration policy ${label} is invalid.`);
+}
+
+function parseIntegrationPolicyExternalCapabilityAllowed(
+  value: boolean
+): IntegrationPolicyEvaluationRecord["externalCapabilityAllowed"] {
+  if (value === false) {
+    return value;
+  }
+  throw new Error("Integration policy external capability flag is invalid.");
+}
+
+function parseIntegrationPolicySource(value: string): IntegrationPolicyEvaluationRecord["source"] {
+  if (value === "server") {
+    return value;
+  }
+  throw new Error("Integration policy source is invalid.");
+}
+
+function parseIntegrationPolicyNextActions(payload: string): string[] {
+  try {
+    const parsed = JSON.parse(payload);
+    if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
+      throw new Error("invalid next actions");
+    }
+    return parsed.map(sanitizePersistedText).filter(Boolean);
+  } catch {
+    throw new Error("Integration policy next actions are invalid.");
+  }
+}
+
+function sanitizePersistedText(value: string): string {
+  return redactClassifiedText(String(value ?? "").replace(/\s+/g, " ").trim());
+}
+
+function sanitizeOptionalPersistedText(value: string | null | undefined): string | undefined {
+  const sanitized = sanitizePersistedText(value ?? "");
+  return sanitized ? sanitized : undefined;
 }
 
 function serializeRegulatorySourceApprovalRecord(record: RegulatorySourceApprovalRecord) {
@@ -1222,30 +1700,89 @@ function deserializeRegulatorySourceApprovalRecord(
     recordVersion: "lexproof-source-approval-record-v1",
     id: record.id,
     workspaceId: record.workspaceId,
-    queueHash: record.queueHash,
-    sourceApprovalItemId: record.sourceApprovalItemId,
-    clauseId: record.clauseId,
-    jurisdiction: record.jurisdiction,
-    regulator: record.regulator,
-    citation: record.citation,
-    sourceName: record.sourceName,
-    sourceUrl: record.sourceUrl,
-    priority: record.priority as RegulatorySourceApprovalRecord["priority"],
-    approvalStatus: record.approvalStatus as RegulatorySourceApprovalRecord["approvalStatus"],
-    reviewStatus: record.reviewStatus as RegulatorySourceApprovalRecord["reviewStatus"],
-    effectiveAsOf: record.effectiveAsOf,
-    lastReviewedAt: record.lastReviewedAt,
-    nextReviewDueAt: record.nextReviewDueAt,
-    reviewerNotes: record.reviewerNotes,
-    nextAction: record.nextAction,
+    queueHash: parseSha256Hex(record.queueHash, "Source approval queue hash"),
+    sourceApprovalItemId: sanitizePersistedText(record.sourceApprovalItemId),
+    clauseId: sanitizePersistedText(record.clauseId),
+    jurisdiction: sanitizePersistedText(record.jurisdiction),
+    regulator: sanitizePersistedText(record.regulator),
+    citation: sanitizePersistedText(record.citation),
+    sourceName: sanitizePersistedText(record.sourceName),
+    sourceUrl: sanitizePersistedText(record.sourceUrl),
+    priority: parseRegulatorySourceApprovalPriority(record.priority),
+    approvalStatus: parseRegulatorySourceApprovalStatus(record.approvalStatus),
+    reviewStatus: parseRegulatorySourceApprovalReviewStatus(record.reviewStatus),
+    effectiveAsOf: sanitizePersistedText(record.effectiveAsOf),
+    lastReviewedAt: sanitizePersistedText(record.lastReviewedAt),
+    nextReviewDueAt: sanitizePersistedText(record.nextReviewDueAt),
+    reviewerNotes: sanitizePersistedText(record.reviewerNotes),
+    nextAction: sanitizePersistedText(record.nextAction),
     approvalGate:
       "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
-    status: "pending-review",
-    matchingBehaviorChanged: false,
-    createdBy: record.createdBy,
+    status: parseRegulatorySourceApprovalRecordStatus(record.status),
+    matchingBehaviorChanged: parseRegulatorySourceApprovalMatchingBehaviorChanged(record.matchingBehaviorChanged),
+    createdBy: sanitizePersistedText(record.createdBy),
     createdAt: record.createdAt.toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
   };
+}
+
+function sanitizeRegulatorySourceApprovalRecord(record: RegulatorySourceApprovalRecord): RegulatorySourceApprovalRecord {
+  return {
+    ...record,
+    sourceApprovalItemId: sanitizePersistedText(record.sourceApprovalItemId),
+    clauseId: sanitizePersistedText(record.clauseId),
+    jurisdiction: sanitizePersistedText(record.jurisdiction),
+    regulator: sanitizePersistedText(record.regulator),
+    citation: sanitizePersistedText(record.citation),
+    sourceName: sanitizePersistedText(record.sourceName),
+    sourceUrl: sanitizePersistedText(record.sourceUrl),
+    effectiveAsOf: sanitizePersistedText(record.effectiveAsOf),
+    lastReviewedAt: sanitizePersistedText(record.lastReviewedAt),
+    nextReviewDueAt: sanitizePersistedText(record.nextReviewDueAt),
+    reviewerNotes: sanitizePersistedText(record.reviewerNotes),
+    nextAction: sanitizePersistedText(record.nextAction),
+    approvalGate: "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
+    matchingBehaviorChanged: false,
+    createdBy: sanitizePersistedText(record.createdBy),
+    notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
+  };
+}
+
+function parseRegulatorySourceApprovalPriority(value: string): RegulatorySourceApprovalRecord["priority"] {
+  if (value === "P0" || value === "P1") {
+    return value;
+  }
+  throw new Error("Source approval priority is invalid.");
+}
+
+function parseRegulatorySourceApprovalStatus(value: string): RegulatorySourceApprovalRecord["approvalStatus"] {
+  if (value === "approval-required" || value === "metadata-required") {
+    return value;
+  }
+  throw new Error("Source approval status is invalid.");
+}
+
+function parseRegulatorySourceApprovalReviewStatus(value: string): RegulatorySourceApprovalRecord["reviewStatus"] {
+  if (value === "current" || value === "review-due" || value === "metadata-missing") {
+    return value;
+  }
+  throw new Error("Source review status is invalid.");
+}
+
+function parseRegulatorySourceApprovalRecordStatus(value: string): RegulatorySourceApprovalRecord["status"] {
+  if (value === "pending-review") {
+    return value;
+  }
+  throw new Error("Source approval record status is invalid.");
+}
+
+function parseRegulatorySourceApprovalMatchingBehaviorChanged(
+  value: boolean
+): RegulatorySourceApprovalRecord["matchingBehaviorChanged"] {
+  if (value === false) {
+    return value;
+  }
+  throw new Error("Source approval matching behavior changed flag is invalid.");
 }
 
 function serializeRegulatorySourceReviewRecord(record: RegulatorySourceReviewRecord) {
@@ -1305,25 +1842,46 @@ function deserializeRegulatorySourceReviewRecord(record: PersistedRegulatorySour
     recordVersion: "lexproof-source-review-record-v1",
     id: record.id,
     workspaceId: record.workspaceId,
-    ledgerHash: record.ledgerHash,
-    sourceReviewItemId: record.sourceReviewItemId,
-    clauseId: record.clauseId,
-    jurisdiction: record.jurisdiction,
-    regulator: record.regulator,
-    citation: record.citation,
-    sourceName: record.sourceName,
-    sourceUrl: record.sourceUrl,
+    ledgerHash: parseSha256Hex(record.ledgerHash, "Source review ledger hash"),
+    sourceReviewItemId: sanitizePersistedText(record.sourceReviewItemId),
+    clauseId: sanitizePersistedText(record.clauseId),
+    jurisdiction: sanitizePersistedText(record.jurisdiction),
+    regulator: sanitizePersistedText(record.regulator),
+    citation: sanitizePersistedText(record.citation),
+    sourceName: sanitizePersistedText(record.sourceName),
+    sourceUrl: sanitizePersistedText(record.sourceUrl),
     reviewStatus: parseRegulatorySourceReviewStatus(record.reviewStatus),
     priority: parseRegulatorySourceReviewPriority(record.priority),
-    effectiveAsOf: record.effectiveAsOf,
-    lastReviewedAt: record.lastReviewedAt,
-    nextReviewDueAt: record.nextReviewDueAt,
-    reviewerNotes: record.reviewerNotes,
-    nextAction: record.nextAction,
+    effectiveAsOf: sanitizePersistedText(record.effectiveAsOf),
+    lastReviewedAt: sanitizePersistedText(record.lastReviewedAt),
+    nextReviewDueAt: sanitizePersistedText(record.nextReviewDueAt),
+    reviewerNotes: sanitizePersistedText(record.reviewerNotes),
+    nextAction: sanitizePersistedText(record.nextAction),
     status: parseRegulatorySourceReviewRecordStatus(record.status),
-    matchingBehaviorChanged: false,
-    createdBy: record.createdBy,
+    matchingBehaviorChanged: parseRegulatorySourceReviewMatchingBehaviorChanged(record.matchingBehaviorChanged),
+    createdBy: sanitizePersistedText(record.createdBy),
     createdAt: record.createdAt.toISOString(),
+    notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only."
+  };
+}
+
+function sanitizeRegulatorySourceReviewRecord(record: RegulatorySourceReviewRecord): RegulatorySourceReviewRecord {
+  return {
+    ...record,
+    sourceReviewItemId: sanitizePersistedText(record.sourceReviewItemId),
+    clauseId: sanitizePersistedText(record.clauseId),
+    jurisdiction: sanitizePersistedText(record.jurisdiction),
+    regulator: sanitizePersistedText(record.regulator),
+    citation: sanitizePersistedText(record.citation),
+    sourceName: sanitizePersistedText(record.sourceName),
+    sourceUrl: sanitizePersistedText(record.sourceUrl),
+    effectiveAsOf: sanitizePersistedText(record.effectiveAsOf),
+    lastReviewedAt: sanitizePersistedText(record.lastReviewedAt),
+    nextReviewDueAt: sanitizePersistedText(record.nextReviewDueAt),
+    reviewerNotes: sanitizePersistedText(record.reviewerNotes),
+    nextAction: sanitizePersistedText(record.nextAction),
+    matchingBehaviorChanged: false,
+    createdBy: sanitizePersistedText(record.createdBy),
     notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only."
   };
 }
@@ -1332,21 +1890,30 @@ function parseRegulatorySourceReviewStatus(value: string): RegulatorySourceRevie
   if (value === "current" || value === "review-due" || value === "metadata-missing") {
     return value;
   }
-  return "metadata-missing";
+  throw new Error("Source review status is invalid.");
 }
 
 function parseRegulatorySourceReviewPriority(value: string): RegulatorySourceReviewRecord["priority"] {
   if (value === "P0" || value === "P1" || value === "P2") {
     return value;
   }
-  return "P1";
+  throw new Error("Source review priority is invalid.");
 }
 
 function parseRegulatorySourceReviewRecordStatus(value: string): RegulatorySourceReviewRecord["status"] {
   if (value === "current" || value === "pending-review" || value === "metadata-needed") {
     return value;
   }
-  return "pending-review";
+  throw new Error("Source review record status is invalid.");
+}
+
+function parseRegulatorySourceReviewMatchingBehaviorChanged(
+  value: boolean
+): RegulatorySourceReviewRecord["matchingBehaviorChanged"] {
+  if (value === false) {
+    return value;
+  }
+  throw new Error("Source review matching behavior changed flag is invalid.");
 }
 
 function serializeAuditLogRecord(record: AuditLogRecord) {
@@ -1384,14 +1951,52 @@ function deserializeAuditLogRecord(record: PersistedAuditLogRecord): AuditLogRec
     recordVersion: "lexproof-audit-log-record-v1",
     id: record.id,
     workspaceId: record.workspaceId,
-    actorId: record.actorId,
-    action: record.action,
-    targetType: record.targetType as AuditLogRecord["targetType"],
-    targetId: record.targetId,
-    beforeHash: record.beforeHash,
-    afterHash: record.afterHash,
-    summary: record.summary,
+    actorId: sanitizePersistedText(record.actorId),
+    action: sanitizePersistedText(record.action),
+    targetType: parseAuditLogTargetType(record.targetType),
+    targetId: sanitizePersistedText(record.targetId),
+    beforeHash: sanitizePersistedAuditLogHash(record.beforeHash),
+    afterHash: sanitizePersistedAuditLogHash(record.afterHash),
+    summary: sanitizePersistedText(record.summary),
     createdAt: record.createdAt.toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
   };
+}
+
+function sanitizeAuditLogRecord(record: AuditLogRecord): AuditLogRecord {
+  return {
+    ...record,
+    actorId: sanitizePersistedText(record.actorId),
+    action: sanitizePersistedText(record.action),
+    targetType: parseAuditLogTargetType(record.targetType),
+    targetId: sanitizePersistedText(record.targetId),
+    beforeHash: sanitizePersistedAuditLogHash(record.beforeHash),
+    afterHash: sanitizePersistedAuditLogHash(record.afterHash),
+    summary: sanitizePersistedText(record.summary),
+    notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
+  };
+}
+
+function parseAuditLogTargetType(value: string): AuditLogRecord["targetType"] {
+  if (
+    value === "workspace" ||
+    value === "evidence" ||
+    value === "model-run" ||
+    value === "human-review" ||
+    value === "export" ||
+    value === "source-approval" ||
+    value === "source-review" ||
+    value === "integration-policy"
+  ) {
+    return value;
+  }
+  throw new Error("Audit log target type is invalid.");
+}
+
+function sanitizePersistedAuditLogHash(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    return "";
+  }
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : sanitizePersistedText(value);
 }

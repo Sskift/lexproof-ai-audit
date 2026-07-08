@@ -52,6 +52,26 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/evidence-lineage-digest",
+        domain: "evidence-vault",
+        requestContract: "EvidenceVaultLineageDigestRequest",
+        responseContract: "EvidenceVaultLineageDigest",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/source-reviews/packet",
+        domain: "source-reviews",
+        requestContract: "ServerSourceReviewPacketRequest",
+        responseContract: "ServerRegulatorySourceReviewPacket",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "POST",
         path: "/api/workspaces/:workspaceId/evidence/:evidenceId/replacement",
         domain: "evidence-vault",
@@ -145,6 +165,16 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/model-runs/recovery",
+        domain: "model-gateway",
+        requestContract: "ModelGatewayRunRecoveryRequest",
+        responseContract: "ModelGatewayRunRecoveryPacket",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "POST",
         path: "/api/workspaces/:workspaceId/reviews",
         domain: "human-review",
@@ -173,6 +203,16 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/source-approvals/packet",
+        domain: "source-approvals",
+        requestContract: "ServerSourceApprovalPacketRequest",
+        responseContract: "ServerRegulatorySourceApprovalPacket",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "POST",
         path: "/api/workspaces/:workspaceId/source-reviews",
         domain: "source-reviews",
@@ -188,6 +228,16 @@ describe("Phase 2 backend API contracts", () => {
         domain: "source-reviews",
         requestContract: "SourceReviewListRequest",
         responseContract: "RegulatorySourceReviewRecord[]",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle",
+        domain: "integrations",
+        requestContract: "IntegrationPolicyEvaluationReceiptBundleRequest",
+        responseContract: "IntegrationPolicyEvaluationReceiptBundle",
         implemented: true
       })
     );
@@ -210,6 +260,16 @@ describe("Phase 2 backend API contracts", () => {
     );
     expect(routes).toContainEqual(
       expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/audit-log/export",
+        domain: "audit-log",
+        requestContract: "AuditLogExportRequest",
+        responseContract: "AuditLogExportRecord",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
         method: "POST",
         path: "/api/workspaces/:workspaceId/exports/counsel-pack",
         domain: "exports",
@@ -224,6 +284,16 @@ describe("Phase 2 backend API contracts", () => {
         domain: "exports",
         implemented: true,
         responseContract: "CounselPackExportRecord[]"
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
+        path: "/api/workspaces/:workspaceId/exports/counsel-pack/recovery",
+        domain: "exports",
+        requestContract: "CounselPackExportRecoveryRequest",
+        responseContract: "CounselPackExportRecoveryPacket",
+        implemented: true
       })
     );
     expect(routes.every((route) => route.notLegalAdviceBoundary.includes("Not legal advice"))).toBe(true);

@@ -21,6 +21,7 @@ import {
   type ObjectStoragePolicyDraft
 } from "../src/lib/objectStoragePolicy.js";
 import {
+  createIntegrationPolicyEvaluationReceiptBundle,
   createIntegrationPolicyEvaluationRecord,
   type IntegrationPolicyEvaluationReport,
   type IntegrationPolicyEvaluationRecord,
@@ -30,29 +31,13 @@ import { createAuditLogRecord } from "../src/lib/phase2Types.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
 
-type ObjectStoragePolicyRequestBody = {
-  context?: unknown;
-  policy?: unknown;
-  actorId?: unknown;
-};
+type ObjectStoragePolicyRequestBody = unknown;
 
-type DocumentParserPolicyRequestBody = {
-  context?: unknown;
-  policy?: unknown;
-  actorId?: unknown;
-};
+type DocumentParserPolicyRequestBody = unknown;
 
-type ChainAnchorPolicyRequestBody = {
-  context?: unknown;
-  policy?: unknown;
-  actorId?: unknown;
-};
+type ChainAnchorPolicyRequestBody = unknown;
 
-type GrcDestinationPolicyRequestBody = {
-  context?: unknown;
-  policy?: unknown;
-  actorId?: unknown;
-};
+type GrcDestinationPolicyRequestBody = unknown;
 
 type IntegrationPolicyRequestPayload = {
   context: Record<string, unknown>;
@@ -66,6 +51,7 @@ type IntegrationPolicyRoutesOptions = {
 
 const INTEGRATION_POLICY_RECOVERY_ACTION =
   "Send metadata-only integration context and policy JSON objects without raw documents, credentials, raw KYC, personal data, private keys, wallet secrets, legal conclusions, or external write commands." as const;
+const INTEGRATION_POLICY_NUMERIC_FIELD_ERROR = "Integration policy numeric fields must be non-negative integers." as const;
 
 export function registerIntegrationPolicyRoutes(server: FastifyInstance, options: IntegrationPolicyRoutesOptions = {}): void {
   server.post<{ Body: ObjectStoragePolicyRequestBody }>("/api/integrations/object-storage/policy", async (request, reply) =>
@@ -108,6 +94,15 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance, options
     server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/integration-policy-evaluations", async (request) =>
       options.repository?.listIntegrationPolicyEvaluationRecords(request.params.workspaceId) ?? []
     );
+
+    server.get<{ Params: { workspaceId: string } }>(
+      "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle",
+      async (request) =>
+        createIntegrationPolicyEvaluationReceiptBundle({
+          workspaceId: request.params.workspaceId,
+          records: (await options.repository?.listIntegrationPolicyEvaluationRecords(request.params.workspaceId)) ?? []
+        })
+    );
   }
 }
 
@@ -142,12 +137,14 @@ async function evaluateIntegrationPolicy<T extends IntegrationPolicyEvaluationRe
 }
 
 function createIntegrationPolicyRequestPayload(value: unknown): IntegrationPolicyRequestPayload {
-  const body = isRecord(value) ? value : {};
+  if (!isRecord(value)) {
+    throw new Error("Integration policy payload must be a JSON object.");
+  }
 
   return {
-    context: jsonObjectField(body.context, "Integration policy context must be a JSON object."),
-    policy: jsonObjectField(body.policy, "Integration policy draft must be a JSON object."),
-    actorId: stringField(body.actorId)
+    context: jsonObjectField(value.context, "Integration policy context must be a JSON object."),
+    policy: jsonObjectField(value.policy, "Integration policy draft must be a JSON object."),
+    actorId: stringField(value.actorId)
   };
 }
 
@@ -212,8 +209,10 @@ function safeIntegrationPolicyError(error: unknown): Error {
 
 function isKnownIntegrationPolicyError(message: string): boolean {
   return (
+    message === "Integration policy payload must be a JSON object." ||
     message === "Integration policy context must be a JSON object." ||
-    message === "Integration policy draft must be a JSON object."
+    message === "Integration policy draft must be a JSON object." ||
+    message === INTEGRATION_POLICY_NUMERIC_FIELD_ERROR
   );
 }
 
@@ -361,16 +360,15 @@ function stringField(value: unknown): string {
 }
 
 function numberField(value: unknown): number {
-  if (typeof value === "number") {
+  if (value === undefined || value === null) {
+    return 0;
+  }
+
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
     return value;
   }
 
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
-  return 0;
+  throw new Error(INTEGRATION_POLICY_NUMERIC_FIELD_ERROR);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

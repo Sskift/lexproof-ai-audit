@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import { createRegulatoryGraph } from "./regulatoryGraph";
 import { createRegulatorySourceApprovalQueue } from "./regulatorySourceApproval";
-import { createRegulatorySourceApprovalSyncResult, hashRegulatorySourceApprovalQueue } from "./regulatorySourceApprovalSync";
+import {
+  createRegulatorySourceApprovalSyncResult,
+  createServerRegulatorySourceApprovalPacket,
+  hashRegulatorySourceApprovalQueue
+} from "./regulatorySourceApprovalSync";
 import { createRegulatorySourceReview } from "./regulatorySourceReview";
 import type { ProjectProfile } from "./projectModel";
 
@@ -133,5 +137,135 @@ describe("regulatory source approval sync", () => {
 
     expect(hashRegulatorySourceApprovalQueue(regeneratedQueue)).toBe(hashRegulatorySourceApprovalQueue(queue));
     expect(hashRegulatorySourceApprovalQueue(changedQueue)).not.toBe(hashRegulatorySourceApprovalQueue(queue));
+  });
+
+  it("creates a stable server Source Approval packet without reviewer-note body text", () => {
+    const queue = createDueApprovalQueue();
+    const result = createRegulatorySourceApprovalSyncResult({
+      workspaceId: "workspace-source-sync",
+      queue,
+      createdBy: "Source reviewer",
+      createdAt: "2026-10-01T00:00:00.000Z"
+    });
+    const first = createServerRegulatorySourceApprovalPacket({
+      workspaceId: "workspace-source-sync",
+      records: result.records,
+      generatedAt: "2026-10-01T00:00:00.000Z"
+    });
+    const second = createServerRegulatorySourceApprovalPacket({
+      workspaceId: "workspace-source-sync",
+      records: [...result.records].reverse(),
+      generatedAt: "2026-10-02T00:00:00.000Z"
+    });
+
+    expect(first).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-server-source-approval-packet-v1",
+        workspaceId: "workspace-source-sync",
+        recordCount: result.records.length,
+        queueHashes: [result.queueHash],
+        statusCounts: expect.objectContaining({ pendingReview: result.records.length }),
+        matchingBehaviorChanged: false,
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
+      })
+    );
+    expect(first.packetHash).toBe(second.packetHash);
+    expect(first.approvalStatusCounts.approvalRequired + first.approvalStatusCounts.metadataRequired).toBe(result.records.length);
+    expect(first.nextActions.every((action) => action.trim().length > 0)).toBe(true);
+    expect(first.records[0]).toEqual(
+      expect.objectContaining({
+        queueHash: result.queueHash,
+        reviewerNotesHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        recordHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        matchingBehaviorChanged: false
+      })
+    );
+    expect(JSON.stringify(first)).not.toContain(result.records[0].reviewerNotes);
+    expect(JSON.stringify(first)).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal conclusion\b/i);
+  });
+
+  it("rejects corrupted source approval count metadata instead of coercing values", () => {
+    const queue = createDueApprovalQueue();
+    const corruptedTotalQueue = {
+      ...queue,
+      totalItemCount: String(queue.totalItemCount)
+    } as unknown as typeof queue;
+    const corruptedApprovalQueue = {
+      ...queue,
+      approvalRequiredCount: -1
+    } as unknown as typeof queue;
+
+    expect(() =>
+      createRegulatorySourceApprovalSyncResult({
+        workspaceId: "workspace-source-sync",
+        queue: corruptedTotalQueue,
+        createdBy: "Source reviewer",
+        createdAt: "2026-10-01T00:00:00.000Z"
+      })
+    ).toThrow("Source approval total item count is invalid.");
+
+    expect(() =>
+      createRegulatorySourceApprovalSyncResult({
+        workspaceId: "workspace-source-sync",
+        queue: corruptedApprovalQueue,
+        createdBy: "Source reviewer",
+        createdAt: "2026-10-01T00:00:00.000Z"
+      })
+    ).toThrow("Source approval approval required count is invalid.");
+  });
+
+  it("rejects non-array source approval collections and mismatched status counts", () => {
+    const queue = createDueApprovalQueue();
+    const nonArrayItemsQueue = {
+      ...queue,
+      items: {
+        rawSourceBody: "privateKey=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    } as unknown as typeof queue;
+    const mismatchedCountsQueue = {
+      ...queue,
+      totalItemCount: queue.totalItemCount + 1
+    } as unknown as typeof queue;
+
+    expect(() =>
+      createRegulatorySourceApprovalSyncResult({
+        workspaceId: "workspace-source-sync",
+        queue: nonArrayItemsQueue,
+        createdBy: "Source reviewer",
+        createdAt: "2026-10-01T00:00:00.000Z"
+      })
+    ).toThrow("Source approval items must be an array.");
+
+    expect(() =>
+      createRegulatorySourceApprovalSyncResult({
+        workspaceId: "workspace-source-sync",
+        queue: mismatchedCountsQueue,
+        createdBy: "Source reviewer",
+        createdAt: "2026-10-01T00:00:00.000Z"
+      })
+    ).toThrow("Source approval counts must match the approval item statuses.");
+  });
+
+  it("rejects corrupted server approval records instead of normalizing status silently", () => {
+    const queue = createDueApprovalQueue();
+    const result = createRegulatorySourceApprovalSyncResult({
+      workspaceId: "workspace-source-sync",
+      queue,
+      createdBy: "Source reviewer",
+      createdAt: "2026-10-01T00:00:00.000Z"
+    });
+    const corruptedRecord = {
+      ...result.records[0],
+      status: "approved"
+    } as unknown as typeof result.records[number];
+
+    expect(() =>
+      createServerRegulatorySourceApprovalPacket({
+        workspaceId: "workspace-source-sync",
+        records: [corruptedRecord],
+        generatedAt: "2026-10-01T00:00:00.000Z"
+      })
+    ).toThrow("Source approval record status is invalid.");
   });
 });

@@ -57,6 +57,9 @@ const LEGAL_CONCLUSION_PATTERN =
   /\b(final legal decision|legal opinion|legal approval|legally compliant|legally non-compliant|compliance decision)\b/gi;
 const MODEL_INTAKE_PROFILE_METADATA_ERROR =
   "Model intake profile metadata must not include credentials, private keys, wallet secrets, raw KYC, or personal data.";
+const modelEndpointTypes = ["mock", "openai-compatible", "enterprise-proxy"] as const;
+const modelDecisionRoles = ["draft-assistant", "risk-triage", "human-review-support", "final-legal-decision"] as const;
+const aiEventReviewStatuses = ["needs-review", "reviewed", "rejected"] as const;
 
 export function validateModelConnectionProfile(profile: Partial<ModelConnectionProfile>): ModelConnectionValidation {
   const errors: string[] = [];
@@ -140,6 +143,42 @@ export function createAIReviewEventFromRun(
     createdAt: run.generatedAt,
     updatedAt: run.generatedAt
   });
+}
+
+export function parseStoredModelIntakeProfile(
+  raw: string | null | undefined,
+  fallback: ModelConnectionProfile
+): ModelConnectionProfile {
+  if (!raw) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return normalizeModelConnectionProfile(parsed) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function parseStoredAIEvents(raw: string | null | undefined): AIEventRecord[] {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((item) => {
+      const event = normalizeAIEventRecord(item);
+      return event ? [event] : [];
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function buildModelIntakeSummary(
@@ -227,7 +266,7 @@ function createHandoffChecklist(validation: ModelConnectionValidation, unresolve
   return checklist;
 }
 
-function sanitizeModelConnectionProfile(profile: ModelConnectionProfile): ModelConnectionProfile {
+export function sanitizeModelConnectionProfile(profile: ModelConnectionProfile): ModelConnectionProfile {
   return {
     providerName: sanitizeText(profile.providerName),
     modelName: sanitizeText(profile.modelName),
@@ -248,10 +287,91 @@ export function sanitizeAIEventRecord(event: AIEventRecord): AIEventRecord {
     outputSummary: sanitizeText(event.outputSummary),
     modelAction: sanitizeText(event.modelAction),
     humanReviewer: sanitizeText(event.humanReviewer),
-    reviewStatus: event.reviewStatus,
+    reviewStatus: toAIEventReviewStatus(event.reviewStatus) ?? "needs-review",
     ...(event.sourceRunId ? { sourceRunId: sanitizeText(event.sourceRunId) } : {}),
     createdAt: sanitizeText(event.createdAt),
     ...(event.updatedAt ? { updatedAt: sanitizeText(event.updatedAt) } : {})
+  };
+}
+
+function normalizeModelConnectionProfile(value: unknown): ModelConnectionProfile | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Partial<Record<keyof ModelConnectionProfile, unknown>>;
+  const providerName = requiredProfileText(record.providerName);
+  const modelName = requiredProfileText(record.modelName);
+  const endpointType = toModelEndpointType(record.endpointType);
+  const useCase = requiredProfileText(record.useCase);
+  const decisionRole = toModelDecisionRole(record.decisionRole);
+  const dataClasses = safeDataClasses(record.dataClasses);
+  const humanReviewOwner = requiredProfileText(record.humanReviewOwner);
+
+  if (!providerName || !modelName || !endpointType || !useCase || !decisionRole || !dataClasses || !humanReviewOwner) {
+    return null;
+  }
+
+  return {
+    providerName,
+    modelName,
+    endpointType,
+    useCase,
+    decisionRole,
+    dataClasses,
+    humanReviewOwner
+  };
+}
+
+function normalizeAIEventRecord(value: unknown): AIEventRecord | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Partial<Record<keyof AIEventRecord, unknown>>;
+  const id = requiredEventText(record.id);
+  const projectId = requiredEventText(record.projectId);
+  const eventType = requiredEventText(record.eventType);
+  const inputSummary = optionalEventText(record.inputSummary);
+  const outputSummary = optionalEventText(record.outputSummary);
+  const modelAction = optionalEventText(record.modelAction);
+  const humanReviewer = optionalEventText(record.humanReviewer);
+  const reviewStatus = toAIEventReviewStatus(record.reviewStatus);
+  const createdAt = strictIsoTimestamp(record.createdAt);
+  const updatedAt = record.updatedAt === undefined ? null : strictIsoTimestamp(record.updatedAt);
+
+  if (
+    !id ||
+    !projectId ||
+    !eventType ||
+    inputSummary === null ||
+    outputSummary === null ||
+    modelAction === null ||
+    humanReviewer === null ||
+    !reviewStatus ||
+    !createdAt ||
+    (record.updatedAt !== undefined && !updatedAt)
+  ) {
+    return null;
+  }
+
+  const sourceRunId = record.sourceRunId === undefined ? null : requiredEventText(record.sourceRunId);
+  if (record.sourceRunId !== undefined && !sourceRunId) {
+    return null;
+  }
+
+  return {
+    id,
+    projectId,
+    eventType,
+    inputSummary,
+    outputSummary,
+    modelAction,
+    humanReviewer,
+    reviewStatus,
+    ...(sourceRunId ? { sourceRunId } : {}),
+    createdAt,
+    ...(updatedAt ? { updatedAt } : {})
   };
 }
 
@@ -271,6 +391,87 @@ function sanitizeModelIntakeSummary(summary: ModelIntakeSummary): ModelIntakeSum
 function sanitizeHash(value: string): string {
   const hash = value.trim();
   return /^[a-f0-9]{64}$/.test(hash) ? hash : sanitizeText(hash);
+}
+
+function requiredProfileText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const text = sanitizeText(value);
+  return text.length > 0 ? text : null;
+}
+
+function requiredEventText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const text = sanitizeText(value);
+  return text.length > 0 ? text : null;
+}
+
+function optionalEventText(value: unknown): string | null {
+  return typeof value === "string" ? sanitizeText(value) : null;
+}
+
+function safeDataClasses(value: unknown): string[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const cleaned: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") {
+      return null;
+    }
+
+    if (hasUnsafeDataClass(item)) {
+      continue;
+    }
+
+    const sanitized = sanitizeText(item);
+    if (sanitized.length > 0 && !cleaned.includes(sanitized)) {
+      cleaned.push(sanitized);
+    }
+  }
+
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+function hasUnsafeDataClass(value: string): boolean {
+  return classifyDataBoundaryText(value).some(
+    (finding) => finding.severity === "block" || finding.dataClass === "raw-kyc" || finding.dataClass === "personal-data"
+  );
+}
+
+function toModelEndpointType(value: unknown): ModelEndpointType | null {
+  return typeof value === "string" && modelEndpointTypes.includes(value as ModelEndpointType)
+    ? (value as ModelEndpointType)
+    : null;
+}
+
+function toModelDecisionRole(value: unknown): ModelDecisionRole | null {
+  return typeof value === "string" && modelDecisionRoles.includes(value as ModelDecisionRole)
+    ? (value as ModelDecisionRole)
+    : null;
+}
+
+function toAIEventReviewStatus(value: unknown): AIEventReviewStatus | null {
+  return typeof value === "string" && aiEventReviewStatuses.includes(value as AIEventReviewStatus)
+    ? (value as AIEventReviewStatus)
+    : null;
+}
+
+function strictIsoTimestamp(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const timestamp = value.trim();
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(timestamp) && !Number.isNaN(Date.parse(timestamp))
+    ? timestamp
+    : null;
 }
 
 function sanitizeText(value: string): string {

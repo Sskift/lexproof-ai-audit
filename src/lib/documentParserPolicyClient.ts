@@ -5,6 +5,7 @@ import type {
   DocumentParserPolicyReport
 } from "./documentParserPolicy";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { redactIntegrationPolicyReport } from "./integrationPolicyReportRedaction";
 
 export type FetchDocumentParserPolicyReportInput = {
   apiBaseUrl?: string;
@@ -134,11 +135,11 @@ function validateDocumentParserPolicyReport(payload: unknown): DocumentParserPol
     throw invalidResponseError("Document parser policy response has invalid control metadata.");
   }
 
-  if (!Array.isArray(payload.nextActions) || !payload.nextActions.every((action) => typeof action === "string")) {
+  if (!isNonEmptyStringArray(payload.nextActions)) {
     throw invalidResponseError("Document parser policy response has invalid next actions.");
   }
 
-  return payload as DocumentParserPolicyReport;
+  return redactIntegrationPolicyReport(payload as DocumentParserPolicyReport);
 }
 
 function isDocumentParserPolicyControl(value: unknown): value is DocumentParserPolicyControl {
@@ -157,6 +158,14 @@ function isDocumentParserPolicyControl(value: unknown): value is DocumentParserP
 
 function isDocumentParserPolicyStatus(value: unknown): value is DocumentParserPolicyStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as DocumentParserPolicyStatus);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((action) => typeof action === "string" && action.trim().length > 0)
+  );
 }
 
 function invalidResponseError(message: string): DocumentParserPolicyClientError {

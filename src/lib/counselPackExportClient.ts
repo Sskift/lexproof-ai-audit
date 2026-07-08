@@ -1,6 +1,8 @@
 import type { CounselPackExportRecord } from "./phase2Types";
-import type { CounselPackVersionRecord } from "./counselPackVersions";
+import { sanitizeCounselPackVersionRecord, type CounselPackVersionRecord } from "./counselPackVersions";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { parseCounselPackExportRecord } from "./counselPackExportRecords";
+import { redactClassifiedText } from "./dataClassification";
 
 export type CreateServerCounselPackExportInput = {
   workspaceId: string;
@@ -16,6 +18,9 @@ type ErrorResponse = {
   recoveryAction?: string;
   notLegalAdviceBoundary?: string;
 };
+
+const legalConclusionPattern =
+  /\b(final[_\-\s]+legal[_\-\s]+decision|legal[_\-\s]+opinion|legal[_\-\s]+conclusion|legal[_\-\s]+approval|legally[_\-\s]+compliant|legally[_\-\s]+non[_\-\s]+compliant|compliance[_\-\s]+decision)\b/gi;
 
 export type CounselPackExportClientErrorDetails = {
   message: string;
@@ -52,26 +57,33 @@ export async function createServerCounselPackExportRecord({
     throw new Error("Save a fresh Counsel Pack version with Regulatory Source Pack metadata before server export.");
   }
 
+  const safeVersionRecord = sanitizeCounselPackVersionRecord(versionRecord);
+  const safeRegulatorySourcePack = safeVersionRecord.regulatorySourcePack;
+  if (!safeRegulatorySourcePack?.packHash) {
+    throw new Error("Save a fresh Counsel Pack version with Regulatory Source Pack metadata before server export.");
+  }
+  const createdByValue = sanitizeExportRequestText(createdBy) || "Compliance";
+
   const response = await fetcher(buildWorkspaceUrl(apiBaseUrl, workspaceId, "exports/counsel-pack"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      projectName: versionRecord.projectName,
-      title: versionRecord.title,
+      projectName: sanitizeExportRequestText(safeVersionRecord.projectName) || "Project",
+      title: sanitizeExportRequestText(safeVersionRecord.title) || `Counsel Pack v${safeVersionRecord.version}`,
       format: "markdown",
-      artifactName: `${slug(versionRecord.projectName)}-counsel-pack-v${versionRecord.version}.md`,
-      manifestHash: versionRecord.manifestHash,
-      artifactHash: versionRecord.markdownHash,
-      artifactSize: versionRecord.markdownSize,
-      riskLevel: versionRecord.riskLevel,
-      reviewSummary: versionRecord.reviewSummary,
-      sourceCount: versionRecord.sourcePack.length,
-      sourcePackHash: versionRecord.regulatorySourcePack.packHash,
-      sourceReviewStatus: versionRecord.regulatorySourcePack.sourceReviewStatus,
-      ...(versionRecord.jurisdictionReadinessDigest
-        ? { jurisdictionReadinessDigest: mapJurisdictionReadinessDigest(versionRecord.jurisdictionReadinessDigest) }
+      artifactName: `${slug(sanitizeExportRequestText(safeVersionRecord.projectName) || "lexproof")}-counsel-pack-v${safeVersionRecord.version}.md`,
+      manifestHash: safeVersionRecord.manifestHash,
+      artifactHash: safeVersionRecord.markdownHash,
+      artifactSize: safeVersionRecord.markdownSize,
+      riskLevel: safeVersionRecord.riskLevel,
+      reviewSummary: safeVersionRecord.reviewSummary,
+      sourceCount: safeVersionRecord.sourcePack.length,
+      sourcePackHash: safeRegulatorySourcePack.packHash,
+      sourceReviewStatus: safeRegulatorySourcePack.sourceReviewStatus,
+      ...(safeVersionRecord.jurisdictionReadinessDigest
+        ? { jurisdictionReadinessDigest: mapJurisdictionReadinessDigest(safeVersionRecord.jurisdictionReadinessDigest) }
         : {}),
-      createdBy: createdBy.trim() || "Compliance",
+      createdBy: createdByValue,
       includesRawKycOrPersonalData: false,
       includesCredentialMaterial: false
     })
@@ -89,7 +101,17 @@ export async function createServerCounselPackExportRecord({
     });
   }
 
-  return payload as CounselPackExportRecord;
+  const record = parseCounselPackExportRecord(payload);
+  if (!record) {
+    throw new CounselPackExportClientError({
+      message: "Server Counsel Pack export response did not match the metadata-only export record contract.",
+      code: "COUNSEL_PACK_EXPORT_RESPONSE_INVALID",
+      recoveryAction: "Retry after refreshing the Phase 2 API; do not store the invalid export response.",
+      notLegalAdviceBoundary: "Not legal advice. Counsel Pack export records are audit preparation metadata only."
+    });
+  }
+
+  return record;
 }
 
 function mapJurisdictionReadinessDigest(
@@ -124,4 +146,20 @@ function slug(value: string): string {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "lexproof"
   );
+}
+
+function sanitizeExportRequestText(value: string): string {
+  return redactClassifiedText(value)
+    .replace(
+      /\b(?:api[_\-\s]?key|apiKey|secret[_\-\s]?key|secretKey|client[_\-\s]?secret|client secret|clientSecret|bearer token|bearerToken|access[_\-\s]?token|accessToken|refresh[_\-\s]?token|refreshToken|session[_\-\s]?token|sessionToken|webhook[_\-\s]?secret|webhookSecret|password|passphrase)\s*[:=]\s*\[redacted-secret\]/gi,
+      "[redacted-secret]"
+    )
+    .replace(/raw[_\-\s]+kyc/gi, "[redacted-raw-kyc]")
+    .replace(/\[redacted-\[redacted-raw-kyc\]\]/gi, "[redacted-raw-kyc]")
+    .replace(/\[redacted-raw-kyc\]\s+(?:packet|file|document|upload|room|dump|csv|spreadsheet|passport|data)\b/gi, "[redacted-raw-kyc]")
+    .replace(/\bprivate\s+key\s+\[redacted-private-key\]/gi, "[redacted-private-key]")
+    .replace(/\b(?:passport|driver'?s?\s+license|national\s+id|government\s+id)\s+(?:file|document|record|scan|image|data)\b/gi, "[redacted-identity-document]")
+    .replace(legalConclusionPattern, "[redacted-legal-conclusion]")
+    .replace(/\s+/g, " ")
+    .trim();
 }

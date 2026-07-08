@@ -45,6 +45,8 @@ import type {
   RegulatorySourceApprovalSyncResult,
   RegulatorySourceReviewSyncResult
 } from "../lib/phase2Types";
+import type { ServerRegulatorySourceApprovalPacket } from "../lib/regulatorySourceApprovalSync";
+import type { ServerRegulatorySourceReviewPacket } from "../lib/regulatorySourceReviewSync";
 import {
   createWorkspaceActionQueueExport,
   downloadWorkspaceActionQueueJson,
@@ -73,6 +75,10 @@ type RegulatoryCommandCenterProps = {
   sourceReviewSyncStatus: "idle" | "syncing" | "synced" | "error";
   sourceReviewSyncError: string;
   sourceReviewSyncRecoveryAction: string;
+  serverSourceReviewPacket: ServerRegulatorySourceReviewPacket | null;
+  serverSourceReviewPacketRefreshStatus: "idle" | "syncing" | "synced" | "error";
+  serverSourceReviewPacketRefreshError: string;
+  serverSourceReviewPacketRefreshRecoveryAction: string;
   sourceApprovalQueue: RegulatorySourceApprovalQueue;
   sourceApprovalApiBaseUrl: string;
   sourceApprovalSyncResult: RegulatorySourceApprovalSyncResult | null;
@@ -83,6 +89,10 @@ type RegulatoryCommandCenterProps = {
   sourceApprovalRecordRefreshStatus: "idle" | "syncing" | "synced" | "error";
   sourceApprovalRecordRefreshError: string;
   sourceApprovalRecordRefreshRecoveryAction: string;
+  sourceApprovalPacket: ServerRegulatorySourceApprovalPacket | null;
+  sourceApprovalPacketRefreshStatus: "idle" | "syncing" | "synced" | "error";
+  sourceApprovalPacketRefreshError: string;
+  sourceApprovalPacketRefreshRecoveryAction: string;
   controlMatrix: RegulatoryControlMatrix;
   jurisdictionEvidenceMap: JurisdictionEvidenceMap | null;
   jurisdictionReadinessDigest: JurisdictionReadinessDigest | null;
@@ -101,12 +111,34 @@ type RegulatoryCommandCenterProps = {
   onSourceReviewApiBaseUrlChange: (value: string) => void;
   onSourceReviewAsOfChange: (value: string) => void;
   onSyncSourceReviewLedger: () => Promise<void> | void;
+  onRefreshServerSourceReviewPacket: () => Promise<void> | void;
   onSourceApprovalApiBaseUrlChange: (value: string) => void;
   onSyncSourceApprovalQueue: () => Promise<void> | void;
   onRefreshSourceApprovalRecords: () => Promise<void> | void;
+  onRefreshSourceApprovalPacket: () => Promise<void> | void;
   onNavigate: (tab: WorkspaceActionTarget) => void;
   onRequestSourceGapEvidence: (item: SourceEvidenceGapTriageItem) => void;
 };
+
+function downloadServerSourceApprovalPacketJson(filename: string, packet: ServerRegulatorySourceApprovalPacket): void {
+  const blob = new Blob([`${JSON.stringify(packet, null, 2)}\n`], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadServerSourceReviewPacketJson(filename: string, packet: ServerRegulatorySourceReviewPacket): void {
+  const blob = new Blob([`${JSON.stringify(packet, null, 2)}\n`], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 export function RegulatoryCommandCenter({
   project,
@@ -119,6 +151,10 @@ export function RegulatoryCommandCenter({
   sourceReviewSyncStatus,
   sourceReviewSyncError,
   sourceReviewSyncRecoveryAction,
+  serverSourceReviewPacket,
+  serverSourceReviewPacketRefreshStatus,
+  serverSourceReviewPacketRefreshError,
+  serverSourceReviewPacketRefreshRecoveryAction,
   sourceApprovalQueue,
   sourceApprovalApiBaseUrl,
   sourceApprovalSyncResult,
@@ -129,6 +165,10 @@ export function RegulatoryCommandCenter({
   sourceApprovalRecordRefreshStatus,
   sourceApprovalRecordRefreshError,
   sourceApprovalRecordRefreshRecoveryAction,
+  sourceApprovalPacket,
+  sourceApprovalPacketRefreshStatus,
+  sourceApprovalPacketRefreshError,
+  sourceApprovalPacketRefreshRecoveryAction,
   controlMatrix,
   jurisdictionEvidenceMap,
   jurisdictionReadinessDigest,
@@ -147,9 +187,11 @@ export function RegulatoryCommandCenter({
   onSourceReviewApiBaseUrlChange,
   onSourceReviewAsOfChange,
   onSyncSourceReviewLedger,
+  onRefreshServerSourceReviewPacket,
   onSourceApprovalApiBaseUrlChange,
   onSyncSourceApprovalQueue,
   onRefreshSourceApprovalRecords,
+  onRefreshSourceApprovalPacket,
   onNavigate,
   onRequestSourceGapEvidence
 }: RegulatoryCommandCenterProps) {
@@ -679,6 +721,30 @@ export function RegulatoryCommandCenter({
             <RefreshCcw size={16} aria-hidden="true" />
             {sourceReviewSyncStatus === "syncing" ? "Syncing Source Review Ledger" : "Sync Source Review Ledger"}
           </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={onRefreshServerSourceReviewPacket}
+            disabled={serverSourceReviewPacketRefreshStatus === "syncing" || sourceReviewSyncStatus === "syncing"}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {serverSourceReviewPacketRefreshStatus === "syncing" ? "Refreshing Source Review Packet" : "Refresh Source Review Packet"}
+          </button>
+          {serverSourceReviewPacket ? (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                downloadServerSourceReviewPacketJson(
+                  `lexproof-${project.id}-server-source-review-packet.json`,
+                  serverSourceReviewPacket
+                )
+              }
+            >
+              <Download size={15} aria-hidden="true" />
+              Download Server Source Review Packet JSON
+            </button>
+          ) : null}
           <small>
             Syncs reviewed source lineage metadata only. Matching behavior remains unchanged until a separate source approval gate
             records refreshed metadata.
@@ -690,6 +756,13 @@ export function RegulatoryCommandCenter({
               {sourceReviewSyncResult.ledgerHash.slice(0, 12)}...
             </span>
           ) : null}
+          {serverSourceReviewPacketRefreshStatus === "synced" && serverSourceReviewPacket ? (
+            <span className="save-state">
+              Source review packet refreshed: {serverSourceReviewPacket.recordCount} record
+              {serverSourceReviewPacket.recordCount === 1 ? "" : "s"}. Packet hash{" "}
+              {serverSourceReviewPacket.packetHash.slice(0, 12)}... Matching behavior unchanged.
+            </span>
+          ) : null}
           {sourceReviewSyncError ? (
             <div className="provider-policy-error" role="alert">
               <strong>{sourceReviewSyncError}</strong>
@@ -697,7 +770,40 @@ export function RegulatoryCommandCenter({
               <small>Not legal advice. Source review sync is audit preparation lineage metadata only.</small>
             </div>
           ) : null}
+          {serverSourceReviewPacketRefreshError ? (
+            <div className="provider-policy-error" role="alert">
+              <strong>{serverSourceReviewPacketRefreshError}</strong>
+              {serverSourceReviewPacketRefreshRecoveryAction ? <span>{serverSourceReviewPacketRefreshRecoveryAction}</span> : null}
+              <small>Not legal advice. Server Source Review packets are audit preparation lineage metadata only.</small>
+            </div>
+          ) : null}
         </div>
+        {serverSourceReviewPacket ? (
+          <section className="source-approval-records" aria-label="Server Source Review Packet">
+            <div className="reg-section-title">
+              <FileSearch size={16} aria-hidden="true" />
+              <h4>Server Source Review Packet</h4>
+            </div>
+            <div className="reg-source-review-summary">
+              <Metric label="Packet records" value={serverSourceReviewPacket.recordCount} helper={serverSourceReviewPacket.status} />
+              <Metric label="Pending review" value={serverSourceReviewPacket.statusCounts.pendingReview} helper="source review" />
+              <Metric label="Metadata needed" value={serverSourceReviewPacket.statusCounts.metadataNeeded} helper="source metadata" />
+            </div>
+            <p>
+              Packet hash {serverSourceReviewPacket.packetHash.slice(0, 12)}... · ledger hashes{" "}
+              {serverSourceReviewPacket.ledgerHashes.length} · matching behavior unchanged.
+            </p>
+            {serverSourceReviewPacket.nextActions.length ? (
+              <div className="server-source-packet-actions" role="status" aria-label="Server Source Review Packet recovery actions">
+                <strong>Recovery actions</strong>
+                {serverSourceReviewPacket.nextActions.map((action) => (
+                  <span key={action}>{action}</span>
+                ))}
+              </div>
+            ) : null}
+            <small>{serverSourceReviewPacket.notLegalAdviceBoundary}</small>
+          </section>
+        ) : null}
         <div className="reg-source-review-list">
           {topSourceReviewItems.length === 0 ? (
             <p className="empty-state">No source review records matched current facts.</p>
@@ -776,6 +882,30 @@ export function RegulatoryCommandCenter({
             <RefreshCcw size={16} aria-hidden="true" />
             {sourceApprovalRecordRefreshStatus === "syncing" ? "Refreshing Source Approval Records" : "Refresh Source Approval Records"}
           </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={onRefreshSourceApprovalPacket}
+            disabled={sourceApprovalPacketRefreshStatus === "syncing" || sourceApprovalSyncStatus === "syncing"}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {sourceApprovalPacketRefreshStatus === "syncing" ? "Refreshing Source Approval Packet" : "Refresh Source Approval Packet"}
+          </button>
+          {sourceApprovalPacket ? (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                downloadServerSourceApprovalPacketJson(
+                  `lexproof-${project.id}-server-source-approval-packet.json`,
+                  sourceApprovalPacket
+                )
+              }
+            >
+              <Download size={15} aria-hidden="true" />
+              Download Server Source Approval Packet JSON
+            </button>
+          ) : null}
           <small>
             Syncs source approval metadata only. Source matching remains gated until counsel or compliance review records refreshed
             metadata.
@@ -793,6 +923,13 @@ export function RegulatoryCommandCenter({
               {sourceApprovalRecords.length === 1 ? "" : "s"}. Matching behavior unchanged.
             </span>
           ) : null}
+          {sourceApprovalPacketRefreshStatus === "synced" && sourceApprovalPacket ? (
+            <span className="save-state">
+              Source approval packet refreshed: {sourceApprovalPacket.recordCount} record
+              {sourceApprovalPacket.recordCount === 1 ? "" : "s"}. Packet hash {sourceApprovalPacket.packetHash.slice(0, 12)}
+              ... Matching behavior unchanged.
+            </span>
+          ) : null}
           {sourceApprovalSyncError ? (
             <div className="provider-policy-error" role="alert">
               <strong>{sourceApprovalSyncError}</strong>
@@ -807,7 +944,40 @@ export function RegulatoryCommandCenter({
               <small>Not legal advice. Source approval record refresh is audit preparation workflow metadata only.</small>
             </div>
           ) : null}
+          {sourceApprovalPacketRefreshError ? (
+            <div className="provider-policy-error" role="alert">
+              <strong>{sourceApprovalPacketRefreshError}</strong>
+              {sourceApprovalPacketRefreshRecoveryAction ? <span>{sourceApprovalPacketRefreshRecoveryAction}</span> : null}
+              <small>Not legal advice. Source approval packets are audit preparation workflow metadata only.</small>
+            </div>
+          ) : null}
         </div>
+        {sourceApprovalPacket ? (
+          <section className="source-approval-records" aria-label="Server Source Approval Packet">
+            <div className="reg-section-title">
+              <FileSearch size={16} aria-hidden="true" />
+              <h4>Server Source Approval Packet</h4>
+            </div>
+            <div className="reg-source-review-summary">
+              <Metric label="Packet records" value={sourceApprovalPacket.recordCount} helper={sourceApprovalPacket.status} />
+              <Metric label="Approval gates" value={sourceApprovalPacket.approvalStatusCounts.approvalRequired} helper="approval required" />
+              <Metric label="Metadata gates" value={sourceApprovalPacket.approvalStatusCounts.metadataRequired} helper="metadata required" />
+            </div>
+            <p>
+              Packet hash {sourceApprovalPacket.packetHash.slice(0, 12)}... · queue hashes {sourceApprovalPacket.queueHashes.length} ·
+              matching behavior unchanged.
+            </p>
+            {sourceApprovalPacket.nextActions.length ? (
+              <div className="server-source-packet-actions" role="status" aria-label="Server Source Approval Packet recovery actions">
+                <strong>Recovery actions</strong>
+                {sourceApprovalPacket.nextActions.map((action) => (
+                  <span key={action}>{action}</span>
+                ))}
+              </div>
+            ) : null}
+            <small>{sourceApprovalPacket.notLegalAdviceBoundary}</small>
+          </section>
+        ) : null}
         <div className="source-approval-list">
           {sourceApprovalQueue.items.length === 0 ? (
             <p className="empty-state">No source update approval actions are open. Source matching remains tied to reviewed metadata.</p>

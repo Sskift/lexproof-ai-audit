@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { fetchObjectStoragePolicyReport } from "./objectStoragePolicyClient";
 import type { ObjectStoragePolicyContext, ObjectStoragePolicyReport } from "./objectStoragePolicy";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 const readyReport: ObjectStoragePolicyReport = {
   reportVersion: "lexproof-object-storage-policy-v1",
   generatedAt: "2026-07-01T00:00:00.000Z",
@@ -127,6 +130,98 @@ describe("object storage policy client", () => {
       code: "OBJECT_STORAGE_POLICY_INVALID_RESPONSE",
       recoveryAction: "Verify the Phase 2 API is returning the metadata-only object storage policy contract."
     });
+  });
+
+  it("rejects storage policy responses with blank next actions before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...readyReport,
+        nextActions: ["Keep external object storage disabled until a separate storage adapter enablement review.", "   "]
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchObjectStoragePolicyReport({
+        fetcher,
+        context: {
+          workspaceId: "workspace-storage",
+          evidenceCount: 1,
+          retentionStatus: "ready",
+          vaultSyncAllowed: true,
+          blockerCount: 0,
+          manifestHash: "d".repeat(64)
+        },
+        policy: {
+          policyOwner: "Storage owner",
+          retentionDays: 365,
+          deletionSlaDays: 30,
+          encryptionAtRestApproved: true,
+          bucketAllowlistApproved: true,
+          accessLoggingApproved: true,
+          lifecyclePolicyApproved: true,
+          noSensitiveMaterialConfirmed: true,
+          humanReviewRequired: true,
+          notes: ""
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "OBJECT_STORAGE_POLICY_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning the metadata-only object storage policy contract."
+    });
+  });
+
+  it("redacts classified text from otherwise valid storage policy responses before UI use", async () => {
+    const pollutedReport: ObjectStoragePolicyReport = {
+      ...readyReport,
+      controls: [
+        {
+          ...readyReport.controls[0],
+          label: `Retention boundary ${apiKey}`,
+          evidence: `Raw KYC packet and apiKey=${apiKey} were copied into server policy evidence before a final legal decision.`,
+          recoveryAction: `Remove private key ${privateKey} and passport data before storage handoff.`
+        }
+      ],
+      nextActions: [`Resolve apiKey=${apiKey}, raw KYC packet, and final legal decision before adapter review.`]
+    };
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => pollutedReport
+    })) as unknown as typeof fetch;
+
+    const report = await fetchObjectStoragePolicyReport({
+      fetcher,
+      context: {
+        workspaceId: "workspace-storage",
+        evidenceCount: 1,
+        retentionStatus: "ready",
+        vaultSyncAllowed: true,
+        blockerCount: 0,
+        manifestHash: "d".repeat(64)
+      },
+      policy: {
+        policyOwner: "Storage owner",
+        retentionDays: 365,
+        deletionSlaDays: 30,
+        encryptionAtRestApproved: true,
+        bucketAllowlistApproved: true,
+        accessLoggingApproved: true,
+        lifecyclePolicyApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: ""
+      }
+    });
+    const serialized = JSON.stringify(report);
+
+    expect(report).not.toBe(pollutedReport);
+    expect(report.controls[0].evidence).toContain("[redacted-raw-kyc]");
+    expect(report.nextActions[0]).toContain("[redacted-legal-conclusion]");
+    expect(serialized).toContain("[redacted-api-key]");
+    expect(serialized).toContain("[redacted-private-key]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport data|final legal decision/i);
   });
 
   it("redacts unsafe API error payload text before surfacing policy failure guidance", async () => {

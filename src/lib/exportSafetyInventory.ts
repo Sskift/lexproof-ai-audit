@@ -580,15 +580,15 @@ function createAuditLogExportRecoveryAction(auditLogExport: AuditLogExportRecord
   }
 
   if (!auditLogExport.exportAllowed) {
-    return auditLogExport.remediation[0] ?? "Remove blocked Audit Log source fields before external handoff.";
+    return auditLogExport.nextActions[0] ?? auditLogExport.remediation[0] ?? "Remove blocked Audit Log source fields before external handoff.";
   }
 
   if (auditLogExport.dataBoundaryStatus === "needs-review") {
-    return auditLogExport.remediation[0] ?? "Review warning-level Audit Log boundary findings before handoff.";
+    return auditLogExport.nextActions[0] ?? auditLogExport.remediation[0] ?? "Review warning-level Audit Log boundary findings before handoff.";
   }
 
   if (auditLogExport.eventCount === 0) {
-    return "Run Secure Review Journey before treating Audit Log Export as complete handoff evidence.";
+    return auditLogExport.nextActions[0] ?? "Run Secure Review Journey before treating Audit Log Export as complete handoff evidence.";
   }
 
   return "Keep Audit Log Export JSON with the secure review handoff packet.";

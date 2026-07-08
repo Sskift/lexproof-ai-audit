@@ -4,7 +4,7 @@ import { registerCounselPackExportRoutes } from "./counselPackExportRoutes";
 import { createMemoryReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
 describe("Counsel Pack export route module", () => {
-  it("registers metadata-only create, list, and lookup routes with audit logs", async () => {
+  it("registers metadata-only create, list, lookup, and recovery routes with audit logs", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();
     await registerCounselPackExportRoutes(server, { repository });
@@ -81,6 +81,35 @@ describe("Counsel Pack export route module", () => {
     expect(listResponse.statusCode).toBe(200);
     expect(listResponse.json()).toEqual([expect.objectContaining({ id: createResponse.json().id, version: 1 })]);
 
+    const recoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-export-routes/exports/counsel-pack/recovery"
+    });
+    expect(recoveryResponse.statusCode).toBe(200);
+    expect(recoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-counsel-pack-export-recovery-packet-v1",
+        workspaceId: "workspace-export-routes",
+        recordCount: 1,
+        recoveryItemCount: 1,
+        blockedCount: 1,
+        latestExportRecordId: createResponse.json().id,
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(recoveryResponse.json().items).toEqual([
+      expect.objectContaining({
+        exportRecordId: createResponse.json().id,
+        recoveryStatus: "blocked",
+        priority: "P0",
+        recoveryAction: "Resolve blocked counsel review items before export recovery can clear.",
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery items are audit preparation workflow metadata only."
+      })
+    ]);
+    expect(recoveryResponse.body).not.toContain("# Counsel Pack");
+    expect(recoveryResponse.body.toLowerCase()).not.toContain("api_key");
+
     const lookupResponse = await server.inject({
       method: "GET",
       url: `/api/workspaces/workspace-export-routes/exports/${createResponse.json().id}`
@@ -147,6 +176,135 @@ describe("Counsel Pack export route module", () => {
     });
     expect(response.body).not.toContain("sk-live-secret");
     expect(response.body.toLowerCase()).not.toContain("api_key");
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("rejects malformed export record metadata before creating records or audit logs", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerCounselPackExportRoutes(server, { repository });
+
+    const validPayload = {
+      projectName: "YieldPassport",
+      title: "YieldPassport Counsel Pack v1",
+      format: "markdown",
+      artifactName: "yieldpassport-counsel-pack.md",
+      manifestHash: "a".repeat(64),
+      artifactHash: "b".repeat(64),
+      artifactSize: 4096,
+      riskLevel: "critical",
+      reviewSummary: {
+        total: 7,
+        reviewed: 1,
+        readyForCounsel: 2,
+        needsEvidence: 3,
+        blocked: 1,
+        open: 6
+      },
+      sourceCount: 4,
+      sourcePackHash: "c".repeat(64),
+      sourceReviewStatus: "current",
+      jurisdictionReadinessDigest: {
+        digestHash: "d".repeat(64),
+        status: "needs-evidence",
+        handoffAllowed: false,
+        jurisdictionCount: 2,
+        readyForCounselCount: 0,
+        needsEvidenceCount: 2,
+        needsSourceReviewCount: 0,
+        metadataMissingCount: 0,
+        openEvidenceRequestCount: 8,
+        sourceFreshnessBlockerCount: 1,
+        dueSoonSourceCount: 0,
+        notLegalAdviceBoundary:
+          "Not legal advice. Counsel Pack export jurisdiction readiness metadata is audit preparation workflow metadata only."
+      },
+      createdBy: "Compliance",
+      includesRawKycOrPersonalData: false,
+      includesCredentialMaterial: false
+    };
+    const cases: Array<{ payload?: unknown; expectedError: string }> = [
+      {
+        expectedError: "Counsel Pack export payload must be a JSON object."
+      },
+      {
+        payload: {
+          ...validPayload,
+          artifactSize: "4096",
+          apiKey: "sk-live-abcdef1234567890abcdef1234567890"
+        },
+        expectedError: "Counsel Pack export artifact size must be a non-negative integer."
+      },
+      {
+        payload: {
+          ...validPayload,
+          reviewSummary: {
+            ...validPayload.reviewSummary,
+            reviewed: "1"
+          }
+        },
+        expectedError: "Counsel Pack export review summary reviewed count must be a non-negative integer."
+      },
+      {
+        payload: {
+          ...validPayload,
+          jurisdictionReadinessDigest: {
+            ...validPayload.jurisdictionReadinessDigest,
+            dueSoonSourceCount: 0.5
+          },
+          rawContent: { privateKey: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" }
+        },
+        expectedError: "Counsel Pack export jurisdiction readiness due soon source count must be a non-negative integer."
+      },
+      {
+        payload: {
+          ...validPayload,
+          includesCredentialMaterial: "false"
+        },
+        expectedError: "Counsel Pack export credential material flag must be a boolean."
+      }
+    ];
+
+    for (const [index, item] of cases.entries()) {
+      const workspaceId = `workspace-export-malformed-${index}`;
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/workspaces/${workspaceId}/exports/counsel-pack`,
+        ...(item.payload === undefined ? {} : { payload: item.payload })
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          error: item.expectedError,
+          code: "COUNSEL_PACK_EXPORT_CREATE_FAILED",
+          recoveryAction: "Remove raw content and blocked data classes, then retry with manifest and artifact hashes only.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        })
+      );
+      expect(response.body).not.toContain("sk-live-abcdef");
+      expect(response.body).not.toContain("0x1234567890abcdef");
+      expect(response.body).not.toContain("apiKey");
+      expect(response.body).not.toContain("privateKey");
+      expect(await repository.listCounselPackExportRecords(workspaceId)).toEqual([]);
+      expect(await repository.listAuditLogRecords(workspaceId)).toEqual([]);
+
+      const recoveryResponse = await server.inject({
+        method: "GET",
+        url: `/api/workspaces/${workspaceId}/exports/counsel-pack/recovery`
+      });
+      expect(recoveryResponse.statusCode).toBe(200);
+      expect(recoveryResponse.json()).toEqual(
+        expect.objectContaining({
+          recordCount: 0,
+          recoveryItemCount: 0,
+          blockedCount: 0,
+          notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
+        })
+      );
+    }
 
     await server.close();
     await repository.close();

@@ -1,5 +1,6 @@
 import type { AuditResult } from "./auditEngine";
 import type { AIReviewResult } from "./aiReview";
+import { redactClassifiedText } from "./dataClassification";
 import type { ProjectProfile } from "./projectModel";
 
 export type CounselQuestionStatus = "open" | "answered" | "deferred";
@@ -15,6 +16,13 @@ export type CounselQuestion = {
   source: CounselQuestionSource;
   notLegalAdviceBoundary: "Not legal advice. Counsel questions are audit preparation prompts only.";
 };
+
+const COUNSEL_QUESTION_BOUNDARY = "Not legal advice. Counsel questions are audit preparation prompts only." as const;
+const counselQuestionPriorities = ["P0", "P1", "P2"] as const;
+const counselQuestionStatuses = ["open", "answered", "deferred"] as const;
+const counselQuestionSources = ["risk-rule", "ai-review", "manual"] as const;
+const legalConclusionPattern =
+  /\b(final\s+legal\s+decision|legal\s+opinion|legal\s+approval|legally\s+compliant|legally\s+non-compliant|compliance\s+decision)\b/gi;
 
 type QuestionTemplate = {
   suffix: string;
@@ -84,21 +92,25 @@ export function createDefaultCounselQuestions(project: ProjectProfile, audit: Au
       priority: template.priority,
       status: "open",
       source: "risk-rule",
-      notLegalAdviceBoundary: "Not legal advice. Counsel questions are audit preparation prompts only."
+      notLegalAdviceBoundary: COUNSEL_QUESTION_BOUNDARY
     }))
   );
 }
 
 export function createQuestionsFromAIReview(project: ProjectProfile, review: AIReviewResult): CounselQuestion[] {
-  return review.draftQuestions.map((question, index) => ({
-    id: `${project.id}-ai-review-${index + 1}-${slug(question)}`,
-    projectId: project.id,
-    question,
-    priority: "P1",
-    status: "open",
-    source: "ai-review",
-    notLegalAdviceBoundary: "Not legal advice. Counsel questions are audit preparation prompts only."
-  }));
+  return review.draftQuestions.map((question, index) => {
+    const safeQuestion = sanitizeCounselQuestionText(question);
+
+    return {
+      id: `${project.id}-ai-review-${index + 1}-${slug(safeQuestion)}`,
+      projectId: project.id,
+      question: safeQuestion,
+      priority: "P1",
+      status: "open",
+      source: "ai-review",
+      notLegalAdviceBoundary: COUNSEL_QUESTION_BOUNDARY
+    };
+  });
 }
 
 export function createManualCounselQuestion(project: ProjectProfile): CounselQuestion {
@@ -109,14 +121,49 @@ export function createManualCounselQuestion(project: ProjectProfile): CounselQue
     priority: "P1",
     status: "open",
     source: "manual",
-    notLegalAdviceBoundary: "Not legal advice. Counsel questions are audit preparation prompts only."
+    notLegalAdviceBoundary: COUNSEL_QUESTION_BOUNDARY
   };
 }
 
+export function sanitizeCounselQuestion(question: CounselQuestion): CounselQuestion {
+  const relatedFlagId = sanitizeOptionalCounselQuestionText(question.relatedFlagId);
+
+  return {
+    id: sanitizeCounselQuestionText(question.id) || "counsel-question",
+    projectId: sanitizeCounselQuestionText(question.projectId) || "project",
+    question: sanitizeCounselQuestionText(question.question) || "Counsel review question requires metadata-only clarification.",
+    ...(relatedFlagId ? { relatedFlagId } : {}),
+    priority: question.priority,
+    status: question.status,
+    source: question.source,
+    notLegalAdviceBoundary: COUNSEL_QUESTION_BOUNDARY
+  };
+}
+
+export function parseStoredCounselQuestions(raw: string | null | undefined): CounselQuestion[] {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.flatMap((item) => {
+          const question = normalizeStoredCounselQuestion(item);
+          return question ? [question] : [];
+        })
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export function mergeCounselQuestionQueues(existing: CounselQuestion[], incoming: CounselQuestion[]): CounselQuestion[] {
-  const ids = new Set(existing.map((question) => question.id));
-  const seen = new Set(existing.map((question) => normalizeQuestion(question.question)));
-  const additions = incoming.filter((question) => {
+  const sanitizedExisting = existing.map(sanitizeCounselQuestion);
+  const sanitizedIncoming = incoming.map(sanitizeCounselQuestion);
+  const ids = new Set(sanitizedExisting.map((question) => question.id));
+  const seen = new Set(sanitizedExisting.map((question) => normalizeQuestion(question.question)));
+  const additions = sanitizedIncoming.filter((question) => {
     if (ids.has(question.id)) {
       return false;
     }
@@ -129,7 +176,7 @@ export function mergeCounselQuestionQueues(existing: CounselQuestion[], incoming
     return true;
   });
 
-  return [...existing, ...additions];
+  return [...sanitizedExisting, ...additions];
 }
 
 export function sortCounselQuestionsForReview(questions: CounselQuestion[]): CounselQuestion[] {
@@ -156,6 +203,66 @@ export function sortCounselQuestionsForReview(questions: CounselQuestion[]): Cou
 
 function normalizeQuestion(question: string): string {
   return question.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizeStoredCounselQuestion(value: unknown): CounselQuestion | null {
+  if (!isRecord(value) || value.notLegalAdviceBoundary !== COUNSEL_QUESTION_BOUNDARY) {
+    return null;
+  }
+
+  if (
+    !isNonEmptyString(value.id) ||
+    !isNonEmptyString(value.projectId) ||
+    !isNonEmptyString(value.question) ||
+    !isOneOf(value.priority, counselQuestionPriorities) ||
+    !isOneOf(value.status, counselQuestionStatuses) ||
+    !isOneOf(value.source, counselQuestionSources)
+  ) {
+    return null;
+  }
+
+  if (value.relatedFlagId !== undefined && typeof value.relatedFlagId !== "string") {
+    return null;
+  }
+
+  return sanitizeCounselQuestion({
+    id: value.id,
+    projectId: value.projectId,
+    question: value.question,
+    ...(value.relatedFlagId ? { relatedFlagId: value.relatedFlagId } : {}),
+    priority: value.priority,
+    status: value.status,
+    source: value.source,
+    notLegalAdviceBoundary: COUNSEL_QUESTION_BOUNDARY
+  });
+}
+
+function sanitizeOptionalCounselQuestionText(value: string | undefined): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const sanitized = sanitizeCounselQuestionText(value);
+  return sanitized || undefined;
+}
+
+function sanitizeCounselQuestionText(value: string): string {
+  return redactClassifiedText(value)
+    .replace(/\b(?:passport|driver'?s?\s+license|national\s+id|government\s+id)\s+(?:file|document|record|scan|image)\b/gi, "[redacted-identity-document]")
+    .replace(legalConclusionPattern, "[redacted-legal-conclusion]")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isOneOf<const T extends readonly string[]>(value: unknown, options: T): value is T[number] {
+  return typeof value === "string" && options.includes(value);
 }
 
 function slug(value: string): string {

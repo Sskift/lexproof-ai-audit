@@ -5,6 +5,7 @@ import type {
   GrcDestinationPolicyReport
 } from "./grcDestinationPolicy";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { redactIntegrationPolicyReport } from "./integrationPolicyReportRedaction";
 
 export type FetchGrcDestinationPolicyReportInput = {
   apiBaseUrl?: string;
@@ -137,11 +138,11 @@ function validateGrcDestinationPolicyReport(payload: unknown): GrcDestinationPol
     throw invalidResponseError("GRC destination policy response has invalid control metadata.");
   }
 
-  if (!Array.isArray(payload.nextActions) || !payload.nextActions.every((action) => typeof action === "string")) {
+  if (!isNonEmptyStringArray(payload.nextActions)) {
     throw invalidResponseError("GRC destination policy response has invalid next actions.");
   }
 
-  return payload as GrcDestinationPolicyReport;
+  return redactIntegrationPolicyReport(payload as GrcDestinationPolicyReport);
 }
 
 function isGrcDestinationPolicyControl(value: unknown): value is GrcDestinationPolicyControl {
@@ -160,6 +161,14 @@ function isGrcDestinationPolicyControl(value: unknown): value is GrcDestinationP
 
 function isGrcDestinationPolicyStatus(value: unknown): value is GrcDestinationPolicyStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as GrcDestinationPolicyStatus);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((action) => typeof action === "string" && action.trim().length > 0)
+  );
 }
 
 function invalidResponseError(message: string): GrcDestinationPolicyClientError {

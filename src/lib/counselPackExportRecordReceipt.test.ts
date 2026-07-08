@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  createCounselPackExportRecoveryPacket,
   createCounselPackExportRecordReceipt,
+  downloadCounselPackExportRecoveryPacketJson,
   downloadCounselPackExportRecordReceiptJson,
+  exportCounselPackExportRecoveryPacketJson,
   exportCounselPackExportRecordReceiptJson,
+  type CounselPackExportRecoveryPacket,
   type CounselPackExportRecordReceipt
 } from "./counselPackExportRecordReceipt";
 import type { CounselPackExportRecord } from "./phase2Types";
@@ -56,19 +60,23 @@ describe("counsel pack export record receipt", () => {
   it("redacts unsafe text before JSON export", async () => {
     const receipt = await createCounselPackExportRecordReceipt(
       createRecord({
-        projectName: `Issuer ${apiKey}`,
-        title: `Counsel Pack ${privateKey}`,
-        artifactName: `artifact-${apiKey}.md`,
-        createdBy: `Reviewer ${privateKey}`
+        projectName: `Issuer apiKey=${apiKey} legal conclusion`,
+        title: `Counsel Pack raw_KYC passport A1234567 ${privateKey}`,
+        artifactName: `artifact-final legal decision-${apiKey}.md`,
+        createdBy: `Reviewer ${privateKey} passport data`
       })
     );
     const json = exportCounselPackExportRecordReceiptJson(receipt);
 
     expect(json).toContain("lexproof-counsel-pack-export-record-receipt-v1");
-    expect(json).toContain("[redacted-api-key]");
+    expect(json).toContain("[redacted-secret]");
     expect(json).toContain("[redacted-private-key]");
+    expect(json).toContain("[redacted-raw-kyc]");
+    expect(json).toContain("[redacted-legal-conclusion]");
+    expect(json).toContain("[redacted-identity-document]");
     expect(json).not.toContain(apiKey);
     expect(json).not.toContain(privateKey);
+    expect(json).not.toMatch(/apiKey|raw_KYC|A1234567|legal conclusion|final legal decision|passport data/i);
     expect(json).not.toContain("# Counsel Pack");
   });
 
@@ -96,6 +104,119 @@ describe("counsel pack export record receipt", () => {
       expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
       expect(click).toHaveBeenCalledTimes(1);
       expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-export-record-receipt");
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
+  it("creates a stable metadata-only recovery packet across export records", async () => {
+    const blockedRecord = createRecord({
+      id: `counsel-pack-export-blocked-apiKey=${apiKey}`,
+      version: 1,
+      artifactName: `blocked-raw_KYC passport A1234567 legal conclusion.md`,
+      createdAt: "2026-07-04T00:00:00.000Z",
+      reviewSummary: {
+        total: 4,
+        reviewed: 2,
+        readyForCounsel: 1,
+        needsEvidence: 1,
+        blocked: 1,
+        open: 2
+      }
+    });
+    const sourceReviewRecord = createRecord({
+      id: "counsel-pack-export-source-review",
+      version: 2,
+      artifactName: "source-review final legal decision.md",
+      createdAt: "2026-07-05T00:00:00.000Z",
+      reviewSummary: cleanReviewSummary(),
+      jurisdictionReadinessDigest: cleanJurisdictionReadinessDigest(),
+      sourceReviewStatus: "review-due"
+    });
+    const readyRecord = createRecord({
+      id: "counsel-pack-export-ready raw_KYC passport A1234567",
+      version: 3,
+      artifactName: "ready.md",
+      createdAt: "2026-07-06T00:00:00.000Z",
+      reviewSummary: cleanReviewSummary(),
+      jurisdictionReadinessDigest: cleanJurisdictionReadinessDigest()
+    });
+
+    const first = await createCounselPackExportRecoveryPacket("workspace-receipt", [readyRecord, sourceReviewRecord, blockedRecord], {
+      generatedAt: "2026-07-07T00:00:00.000Z"
+    });
+    const second = await createCounselPackExportRecoveryPacket("workspace-receipt", [blockedRecord, readyRecord, sourceReviewRecord], {
+      generatedAt: "2026-07-07T00:01:00.000Z"
+    });
+    const json = exportCounselPackExportRecoveryPacketJson(first);
+
+    expect(first).toMatchObject({
+      packetVersion: "lexproof-counsel-pack-export-recovery-packet-v1",
+      workspaceId: "workspace-receipt",
+      recordCount: 3,
+      recoveryItemCount: 2,
+      blockedCount: 1,
+      needsSourceReviewCount: 1,
+      needsReviewCount: 0,
+      readyCount: 1,
+      latestExportRecordId: expect.stringContaining("[redacted-raw-kyc]"),
+      notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
+    } satisfies Partial<CounselPackExportRecoveryPacket>);
+    expect(first.items.map((item) => item.recoveryStatus)).toEqual(["blocked", "needs-source-review", "ready"]);
+    expect(first.items[0]).toEqual(
+      expect.objectContaining({
+        priority: "P0",
+        recoveryAction: "Resolve blocked counsel review items before export recovery can clear."
+      })
+    );
+    expect(first.items[1]).toEqual(
+      expect.objectContaining({
+        priority: "P1",
+        recoveryAction: "Refresh source review metadata before final external handoff."
+      })
+    );
+    expect(first.nextActions).toEqual([
+      "Resolve blocked counsel review items before export recovery can clear.",
+      "Refresh source review metadata before final external handoff."
+    ]);
+    expect(first.nextActions.every((action) => action.trim().length > 0)).toBe(true);
+    expect(first.packetHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(first.packetHash).toBe(second.packetHash);
+    expect(first.generatedAt).not.toBe(second.generatedAt);
+    expect(json).toContain("[redacted-secret]");
+    expect(json).toContain("[redacted-raw-kyc]");
+    expect(json).toContain("[redacted-legal-conclusion]");
+    expect(json).not.toContain(apiKey);
+    expect(json).not.toMatch(/apiKey|raw_KYC|A1234567|legal conclusion|final legal decision/i);
+    expect(json).not.toContain("# Counsel Pack");
+  });
+
+  it("exports and downloads recovery packet JSON", async () => {
+    const packet = await createCounselPackExportRecoveryPacket("workspace-receipt", [
+      createRecord({ reviewSummary: cleanReviewSummary(), jurisdictionReadinessDigest: cleanJurisdictionReadinessDigest() })
+    ]);
+    const json = exportCounselPackExportRecoveryPacketJson(packet);
+
+    expect(json).toContain("\"packetVersion\": \"lexproof-counsel-pack-export-recovery-packet-v1\"");
+    expect(json).toContain("\"packetHash\"");
+    expect(json).toContain("Keep the latest metadata-only export receipt");
+    expect(json).toContain("Not legal advice");
+
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:counsel-pack-export-recovery-packet");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
+
+    try {
+      downloadCounselPackExportRecoveryPacketJson("counsel-pack-export-recovery-packet.json", packet);
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:counsel-pack-export-recovery-packet");
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;

@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   AuditLogClientError,
+  buildAuditLogExportUrl,
   buildAuditLogRecordsUrl,
+  fetchAuditLogExport,
   fetchAuditLogRecords
 } from "./auditLogClient";
+import type { AuditLogExportRecord } from "./auditLogExport";
 import type { AuditLogRecord } from "./phase2Types";
 
 const auditLogRecord: AuditLogRecord = {
@@ -19,6 +22,48 @@ const auditLogRecord: AuditLogRecord = {
   summary: "Updated human review status to reviewed.",
   createdAt: "2026-07-03T00:00:00.000Z",
   notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
+};
+
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+const auditLogExportRecord: AuditLogExportRecord = {
+  exportVersion: "lexproof-audit-log-export-v1",
+  workspaceId: "workspace-audit-client",
+  exportedAt: "2026-07-03T00:01:00.000Z",
+  exportHash: "a".repeat(64),
+  integrityChainHash: "b".repeat(64),
+  integrityStatus: "verified",
+  integritySummary: "Audit log chain verified across 1 metadata-only event hash.",
+  eventCount: 1,
+  firstEventAt: "2026-07-03T00:00:00.000Z",
+  lastEventAt: "2026-07-03T00:00:00.000Z",
+  actionCounts: { "human-review.updated": 1 },
+  actors: ["Compliance"],
+  targetTypes: ["human-review"],
+  dataBoundaryStatus: "clean",
+  exportAllowed: true,
+  boundaryBlockerCount: 0,
+  boundaryWarningCount: 0,
+  detectedClasses: [],
+  boundaryFindings: [],
+  remediation: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+  nextActions: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+  events: [
+    {
+      id: "audit-log-client-1",
+      actorId: "Compliance",
+      action: "human-review.updated",
+      targetType: "human-review",
+      targetId: "human-review-1",
+      beforeHash: "requested",
+      afterHash: "reviewed",
+      summary: "Updated human review status to reviewed.",
+      createdAt: "2026-07-03T00:00:00.000Z",
+      entryHash: "c".repeat(64)
+    }
+  ],
+  notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
 };
 
 describe("audit log client", () => {
@@ -50,6 +95,36 @@ describe("audit log client", () => {
     expect(JSON.stringify(init)).not.toContain("rawKyc");
   });
 
+  it("fetches filtered Audit Log export metadata with integrity chain fields", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => auditLogExportRecord
+    })) as unknown as typeof fetch;
+
+    const exportRecord = await fetchAuditLogExport({
+      apiBaseUrl: "https://api.lexproof.test/",
+      workspaceId: "workspace-audit-client",
+      filters: {
+        actorId: " Compliance ",
+        targetType: " human-review ",
+        action: "human-review.updated",
+        targetId: "human-review-1"
+      },
+      fetcher
+    });
+
+    expect(exportRecord).toEqual(auditLogExportRecord);
+    expect(exportRecord.exportHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(exportRecord.integrityChainHash).toMatch(/^[a-f0-9]{64}$/);
+    const [url, init] = (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+    expect(url).toBe(
+      "https://api.lexproof.test/api/workspaces/workspace-audit-client/audit-log/export?actorId=Compliance&action=human-review.updated&targetId=human-review-1&targetType=human-review"
+    );
+    expect(init).toEqual({ method: "GET" });
+    expect(JSON.stringify(init)).not.toContain("apiKey");
+    expect(JSON.stringify(init)).not.toContain("rawKyc");
+  });
+
   it("rejects unsupported target filters before calling the API", async () => {
     const fetcher = vi.fn() as unknown as typeof fetch;
 
@@ -64,6 +139,9 @@ describe("audit log client", () => {
     expect(fetcher).not.toHaveBeenCalled();
     expect(() =>
       buildAuditLogRecordsUrl("https://api.lexproof.test", "workspace-audit-client", { targetType: "legal-opinion" })
+    ).toThrow(/target type must be workspace/i);
+    expect(() =>
+      buildAuditLogExportUrl("https://api.lexproof.test", "workspace-audit-client", { targetType: "legal-opinion" })
     ).toThrow(/target type must be workspace/i);
   });
 
@@ -82,6 +160,196 @@ describe("audit log client", () => {
       code: "AUDIT_LOG_INVALID_RESPONSE",
       recoveryAction: "Verify the Phase 2 API is returning metadata-only Audit Log records."
     });
+  });
+
+  it("redacts classified text from otherwise valid Audit Log records before UI use", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => [
+        {
+          ...auditLogRecord,
+          actorId: `Compliance ${apiKey}`,
+          targetId: `human-review-${privateKey}`,
+          beforeHash: privateKey,
+          afterHash: apiKey,
+          summary: `Blocked raw_KYC passport A1234567, private key ${privateKey}, final-legal-decision, passport data, and apiKey=${apiKey}.`
+        }
+      ]
+    })) as unknown as typeof fetch;
+
+    const records = await fetchAuditLogRecords({
+      workspaceId: "workspace-audit-client",
+      fetcher
+    });
+
+    expect(records).toEqual([
+      expect.objectContaining({
+        actorId: "Compliance [redacted-api-key]",
+        targetId: "human-review-[redacted-private-key]",
+        beforeHash: "[redacted-private-key]",
+        afterHash: "[redacted-api-key]",
+        summary: expect.stringContaining("[redacted-raw-kyc]"),
+        notLegalAdviceBoundary: "Not legal advice. Audit log records are review workspace metadata."
+      })
+    ]);
+    expect(JSON.stringify(records)).toContain("[redacted-legal-conclusion]");
+    expect(JSON.stringify(records)).toContain("[redacted-identity-document]");
+    expect(JSON.stringify(records)).not.toContain(apiKey);
+    expect(JSON.stringify(records)).not.toContain(privateKey);
+    expect(JSON.stringify(records)).not.toContain("apiKey");
+    expect(JSON.stringify(records)).not.toContain("raw_KYC");
+    expect(JSON.stringify(records)).not.toContain("raw-KYC");
+    expect(JSON.stringify(records)).not.toContain("A1234567");
+    expect(JSON.stringify(records)).not.toContain("passport data");
+    expect(JSON.stringify(records)).not.toContain("final-legal-decision");
+  });
+
+  it("rejects malformed Audit Log export artifacts before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...auditLogExportRecord,
+        integrityChainHash: "not-a-hash"
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchAuditLogExport({
+        workspaceId: "workspace-audit-client",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "AUDIT_LOG_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning a metadata-only Audit Log export artifact."
+    });
+  });
+
+  it("rejects Audit Log export artifacts with blank recovery next actions", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...auditLogExportRecord,
+        nextActions: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff.", "   "]
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchAuditLogExport({
+        workspaceId: "workspace-audit-client",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      code: "AUDIT_LOG_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning a metadata-only Audit Log export artifact."
+    });
+  });
+
+  it("redacts classified text from otherwise valid Audit Log export artifacts before UI use", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...auditLogExportRecord,
+        workspaceId: `workspace-audit-client ${apiKey} legal conclusion`,
+        integritySummary: `Verified event hash after raw_KYC passport A1234567, legal conclusion, passport data, and apiKey=${apiKey}.`,
+        actionCounts: { [`human-review.updated ${apiKey} legal conclusion`]: 1 },
+        actors: [`Compliance ${apiKey}`],
+        dataBoundaryStatus: "blocked",
+        integrityStatus: "blocked",
+        exportAllowed: false,
+        boundaryBlockerCount: 3,
+        boundaryWarningCount: 1,
+        detectedClasses: ["credential-material", "private-key-material", "raw-kyc"],
+        boundaryFindings: [
+          {
+            source: "event",
+            eventId: `audit-log-client-${privateKey}`,
+            field: "summary",
+            dataClass: "credential-material",
+            severity: "block",
+            matchCount: 1,
+            redactedSnippet: `summary copied apiKey=${apiKey}, raw_KYC passport A1234567, legal conclusion, and passport data`,
+            message: `Credential field apiKey=${apiKey} and legal conclusion must be removed before export.`
+          }
+        ],
+        remediation: [
+          `Remove private key ${privateKey}, raw_KYC data, legal conclusion, and passport data before handoff.`
+        ],
+        nextActions: [
+          `Resolve apiKey=${apiKey}, private key ${privateKey}, final-legal-decision, and passport data before sharing.`
+        ],
+        events: [
+          {
+            ...auditLogExportRecord.events[0],
+            id: `audit-log-client-${apiKey}`,
+            actorId: `Compliance ${apiKey}`,
+            action: `human-review.updated ${apiKey}`,
+            targetId: `human-review-${privateKey}`,
+            beforeHash: privateKey,
+            afterHash: apiKey,
+            summary: `Blocked raw_KYC passport A1234567, private key ${privateKey}, final-legal-decision, passport data, and apiKey=${apiKey}.`
+          }
+        ]
+      })
+    })) as unknown as typeof fetch;
+
+    const exportRecord = await fetchAuditLogExport({
+      workspaceId: "workspace-audit-client",
+      fetcher
+    });
+    const serialized = JSON.stringify(exportRecord);
+
+    expect(exportRecord).toEqual(
+      expect.objectContaining({
+        workspaceId: "workspace-audit-client [redacted-api-key] [redacted-legal-conclusion]",
+        integrityStatus: "blocked",
+        dataBoundaryStatus: "blocked",
+        exportAllowed: false,
+        actionCounts: { "human-review.updated [redacted-api-key] [redacted-legal-conclusion]": 1 },
+        actors: ["Compliance [redacted-api-key]"],
+        remediation: [
+          "Remove [redacted-private-key], [redacted-raw-kyc], [redacted-legal-conclusion], and [redacted-identity-document] before handoff."
+        ],
+        nextActions: [
+          "Resolve [redacted-secret], [redacted-private-key], [redacted-legal-conclusion], and [redacted-identity-document] before sharing."
+        ],
+        notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+      })
+    );
+    expect(exportRecord.boundaryFindings[0]).toEqual(
+      expect.objectContaining({
+        eventId: "audit-log-client-[redacted-private-key]",
+        redactedSnippet:
+          "summary copied [redacted-secret], [redacted-raw-kyc] [redacted-passport-id], [redacted-legal-conclusion], and [redacted-identity-document]",
+        message: "Credential field [redacted-secret] and [redacted-legal-conclusion] must be removed before export."
+      })
+    );
+    expect(exportRecord.events[0]).toEqual(
+      expect.objectContaining({
+        id: "audit-log-client-[redacted-api-key]",
+        actorId: "Compliance [redacted-api-key]",
+        action: "human-review.updated [redacted-api-key]",
+        targetId: "human-review-[redacted-private-key]",
+        beforeHash: "[redacted-private-key]",
+        afterHash: "[redacted-api-key]",
+        summary:
+          "Blocked [redacted-raw-kyc] [redacted-passport-id], [redacted-private-key], [redacted-legal-conclusion], [redacted-identity-document], and [redacted-secret]"
+      })
+    );
+    expect(serialized).toContain("[redacted-api-key]");
+    expect(serialized).toContain("[redacted-secret]");
+    expect(serialized).toContain("[redacted-private-key]");
+    expect(serialized).toContain("[redacted-raw-kyc]");
+    expect(serialized).toContain("[redacted-legal-conclusion]");
+    expect(serialized).toContain("[redacted-identity-document]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toContain("apiKey");
+    expect(serialized).not.toContain("raw_KYC");
+    expect(serialized).not.toContain("raw-KYC");
+    expect(serialized).not.toContain("A1234567");
+    expect(serialized).not.toContain("passport data");
+    expect(serialized).not.toContain("legal conclusion");
+    expect(serialized).not.toContain("final-legal-decision");
   });
 
   it("redacts unsafe API error text when Audit Log refresh fails", async () => {
@@ -111,9 +379,40 @@ describe("audit log client", () => {
     const error = caught as AuditLogClientError;
     expect(error.code).toBe("AUDIT_LOG_FILTER_FAILED");
     expect(error.message).toContain("[redacted-secret]");
-    expect(error.message).toContain("[redacted-personal-data]");
+    expect(error.message).toContain("[redacted-identity-document]");
     expect(error.message).not.toContain("sk-live");
     expect(error.message).not.toContain("passport data");
+    expect(error.recoveryAction).toContain("[redacted-private-key]");
+    expect(error.notLegalAdviceBoundary).toBe("Not legal advice. This API creates audit preparation workflow records only.");
+  });
+
+  it("redacts unsafe API error text when Audit Log export refresh fails", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      json: async () => ({
+        error: "Audit log export failed with api_key=sk-live-abcdef1234567890abcdef1234567890.",
+        code: "AUDIT_LOG_EXPORT_FAILED",
+        recoveryAction:
+          "Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef and retry export.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    })) as unknown as typeof fetch;
+
+    let caught: unknown;
+    try {
+      await fetchAuditLogExport({
+        workspaceId: "workspace-audit-client",
+        fetcher
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(AuditLogClientError);
+    const error = caught as AuditLogClientError;
+    expect(error.code).toBe("AUDIT_LOG_EXPORT_FAILED");
+    expect(error.message).toContain("[redacted-secret]");
+    expect(error.message).not.toContain("sk-live");
     expect(error.recoveryAction).toContain("[redacted-private-key]");
     expect(error.notLegalAdviceBoundary).toBe("Not legal advice. This API creates audit preparation workflow records only.");
   });

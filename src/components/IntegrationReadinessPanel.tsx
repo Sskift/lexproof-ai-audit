@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Bot,
   ClipboardList,
@@ -58,12 +59,22 @@ import {
   type ObjectStoragePolicyDraft,
   type ObjectStoragePolicyReport
 } from "../lib/objectStoragePolicy";
-import type { IntegrationPolicyEvaluationRecord } from "../lib/integrationPolicyEvaluation";
+import {
+  createIntegrationPolicyEvaluationReceiptBundle,
+  downloadIntegrationPolicyEvaluationReceiptBundleJson,
+  type IntegrationPolicyEvaluationReceiptBundle,
+  type IntegrationPolicyEvaluationRecord
+} from "../lib/integrationPolicyEvaluation";
+import {
+  fetchIntegrationPolicyEvaluationReceiptBundle,
+  IntegrationPolicyEvaluationClientError
+} from "../lib/integrationPolicyEvaluationClient";
 
 type IntegrationReadinessPanelProps = {
   registry: IntegrationReadinessRegistry;
   enablementDossier: IntegrationEnablementDossier | null;
   enablementGate: IntegrationEnablementGate | null;
+  workspaceId: string;
   integrationPolicyEvaluationRecords: IntegrationPolicyEvaluationRecord[];
   integrationPolicyEvaluationApiBaseUrl: string;
   integrationPolicyEvaluationSyncStatus: "idle" | "syncing" | "synced" | "error";
@@ -148,6 +159,7 @@ export function IntegrationReadinessPanel({
   registry,
   enablementDossier,
   enablementGate,
+  workspaceId,
   integrationPolicyEvaluationRecords,
   integrationPolicyEvaluationApiBaseUrl,
   integrationPolicyEvaluationSyncStatus,
@@ -240,6 +252,7 @@ export function IntegrationReadinessPanel({
       </div>
       <IntegrationEnablementDossierPanel dossier={enablementDossier} gate={enablementGate} />
       <IntegrationPolicyEvaluationReceiptsPanel
+        workspaceId={workspaceId}
         records={integrationPolicyEvaluationRecords}
         apiBaseUrl={integrationPolicyEvaluationApiBaseUrl}
         syncStatus={integrationPolicyEvaluationSyncStatus}
@@ -496,6 +509,7 @@ function PolicyReceiptCoveragePanel({ coverage }: { coverage: IntegrationEnablem
 }
 
 function IntegrationPolicyEvaluationReceiptsPanel({
+  workspaceId,
   records,
   apiBaseUrl,
   syncStatus,
@@ -504,6 +518,7 @@ function IntegrationPolicyEvaluationReceiptsPanel({
   onApiBaseUrlChange,
   onRefresh
 }: {
+  workspaceId: string;
   records: IntegrationPolicyEvaluationRecord[];
   apiBaseUrl: string;
   syncStatus: "idle" | "syncing" | "synced" | "error";
@@ -512,7 +527,60 @@ function IntegrationPolicyEvaluationReceiptsPanel({
   onApiBaseUrlChange: (value: string) => void;
   onRefresh: () => Promise<void> | void;
 }) {
+  const [serverBundle, setServerBundle] = useState<IntegrationPolicyEvaluationReceiptBundle | null>(null);
+  const [serverBundleStatus, setServerBundleStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [serverBundleError, setServerBundleError] = useState("");
+  const [serverBundleRecoveryAction, setServerBundleRecoveryAction] = useState("");
   const latestRecords = records.slice(0, 4);
+
+  useEffect(() => {
+    setServerBundle(null);
+    setServerBundleStatus("idle");
+    setServerBundleError("");
+    setServerBundleRecoveryAction("");
+  }, [workspaceId]);
+
+  const downloadReceiptBundle = async () => {
+    if (!records.length) {
+      return;
+    }
+    const bundle = await createIntegrationPolicyEvaluationReceiptBundle({
+      workspaceId: records[0].workspaceId,
+      records
+    });
+    downloadIntegrationPolicyEvaluationReceiptBundleJson("integration-policy-receipt-bundle.json", bundle);
+  };
+  const refreshServerReceiptBundle = async () => {
+    setServerBundleStatus("syncing");
+    setServerBundleError("");
+    setServerBundleRecoveryAction("");
+
+    try {
+      const bundle = await fetchIntegrationPolicyEvaluationReceiptBundle({
+        apiBaseUrl,
+        workspaceId
+      });
+      setServerBundle(bundle);
+      setServerBundleStatus("synced");
+    } catch (error) {
+      setServerBundle(null);
+      setServerBundleStatus("error");
+      if (error instanceof IntegrationPolicyEvaluationClientError) {
+        setServerBundleError(error.message);
+        setServerBundleRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setServerBundleError(error instanceof Error ? error.message : "Policy receipt bundle refresh failed.");
+      setServerBundleRecoveryAction("Start the Phase 2 API and retry policy receipt bundle refresh.");
+    }
+  };
+  const downloadServerReceiptBundle = () => {
+    if (!serverBundle) {
+      return;
+    }
+
+    downloadIntegrationPolicyEvaluationReceiptBundleJson("server-integration-policy-receipt-bundle.json", serverBundle);
+  };
 
   return (
     <section className={`integration-policy-receipts ${syncStatus}`} aria-label="Integration Policy Evaluation Receipts">
@@ -553,6 +621,66 @@ function IntegrationPolicyEvaluationReceiptsPanel({
             <small>Not legal advice. Receipt refresh is audit preparation workflow metadata only.</small>
           </div>
         ) : null}
+      </div>
+      <div className="inline-actions provider-policy-actions">
+        <span>Bundle persisted receipts into one metadata-only adapter enablement evidence artifact.</span>
+        <button type="button" className="secondary" onClick={() => void downloadReceiptBundle()} disabled={!records.length}>
+          <Download size={16} aria-hidden="true" />
+          Download Policy Receipt Bundle JSON
+        </button>
+      </div>
+      <div className={`integration-policy-server-bundle ${serverBundleStatus}`}>
+        <div className="split-title compact-title">
+          <div>
+            <ReceiptText size={16} aria-hidden="true" />
+            <strong>Server Receipt Bundle</strong>
+          </div>
+          <span className="workflow-status disabled">External enablement disabled</span>
+        </div>
+        <p>
+          {serverBundle
+            ? `${serverBundle.recordCount} persisted receipt${serverBundle.recordCount === 1 ? "" : "s"} bundled from the Phase 2 API.`
+            : "Refresh the persisted server bundle to verify adapter enablement remains disabled after reload."}
+        </p>
+        {serverBundle ? (
+          <div className="integration-policy-server-bundle-facts">
+            <ProviderPolicyFact label="Bundle" value={`${serverBundle.bundleHash.slice(0, 12)}...`} />
+            <ProviderPolicyFact label="Records" value={String(serverBundle.recordCount)} />
+            <ProviderPolicyFact label="Missing" value={String(serverBundle.missingPolicyIds.length)} />
+            <ProviderPolicyFact label="Blocked" value={String(serverBundle.blockedCount)} />
+            <ProviderPolicyFact label="External" value={serverBundle.externalEnablementAllowed ? "Enabled" : "Disabled"} />
+          </div>
+        ) : null}
+        {serverBundle ? (
+          <div
+            className="integration-policy-server-bundle-actions"
+            role="status"
+            aria-label="Server Receipt Bundle actions"
+          >
+            <strong>Receipt bundle actions</strong>
+            {serverBundle.nextActions.map((action) => (
+              <span key={action}>{action}</span>
+            ))}
+          </div>
+        ) : null}
+        {serverBundleError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{serverBundleError}</strong>
+            {serverBundleRecoveryAction ? <span>{serverBundleRecoveryAction}</span> : null}
+            <small>Not legal advice. Receipt bundle refresh is metadata-only and does not enable adapters.</small>
+          </div>
+        ) : null}
+        <div className="inline-actions provider-policy-actions">
+          <button type="button" className="secondary" onClick={() => void refreshServerReceiptBundle()} disabled={serverBundleStatus === "syncing"}>
+            <RefreshCcw size={16} aria-hidden="true" />
+            {serverBundleStatus === "syncing" ? "Refreshing Server Bundle" : "Refresh Server Receipt Bundle"}
+          </button>
+          <button type="button" className="secondary" onClick={downloadServerReceiptBundle} disabled={!serverBundle}>
+            <Download size={16} aria-hidden="true" />
+            Download Server Receipt Bundle JSON
+          </button>
+        </div>
+        <small>{serverBundle?.notLegalAdviceBoundary ?? "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."}</small>
       </div>
       {latestRecords.length ? (
         <div className="integration-policy-receipt-list">

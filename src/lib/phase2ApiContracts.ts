@@ -73,6 +73,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       true
     ),
     createRoute("GET", "/api/workspaces/:workspaceId/evidence-manifest", "evidence-vault", "EvidenceManifestRequest", "EvidenceManifest", true),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/evidence-lineage-digest",
+      "evidence-vault",
+      "EvidenceVaultLineageDigestRequest",
+      "EvidenceVaultLineageDigest",
+      true
+    ),
     createRoute("GET", "/api/model-gateway/adapters", "model-gateway", "ModelGatewayAdapterListRequest", "ModelGatewayAdapterDescriptor[]", true),
     createRoute(
       "GET",
@@ -132,6 +140,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     ),
     createRoute("POST", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "CreateModelGatewayRunRequest", "ModelGatewayRun", true),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs", "model-gateway", "ModelGatewayRunListRequest", "ModelGatewayRunSummary[]", true),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/model-runs/recovery",
+      "model-gateway",
+      "ModelGatewayRunRecoveryRequest",
+      "ModelGatewayRunRecoveryPacket",
+      true
+    ),
     createRoute("GET", "/api/workspaces/:workspaceId/model-runs/:runId", "model-gateway", "ModelGatewayRunLookupRequest", "ModelGatewayRun", true),
     createRoute("POST", "/api/workspaces/:workspaceId/reviews", "human-review", "CreateHumanReviewRequest", "HumanReviewRecord", true),
     createRoute("GET", "/api/workspaces/:workspaceId/reviews/queue", "human-review", "HumanReviewQueueRequest", "ServerHumanReviewQueueView", true),
@@ -154,6 +170,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       true
     ),
     createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/source-approvals/packet",
+      "source-approvals",
+      "ServerSourceApprovalPacketRequest",
+      "ServerRegulatorySourceApprovalPacket",
+      true
+    ),
+    createRoute(
       "POST",
       "/api/workspaces/:workspaceId/source-reviews",
       "source-reviews",
@@ -170,6 +194,22 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       true
     ),
     createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/source-reviews/packet",
+      "source-reviews",
+      "ServerSourceReviewPacketRequest",
+      "ServerRegulatorySourceReviewPacket",
+      true
+    ),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle",
+      "integrations",
+      "IntegrationPolicyEvaluationReceiptBundleRequest",
+      "IntegrationPolicyEvaluationReceiptBundle",
+      true
+    ),
+    createRoute(
       "POST",
       "/api/workspaces/:workspaceId/exports/counsel-pack",
       "exports",
@@ -180,13 +220,29 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
     createRoute("GET", "/api/workspaces/:workspaceId/exports", "exports", "CounselPackExportListRequest", "CounselPackExportRecord[]", true),
     createRoute(
       "GET",
+      "/api/workspaces/:workspaceId/exports/counsel-pack/recovery",
+      "exports",
+      "CounselPackExportRecoveryRequest",
+      "CounselPackExportRecoveryPacket",
+      true
+    ),
+    createRoute(
+      "GET",
       "/api/workspaces/:workspaceId/exports/:exportId",
       "exports",
       "CounselPackExportLookupRequest",
       "CounselPackExportRecord",
       true
     ),
-    createRoute("GET", "/api/workspaces/:workspaceId/audit-log", "audit-log", "AuditLogListRequest", "AuditLogRecord[]", true)
+    createRoute("GET", "/api/workspaces/:workspaceId/audit-log", "audit-log", "AuditLogListRequest", "AuditLogRecord[]", true),
+    createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/audit-log/export",
+      "audit-log",
+      "AuditLogExportRequest",
+      "AuditLogExportRecord",
+      true
+    )
   ];
 }
 

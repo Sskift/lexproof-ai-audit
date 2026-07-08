@@ -4,7 +4,10 @@ import {
   createEvidenceRemovedEvent,
   createEvidenceUpdateEvent,
   downloadEvidenceAuditTrailJson,
-  exportEvidenceAuditTrailJson
+  exportEvidenceAuditTrailJson,
+  parseStoredEvidenceAuditEvents,
+  sanitizeEvidenceAuditEvent,
+  type EvidenceAuditEvent
 } from "./evidenceAuditTrail";
 import type { EvidenceItem } from "./projectModel";
 
@@ -104,6 +107,89 @@ describe("evidence audit trail events", () => {
     });
     expect(json).toContain("\"trailVersion\": \"lexproof-evidence-audit-trail-v1\"");
     expect(json).toContain("\"action\": \"removed\"");
+  });
+
+  it("sanitizes stored evidence audit events before local recovery", () => {
+    const restored = parseStoredEvidenceAuditEvents(
+      JSON.stringify([
+        {
+          eventVersion: "lexproof-evidence-audit-event-v1",
+          id: "event-sk-live123456789012",
+          projectId: "project-1",
+          evidenceId: "evidence-1",
+          evidenceLabel: "Legal opinion raw KYC packet passport file apiKey=supersecretvalue",
+          action: "updated",
+          actor: "Compliance",
+          changedFields: ["label", "content"],
+          summary:
+            "Updated after final legal decision with 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef.",
+          createdAt: "2026-06-29T01:00:00.000Z",
+          rawEvidenceContent: "must not survive",
+          notLegalAdviceBoundary: "Not legal advice. Evidence audit trail events are local audit preparation metadata."
+        }
+      ])
+    );
+
+    expect(restored).toHaveLength(1);
+    expect(JSON.stringify(restored[0])).not.toContain("sk-live123456789012");
+    expect(JSON.stringify(restored[0])).not.toContain("supersecretvalue");
+    expect(JSON.stringify(restored[0])).not.toContain("Legal opinion");
+    expect(JSON.stringify(restored[0])).not.toContain("raw KYC packet");
+    expect(JSON.stringify(restored[0])).not.toContain("passport file");
+    expect(JSON.stringify(restored[0])).not.toContain("final legal decision");
+    expect(JSON.stringify(restored[0])).not.toContain("0x1234567890abcdef");
+    expect(restored[0]).not.toHaveProperty("rawEvidenceContent");
+    expect(restored[0]?.evidenceLabel).toContain("[redacted-raw-kyc]");
+    expect(restored[0]?.notLegalAdviceBoundary).toBe(
+      "Not legal advice. Evidence audit trail events are local audit preparation metadata."
+    );
+  });
+
+  it("drops malformed stored evidence audit events and invalid workflow fields", () => {
+    const valid: EvidenceAuditEvent = createEvidenceCreatedEvent(
+      "project-1",
+      evidence,
+      "Founder",
+      "2026-06-29T00:00:00.000Z"
+    );
+
+    expect(
+      parseStoredEvidenceAuditEvents(
+        JSON.stringify([
+          valid,
+          { ...valid, id: "bad-boundary", notLegalAdviceBoundary: "Legal advice approved." },
+          { ...valid, id: "bad-action", action: "approved" },
+          { ...valid, id: "bad-actor", actor: "Outside Counsel" },
+          { ...valid, id: "bad-field", changedFields: ["label", "rawEvidenceContent"] },
+          { ...valid, id: "bad-date", createdAt: "June 29, 2026" }
+        ])
+      )
+    ).toEqual([valid]);
+    expect(parseStoredEvidenceAuditEvents("{not-json")).toEqual([]);
+  });
+
+  it("sanitizes mutated audit trail exports without changing the non-advice boundary", () => {
+    const event = sanitizeEvidenceAuditEvent({
+      eventVersion: "lexproof-evidence-audit-event-v1",
+      id: "event-1",
+      projectId: "project-1",
+      evidenceId: "evidence-1",
+      evidenceLabel: "Passport document review",
+      action: "updated",
+      actor: "Compliance",
+      changedFields: ["label"],
+      summary: "Compliance decision references raw KYC dump.",
+      createdAt: "2026-06-29T01:00:00.000Z",
+      notLegalAdviceBoundary: "Not legal advice. Evidence audit trail events are local audit preparation metadata."
+    });
+    const json = exportEvidenceAuditTrailJson([event]);
+
+    expect(json).not.toContain("Passport document");
+    expect(json).not.toContain("Compliance decision");
+    expect(json).not.toContain("raw KYC dump");
+    expect(json).toContain("[redacted-identity-document]");
+    expect(json).toContain("[redacted-legal-conclusion]");
+    expect(json).toContain("Not legal advice");
   });
 });
 

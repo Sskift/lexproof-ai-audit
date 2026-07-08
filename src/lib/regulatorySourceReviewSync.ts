@@ -37,6 +37,65 @@ export type RegulatorySourceReviewSyncLedger = {
   notLegalAdviceBoundary: "Not legal advice. Source review metadata is audit preparation lineage only.";
 };
 
+export type ServerRegulatorySourceReviewPacketStatus = "empty" | "ready" | "needs-review" | "metadata-needed";
+
+export type ServerRegulatorySourceReviewPacketRecord = {
+  recordId: string;
+  ledgerHash: string;
+  clauseId: string;
+  jurisdiction: string;
+  regulator: string;
+  citation: string;
+  sourceName: string;
+  sourceUrl: string;
+  reviewStatus: RegulatorySourceReviewRecord["reviewStatus"];
+  priority: RegulatorySourceReviewRecord["priority"];
+  effectiveAsOf: string;
+  lastReviewedAt: string;
+  nextReviewDueAt: string;
+  nextAction: string;
+  status: RegulatorySourceReviewRecord["status"];
+  reviewerNotesHash: string;
+  recordHash: string;
+  matchingBehaviorChanged: false;
+  notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only.";
+};
+
+export type ServerRegulatorySourceReviewPacket = {
+  packetVersion: "lexproof-server-source-review-packet-v1";
+  workspaceId: string;
+  generatedAt: string;
+  status: ServerRegulatorySourceReviewPacketStatus;
+  recordCount: number;
+  ledgerHashes: string[];
+  statusCounts: {
+    current: number;
+    pendingReview: number;
+    metadataNeeded: number;
+  };
+  reviewStatusCounts: {
+    current: number;
+    reviewDue: number;
+    metadataMissing: number;
+  };
+  priorityCounts: {
+    P0: number;
+    P1: number;
+    P2: number;
+  };
+  matchingBehaviorChanged: false;
+  records: ServerRegulatorySourceReviewPacketRecord[];
+  nextActions: string[];
+  packetHash: string;
+  notLegalAdviceBoundary: "Not legal advice. Server Source Review packets are audit preparation lineage metadata only.";
+};
+
+export type CreateServerRegulatorySourceReviewPacketInput = {
+  workspaceId: string;
+  records: RegulatorySourceReviewRecord[];
+  generatedAt?: string;
+};
+
 export type CreateRegulatorySourceReviewSyncInput = {
   workspaceId: string;
   sourceReview: RegulatorySourceReviewSyncLedger;
@@ -46,6 +105,7 @@ export type CreateRegulatorySourceReviewSyncInput = {
 
 const SOURCE_REVIEW_BOUNDARY = "Not legal advice. Source review metadata is audit preparation lineage only." as const;
 const RECORD_BOUNDARY = "Not legal advice. Source review records are audit preparation lineage metadata only." as const;
+const SERVER_PACKET_BOUNDARY = "Not legal advice. Server Source Review packets are audit preparation lineage metadata only." as const;
 const UNSAFE_ERROR =
   "Source review records must not include credentials, private keys, raw KYC, personal data, or legal conclusions.";
 
@@ -92,6 +152,50 @@ export function hashRegulatorySourceReviewLedger(sourceReview: RegulatorySourceR
   return sha256Hex(stableStringify(normalizeSourceReview(sourceReview)));
 }
 
+export function createServerRegulatorySourceReviewPacket(
+  input: CreateServerRegulatorySourceReviewPacketInput
+): ServerRegulatorySourceReviewPacket {
+  const workspaceId = normalizeRequired(input.workspaceId, "Workspace ID");
+  const records = sortSourceReviewRecords(input.records).map(createServerPacketRecord);
+  const statusCounts = {
+    current: records.filter((record) => record.status === "current").length,
+    pendingReview: records.filter((record) => record.status === "pending-review").length,
+    metadataNeeded: records.filter((record) => record.status === "metadata-needed").length
+  };
+  const reviewStatusCounts = {
+    current: records.filter((record) => record.reviewStatus === "current").length,
+    reviewDue: records.filter((record) => record.reviewStatus === "review-due").length,
+    metadataMissing: records.filter((record) => record.reviewStatus === "metadata-missing").length
+  };
+  const priorityCounts = {
+    P0: records.filter((record) => record.priority === "P0").length,
+    P1: records.filter((record) => record.priority === "P1").length,
+    P2: records.filter((record) => record.priority === "P2").length
+  };
+  const status = selectServerPacketStatus(records.length, statusCounts);
+  const nextActions = createServerPacketNextActions(status);
+  const hashPayload = {
+    packetVersion: "lexproof-server-source-review-packet-v1" as const,
+    workspaceId,
+    status,
+    recordCount: records.length,
+    ledgerHashes: uniqueSorted(records.map((record) => record.ledgerHash)),
+    statusCounts,
+    reviewStatusCounts,
+    priorityCounts,
+    matchingBehaviorChanged: false as const,
+    records,
+    nextActions,
+    notLegalAdviceBoundary: SERVER_PACKET_BOUNDARY
+  };
+
+  return {
+    ...hashPayload,
+    generatedAt: input.generatedAt ?? new Date().toISOString(),
+    packetHash: sha256Hex(stableStringify(hashPayload))
+  };
+}
+
 function createRecord({
   workspaceId,
   ledgerHash,
@@ -134,25 +238,93 @@ function createRecord({
   };
 }
 
+function createServerPacketRecord(record: RegulatorySourceReviewRecord): ServerRegulatorySourceReviewPacketRecord {
+  const payload = {
+    recordId: safeText(record.id),
+    ledgerHash: preserveSha256(record.ledgerHash),
+    clauseId: safeText(record.clauseId),
+    jurisdiction: safeText(record.jurisdiction),
+    regulator: safeText(record.regulator),
+    citation: safeText(record.citation),
+    sourceName: safeText(record.sourceName),
+    sourceUrl: safeText(record.sourceUrl),
+    reviewStatus: normalizeReviewStatus(record.reviewStatus),
+    priority: normalizePriority(record.priority),
+    effectiveAsOf: safeText(record.effectiveAsOf),
+    lastReviewedAt: safeText(record.lastReviewedAt),
+    nextReviewDueAt: safeText(record.nextReviewDueAt),
+    nextAction: safeText(record.nextAction),
+    status: normalizeRecordStatus(record.status),
+    reviewerNotesHash: sha256Hex(safeText(record.reviewerNotes)),
+    matchingBehaviorChanged: false as const,
+    notLegalAdviceBoundary: RECORD_BOUNDARY
+  };
+
+  return {
+    ...payload,
+    recordHash: sha256Hex(stableStringify(payload))
+  };
+}
+
 function normalizeSourceReview(sourceReview: RegulatorySourceReviewSyncLedger): RegulatorySourceReviewSyncLedger {
   if (!sourceReview || sourceReview.notLegalAdviceBoundary !== SOURCE_REVIEW_BOUNDARY) {
     throw new Error("Source review ledger is missing the required Not legal advice boundary.");
   }
 
-  const items = Array.isArray(sourceReview.items) ? sourceReview.items.map(normalizeItem).sort(compareItems) : [];
-  const actions = Array.isArray(sourceReview.actions) ? sourceReview.actions.map(normalizeAction).sort(compareActions) : [];
+  if (!Array.isArray(sourceReview.items)) {
+    throw new Error("Source review items must be an array.");
+  }
+
+  if (!Array.isArray(sourceReview.actions)) {
+    throw new Error("Source review actions must be an array.");
+  }
+
+  const items = sourceReview.items.map(normalizeItem).sort(compareItems);
+  const actions = sourceReview.actions.map(normalizeAction).sort(compareActions);
+  const totalSourceCount = normalizeCount(sourceReview.totalSourceCount, "total source count");
+  const currentSourceCount = normalizeCount(sourceReview.currentSourceCount, "current source count");
+  const reviewDueCount = normalizeCount(sourceReview.reviewDueCount, "review due count");
+  const metadataMissingCount = normalizeCount(sourceReview.metadataMissingCount, "metadata missing count");
+  assertSourceReviewCounts({ totalSourceCount, currentSourceCount, reviewDueCount, metadataMissingCount, items });
 
   return {
     status: normalizeReviewStatus(sourceReview.status),
-    totalSourceCount: Number(sourceReview.totalSourceCount),
-    currentSourceCount: Number(sourceReview.currentSourceCount),
-    reviewDueCount: Number(sourceReview.reviewDueCount),
-    metadataMissingCount: Number(sourceReview.metadataMissingCount),
-    reviewWindowDays: Number(sourceReview.reviewWindowDays),
+    totalSourceCount,
+    currentSourceCount,
+    reviewDueCount,
+    metadataMissingCount,
+    reviewWindowDays: normalizeCount(sourceReview.reviewWindowDays, "review window days"),
     items,
     actions,
     notLegalAdviceBoundary: SOURCE_REVIEW_BOUNDARY
   };
+}
+
+function assertSourceReviewCounts({
+  totalSourceCount,
+  currentSourceCount,
+  reviewDueCount,
+  metadataMissingCount,
+  items
+}: {
+  totalSourceCount: number;
+  currentSourceCount: number;
+  reviewDueCount: number;
+  metadataMissingCount: number;
+  items: RegulatorySourceReviewSyncItem[];
+}): void {
+  const actualCurrentCount = items.filter((item) => item.reviewStatus === "current").length;
+  const actualReviewDueCount = items.filter((item) => item.reviewStatus === "review-due").length;
+  const actualMetadataMissingCount = items.filter((item) => item.reviewStatus === "metadata-missing").length;
+
+  if (
+    totalSourceCount !== items.length ||
+    currentSourceCount !== actualCurrentCount ||
+    reviewDueCount !== actualReviewDueCount ||
+    metadataMissingCount !== actualMetadataMissingCount
+  ) {
+    throw new Error("Source review counts must match the review item statuses.");
+  }
 }
 
 function normalizeItem(item: RegulatorySourceReviewSyncItem): RegulatorySourceReviewSyncItem {
@@ -174,7 +346,7 @@ function normalizeItem(item: RegulatorySourceReviewSyncItem): RegulatorySourceRe
 function normalizeAction(action: RegulatorySourceReviewSyncAction): RegulatorySourceReviewSyncAction {
   return {
     id: safeText(action.id),
-    priority: action.priority === "P0" ? "P0" : "P1",
+    priority: normalizeActionPriority(action.priority),
     action: safeText(action.action),
     clauseId: safeText(action.clauseId),
     sourceUrl: safeText(action.sourceUrl)
@@ -220,12 +392,24 @@ function safeText(value: string): string {
   return redactClassifiedText(String(value ?? "").replace(/\s+/g, " ").trim());
 }
 
+function preserveSha256(value: string): string {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : safeText(normalized);
+}
+
 function normalizeRequired(value: string, label: string): string {
   const normalized = safeText(value);
   if (!normalized) {
     throw new Error(`${label} is required for source review sync.`);
   }
   return normalized;
+}
+
+function normalizeCount(value: unknown, label: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+  throw new Error(`Source review ${label} is invalid.`);
 }
 
 function normalizeReviewStatus(value: RegulatorySourceReviewSyncStatus): RegulatorySourceReviewSyncStatus {
@@ -235,12 +419,81 @@ function normalizeReviewStatus(value: RegulatorySourceReviewSyncStatus): Regulat
   throw new Error("Source review status is invalid.");
 }
 
+function normalizePriority(value: RegulatorySourceReviewRecord["priority"]): RegulatorySourceReviewRecord["priority"] {
+  if (value === "P0" || value === "P1" || value === "P2") {
+    return value;
+  }
+  throw new Error("Source review priority is invalid.");
+}
+
+function normalizeRecordStatus(value: RegulatorySourceReviewRecord["status"]): RegulatorySourceReviewRecord["status"] {
+  if (value === "current" || value === "pending-review" || value === "metadata-needed") {
+    return value;
+  }
+  throw new Error("Source review record status is invalid.");
+}
+
+function normalizeActionPriority(value: RegulatorySourceReviewSyncAction["priority"]): RegulatorySourceReviewSyncAction["priority"] {
+  if (value === "P0" || value === "P1") {
+    return value;
+  }
+  throw new Error("Source review action priority is invalid.");
+}
+
 function compareItems(left: RegulatorySourceReviewSyncItem, right: RegulatorySourceReviewSyncItem): number {
   return `${left.clauseId}-${left.jurisdiction}`.localeCompare(`${right.clauseId}-${right.jurisdiction}`);
 }
 
 function compareActions(left: RegulatorySourceReviewSyncAction, right: RegulatorySourceReviewSyncAction): number {
   return `${left.clauseId}-${left.id}`.localeCompare(`${right.clauseId}-${right.id}`);
+}
+
+function sortSourceReviewRecords(records: RegulatorySourceReviewRecord[]): RegulatorySourceReviewRecord[] {
+  return [...records].sort(
+    (left, right) =>
+      left.ledgerHash.localeCompare(right.ledgerHash) ||
+      left.clauseId.localeCompare(right.clauseId) ||
+      left.id.localeCompare(right.id)
+  );
+}
+
+function selectServerPacketStatus(
+  recordCount: number,
+  counts: ServerRegulatorySourceReviewPacket["statusCounts"]
+): ServerRegulatorySourceReviewPacketStatus {
+  if (recordCount === 0) {
+    return "empty";
+  }
+
+  if (counts.metadataNeeded > 0) {
+    return "metadata-needed";
+  }
+
+  if (counts.pendingReview > 0) {
+    return "needs-review";
+  }
+
+  return "ready";
+}
+
+function createServerPacketNextActions(status: ServerRegulatorySourceReviewPacketStatus): string[] {
+  if (status === "empty") {
+    return ["Sync Source Review Ledger metadata before counsel handoff."];
+  }
+
+  if (status === "metadata-needed") {
+    return ["Fill missing source metadata, then sync the Source Review Ledger before final handoff."];
+  }
+
+  if (status === "needs-review") {
+    return ["Refresh due source metadata with counsel or compliance review before final handoff."];
+  }
+
+  return ["Keep the server Source Review packet with the Counsel Pack handoff and preserve matching behavior controls."];
+}
+
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values.filter((value) => value.trim().length > 0))].sort((left, right) => left.localeCompare(right));
 }
 
 function stableStringify(value: unknown): string {

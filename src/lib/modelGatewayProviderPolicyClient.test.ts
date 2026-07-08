@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { fetchModelGatewayProviderPolicy } from "./modelGatewayProviderPolicyClient";
 import type { ModelGatewayProviderPolicyReport } from "./modelGatewayProviderPolicy";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 const providerPolicyReport: ModelGatewayProviderPolicyReport = {
   reportVersion: "lexproof-model-gateway-provider-policy-v1",
   generatedAt: "2026-06-30T00:00:00.000Z",
@@ -141,6 +144,66 @@ describe("model gateway provider policy client", () => {
     await expect(fetchModelGatewayProviderPolicy({ fetcher })).rejects.toThrow(
       "Provider policy response is missing the required Not legal advice boundary."
     );
+  });
+
+  it("rejects provider policy responses with blank next actions before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () =>
+      jsonResponse(
+        {
+          ...providerPolicyReport,
+          nextActions: [
+            "Keep external provider proxying disabled until provider allowlist and egress logging are reviewed.",
+            "   "
+          ]
+        },
+        200
+      )
+    ) as unknown as typeof fetch;
+
+    await expect(fetchModelGatewayProviderPolicy({ fetcher })).rejects.toThrow(
+      "Provider policy response has invalid next actions."
+    );
+  });
+
+  it("redacts classified text from otherwise valid provider policy responses before UI use", async () => {
+    const pollutedReport: ModelGatewayProviderPolicyReport = {
+      ...providerPolicyReport,
+      adapters: [
+        {
+          ...providerPolicyReport.adapters[1],
+          label: `OpenAI-compatible gateway ${apiKey}`,
+          credentialPolicy: `Do not use apiKey=${apiKey} after raw KYC packet review.`,
+          readinessEvidence: `Provider evidence copied private key ${privateKey} before a final legal decision.`,
+          disabledReason: `Remove passport data and legal opinion before provider proxying.`
+        } as unknown as ModelGatewayProviderPolicyReport["adapters"][number]
+      ],
+      controls: [
+        {
+          ...providerPolicyReport.controls[0],
+          evidence: `Control evidence copied raw KYC packet and apiKey=${apiKey}.`,
+          recoveryAction: `Remove private key ${privateKey} before provider review.`
+        }
+      ],
+      nextActions: [`Resolve apiKey=${apiKey}, raw KYC packet, and legal conclusion before proxy review.`]
+    };
+    const fetcher = vi.fn(async () => jsonResponse(pollutedReport, 200)) as unknown as typeof fetch;
+
+    const report = await fetchModelGatewayProviderPolicy({
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher
+    });
+    const serialized = JSON.stringify(report);
+
+    expect(report).not.toBe(pollutedReport);
+    expect(report.adapters[0].credentialPolicy).toContain("[redacted-secret]");
+    expect(report.adapters[0].readinessEvidence).toContain("[redacted-private-key]");
+    expect(report.adapters[0].disabledReason).toContain("[redacted-identity-document]");
+    expect(report.controls[0].evidence).toContain("[redacted-raw-kyc]");
+    expect(report.nextActions[0]).toContain("[redacted-legal-conclusion]");
+    expect(serialized).toContain("[redacted-api-key]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport data|legal opinion|final legal decision|legal conclusion/i);
   });
 });
 

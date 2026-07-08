@@ -523,6 +523,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
         owner: "Compliance"
       },
       {
+        label: "EU AI Act provider QMS and risk-management register",
+        kind: "Register",
+        content:
+          "Requested: document high-risk AI provider role, intended purpose, risk management system, quality management system, instructions for use, human oversight, governance owner, provider conformity file boundary, counsel review owner, and no legal conclusion.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-high-risk-provider-quality-documentation",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "EU AI Act technical documentation and data-governance register",
+        kind: "Register",
+        content:
+          "Requested: document technical documentation, data governance, training data governance, validation data, test data, record-keeping logs, logging, accuracy robustness cybersecurity assumptions, reviewer owner, and no raw personal data, client identifiers, credentials, or legal conclusions.",
+        source:
+          "LexProof template: AI Legal / Compliance Workflow; regulatory control: control-eu-ai-act-high-risk-provider-quality-documentation",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
         label: "EU AI Act justice and ADR perimeter memo",
         kind: "Memo",
         content:
@@ -712,6 +732,26 @@ export const evidenceTemplates: EvidenceTemplate[] = [
           "Requested: document endorsement, testimonial, material connection, creator disclosure, approval routing, monitoring owner, and retained review evidence.",
         source:
           "LexProof template: Campaign Claims Review; regulatory control: control-us-ftc-endorsement-advertising-guides",
+        status: "requested",
+        owner: "Compliance"
+      },
+      {
+        label: "Investment adviser advertisement and promoter review file",
+        kind: "Review file",
+        content:
+          "Requested: if investment adviser or private fund marketing is in scope, document advertisement inventory, advisory services, private fund investor audience, testimonial or endorsement scope, promoter compensation, material conflict disclosure, written agreement, disqualification screening, Form ADV reporting, review owner, and no raw investor records.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-us-sec-investment-adviser-marketing-rule",
+        status: "requested",
+        owner: "Counsel"
+      },
+      {
+        label: "Investment adviser performance presentation support file",
+        kind: "Support file",
+        content:
+          "Requested: if adviser advertisements include performance results, document gross performance, net performance, hypothetical performance, extracted performance, related performance, predecessor performance, time period, books and records, recordkeeping owner, substantiation source, and no raw portfolio or investor records.",
+        source:
+          "LexProof template: Campaign Claims Review; regulatory control: control-us-sec-investment-adviser-marketing-rule",
         status: "requested",
         owner: "Compliance"
       },

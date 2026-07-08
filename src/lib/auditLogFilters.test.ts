@@ -52,6 +52,25 @@ describe("audit log filters", () => {
       ]
     });
   });
+
+  it("rejects repeated or non-string filters before route handlers evaluate them", () => {
+    expect(
+      normalizeAuditLogFilters({
+        actorId: ["Compliance", "Counsel"],
+        action: 42,
+        targetId: { unsafe: true },
+        targetType: ["evidence"]
+      })
+    ).toEqual({
+      valid: false,
+      errors: [
+        "Audit log actorId filter must be a single string.",
+        "Audit log action filter must be a single string.",
+        "Audit log targetId filter must be a single string.",
+        "Audit log targetType filter must be a single string."
+      ]
+    });
+  });
 });
 
 function createRecord(overrides: Partial<AuditLogRecord> = {}): AuditLogRecord {

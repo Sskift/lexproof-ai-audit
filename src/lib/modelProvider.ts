@@ -1,6 +1,6 @@
 import type { AIReviewPayload } from "./aiReview";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
-import { classifyDataBoundaryText, type ClassifiedDataClass } from "./dataClassification";
+import { classifyDataBoundaryText, redactClassifiedText, type ClassifiedDataClass } from "./dataClassification";
 
 export type ModelProviderKind = "mock" | "openai-compatible";
 
@@ -10,6 +10,8 @@ export type ModelSettings = {
   baseUrl?: string;
   apiKey?: string;
 };
+
+export type StoredModelSettings = Omit<ModelSettings, "apiKey">;
 
 export type ModelSettingsValidation = {
   valid: boolean;
@@ -29,6 +31,11 @@ export type ModelProvider = {
 const DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY =
   "Not legal advice. Model provider errors are audit preparation workflow metadata only.";
 
+export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
+  provider: "mock",
+  model: "lexproof-mock"
+};
+
 export class ModelProviderClientError extends Error {
   code: string;
   recoveryAction: string;
@@ -43,6 +50,32 @@ export class ModelProviderClientError extends Error {
       "Check the provider Base URL, model name, and session-only API key, then retry after Redaction Gate passes.";
     this.notLegalAdviceBoundary = options?.notLegalAdviceBoundary ?? DEFAULT_MODEL_PROVIDER_ERROR_BOUNDARY;
   }
+}
+
+export function parseStoredModelSettings(
+  raw: string | null | undefined,
+  fallback: ModelSettings = DEFAULT_MODEL_SETTINGS
+): ModelSettings {
+  const safeFallback = createSafeModelSettingsFallback(fallback);
+  if (!raw) {
+    return safeFallback;
+  }
+
+  try {
+    return parseModelSettingsValue(JSON.parse(raw) as unknown, safeFallback);
+  } catch {
+    return safeFallback;
+  }
+}
+
+export function sanitizeModelSettingsForStorage(
+  settings: ModelSettings,
+  fallback: ModelSettings = DEFAULT_MODEL_SETTINGS
+): StoredModelSettings {
+  const safeFallback = createSafeModelSettingsFallback(fallback);
+  const safeSettings = parseModelSettingsValue(settings, safeFallback);
+  const { apiKey: _apiKey, ...storedSettings } = safeSettings;
+  return storedSettings;
 }
 
 export function validateModelSettings(settings: ModelSettings): ModelSettingsValidation {
@@ -76,11 +109,7 @@ const modelMetadataBlockedClasses: ClassifiedDataClass[] = [
 
 function createModelMetadataBoundaryErrors(settings: ModelSettings): string[] {
   const metadataText = [settings.model, settings.baseUrl ?? ""].join(" ");
-  const blockedClasses = new Set(
-    classifyDataBoundaryText(metadataText)
-      .map((finding) => finding.dataClass)
-      .filter((dataClass) => modelMetadataBlockedClasses.includes(dataClass))
-  );
+  const blockedClasses = new Set(createBlockedModelMetadataClasses(metadataText));
 
   return modelMetadataBlockedClasses
     .filter((dataClass) => blockedClasses.has(dataClass))
@@ -88,6 +117,84 @@ function createModelMetadataBoundaryErrors(settings: ModelSettings): string[] {
       (dataClass) =>
         `Model settings metadata contains ${dataClass}. Remove credentials, private keys, or raw KYC from model name and endpoint metadata before validating Model Connect.`
     );
+}
+
+function parseModelSettingsValue(value: unknown, fallback: ModelSettings): ModelSettings {
+  if (!isRecord(value) || !isModelProviderKind(value.provider)) {
+    return fallback;
+  }
+
+  const model = parseModelMetadataText(value.model, value.provider === "mock" ? "lexproof-mock" : "");
+  if (model === null) {
+    return fallback;
+  }
+
+  if (value.provider === "mock") {
+    return {
+      provider: "mock",
+      model: model || "lexproof-mock"
+    };
+  }
+
+  const baseUrl = parseOptionalModelMetadataText(value.baseUrl);
+  if (baseUrl === null) {
+    return fallback;
+  }
+
+  return {
+    provider: "openai-compatible",
+    model,
+    baseUrl
+  };
+}
+
+function createSafeModelSettingsFallback(fallback: ModelSettings): ModelSettings {
+  const model = parseModelMetadataText(fallback.model, fallback.provider === "mock" ? "lexproof-mock" : "");
+  const baseUrl = parseOptionalModelMetadataText(fallback.baseUrl);
+
+  if (fallback.provider === "openai-compatible" && model !== null && baseUrl !== null) {
+    return {
+      provider: "openai-compatible",
+      model,
+      baseUrl
+    };
+  }
+
+  return { ...DEFAULT_MODEL_SETTINGS };
+}
+
+function parseOptionalModelMetadataText(value: unknown): string | undefined | null {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return parseModelMetadataText(value, "");
+}
+
+function parseModelMetadataText(value: unknown, defaultValue: string): string | null {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  if (createBlockedModelMetadataClasses(value).length > 0) {
+    return null;
+  }
+
+  return redactClassifiedText(value).replace(/\s+/g, " ").trim();
+}
+
+function createBlockedModelMetadataClasses(value: string): ClassifiedDataClass[] {
+  return classifyDataBoundaryText(value)
+    .map((finding) => finding.dataClass)
+    .filter((dataClass) => modelMetadataBlockedClasses.includes(dataClass));
+}
+
+function isModelProviderKind(value: unknown): value is ModelProviderKind {
+  return value === "mock" || value === "openai-compatible";
 }
 
 export function buildOpenAICompatibleRequest(settings: ModelSettings, payload: AIReviewPayload) {

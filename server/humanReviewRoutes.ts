@@ -22,13 +22,13 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
     "/api/workspaces/:workspaceId/reviews",
     async (request, reply) => {
       try {
-        assertHumanReviewTargetType(request.body.targetType);
+        const payload = parseHumanReviewRequestBody(request.body);
         const review = createHumanReviewRecord({
           workspaceId: request.params.workspaceId,
-          targetType: request.body.targetType,
-          targetId: request.body.targetId,
-          reviewerId: request.body.reviewerId,
-          comment: request.body.comment
+          targetType: payload.targetType,
+          targetId: payload.targetId,
+          reviewerId: payload.reviewerId,
+          comment: payload.comment
         });
         await repository.saveHumanReviewRecord(review);
         await repository.appendAuditLogRecord(
@@ -92,14 +92,12 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
       }
 
       try {
-        if (request.body.status) {
-          assertHumanReviewStatus(request.body.status);
-        }
+        const payload = parseHumanReviewUpdateBody(request.body);
 
         const updated = updateHumanReviewRecord(reviews[reviewIndex], {
-          status: request.body.status,
-          comment: request.body.comment,
-          reviewerId: request.body.reviewerId
+          status: payload.status,
+          comment: payload.comment,
+          reviewerId: payload.reviewerId
         });
         const evidenceEffect = createEvidenceVaultStatusEffectFromHumanReview(updated);
         const existingEvidence = evidenceEffect
@@ -196,23 +194,27 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
   );
 }
 
-type HumanReviewRequestBody = {
+type HumanReviewRequestBody = unknown;
+
+type ParsedHumanReviewRequestBody = {
   targetType: HumanReviewRecord["targetType"];
   targetId: string;
   reviewerId: string;
   comment: string;
 };
 
-type HumanReviewUpdateBody = {
+type HumanReviewUpdateBody = unknown;
+
+type ParsedHumanReviewUpdateBody = {
   status?: HumanReviewRecord["status"];
   comment?: string;
   reviewerId?: string;
 };
 
 type HumanReviewQueueQuery = {
-  targetType?: string;
-  status?: string;
-  reviewerId?: string;
+  targetType?: unknown;
+  status?: unknown;
+  reviewerId?: unknown;
 };
 
 function updateEvidenceVaultRecordFromReview(
@@ -228,11 +230,39 @@ function updateEvidenceVaultRecordFromReview(
   };
 }
 
+function parseHumanReviewRequestBody(value: unknown): ParsedHumanReviewRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Human review request payload must be a JSON object.");
+  }
+
+  const targetType = stringField(value.targetType, "Human review target type must be a string.");
+  assertHumanReviewTargetType(targetType);
+
+  return {
+    targetType,
+    targetId: stringField(value.targetId, "Human review target ID must be a string."),
+    reviewerId: stringField(value.reviewerId, "Human review reviewer ID must be a string."),
+    comment: stringField(value.comment, "Human review comment must be a string.")
+  };
+}
+
+function parseHumanReviewUpdateBody(value: unknown): ParsedHumanReviewUpdateBody {
+  if (!isRecord(value)) {
+    throw new Error("Human review update payload must be a JSON object.");
+  }
+
+  return {
+    status: optionalHumanReviewStatusField(value.status),
+    comment: optionalStringField(value.comment, "Human review update comment must be a string."),
+    reviewerId: optionalStringField(value.reviewerId, "Human review update reviewer ID must be a string.")
+  };
+}
+
 function createHumanReviewQueueFilters(query: HumanReviewQueueQuery): ServerHumanReviewQueueFilters {
   const filters: ServerHumanReviewQueueFilters = {};
-  const targetType = query.targetType?.trim();
-  const status = query.status?.trim();
-  const reviewerId = query.reviewerId?.trim();
+  const targetType = optionalQueryStringField(query.targetType, "targetType");
+  const status = optionalQueryStringField(query.status, "status");
+  const reviewerId = optionalQueryStringField(query.reviewerId, "reviewerId");
 
   if (targetType) {
     assertHumanReviewTargetType(targetType);
@@ -251,6 +281,45 @@ function createHumanReviewQueueFilters(query: HumanReviewQueueQuery): ServerHuma
   return filters;
 }
 
+function optionalQueryStringField(value: unknown, field: keyof HumanReviewQueueQuery): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`Human review ${field} filter must be a single string.`);
+  }
+
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
+function optionalHumanReviewStatusField(value: unknown): HumanReviewRecord["status"] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const status = stringField(value, "Human review status must be a string.");
+  assertHumanReviewStatus(status);
+  return status;
+}
+
+function optionalStringField(value: unknown, message: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return stringField(value, message);
+}
+
+function stringField(value: unknown, message: string): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  throw new Error(message);
+}
+
 function assertHumanReviewTargetType(targetType: string): asserts targetType is HumanReviewRecord["targetType"] {
   if (!["risk-flag", "evidence", "model-run", "clause-match", "counsel-pack"].includes(targetType)) {
     throw new Error("Human review target type must be risk-flag, evidence, model-run, clause-match, or counsel-pack.");
@@ -261,6 +330,10 @@ function assertHumanReviewStatus(status: string): asserts status is HumanReviewR
   if (!["requested", "under-review", "reviewed", "rejected", "needs-more-evidence"].includes(status)) {
     throw new Error("Human review status must be requested, under-review, reviewed, rejected, or needs-more-evidence.");
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function createHumanReviewNotFoundError() {

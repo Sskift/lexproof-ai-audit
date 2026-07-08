@@ -3,7 +3,10 @@ import {
   buildOpenAICompatibleRequest,
   createMockModelProvider,
   createOpenAICompatibleModelProvider,
+  DEFAULT_MODEL_SETTINGS,
   ModelProviderClientError,
+  parseStoredModelSettings,
+  sanitizeModelSettingsForStorage,
   validateModelSettings
 } from "./modelProvider";
 import type { AIReviewPayload } from "./aiReview";
@@ -25,6 +28,86 @@ const payload: AIReviewPayload = {
   evidenceSummaries: [{ label: "Policy", kind: "Markdown", status: "received", owner: "Counsel", contentPreview: "Human review policy" }],
   missingEvidenceChecklist: []
 };
+
+describe("parseStoredModelSettings", () => {
+  it("restores non-secret provider metadata without restoring stored API keys", () => {
+    const settings = parseStoredModelSettings(
+      JSON.stringify({
+        provider: "openai-compatible",
+        model: "audit-prep-model",
+        baseUrl: "https://models.example.com/v1",
+        apiKey: "sk-live-abcdefghijklmnopqrstuvwxyz123456"
+      })
+    );
+
+    expect(settings).toEqual({
+      provider: "openai-compatible",
+      model: "audit-prep-model",
+      baseUrl: "https://models.example.com/v1"
+    });
+    expect(settings).not.toHaveProperty("apiKey");
+  });
+
+  it("falls back when stored settings are malformed or use an unsupported provider", () => {
+    expect(parseStoredModelSettings("{not-json")).toEqual(DEFAULT_MODEL_SETTINGS);
+    expect(parseStoredModelSettings(JSON.stringify({ provider: "enterprise-proxy", model: "managed-model" }))).toEqual(
+      DEFAULT_MODEL_SETTINGS
+    );
+    expect(parseStoredModelSettings(JSON.stringify({ provider: "mock", model: 42 }))).toEqual(DEFAULT_MODEL_SETTINGS);
+  });
+
+  it("does not restore model metadata that contains credentials, private keys, or raw KYC references", () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const settings = parseStoredModelSettings(
+      JSON.stringify({
+        provider: "openai-compatible",
+        model: `raw KYC routing ${privateKey}`,
+        baseUrl: `https://models.example.com/v1?api_key=${apiKey}`,
+        apiKey: "sk-session-only"
+      })
+    );
+
+    expect(settings).toEqual(DEFAULT_MODEL_SETTINGS);
+    expect(JSON.stringify(settings)).not.toContain(apiKey);
+    expect(JSON.stringify(settings)).not.toContain(privateKey);
+    expect(JSON.stringify(settings)).not.toMatch(/raw KYC/i);
+  });
+});
+
+describe("sanitizeModelSettingsForStorage", () => {
+  it("serializes only metadata fields and leaves session-only API keys out of localStorage payloads", () => {
+    const stored = sanitizeModelSettingsForStorage({
+      provider: "openai-compatible",
+      model: "audit-prep-model",
+      baseUrl: "https://models.example.com/v1",
+      apiKey: "sk-live-abcdefghijklmnopqrstuvwxyz123456"
+    });
+
+    expect(stored).toEqual({
+      provider: "openai-compatible",
+      model: "audit-prep-model",
+      baseUrl: "https://models.example.com/v1"
+    });
+    expect(stored).not.toHaveProperty("apiKey");
+  });
+
+  it("falls back to mock metadata instead of persisting unsafe provider settings", () => {
+    const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const stored = sanitizeModelSettingsForStorage({
+      provider: "openai-compatible",
+      model: `Counsel review model with raw KYC packet ${privateKey}`,
+      baseUrl: `https://models.example.com/v1?api_key=${apiKey}`,
+      apiKey: "sk-session-only"
+    });
+
+    expect(stored).toEqual(DEFAULT_MODEL_SETTINGS);
+    expect(JSON.stringify(stored)).not.toContain(apiKey);
+    expect(JSON.stringify(stored)).not.toContain(privateKey);
+    expect(JSON.stringify(stored)).not.toMatch(/raw KYC|session-only/i);
+  });
+});
 
 describe("validateModelSettings", () => {
   it("accepts mock settings without an API key", () => {

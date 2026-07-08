@@ -362,6 +362,28 @@ describe("Phase 2 backend app", () => {
         Counsel: 1
       },
       nextActions: ["1 review item needs more evidence before counsel handoff."],
+      recoveryPacket: expect.objectContaining({
+        packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+        workspaceId: "workspace-queue",
+        status: "needs-recovery",
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        summary: expect.objectContaining({
+          totalRecoveryCount: 1,
+          returnedCount: 1,
+          rejectedCount: 0,
+          notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+        }),
+        items: [
+          expect.objectContaining({
+            id: evidenceReview.id,
+            targetType: "evidence",
+            status: "needs-more-evidence",
+            severity: "needs-action",
+            notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery items are audit preparation workflow metadata only."
+          })
+        ],
+        notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+      }),
       items: [expect.objectContaining({ id: evidenceReview.id, targetType: "evidence", status: "needs-more-evidence" })],
       notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
     });

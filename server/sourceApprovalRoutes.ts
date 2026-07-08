@@ -5,6 +5,7 @@ import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { createAuditLogRecord } from "../src/lib/phase2Types.js";
 import {
   createRegulatorySourceApprovalSyncResult,
+  createServerRegulatorySourceApprovalPacket,
   type RegulatorySourceApprovalSyncItem,
   type RegulatorySourceApprovalSyncQueue
 } from "../src/lib/regulatorySourceApprovalSync.js";
@@ -20,10 +21,11 @@ export function registerSourceApprovalRoutes(server: FastifyInstance, options: S
     "/api/workspaces/:workspaceId/source-approvals",
     async (request, reply) => {
       try {
+        const payload = parseSourceApprovalSyncRequestBody(request.body);
         const result = createRegulatorySourceApprovalSyncResult({
           workspaceId: request.params.workspaceId,
-          queue: createQueuePayload(request.body?.queue),
-          createdBy: stringField(request.body?.createdBy, "Compliance"),
+          queue: createQueuePayload(payload.queue),
+          createdBy: stringField(payload.createdBy, "Compliance"),
           createdAt: new Date().toISOString()
         });
 
@@ -31,7 +33,7 @@ export function registerSourceApprovalRoutes(server: FastifyInstance, options: S
         await repository.appendAuditLogRecord(
           createAuditLogRecord({
             workspaceId: request.params.workspaceId,
-            actorId: stringField(request.body?.createdBy, "Compliance"),
+            actorId: stringField(payload.createdBy, "Compliance"),
             action: "source-approval.synced",
             targetType: "source-approval",
             targetId: result.queueHash,
@@ -59,26 +61,47 @@ export function registerSourceApprovalRoutes(server: FastifyInstance, options: S
   server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/source-approvals", async (request) =>
     repository.listRegulatorySourceApprovalRecords(request.params.workspaceId)
   );
+
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/source-approvals/packet", async (request) => {
+    const records = await repository.listRegulatorySourceApprovalRecords(request.params.workspaceId);
+    return createServerRegulatorySourceApprovalPacket({
+      workspaceId: request.params.workspaceId,
+      records
+    });
+  });
 }
 
-type SourceApprovalSyncRequestBody = {
+type SourceApprovalSyncRequestBody = unknown;
+
+type ParsedSourceApprovalSyncRequestBody = {
   createdBy?: unknown;
   queue?: unknown;
 };
+
+function parseSourceApprovalSyncRequestBody(value: unknown): ParsedSourceApprovalSyncRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Source approval sync payload must be a JSON object.");
+  }
+
+  return {
+    createdBy: value.createdBy,
+    queue: value.queue
+  };
+}
 
 function createQueuePayload(value: unknown): RegulatorySourceApprovalSyncQueue {
   if (!isRecord(value)) {
     throw new Error("Source approval queue is required.");
   }
 
-  const items = Array.isArray(value.items) ? value.items.map(createItemPayload) : [];
+  const items = arrayField(value.items, "Source approval items").map(createItemPayload);
   return {
     queueVersion: stringField(value.queueVersion) as RegulatorySourceApprovalSyncQueue["queueVersion"],
     generatedAt: stringField(value.generatedAt),
     status: queueStatusField(value.status),
-    totalItemCount: numberField(value.totalItemCount),
-    approvalRequiredCount: numberField(value.approvalRequiredCount),
-    metadataRequiredCount: numberField(value.metadataRequiredCount),
+    totalItemCount: numberField(value.totalItemCount, "Source approval total item count is invalid."),
+    approvalRequiredCount: numberField(value.approvalRequiredCount, "Source approval required count is invalid."),
+    metadataRequiredCount: numberField(value.metadataRequiredCount, "Source approval metadata required count is invalid."),
     items,
     notLegalAdviceBoundary: stringField(value.notLegalAdviceBoundary) as RegulatorySourceApprovalSyncQueue["notLegalAdviceBoundary"]
   };
@@ -90,21 +113,21 @@ function createItemPayload(value: unknown): RegulatorySourceApprovalSyncItem {
   }
 
   return {
-    id: stringField(value.id),
+    id: requiredStringField(value.id, "Source approval item ID"),
     priority: priorityField(value.priority),
     approvalStatus: approvalStatusField(value.approvalStatus),
     reviewStatus: reviewStatusField(value.reviewStatus),
-    clauseId: stringField(value.clauseId),
-    jurisdiction: stringField(value.jurisdiction),
-    regulator: stringField(value.regulator),
-    citation: stringField(value.citation),
-    sourceName: stringField(value.sourceName),
-    sourceUrl: stringField(value.sourceUrl),
-    effectiveAsOf: stringField(value.effectiveAsOf),
-    lastReviewedAt: stringField(value.lastReviewedAt),
-    nextReviewDueAt: stringField(value.nextReviewDueAt),
-    reviewerNotes: stringField(value.reviewerNotes),
-    nextAction: stringField(value.nextAction),
+    clauseId: requiredStringField(value.clauseId, "Source approval item clause ID"),
+    jurisdiction: requiredStringField(value.jurisdiction, "Source approval item jurisdiction"),
+    regulator: requiredStringField(value.regulator, "Source approval item regulator"),
+    citation: requiredStringField(value.citation, "Source approval item citation"),
+    sourceName: requiredStringField(value.sourceName, "Source approval item source name"),
+    sourceUrl: requiredStringField(value.sourceUrl, "Source approval item source URL"),
+    effectiveAsOf: requiredStringField(value.effectiveAsOf, "Source approval item effective date"),
+    lastReviewedAt: requiredStringField(value.lastReviewedAt, "Source approval item last reviewed date"),
+    nextReviewDueAt: requiredStringField(value.nextReviewDueAt, "Source approval item next review due date"),
+    reviewerNotes: requiredStringField(value.reviewerNotes, "Source approval reviewer notes"),
+    nextAction: requiredStringField(value.nextAction, "Source approval next action"),
     approvalGate: stringField(value.approvalGate) as RegulatorySourceApprovalSyncItem["approvalGate"],
     notLegalAdviceBoundary: stringField(value.notLegalAdviceBoundary) as RegulatorySourceApprovalSyncItem["notLegalAdviceBoundary"]
   };
@@ -114,30 +137,56 @@ function stringField(value: unknown, fallback = ""): string {
   return typeof value === "string" && value.trim() ? value.replace(/\s+/g, " ").trim() : fallback;
 }
 
-function numberField(value: unknown): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+function requiredStringField(value: unknown, label: string): string {
+  if (typeof value === "string" && value.trim()) {
+    return value.replace(/\s+/g, " ").trim();
+  }
+
+  throw new Error(`${label} must be a non-empty string.`);
+}
+
+function arrayField(value: unknown, label: string): unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  throw new Error(`${label} must be an array.`);
+}
+
+function numberField(value: unknown, message: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+
+  throw new Error(message);
 }
 
 function queueStatusField(value: unknown): RegulatorySourceApprovalSyncQueue["status"] {
   if (value === "empty" || value === "needs-approval" || value === "needs-metadata") {
     return value;
   }
-  return "empty";
+  throw new Error("Source approval queue status is invalid.");
 }
 
 function priorityField(value: unknown): RegulatorySourceApprovalSyncItem["priority"] {
-  return value === "P0" ? "P0" : "P1";
+  if (value === "P0" || value === "P1") {
+    return value;
+  }
+  throw new Error("Source approval priority is invalid.");
 }
 
 function approvalStatusField(value: unknown): RegulatorySourceApprovalSyncItem["approvalStatus"] {
-  return value === "metadata-required" ? "metadata-required" : "approval-required";
+  if (value === "approval-required" || value === "metadata-required") {
+    return value;
+  }
+  throw new Error("Source approval status is invalid.");
 }
 
 function reviewStatusField(value: unknown): RegulatorySourceApprovalSyncItem["reviewStatus"] {
-  if (value === "current" || value === "metadata-missing") {
+  if (value === "current" || value === "review-due" || value === "metadata-missing") {
     return value;
   }
-  return "review-due";
+  throw new Error("Source review status is invalid.");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

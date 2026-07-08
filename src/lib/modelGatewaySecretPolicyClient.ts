@@ -5,6 +5,7 @@ import type {
 } from "./modelGatewaySecretPolicy";
 import type { ModelGatewayProviderPolicyStatus } from "./modelGatewayProviderPolicy";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { redactIntegrationPolicyReport } from "./integrationPolicyReportRedaction";
 
 export type FetchModelGatewaySecretPolicyReportInput = {
   apiBaseUrl?: string;
@@ -114,11 +115,11 @@ function validateSecretPolicyReport(payload: unknown): ModelGatewaySecretPolicyR
     throw invalidResponseError("Secret policy response has invalid control metadata.");
   }
 
-  if (!Array.isArray(payload.nextActions) || !payload.nextActions.every((action) => typeof action === "string")) {
+  if (!isNonEmptyStringArray(payload.nextActions)) {
     throw invalidResponseError("Secret policy response has invalid next actions.");
   }
 
-  return payload as ModelGatewaySecretPolicyReport;
+  return redactIntegrationPolicyReport(payload as ModelGatewaySecretPolicyReport);
 }
 
 function isSecretPolicyControl(value: unknown): value is ModelGatewaySecretPolicyControl {
@@ -137,6 +138,14 @@ function isSecretPolicyControl(value: unknown): value is ModelGatewaySecretPolic
 
 function isProviderPolicyStatus(value: unknown): value is ModelGatewayProviderPolicyStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as ModelGatewayProviderPolicyStatus);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((action) => typeof action === "string" && action.trim().length > 0)
+  );
 }
 
 function invalidResponseError(message: string): ModelGatewaySecretPolicyClientError {

@@ -1,10 +1,10 @@
-import { redactDataBoundaryText } from "./dataBoundary";
 import {
   classifyDataBoundaryText,
   type ClassifiedDataClass,
   type ClassifiedDataSeverity
-} from "./dataClassification";
-import type { AuditLogRecord } from "./phase2Types";
+} from "./dataClassification.js";
+import { redactAuditLogText } from "./auditLogRedaction.js";
+import type { AuditLogRecord } from "./phase2Types.js";
 
 export type AuditLogExportBoundaryStatus = "clean" | "needs-review" | "blocked";
 export type AuditLogExportIntegrityStatus = "verified" | "needs-review" | "blocked" | "empty";
@@ -54,6 +54,7 @@ export type AuditLogExportRecord = {
   detectedClasses: ClassifiedDataClass[];
   boundaryFindings: AuditLogExportBoundaryFinding[];
   remediation: string[];
+  nextActions: string[];
   events: AuditLogExportEvent[];
   notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only.";
 };
@@ -78,8 +79,15 @@ export function createAuditLogExport(input: CreateAuditLogExportInput): AuditLog
   const actionCounts = countActions(events);
   const actors = uniqueSorted(events.map((event) => event.actorId));
   const targetTypes = uniqueSorted(events.map((event) => event.targetType)) as AuditLogRecord["targetType"][];
+  const remediation = createRemediation(boundaryFindings);
+  const nextActions = createNextActions({
+    eventCount: events.length,
+    integrityStatus,
+    exportAllowed: boundaryBlockerCount === 0,
+    remediation
+  });
   const exportHash = createExportHash({
-    workspaceId: redactDataBoundaryText(input.workspaceId.trim() || "local-workspace"),
+    workspaceId: redactAuditLogText(input.workspaceId.trim() || "local-workspace"),
     eventCount: events.length,
     firstEventAt: events[0]?.createdAt,
     lastEventAt: events.at(-1)?.createdAt,
@@ -93,12 +101,14 @@ export function createAuditLogExport(input: CreateAuditLogExportInput): AuditLog
     boundaryBlockerCount,
     boundaryWarningCount,
     detectedClasses: uniqueSorted(boundaryFindings.map((finding) => finding.dataClass)),
+    remediation,
+    nextActions,
     eventEntryHashes: events.map((event) => event.entryHash)
   });
 
   return {
     exportVersion: "lexproof-audit-log-export-v1",
-    workspaceId: redactDataBoundaryText(input.workspaceId.trim() || "local-workspace"),
+    workspaceId: redactAuditLogText(input.workspaceId.trim() || "local-workspace"),
     exportedAt: input.exportedAt ?? new Date().toISOString(),
     exportHash,
     integrityChainHash,
@@ -116,7 +126,8 @@ export function createAuditLogExport(input: CreateAuditLogExportInput): AuditLog
     boundaryWarningCount,
     detectedClasses: uniqueSorted(boundaryFindings.map((finding) => finding.dataClass)) as ClassifiedDataClass[],
     boundaryFindings,
-    remediation: createRemediation(boundaryFindings),
+    remediation,
+    nextActions,
     events,
     notLegalAdviceBoundary: NOT_LEGAL_ADVICE_BOUNDARY
   };
@@ -127,28 +138,57 @@ export function exportAuditLogJson(record: AuditLogExportRecord): string {
 }
 
 export function downloadAuditLogJson(filename: string, record: AuditLogExportRecord): void {
-  const blob = new Blob([exportAuditLogJson(record)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const browser = resolveBrowserDownloadGlobals();
+  const blob = new browser.Blob([exportAuditLogJson(record)], { type: "application/json;charset=utf-8" });
+  const url = browser.URL.createObjectURL(blob);
+  const link = browser.document.createElement("a");
   link.href = url;
   link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
   link.style.display = "none";
-  document.body.appendChild(link);
+  browser.document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  browser.URL.revokeObjectURL(url);
+}
+
+type BrowserDownloadGlobals = {
+  Blob: typeof Blob;
+  URL: {
+    createObjectURL(blob: Blob): string;
+    revokeObjectURL(url: string): void;
+  };
+  document: {
+    body: {
+      appendChild(node: unknown): void;
+    };
+    createElement(tagName: "a"): {
+      href: string;
+      download: string;
+      style: { display: string };
+      click(): void;
+      remove(): void;
+    };
+  };
+};
+
+function resolveBrowserDownloadGlobals(): BrowserDownloadGlobals {
+  const globals = globalThis as typeof globalThis & Partial<BrowserDownloadGlobals>;
+  if (!globals.Blob || !globals.URL || !globals.document) {
+    throw new Error("Audit Log JSON download requires browser document APIs.");
+  }
+  return globals as BrowserDownloadGlobals;
 }
 
 function createExportEvent(record: AuditLogRecord): AuditLogExportEvent {
   const event = {
-    id: redactDataBoundaryText(record.id),
-    actorId: redactDataBoundaryText(record.actorId),
-    action: redactDataBoundaryText(record.action),
+    id: redactAuditLogText(record.id),
+    actorId: redactAuditLogText(record.actorId),
+    action: redactAuditLogText(record.action),
     targetType: record.targetType,
-    targetId: redactDataBoundaryText(record.targetId),
+    targetId: redactAuditLogText(record.targetId),
     beforeHash: sanitizeAuditHash(record.beforeHash),
     afterHash: sanitizeAuditHash(record.afterHash),
-    summary: redactDataBoundaryText(record.summary),
+    summary: redactAuditLogText(record.summary),
     createdAt: record.createdAt
   };
 
@@ -164,7 +204,7 @@ function createBoundaryFindings(workspaceId: string, records: AuditLogRecord[]):
     ...records.flatMap((record) =>
       scanAuditLogRecord(record).map((finding) => ({
         ...finding,
-        eventId: redactDataBoundaryText(record.id)
+        eventId: redactAuditLogText(record.id)
       }))
     )
   ];
@@ -193,8 +233,8 @@ function scanBoundaryField(input: {
     dataClass: finding.dataClass,
     severity: finding.severity,
     matchCount: finding.matchCount,
-    redactedSnippet: finding.redactedSnippet,
-    message: finding.message
+    redactedSnippet: redactAuditLogText(finding.redactedSnippet),
+    message: redactAuditLogText(finding.message)
   }));
 }
 
@@ -204,7 +244,7 @@ function sanitizeAuditHash(value: string): string {
     return "";
   }
 
-  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : redactDataBoundaryText(value);
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : redactAuditLogText(value);
 }
 
 function createBoundaryStatus(
@@ -241,6 +281,29 @@ function createRemediation(findings: AuditLogExportBoundaryFinding[]): string[] 
   }
 
   return remediation;
+}
+
+function createNextActions(input: {
+  eventCount: number;
+  integrityStatus: AuditLogExportIntegrityStatus;
+  exportAllowed: boolean;
+  remediation: string[];
+}): string[] {
+  const actions: string[] = [];
+
+  if (input.eventCount === 0 || input.integrityStatus === "empty") {
+    actions.push("Run Secure Review Journey or clear Audit Log filters before final handoff.");
+  }
+
+  if (input.integrityStatus === "blocked" || !input.exportAllowed) {
+    actions.push("Resolve Audit Log data-boundary blockers before downloading or sharing the export.");
+  }
+
+  if (input.integrityStatus === "needs-review") {
+    actions.push("Confirm warning-level Audit Log metadata with the reviewer before external handoff.");
+  }
+
+  return Array.from(new Set([...actions, ...input.remediation])).filter((action) => action.trim().length > 0);
 }
 
 function compareAuditLogRecords(left: AuditLogRecord, right: AuditLogRecord): number {

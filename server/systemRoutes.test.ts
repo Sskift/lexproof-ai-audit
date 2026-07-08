@@ -61,14 +61,33 @@ describe("System route module", () => {
     expect(payload.routeFamilies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "model-gateway-provider-policy", path: "/api/model-gateway/provider-policy" }),
+        expect.objectContaining({
+          id: "model-gateway-run-recovery",
+          path: "/api/workspaces/:workspaceId/model-runs/recovery"
+        }),
         expect.objectContaining({ id: "evidence-vault-manifest", path: "/api/workspaces/:workspaceId/evidence-manifest" }),
+        expect.objectContaining({
+          id: "evidence-vault-lineage-digest",
+          path: "/api/workspaces/:workspaceId/evidence-lineage-digest"
+        }),
         expect.objectContaining({ id: "human-review-queue", path: "/api/workspaces/:workspaceId/reviews/queue" }),
         expect.objectContaining({ id: "source-review-ledger", path: "/api/workspaces/:workspaceId/source-reviews" }),
+        expect.objectContaining({ id: "source-review-packet", path: "/api/workspaces/:workspaceId/source-reviews/packet" }),
         expect.objectContaining({ id: "source-approval-queue", path: "/api/workspaces/:workspaceId/source-approvals" }),
-        expect.objectContaining({ id: "integration-policy-evaluations" })
+        expect.objectContaining({ id: "source-approval-packet", path: "/api/workspaces/:workspaceId/source-approvals/packet" }),
+        expect.objectContaining({
+          id: "counsel-pack-export-recovery",
+          path: "/api/workspaces/:workspaceId/exports/counsel-pack/recovery"
+        }),
+        expect.objectContaining({ id: "audit-log-export", path: "/api/workspaces/:workspaceId/audit-log/export" }),
+        expect.objectContaining({ id: "integration-policy-evaluations" }),
+        expect.objectContaining({
+          id: "integration-policy-receipt-bundle",
+          path: "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle"
+        })
       ])
     );
-    expect(payload.routeFamilyCount).toBe(9);
+    expect(payload.routeFamilyCount).toBe(16);
     expect(payload.implementedRoutes).toEqual(expect.arrayContaining([expect.objectContaining({ path: "/api/preflight" })]));
     expect(JSON.stringify(payload)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
 

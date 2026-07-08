@@ -39,8 +39,72 @@ export type CreateRegulatorySourceApprovalSyncInput = {
   createdAt?: string;
 };
 
+export type ServerRegulatorySourceApprovalPacketStatus = "empty" | "ready" | "needs-approval" | "metadata-needed";
+
+export type ServerRegulatorySourceApprovalPacketRecord = {
+  recordId: string;
+  queueHash: string;
+  sourceApprovalItemId: string;
+  clauseId: string;
+  jurisdiction: string;
+  regulator: string;
+  citation: string;
+  sourceName: string;
+  sourceUrl: string;
+  priority: RegulatorySourceApprovalRecord["priority"];
+  approvalStatus: RegulatorySourceApprovalRecord["approvalStatus"];
+  reviewStatus: RegulatorySourceApprovalRecord["reviewStatus"];
+  effectiveAsOf: string;
+  lastReviewedAt: string;
+  nextReviewDueAt: string;
+  nextAction: string;
+  approvalGate: RegulatorySourceApprovalRecord["approvalGate"];
+  status: RegulatorySourceApprovalRecord["status"];
+  reviewerNotesHash: string;
+  recordHash: string;
+  matchingBehaviorChanged: false;
+  notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only.";
+};
+
+export type ServerRegulatorySourceApprovalPacket = {
+  packetVersion: "lexproof-server-source-approval-packet-v1";
+  workspaceId: string;
+  generatedAt: string;
+  status: ServerRegulatorySourceApprovalPacketStatus;
+  recordCount: number;
+  queueHashes: string[];
+  statusCounts: {
+    pendingReview: number;
+  };
+  approvalStatusCounts: {
+    approvalRequired: number;
+    metadataRequired: number;
+  };
+  reviewStatusCounts: {
+    current: number;
+    reviewDue: number;
+    metadataMissing: number;
+  };
+  priorityCounts: {
+    P0: number;
+    P1: number;
+  };
+  matchingBehaviorChanged: false;
+  records: ServerRegulatorySourceApprovalPacketRecord[];
+  nextActions: string[];
+  packetHash: string;
+  notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only.";
+};
+
+export type CreateServerRegulatorySourceApprovalPacketInput = {
+  workspaceId: string;
+  records: RegulatorySourceApprovalRecord[];
+  generatedAt?: string;
+};
+
 const RECORD_BOUNDARY = "Not legal advice. Source approval records are audit preparation workflow metadata only." as const;
 const QUEUE_BOUNDARY = "Not legal advice. Source update approvals are audit preparation workflow metadata only." as const;
+const SERVER_PACKET_BOUNDARY = "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only." as const;
 const APPROVAL_GATE =
   "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata." as const;
 const UNSAFE_ERROR =
@@ -90,6 +154,52 @@ export function hashRegulatorySourceApprovalQueue(queue: RegulatorySourceApprova
   );
 }
 
+export function createServerRegulatorySourceApprovalPacket(
+  input: CreateServerRegulatorySourceApprovalPacketInput
+): ServerRegulatorySourceApprovalPacket {
+  const workspaceId = normalizeRequired(input.workspaceId, "Workspace ID");
+  const records = sortSourceApprovalRecords(input.records).map(createServerApprovalPacketRecord);
+  const statusCounts = {
+    pendingReview: records.filter((record) => record.status === "pending-review").length
+  };
+  const approvalStatusCounts = {
+    approvalRequired: records.filter((record) => record.approvalStatus === "approval-required").length,
+    metadataRequired: records.filter((record) => record.approvalStatus === "metadata-required").length
+  };
+  const reviewStatusCounts = {
+    current: records.filter((record) => record.reviewStatus === "current").length,
+    reviewDue: records.filter((record) => record.reviewStatus === "review-due").length,
+    metadataMissing: records.filter((record) => record.reviewStatus === "metadata-missing").length
+  };
+  const priorityCounts = {
+    P0: records.filter((record) => record.priority === "P0").length,
+    P1: records.filter((record) => record.priority === "P1").length
+  };
+  const status = selectServerApprovalPacketStatus(records.length, approvalStatusCounts);
+  const nextActions = createServerApprovalPacketNextActions(status);
+  const hashPayload = {
+    packetVersion: "lexproof-server-source-approval-packet-v1" as const,
+    workspaceId,
+    status,
+    recordCount: records.length,
+    queueHashes: uniqueSorted(records.map((record) => record.queueHash)),
+    statusCounts,
+    approvalStatusCounts,
+    reviewStatusCounts,
+    priorityCounts,
+    matchingBehaviorChanged: false as const,
+    records,
+    nextActions,
+    notLegalAdviceBoundary: SERVER_PACKET_BOUNDARY
+  };
+
+  return {
+    ...hashPayload,
+    generatedAt: input.generatedAt ?? new Date().toISOString(),
+    packetHash: sha256Hex(stableStringify(hashPayload))
+  };
+}
+
 function createRecord({
   workspaceId,
   queueHash,
@@ -132,6 +242,37 @@ function createRecord({
   };
 }
 
+function createServerApprovalPacketRecord(record: RegulatorySourceApprovalRecord): ServerRegulatorySourceApprovalPacketRecord {
+  const payload = {
+    recordId: safeText(record.id),
+    queueHash: preserveSha256(record.queueHash),
+    sourceApprovalItemId: safeText(record.sourceApprovalItemId),
+    clauseId: safeText(record.clauseId),
+    jurisdiction: safeText(record.jurisdiction),
+    regulator: safeText(record.regulator),
+    citation: safeText(record.citation),
+    sourceName: safeText(record.sourceName),
+    sourceUrl: safeText(record.sourceUrl),
+    priority: normalizePriority(record.priority),
+    approvalStatus: normalizeApprovalStatus(record.approvalStatus),
+    reviewStatus: normalizeReviewStatus(record.reviewStatus),
+    effectiveAsOf: safeText(record.effectiveAsOf),
+    lastReviewedAt: safeText(record.lastReviewedAt),
+    nextReviewDueAt: safeText(record.nextReviewDueAt),
+    nextAction: safeText(record.nextAction),
+    approvalGate: APPROVAL_GATE,
+    status: normalizeRecordStatus(record.status),
+    reviewerNotesHash: sha256Hex(safeText(record.reviewerNotes)),
+    matchingBehaviorChanged: false as const,
+    notLegalAdviceBoundary: RECORD_BOUNDARY
+  };
+
+  return {
+    ...payload,
+    recordHash: sha256Hex(stableStringify(payload))
+  };
+}
+
 function normalizeQueue(queue: RegulatorySourceApprovalSyncQueue): RegulatorySourceApprovalSyncQueue {
   if (!queue || queue.queueVersion !== "lexproof-regulatory-source-approval-queue-v1") {
     throw new Error("Source approval queue must use lexproof-regulatory-source-approval-queue-v1.");
@@ -141,18 +282,49 @@ function normalizeQueue(queue: RegulatorySourceApprovalSyncQueue): RegulatorySou
     throw new Error("Source approval queue is missing the required Not legal advice boundary.");
   }
 
-  const items = Array.isArray(queue.items) ? queue.items.map(normalizeItem) : [];
+  if (!Array.isArray(queue.items)) {
+    throw new Error("Source approval items must be an array.");
+  }
+
+  const items = queue.items.map(normalizeItem);
+  const totalItemCount = normalizeCount(queue.totalItemCount, "total item count");
+  const approvalRequiredCount = normalizeCount(queue.approvalRequiredCount, "approval required count");
+  const metadataRequiredCount = normalizeCount(queue.metadataRequiredCount, "metadata required count");
+  assertSourceApprovalCounts({ totalItemCount, approvalRequiredCount, metadataRequiredCount, items });
 
   return {
     queueVersion: "lexproof-regulatory-source-approval-queue-v1",
     generatedAt: normalizeRequired(queue.generatedAt, "Queue generated at"),
     status: normalizeQueueStatus(queue.status),
-    totalItemCount: Number(queue.totalItemCount),
-    approvalRequiredCount: Number(queue.approvalRequiredCount),
-    metadataRequiredCount: Number(queue.metadataRequiredCount),
+    totalItemCount,
+    approvalRequiredCount,
+    metadataRequiredCount,
     items,
     notLegalAdviceBoundary: QUEUE_BOUNDARY
   };
+}
+
+function assertSourceApprovalCounts({
+  totalItemCount,
+  approvalRequiredCount,
+  metadataRequiredCount,
+  items
+}: {
+  totalItemCount: number;
+  approvalRequiredCount: number;
+  metadataRequiredCount: number;
+  items: RegulatorySourceApprovalSyncItem[];
+}): void {
+  const actualApprovalRequiredCount = items.filter((item) => item.approvalStatus === "approval-required").length;
+  const actualMetadataRequiredCount = items.filter((item) => item.approvalStatus === "metadata-required").length;
+
+  if (
+    totalItemCount !== items.length ||
+    approvalRequiredCount !== actualApprovalRequiredCount ||
+    metadataRequiredCount !== actualMetadataRequiredCount
+  ) {
+    throw new Error("Source approval counts must match the approval item statuses.");
+  }
 }
 
 function normalizeItem(item: RegulatorySourceApprovalSyncItem): RegulatorySourceApprovalSyncItem {
@@ -219,12 +391,24 @@ function safeText(value: string): string {
   return redactClassifiedText(String(value ?? "").replace(/\s+/g, " ").trim());
 }
 
+function preserveSha256(value: string): string {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : safeText(normalized);
+}
+
 function normalizeRequired(value: string, label: string): string {
   const normalized = safeText(value);
   if (!normalized) {
     throw new Error(`${label} is required for source approval sync.`);
   }
   return normalized;
+}
+
+function normalizeCount(value: unknown, label: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+  throw new Error(`Source approval ${label} is invalid.`);
 }
 
 function normalizeQueueStatus(value: RegulatorySourceApprovalSyncQueue["status"]): RegulatorySourceApprovalSyncQueue["status"] {
@@ -257,6 +441,61 @@ function normalizeReviewStatus(
     return value;
   }
   throw new Error("Source review status is invalid.");
+}
+
+function normalizeRecordStatus(value: RegulatorySourceApprovalRecord["status"]): RegulatorySourceApprovalRecord["status"] {
+  if (value === "pending-review") {
+    return value;
+  }
+  throw new Error("Source approval record status is invalid.");
+}
+
+function sortSourceApprovalRecords(records: RegulatorySourceApprovalRecord[]): RegulatorySourceApprovalRecord[] {
+  return [...records].sort(
+    (left, right) =>
+      left.queueHash.localeCompare(right.queueHash) ||
+      left.clauseId.localeCompare(right.clauseId) ||
+      left.id.localeCompare(right.id)
+  );
+}
+
+function selectServerApprovalPacketStatus(
+  recordCount: number,
+  counts: ServerRegulatorySourceApprovalPacket["approvalStatusCounts"]
+): ServerRegulatorySourceApprovalPacketStatus {
+  if (recordCount === 0) {
+    return "empty";
+  }
+
+  if (counts.metadataRequired > 0) {
+    return "metadata-needed";
+  }
+
+  if (counts.approvalRequired > 0) {
+    return "needs-approval";
+  }
+
+  return "ready";
+}
+
+function createServerApprovalPacketNextActions(status: ServerRegulatorySourceApprovalPacketStatus): string[] {
+  if (status === "empty") {
+    return ["Sync Source Approval Queue metadata before counsel handoff when source review freshness is due."];
+  }
+
+  if (status === "metadata-needed") {
+    return ["Complete source metadata and record counsel or compliance review before any matching update."];
+  }
+
+  if (status === "needs-approval") {
+    return ["Review refreshed source metadata in the Source Update Approval Queue before it can affect matching behavior."];
+  }
+
+  return ["Keep the server Source Approval packet with handoff evidence and preserve unchanged matching behavior controls."];
+}
+
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values.filter((value) => value.trim().length > 0))].sort((left, right) => left.localeCompare(right));
 }
 
 function stableStringify(value: unknown): string {

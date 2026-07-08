@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
 import type { AIReviewPayload } from "./aiReview";
-import { createModelReviewRun, exportModelReviewRunJson, runAIReviewWithLedger } from "./modelReviewLedger";
+import {
+  createModelReviewRun,
+  exportModelReviewRunJson,
+  parseStoredModelReviewRuns,
+  runAIReviewWithLedger,
+  sanitizeModelReviewRun
+} from "./modelReviewLedger";
 import type { ModelProvider } from "./modelProvider";
 import type { ProjectProfile } from "./projectModel";
 
@@ -158,6 +164,125 @@ describe("createModelReviewRun", () => {
     expect(json).not.toContain(privateKey);
     expect(json).not.toMatch(/final legal decision|raw KYC packet/i);
     expect(json).toContain("AI-assisted draft for audit preparation only. Not legal advice.");
+  });
+
+  it("recovers only structurally valid metadata-only runs from local storage", async () => {
+    const run = await createModelReviewRun({
+      payload,
+      responseContent: JSON.stringify({ extractedFacts: ["Tokenized yield note"] }),
+      providerLabel: "Mock local reviewer",
+      model: "lexproof-mock",
+      redactionStatus: "clean",
+      generatedAt: "2026-06-29T00:00:00.000Z"
+    });
+
+    const recovered = parseStoredModelReviewRuns(
+      JSON.stringify([
+        { ...run, ignoredRawEvidence: "should not survive normalization" },
+        { ...run, runId: "provider-api-key-sk-live-abcdef1234567890abcdef1234567890" },
+        { ...run, boundary: "AI made a legal opinion." },
+        { ...run, payloadHash: "not-a-sha256" },
+        { ...run, evidenceSummaryCount: -1 },
+        { runVersion: "lexproof-ai-review-run-v1" }
+      ])
+    );
+
+    expect(recovered).toEqual([run]);
+    expect(JSON.stringify(recovered)).not.toContain("ignoredRawEvidence");
+  });
+
+  it("returns an empty recovery set for malformed local storage payloads", () => {
+    expect(parseStoredModelReviewRuns("{not json")).toEqual([]);
+    expect(parseStoredModelReviewRuns(JSON.stringify({ runVersion: "lexproof-ai-review-run-v1" }))).toEqual([]);
+    expect(parseStoredModelReviewRuns(null)).toEqual([]);
+  });
+
+  it("sanitizes unsafe persisted display metadata before UI recovery and export", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const run = await createModelReviewRun({
+      payload,
+      responseContent: JSON.stringify({ extractedFacts: ["Tokenized yield note"] }),
+      providerLabel: "Mock local reviewer",
+      model: "lexproof-mock",
+      redactionStatus: "needs-review",
+      generatedAt: "2026-06-29T00:00:00.000Z"
+    });
+
+    const recovered = parseStoredModelReviewRuns(
+      JSON.stringify([
+        {
+          ...run,
+          projectName: `Stored project ${apiKey} final legal decision`,
+          providerLabel: `Provider ${apiKey}`,
+          model: `model-${privateKey}-raw KYC packet`
+        }
+      ])
+    );
+    const [recoveredRun] = recovered;
+    if (!recoveredRun) {
+      throw new Error("Expected a recovered model review run.");
+    }
+    const json = exportModelReviewRunJson(recoveredRun);
+    const serialized = JSON.stringify(recovered);
+
+    expect(recovered).toHaveLength(1);
+    expect(recoveredRun.projectName).toContain("[redacted-api-key]");
+    expect(recoveredRun.projectName).toContain("[redacted-legal-conclusion]");
+    expect(recoveredRun.providerLabel).toContain("[redacted-api-key]");
+    expect(recoveredRun.model).toContain("[redacted-private-key]");
+    expect(recoveredRun.model).toContain("[redacted-raw-kyc]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|final legal decision/i);
+    expect(json).not.toContain(apiKey);
+    expect(json).not.toContain(privateKey);
+    expect(json).toContain("AI-assisted draft for audit preparation only. Not legal advice.");
+  });
+
+  it("sanitizes model review runs before local persistence", async () => {
+    const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const run = await createModelReviewRun({
+      payload,
+      responseContent: JSON.stringify({ extractedFacts: ["Tokenized yield note"] }),
+      providerLabel: "Mock local reviewer",
+      model: "lexproof-mock",
+      redactionStatus: "needs-review",
+      generatedAt: "2026-06-29T00:00:00.000Z"
+    });
+
+    const sanitized = sanitizeModelReviewRun({
+      ...run,
+      projectName: `Stored project ${apiKey} final legal decision`,
+      providerLabel: `Provider ${apiKey}`,
+      model: `model-${privateKey}-raw KYC packet`
+    });
+    const invalid = sanitizeModelReviewRun({
+      ...run,
+      runId: `ai-run-${apiKey}`,
+      providerLabel: `Provider ${apiKey}`
+    });
+    const serialized = JSON.stringify(sanitized);
+
+    expect(sanitized).toEqual(
+      expect.objectContaining({
+        runVersion: "lexproof-ai-review-run-v1",
+        runId: run.runId,
+        payloadHash: run.payloadHash,
+        responseHash: run.responseHash,
+        boundary: "AI-assisted draft for audit preparation only. Not legal advice."
+      })
+    );
+    expect(sanitized?.projectName).toContain("[redacted-api-key]");
+    expect(sanitized?.projectName).toContain("[redacted-legal-conclusion]");
+    expect(sanitized?.providerLabel).toContain("[redacted-api-key]");
+    expect(sanitized?.model).toContain("[redacted-private-key]");
+    expect(sanitized?.model).toContain("[redacted-raw-kyc]");
+    expect(invalid).toBeNull();
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|final legal decision/i);
   });
 });
 

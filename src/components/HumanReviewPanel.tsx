@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ClipboardCheck, Download, History, ShieldAlert, UserCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ClipboardCheck, Download, History, RefreshCw, ShieldAlert, UserCheck } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import {
   createHumanReviewRecoveryPacket,
@@ -15,17 +15,28 @@ import {
   type HumanReviewTimelineEntry
 } from "../lib/humanReviewWorkflow";
 import { createHumanReviewQueueFilterOptions, filterHumanReviewQueueItems } from "../lib/humanReviewQueueFilters";
+import {
+  exportServerHumanReviewRecoveryPacketJson,
+  type ServerHumanReviewRecoveryPacket,
+  type ServerHumanReviewQueueView
+} from "../lib/serverHumanReviewQueue";
+import {
+  fetchServerHumanReviewQueueView,
+  ServerHumanReviewQueueClientError
+} from "../lib/serverHumanReviewQueueClient";
 
 type HumanReviewPanelProps = {
   queue: HumanReviewQueue;
   decisions: HumanReviewDecision[];
+  projectId: string;
   projectName: string;
   onSaveDecision: (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => void;
 };
 
 const statuses: HumanReviewStatus[] = ["needs-review", "in-review", "needs-more-evidence", "reviewed", "rejected"];
+type ServerQueueRefreshStatus = "idle" | "syncing" | "synced" | "error";
 
-export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision }: HumanReviewPanelProps) {
+export function HumanReviewPanel({ queue, decisions, projectId, projectName, onSaveDecision }: HumanReviewPanelProps) {
   const [savedTitle, setSavedTitle] = useState("");
   const [saveGuidance, setSaveGuidance] = useState("");
   const [targetTypeFilter, setTargetTypeFilter] = useState("all");
@@ -34,6 +45,11 @@ export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision
   const [reviewQuery, setReviewQuery] = useState("");
   const [recoveryPacket, setRecoveryPacket] = useState<HumanReviewRecoveryPacket | null>(null);
   const [buildingRecoveryPacket, setBuildingRecoveryPacket] = useState(false);
+  const [serverQueueApiBaseUrl, setServerQueueApiBaseUrl] = useState("");
+  const [serverQueueView, setServerQueueView] = useState<ServerHumanReviewQueueView | null>(null);
+  const [serverQueueRefreshStatus, setServerQueueRefreshStatus] = useState<ServerQueueRefreshStatus>("idle");
+  const [serverQueueRefreshError, setServerQueueRefreshError] = useState("");
+  const [serverQueueRefreshRecoveryAction, setServerQueueRefreshRecoveryAction] = useState("");
   const timeline = createHumanReviewTimeline({
     projectId: queue.items[0]?.projectId ?? "",
     queue,
@@ -56,6 +72,13 @@ export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision
   );
   const hasActiveFilters =
     targetTypeFilter !== "all" || statusFilter !== "all" || reviewerFilter !== "all" || reviewQuery.trim().length > 0;
+
+  useEffect(() => {
+    setServerQueueView(null);
+    setServerQueueRefreshStatus("idle");
+    setServerQueueRefreshError("");
+    setServerQueueRefreshRecoveryAction("");
+  }, [projectId]);
 
   const saveDecision = (item: HumanReviewQueueItem, update: HumanReviewDecisionUpdate) => {
     onSaveDecision(item, update);
@@ -86,6 +109,42 @@ export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision
     }
   };
 
+  const refreshServerHumanReviewQueue = async () => {
+    setServerQueueRefreshStatus("syncing");
+    setServerQueueRefreshError("");
+    setServerQueueRefreshRecoveryAction("");
+
+    try {
+      const queueView = await fetchServerHumanReviewQueueView({
+        apiBaseUrl: serverQueueApiBaseUrl,
+        workspaceId: projectId
+      });
+      setServerQueueView(queueView);
+      setServerQueueRefreshStatus("synced");
+    } catch (error) {
+      setServerQueueView(null);
+      setServerQueueRefreshStatus("error");
+      if (error instanceof ServerHumanReviewQueueClientError) {
+        setServerQueueRefreshError(error.message);
+        setServerQueueRefreshRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setServerQueueRefreshError(error instanceof Error ? error.message : "Human Review queue refresh failed.");
+      setServerQueueRefreshRecoveryAction("Start the Phase 2 API and retry Human Review queue refresh.");
+    }
+  };
+
+  const downloadServerRecoveryPacket = () => {
+    if (!serverQueueView) {
+      return;
+    }
+
+    downloadServerHumanReviewRecoveryPacketJson(
+      `${slug(projectName)}-server-human-review-recovery-packet.json`,
+      serverQueueView.recoveryPacket
+    );
+  };
+
   return (
     <section className="panel stage-panel">
       <SectionHeader
@@ -113,6 +172,17 @@ export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision
         recoveryPacket={recoveryPacket}
         buildingRecoveryPacket={buildingRecoveryPacket}
         onDownload={downloadRecoveryPacket}
+      />
+
+      <ServerHumanReviewRecoveryPacketPanel
+        apiBaseUrl={serverQueueApiBaseUrl}
+        queueView={serverQueueView}
+        status={serverQueueRefreshStatus}
+        error={serverQueueRefreshError}
+        recoveryAction={serverQueueRefreshRecoveryAction}
+        onApiBaseUrlChange={setServerQueueApiBaseUrl}
+        onRefresh={() => void refreshServerHumanReviewQueue()}
+        onDownload={downloadServerRecoveryPacket}
       />
 
       <HumanReviewTimelinePanel timeline={timeline} savedDecisionCount={savedDecisionCount} />
@@ -204,6 +274,97 @@ export function HumanReviewPanel({ queue, decisions, projectName, onSaveDecision
   );
 }
 
+function ServerHumanReviewRecoveryPacketPanel({
+  apiBaseUrl,
+  queueView,
+  status,
+  error,
+  recoveryAction,
+  onApiBaseUrlChange,
+  onRefresh,
+  onDownload
+}: {
+  apiBaseUrl: string;
+  queueView: ServerHumanReviewQueueView | null;
+  status: ServerQueueRefreshStatus;
+  error: string;
+  recoveryAction: string;
+  onApiBaseUrlChange: (value: string) => void;
+  onRefresh: () => void;
+  onDownload: () => void;
+}) {
+  const packet = queueView?.recoveryPacket ?? null;
+  const recoveryCount = packet?.summary.totalRecoveryCount ?? 0;
+  const isSyncing = status === "syncing";
+
+  return (
+    <section
+      className={`human-review-recovery-packet server-human-review-recovery ${recoveryCount > 0 ? "needs-recovery" : "ready"}`}
+      aria-label="Server Human Review Recovery Packet"
+    >
+      <div>
+        <ShieldAlert size={17} aria-hidden="true" />
+        <div>
+          <h3>Server Human Review Recovery Packet</h3>
+          <p>
+            {packet
+              ? `${recoveryCount} persisted returned or rejected review item${recoveryCount === 1 ? "" : "s"} need recovery.`
+              : "Refresh the Phase 2 Human Review queue to verify persisted review recovery before handoff."}
+          </p>
+          <small>{packet?.notLegalAdviceBoundary ?? "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."}</small>
+        </div>
+      </div>
+      {packet ? (
+        <div className="server-human-review-recovery-facts">
+          <SummaryStat label="Server queue" value={queueView?.totalCount ?? 0} />
+          <SummaryStat label="Returned" value={packet.summary.returnedCount} />
+          <SummaryStat label="Rejected" value={packet.summary.rejectedCount} />
+        </div>
+      ) : null}
+      {packet ? (
+        <p className="server-human-review-next-action">
+          <strong>{packet.status === "needs-recovery" ? "Server recovery active" : "Server recovery clear"}</strong>
+          <small>Packet hash {packet.packetHash.slice(0, 12)}...</small>
+        </p>
+      ) : null}
+      {packet ? (
+        <div className="server-human-review-packet-actions" role="status" aria-label="Server Human Review recovery actions">
+          <strong>Recovery actions</strong>
+          {packet.nextActions.map((action) => (
+            <span key={action}>{action}</span>
+          ))}
+        </div>
+      ) : null}
+      {error ? (
+        <p className="save-state server-human-review-error" role="status">
+          {error}
+          {recoveryAction ? <small>{recoveryAction}</small> : null}
+          <small>Not legal advice. Human Review queue refresh is metadata-only.</small>
+        </p>
+      ) : null}
+      <div className="server-human-review-controls">
+        <label className="editor-field" htmlFor="server-human-review-api-base">
+          <span className="field-label">Server Human Review API base URL</span>
+          <input
+            id="server-human-review-api-base"
+            value={apiBaseUrl}
+            onChange={(event) => onApiBaseUrlChange(event.target.value)}
+            placeholder="/api on same host, or http://127.0.0.1:8787"
+          />
+        </label>
+        <button type="button" className="secondary" onClick={onRefresh} disabled={isSyncing}>
+          <RefreshCw size={15} aria-hidden="true" />
+          {isSyncing ? "Refreshing Server Queue" : "Refresh Server Human Review Queue"}
+        </button>
+        <button type="button" className="secondary" onClick={onDownload} disabled={!packet}>
+          <Download size={15} aria-hidden="true" />
+          Download Server Recovery Packet JSON
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function HumanReviewRecoveryPacketPanel({
   recoveryCount,
   returnedCount,
@@ -244,6 +405,27 @@ function HumanReviewRecoveryPacketPanel({
       </div>
     </section>
   );
+}
+
+function slug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "lexproof";
+}
+
+function downloadServerHumanReviewRecoveryPacketJson(filename: string, packet: ServerHumanReviewRecoveryPacket): void {
+  const blob = new Blob([exportServerHumanReviewRecoveryPacketJson(packet)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function SummaryStat({ label, value }: { label: string; value: number }) {

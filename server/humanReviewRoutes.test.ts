@@ -5,6 +5,9 @@ import { registerHumanReviewRoutes } from "./humanReviewRoutes";
 import { createModelGatewayRun } from "./modelGatewayService";
 import { createMemoryReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 describe("Human Review route module", () => {
   it("registers review create, queue, list, and linked Evidence Vault status sync routes", async () => {
     const server = Fastify({ logger: false });
@@ -176,6 +179,45 @@ describe("Human Review route module", () => {
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
 
+    const repeatedTargetTypeResponse = await server.inject({
+      method: "GET",
+      url: `/api/workspaces/workspace-model-review-routes/reviews/queue?targetType=model-run&targetType=${encodeURIComponent(apiKey)}`
+    });
+    expect(repeatedTargetTypeResponse.statusCode).toBe(400);
+    expect(repeatedTargetTypeResponse.json()).toEqual({
+      error: "Human review targetType filter must be a single string.",
+      code: "HUMAN_REVIEW_QUEUE_FAILED",
+      recoveryAction: "Use targetType risk-flag, evidence, model-run, clause-match, or counsel-pack and a supported review status.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+    expect(repeatedTargetTypeResponse.body).not.toContain(apiKey);
+
+    const repeatedStatusResponse = await server.inject({
+      method: "GET",
+      url: `/api/workspaces/workspace-model-review-routes/reviews/queue?status=requested&status=${encodeURIComponent(privateKey)}`
+    });
+    expect(repeatedStatusResponse.statusCode).toBe(400);
+    expect(repeatedStatusResponse.json()).toEqual({
+      error: "Human review status filter must be a single string.",
+      code: "HUMAN_REVIEW_QUEUE_FAILED",
+      recoveryAction: "Use targetType risk-flag, evidence, model-run, clause-match, or counsel-pack and a supported review status.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+    expect(repeatedStatusResponse.body).not.toContain(privateKey);
+
+    const repeatedReviewerResponse = await server.inject({
+      method: "GET",
+      url: `/api/workspaces/workspace-model-review-routes/reviews/queue?reviewerId=Counsel&reviewerId=${encodeURIComponent(apiKey)}`
+    });
+    expect(repeatedReviewerResponse.statusCode).toBe(400);
+    expect(repeatedReviewerResponse.json()).toEqual({
+      error: "Human review reviewerId filter must be a single string.",
+      code: "HUMAN_REVIEW_QUEUE_FAILED",
+      recoveryAction: "Use targetType risk-flag, evidence, model-run, clause-match, or counsel-pack and a supported review status.",
+      notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+    });
+    expect(repeatedReviewerResponse.body).not.toContain(apiKey);
+
     await server.close();
     await repository.close();
   });
@@ -222,6 +264,121 @@ describe("Human Review route module", () => {
         notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
       })
     );
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("rejects malformed create and update payloads without mutating Human Review workflow state", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerHumanReviewRoutes(server, { repository });
+
+    const createCases: Array<{ payload?: unknown; expectedError: string }> = [
+      {
+        expectedError: "Human review request payload must be a JSON object."
+      },
+      {
+        payload: {
+          targetType: "risk-flag",
+          targetId: 42,
+          reviewerId: "Counsel",
+          comment: "Review deterministic risk flag for audit preparation.",
+          apiKey: "sk-live-abcdef1234567890abcdef1234567890"
+        },
+        expectedError: "Human review target ID must be a string."
+      },
+      {
+        payload: {
+          targetType: "risk-flag",
+          targetId: "risk-1",
+          reviewerId: "Counsel",
+          comment: ["Create legal approval."]
+        },
+        expectedError: "Human review comment must be a string."
+      }
+    ];
+
+    for (const [index, item] of createCases.entries()) {
+      const workspaceId = `workspace-human-review-malformed-create-${index}`;
+      const response = await server.inject({
+        method: "POST",
+        url: `/api/workspaces/${workspaceId}/reviews`,
+        ...(item.payload === undefined ? {} : { payload: item.payload })
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          error: item.expectedError,
+          code: "HUMAN_REVIEW_CREATE_FAILED",
+          recoveryAction: "Provide a supported review target, reviewer, and audit-prep comment before creating a review.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        })
+      );
+      expect(response.body).not.toContain("sk-live-abcdef");
+      expect(response.body).not.toContain("apiKey");
+      expect(await repository.listHumanReviewRecords(workspaceId)).toEqual([]);
+      expect(await repository.listAuditLogRecords(workspaceId)).toEqual([]);
+    }
+
+    const createResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-malformed-update/reviews",
+      payload: {
+        targetType: "risk-flag",
+        targetId: "risk-1",
+        reviewerId: "Counsel",
+        comment: "Review deterministic risk flag for audit preparation."
+      }
+    });
+    expect(createResponse.statusCode).toBe(201);
+    const reviewId = createResponse.json().id;
+
+    const updateCases: Array<{ payload?: unknown; expectedError: string }> = [
+      {
+        expectedError: "Human review update payload must be a JSON object."
+      },
+      {
+        payload: {
+          status: 7,
+          comment: "Review metadata only."
+        },
+        expectedError: "Human review status must be a string."
+      },
+      {
+        payload: {
+          status: "reviewed",
+          comment: { rawKyc: "passport packet" }
+        },
+        expectedError: "Human review update comment must be a string."
+      }
+    ];
+
+    for (const item of updateCases) {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/workspaces/workspace-human-review-malformed-update/reviews/${reviewId}`,
+        ...(item.payload === undefined ? {} : { payload: item.payload })
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          error: item.expectedError,
+          code: "HUMAN_REVIEW_UPDATE_FAILED",
+          recoveryAction: "Use a supported review status and keep decisions as audit-prep workflow metadata.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        })
+      );
+      expect(response.body).not.toContain("passport packet");
+      expect(await repository.listHumanReviewRecords("workspace-human-review-malformed-update")).toEqual([
+        expect.objectContaining({ id: reviewId, status: "requested", reviewerId: "Counsel" })
+      ]);
+    }
+    expect(await repository.listAuditLogRecords("workspace-human-review-malformed-update")).toEqual([
+      expect.objectContaining({ action: "human-review.created", targetId: reviewId })
+    ]);
 
     await server.close();
     await repository.close();

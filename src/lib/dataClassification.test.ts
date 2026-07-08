@@ -65,6 +65,24 @@ describe("classifyDataBoundaryText", () => {
     expect(credentialFinding?.redactedSnippet).not.toMatch(/\braw\s+K/i);
   });
 
+  it("classifies raw_KYC and raw-KYC variants without leaking identifiers in snippets", () => {
+    const findings = classifyDataBoundaryText(
+      "Audit Log source copied raw_KYC passport A1234567 and raw-KYC spreadsheet metadata."
+    );
+    const rawKycFinding = findings.find((finding) => finding.dataClass === "raw-kyc");
+    const serialized = JSON.stringify(findings);
+
+    expect(rawKycFinding).toMatchObject({
+      dataClass: "raw-kyc",
+      severity: "block",
+      matchCount: 2
+    });
+    expect(serialized).toContain("[redacted-raw-kyc]");
+    expect(serialized).not.toContain("raw_KYC");
+    expect(serialized).not.toContain("raw-KYC");
+    expect(serialized).not.toContain("A1234567");
+  });
+
   it("blocks provider authorization headers and cloud access keys without exposing token values", () => {
     const findings = classifyDataBoundaryText(
       `Model proxy metadata includes Authorization: Bearer ${bearerToken} and AWS access key ${awsAccessKey}.`
@@ -457,6 +475,14 @@ describe("redactClassifiedText", () => {
     expect(redacted).not.toContain("1990-01-02");
     expect(redacted).not.toContain("D1234567");
     expect(redacted).not.toContain("SG-1234567-Z");
+  });
+
+  it("redacts raw_KYC and raw-KYC variants from reusable boundary snippets", () => {
+    const redacted = redactClassifiedText("Do not export raw_KYC data or raw-KYC spreadsheet metadata.");
+
+    expect(redacted).toContain("[redacted-raw-kyc]");
+    expect(redacted).not.toContain("raw_KYC");
+    expect(redacted).not.toContain("raw-KYC");
   });
 
   it("redacts wallet addresses without changing private-key redaction", () => {

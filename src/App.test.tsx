@@ -29,6 +29,7 @@ const getTemplateControlIds = (templateId: string) => {
 describe("App", () => {
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -913,6 +914,127 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("refreshes and downloads the server Source Approval packet from the command center", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:server-source-approval-packet");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-approvals/packet");
+      expect(init).toEqual({ method: "GET" });
+      return appJsonResponse(
+        {
+          packetVersion: "lexproof-server-source-approval-packet-v1",
+          workspaceId: "sample-yieldpassport",
+          generatedAt: "2026-10-01T00:00:00.000Z",
+          status: "needs-approval",
+          recordCount: 1,
+          queueHashes: ["a".repeat(64)],
+          statusCounts: {
+            pendingReview: 1
+          },
+          approvalStatusCounts: {
+            approvalRequired: 1,
+            metadataRequired: 0
+          },
+          reviewStatusCounts: {
+            current: 0,
+            reviewDue: 1,
+            metadataMissing: 0
+          },
+          priorityCounts: {
+            P0: 0,
+            P1: 1
+          },
+          matchingBehaviorChanged: false,
+          records: [
+            {
+              recordId: "source-approval-record-packet",
+              queueHash: "a".repeat(64),
+              sourceApprovalItemId: "source-approval-control-eu-mica-title-ii-white-paper",
+              clauseId: "control-eu-mica-title-ii-white-paper",
+              jurisdiction: "European Union",
+              regulator: "ESMA",
+              citation: "Regulation (EU) 2023/1114, Title II",
+              sourceName: "EUR-Lex",
+              sourceUrl: "https://eur-lex.europa.eu/",
+              priority: "P1",
+              approvalStatus: "approval-required",
+              reviewStatus: "review-due",
+              effectiveAsOf: "2024-06-30",
+              lastReviewedAt: "2026-06-01",
+              nextReviewDueAt: "2026-09-01",
+              nextAction: "Refresh and approve MiCA Title II source metadata before it changes source matching.",
+              approvalGate:
+                "Source updates cannot change matching behavior until counsel or compliance review records the refreshed source metadata.",
+              status: "pending-review",
+              reviewerNotesHash: "2".repeat(64),
+              recordHash: "3".repeat(64),
+              matchingBehaviorChanged: false,
+              notLegalAdviceBoundary: "Not legal advice. Source approval records are audit preparation workflow metadata only."
+            }
+          ],
+          nextActions: ["Review refreshed source metadata in the Source Update Approval Queue before it can affect matching behavior."],
+          packetHash: "4".repeat(64),
+          notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      const queue = screen.getByRole("region", { name: /Source Update Approval Queue/i });
+      fireEvent.change(within(queue).getByLabelText(/Source Approval API base URL/i), {
+        target: { value: "https://api.lexproof.test" }
+      });
+      fireEvent.click(within(queue).getByRole("button", { name: /Refresh Source Approval Packet/i }));
+
+      expect(await within(queue).findByText(/Source approval packet refreshed: 1 record/i)).toBeInTheDocument();
+      const packetRegion = within(screen.getByRole("region", { name: /Server Source Approval Packet/i }));
+      expect(packetRegion.getByText(/Packet hash 444444444444/i)).toBeInTheDocument();
+      expect(packetRegion.getByText(/matching behavior unchanged/i)).toBeInTheDocument();
+      const recoveryActions = within(packetRegion.getByRole("status", { name: /Server Source Approval Packet recovery actions/i }));
+      expect(recoveryActions.getByText(/Recovery actions/i)).toBeInTheDocument();
+      expect(
+        recoveryActions.getByText(/Review refreshed source metadata in the Source Update Approval Queue before it can affect matching behavior/i)
+      ).toBeInTheDocument();
+      expect(packetRegion.getByText(/Not legal advice. Server Source Approval packets/i)).toBeInTheDocument();
+
+      fireEvent.click(within(queue).getByRole("button", { name: /Download Server Source Approval Packet JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:server-source-approval-packet");
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      expect(JSON.parse(payload)).toEqual(
+        expect.objectContaining({
+          packetVersion: "lexproof-server-source-approval-packet-v1",
+          packetHash: "4".repeat(64),
+          matchingBehaviorChanged: false,
+          notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
+        })
+      );
+      expect(payload).not.toContain("Review source freshness before counsel handoff.");
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal conclusion\b|raw KYC|private key/i);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
+  });
+
   it("syncs Source Review Ledger metadata to the Phase 2 API", async () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-reviews");
@@ -982,6 +1104,120 @@ describe("App", () => {
     expect(within(ledger).getByText(/Matching behavior unchanged/i)).toBeInTheDocument();
     expect(within(ledger).getAllByText(/Not legal advice/i).length).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes and downloads the server Source Review packet from the command center", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn(() => "blob:server-source-review-packet");
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const capturedBlobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return createObjectUrl();
+    });
+    URL.revokeObjectURL = revokeObjectUrl;
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe("https://api.lexproof.test/api/workspaces/sample-yieldpassport/source-reviews/packet");
+      expect(init).toEqual({ method: "GET" });
+      return appJsonResponse(
+        {
+          packetVersion: "lexproof-server-source-review-packet-v1",
+          workspaceId: "sample-yieldpassport",
+          generatedAt: "2026-10-01T00:00:00.000Z",
+          status: "needs-review",
+          recordCount: 1,
+          ledgerHashes: ["b".repeat(64)],
+          statusCounts: {
+            current: 0,
+            pendingReview: 1,
+            metadataNeeded: 0
+          },
+          reviewStatusCounts: {
+            current: 0,
+            reviewDue: 1,
+            metadataMissing: 0
+          },
+          priorityCounts: {
+            P0: 0,
+            P1: 1,
+            P2: 0
+          },
+          matchingBehaviorChanged: false,
+          records: [
+            {
+              recordId: "source-review-record-packet",
+              ledgerHash: "b".repeat(64),
+              clauseId: "control-eu-mica-title-ii-white-paper",
+              jurisdiction: "European Union",
+              regulator: "ESMA",
+              citation: "Regulation (EU) 2023/1114, Title II",
+              sourceName: "EUR-Lex",
+              sourceUrl: "https://eur-lex.europa.eu/",
+              reviewStatus: "review-due",
+              priority: "P1",
+              effectiveAsOf: "2024-06-30",
+              lastReviewedAt: "2026-06-01",
+              nextReviewDueAt: "2026-09-01",
+              nextAction: "Refresh MiCA Title II source metadata before counsel handoff.",
+              status: "pending-review",
+              reviewerNotesHash: "c".repeat(64),
+              recordHash: "d".repeat(64),
+              matchingBehaviorChanged: false,
+              notLegalAdviceBoundary: "Not legal advice. Source review records are audit preparation lineage metadata only."
+            }
+          ],
+          nextActions: ["Refresh due source metadata with counsel or compliance review before final handoff."],
+          packetHash: "5".repeat(64),
+          notLegalAdviceBoundary: "Not legal advice. Server Source Review packets are audit preparation lineage metadata only."
+        },
+        200
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(<App />);
+
+      const ledger = screen.getByRole("region", { name: /Source Review Ledger/i });
+      fireEvent.change(within(ledger).getByLabelText(/Source Review API base URL/i), {
+        target: { value: "https://api.lexproof.test" }
+      });
+      fireEvent.click(within(ledger).getByRole("button", { name: /Refresh Source Review Packet/i }));
+
+      expect(await within(ledger).findByText(/Source review packet refreshed: 1 record/i)).toBeInTheDocument();
+      const packetRegion = within(screen.getByRole("region", { name: /Server Source Review Packet/i }));
+      expect(packetRegion.getByText(/Packet hash 555555555555/i)).toBeInTheDocument();
+      expect(packetRegion.getByText(/matching behavior unchanged/i)).toBeInTheDocument();
+      const recoveryActions = within(packetRegion.getByRole("status", { name: /Server Source Review Packet recovery actions/i }));
+      expect(recoveryActions.getByText(/Recovery actions/i)).toBeInTheDocument();
+      expect(recoveryActions.getByText(/Refresh due source metadata with counsel or compliance review before final handoff/i)).toBeInTheDocument();
+      expect(packetRegion.getByText(/Not legal advice. Server Source Review packets/i)).toBeInTheDocument();
+
+      fireEvent.click(within(ledger).getByRole("button", { name: /Download Server Source Review Packet JSON/i }));
+
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:server-source-review-packet");
+      const payload = await readAppBlobText(capturedBlobs[0]);
+      expect(JSON.parse(payload)).toEqual(
+        expect.objectContaining({
+          packetVersion: "lexproof-server-source-review-packet-v1",
+          packetHash: "5".repeat(64),
+          matchingBehaviorChanged: false,
+          notLegalAdviceBoundary: "Not legal advice. Server Source Review packets are audit preparation lineage metadata only."
+        })
+      );
+      expect(payload).not.toContain("Review source freshness before counsel handoff.");
+      expect(payload).not.toMatch(/\bcompliant\b|\bnon-compliant\b|\blegal conclusion\b|raw KYC|private key/i);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+    }
   });
 
   it("includes the Source Update Approval Queue in the Counsel Pack Markdown preview when approvals are open", async () => {
@@ -1680,9 +1916,29 @@ describe("App", () => {
       expect(readiness.getByText(/modelGateway: mock-run-ready/i)).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/preflight", { method: "GET" });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/model-gateway/provider-policy", { method: "GET" });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/model-runs/recovery", {
+        method: "GET"
+      });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-manifest", {
+        method: "GET"
+      });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-lineage-digest", {
+        method: "GET"
+      });
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/reviews/queue", {
         method: "GET"
       });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/source-reviews/packet", {
+        method: "GET"
+      });
+      expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/source-approvals/packet", {
+        method: "GET"
+      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle",
+        { method: "GET" }
+      );
 
       await act(async () => {
         fireEvent.click(smokeChecklist.getByRole("button", { name: /Download Demo Smoke Checklist JSON/i }));
@@ -1730,7 +1986,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 10/10 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 17/17 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -2562,11 +2818,64 @@ describe("App", () => {
   }, 30000);
 
   it("refreshes persisted integration policy evaluation receipts from the Phase 2 API", async () => {
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob) {
+        capturedBlobs.push(blob);
+      }
+      return "blob:integration-policy-receipt-bundle";
+    });
+    const revokeObjectUrl = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(init).toEqual({ method: "GET" });
+      if (String(url).endsWith("/integration-policy-evaluations/bundle")) {
+        return appJsonResponse(
+          {
+            bundleVersion: "lexproof-integration-policy-evaluation-receipt-bundle-v1",
+            workspaceId: "sample-yieldpassport",
+            generatedAt: "2026-07-01T00:00:00.000Z",
+            bundleHash: "d".repeat(64),
+            recordCount: 1,
+            policyCount: 1,
+            missingPolicyIds: ["object-storage", "chain-anchor", "grc-destination"],
+            readyCount: 0,
+            needsPolicyCount: 1,
+            blockedCount: 0,
+            externalEnablementAllowed: false,
+            nextActions: [
+              "Evaluate missing server policy receipts before adapter enablement review.",
+              "Keep external adapters disabled until a separate enablement review."
+            ],
+            records: [
+              {
+                id: "integration-policy-evaluation-persisted-ui",
+                policyId: "document-parser",
+                reportVersion: "lexproof-document-parser-policy-v1",
+                overallStatus: "needs-policy",
+                approvedControlCount: 7,
+                requiredControlCount: 9,
+                externalCapabilityAllowed: false,
+                externalCapabilityStatus: "needs-policy",
+                reportHash: "a".repeat(64),
+                contextHash: "b".repeat(64),
+                policyHash: "c".repeat(64),
+                evaluatorId: "Integration policy evaluator",
+                source: "server",
+                createdAt: "2026-07-01T00:00:00.000Z",
+                nextActions: ["Approve parser retention and access logging before adapter enablement review."]
+              }
+            ],
+            notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+          },
+          200
+        );
+      }
       expect(String(url)).toBe(
         "https://api.lexproof.test/api/workspaces/sample-yieldpassport/integration-policy-evaluations"
       );
-      expect(init).toEqual({ method: "GET" });
       return appJsonResponse(
         [
           {
@@ -2594,35 +2903,94 @@ describe("App", () => {
       );
     });
     vi.stubGlobal("fetch", fetchMock);
+    URL.createObjectURL = createObjectUrl;
+    URL.revokeObjectURL = revokeObjectUrl;
 
-    render(<App />);
+    try {
+      render(<App />);
 
-    const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
-    const registry = within(registryHeading.closest("section") as HTMLElement);
-    const receipts = within(registry.getByRole("region", { name: /Integration Policy Evaluation Receipts/i }));
+      const registryHeading = await screen.findByRole("heading", { name: /Integration Readiness Registry/i });
+      const registry = within(registryHeading.closest("section") as HTMLElement);
+      const receipts = within(registry.getByRole("region", { name: /Integration Policy Evaluation Receipts/i }));
 
-    fireEvent.change(receipts.getByLabelText(/Policy Receipts API base URL/i), {
-      target: { value: "https://api.lexproof.test" }
-    });
-    fireEvent.click(receipts.getByRole("button", { name: /Refresh Policy Receipts/i }));
+      expect(receipts.getByRole("button", { name: /Download Policy Receipt Bundle JSON/i })).toBeDisabled();
+      fireEvent.change(receipts.getByLabelText(/Policy Receipts API base URL/i), {
+        target: { value: "https://api.lexproof.test" }
+      });
+      fireEvent.click(receipts.getByRole("button", { name: /Refresh Policy Receipts/i }));
 
-    expect(await receipts.findByText(/Policy receipts synced/i)).toBeInTheDocument();
-    expect(receipts.getByText(/1 recorded/i)).toBeInTheDocument();
-    expect(receipts.getByText(/Document Parser Policy/i)).toBeInTheDocument();
-    expect(receipts.getByText(/7\/9 controls ready; external capability is disabled/i)).toBeInTheDocument();
-    expect(receipts.getByText(/Not legal advice. Integration policy evaluation records are audit preparation metadata only./i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(registry.getByText(/Server receipts/i).parentElement).toHaveTextContent("1");
-    });
-    const dossier = within(registry.getByRole("region", { name: /Integration Enablement Dossier/i }));
-    const coverage = within(dossier.getByRole("region", { name: /Integration Policy Receipt Coverage/i }));
-    await waitFor(() => expect(coverage.getByText(/1\/4 receipts/i)).toBeInTheDocument());
-    expect(coverage.getByText(/server receipt needs policy/i)).toBeInTheDocument();
-    expect(coverage.getAllByText(/Document Parser Policy/i).length).toBeGreaterThan(0);
-    expect(coverage.getByText(/Server receipt integration-policy-evaluation-persisted-ui/i)).toBeInTheDocument();
-    expect(coverage.getAllByText(/missing server receipt/i).length).toBeGreaterThanOrEqual(3);
-    expect(coverage.getByText(/Not legal advice. Server policy receipts are audit preparation evidence/i)).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(await receipts.findByText(/Policy receipts synced/i)).toBeInTheDocument();
+      expect(receipts.getByText(/1 recorded/i)).toBeInTheDocument();
+      expect(receipts.getByText(/Document Parser Policy/i)).toBeInTheDocument();
+      expect(receipts.getByText(/7\/9 controls ready; external capability is disabled/i)).toBeInTheDocument();
+      expect(
+        receipts.getByText(/Not legal advice. Integration policy evaluation records are audit preparation metadata only./i)
+      ).toBeInTheDocument();
+      fireEvent.click(receipts.getByRole("button", { name: /Download Policy Receipt Bundle JSON/i }));
+      await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
+      expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:integration-policy-receipt-bundle");
+      const bundlePayload = JSON.parse(await readAppBlobText(capturedBlobs[0])) as Record<string, unknown>;
+      expect(bundlePayload).toEqual(
+        expect.objectContaining({
+          bundleVersion: "lexproof-integration-policy-evaluation-receipt-bundle-v1",
+          workspaceId: "sample-yieldpassport",
+          recordCount: 1,
+          policyCount: 1,
+          missingPolicyIds: ["object-storage", "chain-anchor", "grc-destination"],
+          externalEnablementAllowed: false,
+          bundleHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+        })
+      );
+      expect(JSON.stringify(bundlePayload)).toContain("integration-policy-evaluation-persisted-ui");
+      expect(JSON.stringify(bundlePayload)).not.toContain("apiKey");
+      expect(JSON.stringify(bundlePayload)).not.toContain("raw KYC");
+      fireEvent.click(receipts.getByRole("button", { name: /Refresh Server Receipt Bundle/i }));
+      await waitFor(() => expect(receipts.getAllByText(/Server Receipt Bundle/i).length).toBeGreaterThan(0));
+      expect(await receipts.findByText(/1 persisted receipt bundled from the Phase 2 API/i)).toBeInTheDocument();
+      const serverBundleActions = within(receipts.getByRole("status", { name: /Server Receipt Bundle actions/i }));
+      expect(serverBundleActions.getByText(/Receipt bundle actions/i)).toBeInTheDocument();
+      expect(
+        serverBundleActions.getByText(/Evaluate missing server policy receipts before adapter enablement review./i)
+      ).toBeInTheDocument();
+      expect(
+        serverBundleActions.getByText(/Keep external adapters disabled until a separate enablement review./i)
+      ).toBeInTheDocument();
+      expect(receipts.getByText(/Not legal advice. Integration policy receipt bundles are audit preparation metadata only./i)).toBeInTheDocument();
+      fireEvent.click(receipts.getByRole("button", { name: /Download Server Receipt Bundle JSON/i }));
+      await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
+      const serverBundlePayload = JSON.parse(await readAppBlobText(capturedBlobs[1])) as Record<string, unknown>;
+      expect(serverBundlePayload).toEqual(
+        expect.objectContaining({
+          bundleVersion: "lexproof-integration-policy-evaluation-receipt-bundle-v1",
+          workspaceId: "sample-yieldpassport",
+          recordCount: 1,
+          policyCount: 1,
+          externalEnablementAllowed: false,
+          bundleHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+        })
+      );
+      expect(JSON.stringify(serverBundlePayload)).not.toMatch(/apiKey|raw KYC|private key|external write command/i);
+      await waitFor(() => {
+        expect(registry.getByText(/Server receipts/i).parentElement).toHaveTextContent("1");
+      });
+      const dossier = within(registry.getByRole("region", { name: /Integration Enablement Dossier/i }));
+      const coverage = within(dossier.getByRole("region", { name: /Integration Policy Receipt Coverage/i }));
+      await waitFor(() => expect(coverage.getByText(/1\/4 receipts/i)).toBeInTheDocument());
+      expect(coverage.getByText(/server receipt needs policy/i)).toBeInTheDocument();
+      expect(coverage.getAllByText(/Document Parser Policy/i).length).toBeGreaterThan(0);
+      expect(coverage.getByText(/Server receipt integration-policy-evaluation-persisted-ui/i)).toBeInTheDocument();
+      expect(coverage.getAllByText(/missing server receipt/i).length).toBeGreaterThanOrEqual(3);
+      expect(coverage.getByText(/Not legal advice. Server policy receipts are audit preparation evidence/i)).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      URL.createObjectURL = originalCreateObjectUrl;
+      URL.revokeObjectURL = originalRevokeObjectUrl;
+      click.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("evaluates document parser policy readiness without enabling external parsing", async () => {
@@ -3169,32 +3537,49 @@ describe("App", () => {
   }, 20000);
 
   it("blocks Counsel Pack export actions when evidence contains secret or raw KYC materials", async () => {
-    render(<App />);
+    const { restore, storage } = installAppLocalStorage();
 
-    fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
-    fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe export packet" } });
-    fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
-    fireEvent.change(screen.getByLabelText(/Evidence content/i), {
-      target: {
-        value:
-          "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
-      }
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+    try {
+      render(<App />);
 
-    expect(await screen.findByText("Unsafe export packet")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe export packet" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Text" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: {
+          value:
+            "Contains private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, sk-live-abcdef1234567890, and raw KYC packet."
+        }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
 
-    fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+      expect(await screen.findByText("Unsafe export packet")).toBeInTheDocument();
 
-    expect(await screen.findByRole("heading", { name: /Export Safety Gate/i })).toBeInTheDocument();
-    expect(screen.getByText(/Blocked for export/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Remove or replace blocked materials/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Not legal advice. Data boundary output is audit preparation material only./i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /Download Markdown/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Print \/ Save PDF/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Save Pack Version/i })).toBeDisabled();
-    expect(screen.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Audit Wizard/i }));
+      const recovery = await screen.findByRole("status", { name: /Workspace persistence recovery/i });
+      expect(within(recovery).getByText(/Workspace autosave blocked/i)).toBeInTheDocument();
+      expect(within(recovery).getByText(/project or evidence fields/i)).toBeInTheDocument();
+      await waitFor(() => {
+        const stored = storage.getItem("lexproof.currentProject.v1") ?? "";
+        expect(stored).not.toContain("Unsafe export packet");
+        expect(stored).not.toContain("sk-live");
+        expect(stored).not.toContain("raw KYC packet");
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /Counsel Pack/i }));
+
+      expect(await screen.findByRole("heading", { name: /Export Safety Gate/i })).toBeInTheDocument();
+      expect(screen.getByText(/Blocked for export/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Remove or replace blocked materials/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Not legal advice. Data boundary output is audit preparation material only./i).length).toBeGreaterThan(0);
+      expect(screen.getByRole("button", { name: /Download Markdown/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Print \/ Save PDF/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Save Pack Version/i })).toBeDisabled();
+      expect(screen.queryByText(/0xaaaaaaaa/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/sk-live-abcdef/i)).not.toBeInTheDocument();
+    } finally {
+      restore();
+    }
   }, 30000);
 
   it("blocks Evidence Vault sync when retention policy detects private keys or raw KYC materials", async () => {
@@ -4012,6 +4397,55 @@ describe("App", () => {
         );
       }
 
+      if (path.endsWith("/model-runs/recovery") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            packetVersion: "lexproof-model-gateway-run-recovery-packet-v1",
+            workspaceId: "project-ui",
+            generatedAt: "2026-06-30T00:00:00.000Z",
+            packetHash: "f".repeat(64),
+            runCount: 1,
+            recoveryItemCount: 1,
+            blockedCount: 0,
+            retryAvailableCount: 0,
+            needsHumanReviewCount: 1,
+            readyCount: 0,
+            latestRunId: "model-gateway-run-full",
+            nextActions: [
+              "Complete Human Review before relying on this AI-assisted draft.",
+              "Keep Model Gateway run receipts with the audit-preparation handoff packet."
+            ],
+            items: [
+              {
+                runId: "model-gateway-run-full",
+                providerLabel: "Mock local reviewer gateway",
+                model: "lexproof-mock",
+                status: "completed",
+                redactionStatus: "clean",
+                humanReviewStatus: "needs-review",
+                retryState: "not-needed",
+                requiresHumanReview: true,
+                recoveryStatus: "needs-human-review",
+                priority: "P2",
+                recoveryAction: "Complete Human Review before relying on this AI-assisted draft.",
+                hashes: {
+                  payloadHash: "c".repeat(64),
+                  responseHash: "d".repeat(64),
+                  sourceEvidenceHash: "e".repeat(64)
+                },
+                remediationSteps: [],
+                createdAt: "2026-06-30T00:00:00.000Z",
+                completedAt: "2026-06-30T00:00:00.000Z",
+                notLegalAdviceBoundary:
+                  "Not legal advice. Model Gateway run recovery items are audit preparation workflow metadata only."
+              }
+            ],
+            notLegalAdviceBoundary: "Not legal advice. Model Gateway run recovery packets are audit preparation metadata only."
+          },
+          200
+        );
+      }
+
       if (path.endsWith("/reviews") && init?.method === "GET") {
         return appJsonResponse(
           [
@@ -4044,6 +4478,82 @@ describe("App", () => {
               createdAt: "2026-06-30T00:00:04.000Z"
             })
           ],
+          200
+        );
+      }
+
+      if (path.endsWith("/audit-log/export?targetType=human-review") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            exportVersion: "lexproof-audit-log-export-v1",
+            workspaceId: "project-ui",
+            exportedAt: "2026-06-30T00:01:00.000Z",
+            exportHash: "a".repeat(64),
+            integrityChainHash: "b".repeat(64),
+            integrityStatus: "verified",
+            integritySummary: "Audit log chain verified across 1 metadata-only event hash.",
+            eventCount: 1,
+            firstEventAt: "2026-06-30T00:00:04.000Z",
+            lastEventAt: "2026-06-30T00:00:04.000Z",
+            actionCounts: { "model.run.human-review-queued": 1 },
+            actors: ["Compliance"],
+            targetTypes: ["human-review"],
+            dataBoundaryStatus: "clean",
+            exportAllowed: true,
+            boundaryBlockerCount: 0,
+            boundaryWarningCount: 0,
+            detectedClasses: [],
+            boundaryFindings: [],
+            remediation: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+            nextActions: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+            events: [
+              {
+                id: "audit-log-review",
+                actorId: "Compliance",
+                action: "model.run.human-review-queued",
+                targetType: "human-review",
+                targetId: "human-review-full",
+                beforeHash: "",
+                afterHash: "f".repeat(64),
+                summary: "Created secure review workspace.",
+                createdAt: "2026-06-30T00:00:04.000Z",
+                entryHash: "c".repeat(64)
+              }
+            ],
+            notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+          },
+          200
+        );
+      }
+
+      if (path.endsWith("/audit-log/export?targetType=source-review") && init?.method === "GET") {
+        return appJsonResponse(
+          {
+            exportVersion: "lexproof-audit-log-export-v1",
+            workspaceId: "project-ui",
+            exportedAt: "2026-06-30T00:02:00.000Z",
+            exportHash: "9".repeat(64),
+            integrityChainHash: "8".repeat(64),
+            integrityStatus: "empty",
+            integritySummary: "No server audit log events are available yet; run the Secure Review Journey before final handoff.",
+            eventCount: 0,
+            actionCounts: {},
+            actors: [],
+            targetTypes: [],
+            dataBoundaryStatus: "clean",
+            exportAllowed: true,
+            boundaryBlockerCount: 0,
+            boundaryWarningCount: 0,
+            detectedClasses: [],
+            boundaryFindings: [],
+            remediation: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+            nextActions: [
+              "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+              "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+            ],
+            events: [],
+            notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+          },
           200
         );
       }
@@ -4138,10 +4648,43 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: /Download Audit Log JSON/i })).toBeInTheDocument();
       fireEvent.change(auditLogExplorer.getByLabelText(/Audit log target type/i), { target: { value: "human-review" } });
       fireEvent.click(auditLogExplorer.getByRole("button", { name: /Refresh Server Audit Log/i }));
-      expect(await auditLogExplorer.findByText(/Audit Log refreshed: 1 metadata-only record/i)).toBeInTheDocument();
+      expect(await auditLogExplorer.findByText(/Audit Log export refreshed: 1 metadata-only event/i)).toBeInTheDocument();
       expect(auditLogExplorer.getByText(/Target types human-review/i)).toBeInTheDocument();
       expect(auditLogExplorer.getAllByText(/model.run.human-review-queued/i).length).toBeGreaterThan(0);
       expect(auditLogExplorer.getByText(/Not legal advice. Audit Log exports are review workspace metadata only./i)).toBeInTheDocument();
+      fireEvent.click(auditLogExplorer.getByRole("button", { name: /Download Audit Log JSON/i }));
+      await waitFor(() => expect(createObjectUrl).toHaveBeenCalledTimes(1));
+      expect(click).toHaveBeenCalledTimes(1);
+      const auditLogPayload = JSON.parse(await readAppBlobText(createdBlobs[0])) as Record<string, unknown>;
+      expect(auditLogPayload).toEqual(
+        expect.objectContaining({
+          exportVersion: "lexproof-audit-log-export-v1",
+          workspaceId: "project-ui",
+          eventCount: 1,
+          exportHash: "a".repeat(64),
+          integrityChainHash: "b".repeat(64),
+          nextActions: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+          notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+        })
+      );
+      expect(JSON.stringify(auditLogPayload)).toContain("model.run.human-review-queued");
+      expect(JSON.stringify(auditLogPayload)).not.toContain("Approval summary represented by metadata hash");
+      expect(JSON.stringify(auditLogPayload)).not.toContain("apiKey");
+      expect(JSON.stringify(auditLogPayload)).not.toContain("raw KYC");
+      fireEvent.change(auditLogExplorer.getByLabelText(/Audit log target type/i), { target: { value: "source-review" } });
+      fireEvent.click(auditLogExplorer.getByRole("button", { name: /Refresh Server Audit Log/i }));
+      expect(await auditLogExplorer.findByText(/Audit Log export refreshed: 0 metadata-only events/i)).toBeInTheDocument();
+      const auditLogRecovery = within(auditLogExplorer.getByRole("status", { name: /Audit Log recovery guidance/i }));
+      expect(auditLogRecovery.getByText(/Audit Log recovery empty/i)).toBeInTheDocument();
+      expect(auditLogRecovery.getByText(/Run Secure Review Journey or clear Audit Log filters/i)).toBeInTheDocument();
+      expect(auditLogRecovery.getByText(/Keep Audit Log exports metadata-only/i)).toBeInTheDocument();
+      expect(
+        auditLogRecovery.getByText(/Not legal advice. Audit Log exports are review workspace metadata only./i)
+      ).toBeInTheDocument();
+      expect(auditLogExplorer.getByText(/No Audit Log records match the current filters. Not legal advice./i)).toBeInTheDocument();
+      fireEvent.change(auditLogExplorer.getByLabelText(/Audit log target type/i), { target: { value: "human-review" } });
+      fireEvent.click(auditLogExplorer.getByRole("button", { name: /Refresh Server Audit Log/i }));
+      expect(await auditLogExplorer.findByText(/Audit Log export refreshed: 1 metadata-only event/i)).toBeInTheDocument();
       const modelRunLedger = within(screen.getByRole("region", { name: /Server Model Run Ledger/i }));
       expect(modelRunLedger.getByRole("heading", { name: /Server Model Run Ledger/i })).toBeInTheDocument();
       expect(modelRunLedger.getByText(/Latest run model-gateway-run-full/i)).toBeInTheDocument();
@@ -4152,15 +4695,52 @@ describe("App", () => {
       expect(modelRunLedger.getAllByText(/AI-assisted draft for audit preparation only. Not legal advice./i).length).toBeGreaterThan(0);
       fireEvent.click(modelRunLedger.getByRole("button", { name: /Download Model Run Receipt JSON/i }));
       await waitFor(() => expect(modelRunLedger.getByText(/Model Run receipt ready:/i)).toBeInTheDocument());
-      expect(createObjectUrl).toHaveBeenCalledTimes(1);
-      expect(click).toHaveBeenCalledTimes(1);
-      const modelRunReceipt = JSON.parse(await readAppBlobText(createdBlobs[0])) as Record<string, unknown>;
+      expect(createObjectUrl).toHaveBeenCalledTimes(2);
+      expect(click).toHaveBeenCalledTimes(2);
+      const modelRunReceipt = JSON.parse(await readAppBlobText(createdBlobs[1])) as Record<string, unknown>;
       expect(modelRunReceipt.receiptVersion).toBe("lexproof-model-gateway-run-receipt-v1");
       expect(modelRunReceipt.runId).toBe("model-gateway-run-full");
       expect(modelRunReceipt.receiptHash).toMatch(/^[a-f0-9]{64}$/);
       expect(JSON.stringify(modelRunReceipt)).toContain("Not legal advice");
       expect(JSON.stringify(modelRunReceipt)).not.toContain("Approval summary represented by metadata hash");
       expect(JSON.stringify(modelRunReceipt)).not.toContain("apiKey");
+      const modelRunRecoveryPacket = within(modelRunLedger.getByRole("region", { name: /Server Model Run Recovery Packet/i }));
+      expect(modelRunRecoveryPacket.getByText(/not refreshed/i)).toBeInTheDocument();
+      expect(modelRunRecoveryPacket.getByRole("button", { name: /Download Model Run Recovery Packet JSON/i })).toBeDisabled();
+      fireEvent.click(modelRunRecoveryPacket.getByRole("button", { name: /Refresh Model Run Recovery Packet/i }));
+      expect(
+        await modelRunRecoveryPacket.findByText(/1 persisted Model Gateway run checked for retry, blocker, and Human Review recovery/i)
+      ).toBeInTheDocument();
+      const modelRunRecoveryActions = within(
+        modelRunRecoveryPacket.getByRole("status", { name: /Model Run Recovery Packet actions/i })
+      );
+      expect(modelRunRecoveryActions.getByText(/Recovery actions/i)).toBeInTheDocument();
+      expect(modelRunRecoveryActions.getByText(/Complete Human Review before relying on this AI-assisted draft/i)).toBeInTheDocument();
+      expect(modelRunRecoveryActions.getByText(/Keep Model Gateway run receipts with the audit-preparation handoff packet/i)).toBeInTheDocument();
+      expect(
+        modelRunRecoveryPacket.getByText(/Not legal advice. Model Gateway run recovery packets are audit preparation metadata only./i)
+      ).toBeInTheDocument();
+      fireEvent.click(modelRunRecoveryPacket.getByRole("button", { name: /Download Model Run Recovery Packet JSON/i }));
+      await waitFor(() => expect(createObjectUrl).toHaveBeenCalledTimes(3));
+      expect(click).toHaveBeenCalledTimes(3);
+      const modelRunRecoveryPayload = JSON.parse(await readAppBlobText(createdBlobs[2])) as Record<string, unknown>;
+      expect(modelRunRecoveryPayload).toEqual(
+        expect.objectContaining({
+          packetVersion: "lexproof-model-gateway-run-recovery-packet-v1",
+          workspaceId: "project-ui",
+          runCount: 1,
+          recoveryItemCount: 1,
+          needsHumanReviewCount: 1,
+          packetHash: "f".repeat(64),
+          nextActions: [
+            "Complete Human Review before relying on this AI-assisted draft.",
+            "Keep Model Gateway run receipts with the audit-preparation handoff packet."
+          ],
+          notLegalAdviceBoundary: "Not legal advice. Model Gateway run recovery packets are audit preparation metadata only."
+        })
+      );
+      expect(JSON.stringify(modelRunRecoveryPayload)).toContain("model-gateway-run-full");
+      expect(JSON.stringify(modelRunRecoveryPayload)).not.toMatch(/Approval summary represented by metadata hash|apiKey|raw KYC|private key/i);
       const modelEvaluationSection = screen.getByRole("heading", { name: /Model Gateway Evaluation/i }).closest("section");
       expect(modelEvaluationSection).not.toBeNull();
       const modelEvaluation = within(modelEvaluationSection as HTMLElement);
@@ -4327,7 +4907,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Run Secure Review Journey/i }));
 
     expect(await screen.findByText(/Validate Model Connect before running the secure review journey/i)).toBeInTheDocument();
-  });
+  }, LONG_APP_FLOW_TIMEOUT_MS);
 
   it("shows a recoverable Secure Review Journey error when Model Connect validation is blocked", async () => {
     render(<App />);
@@ -5061,6 +5641,60 @@ describe("App", () => {
     expect(screen.getByLabelText("Status for evidence 1")).toHaveValue("requested");
   });
 
+  it("redacts unsafe AI Review run metadata before autosave", async () => {
+    const unsafeApiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const unsafePrivateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const { restore, storage } = installAppLocalStorage({
+      "lexproof.modelReviewRuns.v1": JSON.stringify([
+        {
+          runVersion: "lexproof-ai-review-run-v1",
+          runId: "ai-run-abcdef1234567890",
+          generatedAt: "2026-06-29T00:00:00.000Z",
+          projectId: "project-app-model-review",
+          projectName: `Stored project ${unsafeApiKey} final legal decision`,
+          providerLabel: `Provider ${unsafeApiKey}`,
+          model: `model-${unsafePrivateKey}-raw KYC packet`,
+          redactionStatus: "needs-review",
+          payloadHash: "a".repeat(64),
+          responseHash: "b".repeat(64),
+          riskFlagCount: 1,
+          evidenceSummaryCount: 1,
+          missingEvidenceCount: 1,
+          boundary: "AI-assisted draft for audit preparation only. Not legal advice.",
+          rawEvidenceBody: `raw KYC packet ${unsafePrivateKey}`
+        }
+      ])
+    });
+
+    try {
+      render(<App />);
+
+      await waitFor(() => {
+        const stored = storage.getItem("lexproof.modelReviewRuns.v1") ?? "";
+        const [storedRun] = JSON.parse(stored);
+        expect(storedRun).toEqual(
+          expect.objectContaining({
+            runVersion: "lexproof-ai-review-run-v1",
+            runId: "ai-run-abcdef1234567890",
+            payloadHash: "a".repeat(64),
+            responseHash: "b".repeat(64),
+            boundary: "AI-assisted draft for audit preparation only. Not legal advice."
+          })
+        );
+        expect(storedRun.rawEvidenceBody).toBeUndefined();
+        expect(stored).toContain("[redacted-api-key]");
+        expect(stored).toContain("[redacted-private-key]");
+        expect(stored).toContain("[redacted-raw-kyc]");
+        expect(stored).toContain("[redacted-legal-conclusion]");
+        expect(stored).not.toContain(unsafeApiKey);
+        expect(stored).not.toContain(unsafePrivateKey);
+        expect(stored).not.toMatch(/raw KYC packet|final legal decision/i);
+      });
+    } finally {
+      restore();
+    }
+  }, 20000);
+
   it("runs AI Review with mock model settings and exposes missing evidence", async () => {
     render(<App />);
 
@@ -5177,12 +5811,136 @@ describe("App", () => {
     expect(screen.getByLabelText(/Status for evidence 1/i)).toHaveValue("rejected");
   }, 20000);
 
+  it("redacts unsafe Human Review decisions before autosave", async () => {
+    const unsafeApiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const unsafePrivateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const { restore, storage } = installAppLocalStorage();
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /New project/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Evidence Ledger/i }));
+      fireEvent.change(screen.getByLabelText(/Evidence label/i), { target: { value: "Unsafe decision memo" } });
+      fireEvent.change(screen.getByLabelText(/Evidence kind/i), { target: { value: "Markdown" } });
+      fireEvent.change(screen.getByLabelText(/Evidence status/i), { target: { value: "received" } });
+      fireEvent.change(screen.getByLabelText(/Evidence owner/i), { target: { value: "Compliance" } });
+      fireEvent.change(screen.getByLabelText(/Evidence content/i), {
+        target: { value: "Metadata-only review note for persistence testing." }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add evidence item/i }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Human Review/i }));
+
+      expect(await screen.findByText("Unsafe decision memo")).toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText(/Status for Unsafe decision memo/i), { target: { value: "rejected" } });
+      fireEvent.change(screen.getByLabelText(/Reviewer for Unsafe decision memo/i), {
+        target: { value: `Outside counsel ${unsafeApiKey}` }
+      });
+      fireEvent.change(screen.getByLabelText(/Decision note for Unsafe decision memo/i), {
+        target: {
+          value: `Reject final legal decision until raw KYC packet, passport file, and private key ${unsafePrivateKey} are removed.`
+        }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Save decision for Unsafe decision memo/i }));
+
+      expect(await screen.findByText(/Human review decision saved for Unsafe decision memo/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        const stored = storage.getItem("lexproof.humanReviewDecisions.v1") ?? "";
+        expect(stored).toContain("[redacted-api-key]");
+        expect(stored).toContain("[redacted-legal-conclusion]");
+        expect(stored).toContain("[redacted-raw-kyc]");
+        expect(stored).toContain("[redacted-identity-document]");
+        expect(stored).toContain("[redacted-private-key]");
+        expect(stored).toContain("Not legal advice. Human review decisions track audit preparation workflow status only.");
+        expect(stored).not.toContain(unsafeApiKey);
+        expect(stored).not.toContain(unsafePrivateKey);
+        expect(stored).not.toMatch(/raw KYC packet|passport file|final legal decision/i);
+      });
+    } finally {
+      restore();
+    }
+  }, 20000);
+
   it("downloads a metadata-only Human Review Recovery Packet for rejected decisions", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
     const revokeObjectUrl = vi.fn();
     const capturedBlobs: Blob[] = [];
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      expect(String(input)).toMatch(/\/api\/workspaces\/.+\/reviews\/queue$/);
+      return appJsonResponse({
+        queueVersion: "lexproof-server-human-review-queue-v1",
+        workspaceId: "server-review-workspace",
+        filters: {},
+        totalCount: 1,
+        openCount: 1,
+        reviewedCount: 0,
+        blockedCount: 0,
+        targetTypeCounts: {
+          evidence: 1
+        },
+        statusCounts: {
+          "needs-more-evidence": 1
+        },
+        reviewerCounts: {
+          Counsel: 1
+        },
+        nextActions: ["1 review item needs more evidence before counsel handoff."],
+        recoveryPacket: {
+          packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+          workspaceId: "server-review-workspace",
+          generatedAt: "2026-07-08T00:00:00.000Z",
+          packetHash: "b".repeat(64),
+          status: "needs-recovery",
+          summary: {
+            totalRecoveryCount: 1,
+            returnedCount: 1,
+            rejectedCount: 0,
+            nextAction: "evidence evidence-server-1: Return the linked Evidence Vault record to requested status.",
+            notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+          },
+          nextActions: ["evidence evidence-server-1: Return the linked Evidence Vault record to requested status."],
+          items: [
+            {
+              itemVersion: "lexproof-server-human-review-recovery-item-v1",
+              id: "review-server-1",
+              workspaceId: "server-review-workspace",
+              targetType: "evidence",
+              targetId: "evidence-server-1",
+              targetLabel: "evidence evidence-server-1",
+              reviewerId: "Counsel",
+              status: "needs-more-evidence",
+              severity: "needs-action",
+              reviewerComment: "Needs metadata-only replacement; [redacted-raw-kyc] and [redacted-private-key] removed.",
+              createdAt: "2026-07-08T00:00:00.000Z",
+              updatedAt: "2026-07-08T00:00:00.000Z",
+              recoveryAction: "Return the linked Evidence Vault record to requested status.",
+              notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery items are audit preparation workflow metadata only."
+            }
+          ],
+          notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+        },
+        items: [
+          {
+            recordVersion: "lexproof-human-review-record-v1",
+            id: "review-server-1",
+            workspaceId: "server-review-workspace",
+            targetType: "evidence",
+            targetId: "evidence-server-1",
+            reviewerId: "Counsel",
+            status: "needs-more-evidence",
+            comment: "Needs metadata-only replacement.",
+            createdAt: "2026-07-08T00:00:00.000Z",
+            updatedAt: "2026-07-08T00:00:00.000Z",
+            notLegalAdviceBoundary: "Not legal advice. Human review records track audit preparation workflow status."
+          }
+        ],
+        notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+      });
+    });
 
     URL.createObjectURL = vi.fn((blob: Blob | MediaSource) => {
       if (blob instanceof Blob) {
@@ -5191,6 +5949,7 @@ describe("App", () => {
       return "blob:human-review-recovery-packet";
     });
     URL.revokeObjectURL = revokeObjectUrl;
+    vi.stubGlobal("fetch", fetchMock);
 
     try {
       render(<App />);
@@ -5216,7 +5975,7 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: /Save decision for Rejected recovery memo/i }));
 
       expect(await screen.findByText(/Rejected from review. Linked evidence is marked rejected for replacement recovery/i)).toBeInTheDocument();
-      const recoveryPacketPanel = within(screen.getByRole("region", { name: /Human Review Recovery Packet/i }));
+      const recoveryPacketPanel = within(screen.getByRole("region", { name: /^Human Review Recovery Packet$/i }));
       expect(recoveryPacketPanel.getByText(/returned or rejected review item/i)).toBeInTheDocument();
       fireEvent.click(recoveryPacketPanel.getByRole("button", { name: /Download Recovery Packet JSON/i }));
 
@@ -5236,8 +5995,32 @@ describe("App", () => {
       expect(packet.items.some((item: { title: string; recoveryAction: string }) => item.title === "Rejected recovery memo" && item.recoveryAction.includes("replacement evidence metadata"))).toBe(true);
       expect(payload).not.toMatch(/sk-live|private key|raw KYC|\bcompliant\b|\bnon-compliant\b|\blegal approval\b/i);
       await waitFor(() => expect(recoveryPacketPanel.getByText(/Recovery packet hash/i)).toBeInTheDocument());
+
+      const serverRecoveryPacketPanel = within(screen.getByRole("region", { name: /^Server Human Review Recovery Packet$/i }));
+      fireEvent.click(serverRecoveryPacketPanel.getByRole("button", { name: /Refresh Server Human Review Queue/i }));
+      expect(await serverRecoveryPacketPanel.findByText(/Server recovery active/i)).toBeInTheDocument();
+      const serverRecoveryActions = within(
+        serverRecoveryPacketPanel.getByRole("status", { name: /Server Human Review recovery actions/i })
+      );
+      expect(serverRecoveryActions.getByText(/Recovery actions/i)).toBeInTheDocument();
+      expect(serverRecoveryActions.getByText(/Return the linked Evidence Vault record to requested status./i)).toBeInTheDocument();
+      expect(
+        serverRecoveryPacketPanel.getByText(/Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only./i)
+      ).toBeInTheDocument();
+      fireEvent.click(serverRecoveryPacketPanel.getByRole("button", { name: /Download Server Recovery Packet JSON/i }));
+      await waitFor(() => expect(capturedBlobs.length).toBe(2));
+      const serverPayload = await readAppBlobText(capturedBlobs[1]);
+      const serverPacket = JSON.parse(serverPayload);
+      expect(serverPacket.packetVersion).toBe("lexproof-server-human-review-recovery-packet-v1");
+      expect(serverPacket.packetHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(serverPacket.summary.totalRecoveryCount).toBe(1);
+      expect(serverPacket.nextActions).toEqual(["evidence evidence-server-1: Return the linked Evidence Vault record to requested status."]);
+      expect(serverPayload).toContain("[redacted-raw-kyc]");
+      expect(serverPayload).toContain("[redacted-private-key]");
+      expect(serverPayload).not.toMatch(/raw KYC packet|passport file|seed phrase|legal approval/i);
     } finally {
       click.mockRestore();
+      vi.unstubAllGlobals();
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;
     }
@@ -5534,6 +6317,51 @@ describe("App", () => {
     expect(await screen.findByText(/## Model Intake Summary/i)).toBeInTheDocument();
     expect(screen.getByText(/Provider: OpenAI-compatible gateway/i)).toBeInTheDocument();
     expect(screen.getByText(/Event SHA-256/i)).toBeInTheDocument();
+  });
+
+  it("redacts unsafe Model Intake profile metadata before autosave", async () => {
+    const unsafeApiKey = "sk-live-abcdef1234567890abcdef1234567890";
+    const unsafeBearerToken = "abcdef1234567890";
+    const unsafePrivateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const { restore, storage } = installAppLocalStorage();
+
+    try {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Model Intake/i }));
+      fireEvent.change(screen.getByLabelText(/Provider name/i), { target: { value: `Gateway ${unsafeApiKey}` } });
+      fireEvent.change(screen.getByLabelText(/Intake model name/i), { target: { value: `model ${unsafePrivateKey}` } });
+      fireEvent.change(screen.getByLabelText(/Model use case/i), {
+        target: { value: "Create a final legal decision from raw KYC packet and passport data." }
+      });
+      fireEvent.change(screen.getByLabelText(/Human review owner/i), {
+        target: { value: `Reviewer bearer token ${unsafeBearerToken}` }
+      });
+      fireEvent.change(screen.getByLabelText(/Allowed data classes/i), {
+        target: { value: "policy metadata, raw KYC packet" }
+      });
+
+      expect(
+        await screen.findByText(/Model intake profile metadata must not include credentials, private keys, wallet secrets, raw KYC, or personal data/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Raw KYC or personal data must not be routed into model intake/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        const stored = storage.getItem("lexproof.modelIntakeProfile.v1") ?? "";
+        expect(stored).toContain("[redacted-api-key]");
+        expect(stored).toContain("[redacted-private-key]");
+        expect(stored).toContain("[redacted-legal-conclusion]");
+        expect(stored).toContain("[redacted-raw-kyc]");
+        expect(stored).toContain("[redacted-personal-data]");
+        expect(stored).toContain("bearer token [redacted-secret]");
+        expect(stored).not.toContain(unsafeApiKey);
+        expect(stored).not.toContain(unsafePrivateKey);
+        expect(stored).not.toContain(unsafeBearerToken);
+        expect(stored).not.toMatch(/raw KYC packet|passport data|final legal decision/i);
+      });
+    } finally {
+      restore();
+    }
   });
 
   it("adds AI draft counsel questions to an editable Counsel Pack queue", async () => {
@@ -5844,6 +6672,12 @@ describe("App", () => {
       expect(
         screen.getByText(/Not legal advice. Counsel Pack export records are audit preparation metadata only./i)
       ).toBeInTheDocument();
+      expect(await screen.findByText(/Server Export Recovery Packet/i)).toBeInTheDocument();
+      expect(screen.getByText(/Export recovery active/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Resolve jurisdiction readiness blockers before external handoff./i).length).toBeGreaterThan(0);
+      expect(
+        screen.getByText(/Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only./i)
+      ).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledTimes(1);
 
       fireEvent.click(screen.getByRole("button", { name: /Download Server Export Receipt JSON/i }));
@@ -5856,6 +6690,14 @@ describe("App", () => {
       expect(receiptPayload).toContain("jurisdictionReadinessDigest");
       expect(receiptPayload).toContain("Not legal advice");
       expect(receiptPayload).not.toContain("# Counsel Pack");
+      fireEvent.click(screen.getByRole("button", { name: /Download Export Recovery Packet JSON/i }));
+      await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
+      const recoveryPayload = await readAppBlobText(capturedBlobs[1]);
+      expect(recoveryPayload).toContain("lexproof-counsel-pack-export-recovery-packet-v1");
+      expect(recoveryPayload).toContain("packetHash");
+      expect(recoveryPayload).toContain("Resolve jurisdiction readiness blockers before external handoff.");
+      expect(recoveryPayload).toContain("Not legal advice");
+      expect(recoveryPayload).not.toContain("# Counsel Pack");
     } finally {
       URL.createObjectURL = originalCreateObjectUrl;
       URL.revokeObjectURL = originalRevokeObjectUrl;
@@ -6041,9 +6883,9 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 9,
+      routeFamilyCount: 16,
       routeFamilies: [],
-      implementedRouteCount: 24,
+      implementedRouteCount: 29,
       implementedRoutes: [],
       externalSideEffectsAllowed: false,
       reportHash: "a".repeat(64),
@@ -6056,21 +6898,301 @@ function createDemoApiMockPayload(url: string): unknown {
   if (url.endsWith("/api/model-gateway/provider-policy")) {
     return {
       reportVersion: "lexproof-model-gateway-provider-policy-v1",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      overallStatus: "needs-policy",
+      enabledProviderCount: 1,
+      deferredProviderCount: 2,
+      adapters: [
+        {
+          provider: "mock",
+          label: "Mock local reviewer gateway",
+          enabled: true,
+          mode: "local-mock",
+          credentialPolicy: "no credentials accepted",
+          status: "ready",
+          readinessEvidence: "Mock local reviewer gateway is enabled for metadata-only mock review. No external provider call is made.",
+          requiredControls: ["redaction-gate", "human-review-enforcement"]
+        },
+        {
+          provider: "openai-compatible",
+          label: "OpenAI-compatible gateway",
+          enabled: false,
+          mode: "external-provider-placeholder",
+          credentialPolicy: "deferred until server-side secret policy is approved",
+          status: "disabled",
+          readinessEvidence: "OpenAI-compatible gateway is registered as a disabled placeholder and cannot receive credentials or external requests in this phase.",
+          requiredControls: [
+            "server-side-secret-policy",
+            "provider-allowlist",
+            "egress-logging",
+            "redaction-gate",
+            "human-review-enforcement"
+          ],
+          disabledReason:
+            "External provider proxying is disabled until server-side secret handling, provider allowlist, and egress logging are approved."
+        },
+        {
+          provider: "enterprise-proxy",
+          label: "Enterprise model proxy gateway",
+          enabled: false,
+          mode: "external-provider-placeholder",
+          credentialPolicy: "deferred until server-side secret policy is approved",
+          status: "disabled",
+          readinessEvidence:
+            "Enterprise model proxy gateway is registered as a disabled placeholder and cannot receive credentials or external requests in this phase.",
+          requiredControls: [
+            "server-side-secret-policy",
+            "provider-allowlist",
+            "egress-logging",
+            "redaction-gate",
+            "human-review-enforcement"
+          ],
+          disabledReason:
+            "External provider proxying is disabled until server-side secret handling, provider allowlist, and egress logging are approved."
+        }
+      ],
+      controls: [
+        {
+          id: "server-side-secret-policy",
+          label: "Server-side secret policy",
+          status: "needs-policy",
+          evidence: "No KMS-backed provider credential storage or secret rotation policy is approved yet.",
+          recoveryAction: "Approve KMS-backed secret storage, rotation, access review, and no-client-persistence requirements."
+        },
+        {
+          id: "provider-allowlist",
+          label: "Provider allowlist",
+          status: "needs-policy",
+          evidence: "External model providers are placeholders until an allowlist and destination review are approved.",
+          recoveryAction: "Approve provider allowlist, model list, jurisdictional routing, and data-class limits."
+        },
+        {
+          id: "egress-logging",
+          label: "Egress logging",
+          status: "needs-policy",
+          evidence: "Server egress logging, retry policy, and failure receipt retention are not approved for external providers.",
+          recoveryAction: "Define metadata-only request logging, retry limits, incident response, and receipt retention."
+        },
+        {
+          id: "redaction-gate",
+          label: "Redaction Gate",
+          status: "ready",
+          evidence: "Model Connect has no current redaction blockers for audit-prep routing.",
+          recoveryAction: "Keep Redaction Gate mandatory before any provider request."
+        },
+        {
+          id: "human-review-enforcement",
+          label: "Human review enforcement",
+          status: "ready",
+          evidence: "Model Gateway receipts and Model Intake route model output to human review before external reliance.",
+          recoveryAction: "Keep model output as draft audit preparation and require human review before counsel handoff."
+        }
+      ],
+      nextActions: ["Keep external provider proxying disabled until provider allowlist and egress logging are reviewed."],
       notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/model-runs/recovery")) {
+    return {
+      packetVersion: "lexproof-model-gateway-run-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      packetHash: "6".repeat(64),
+      runCount: 0,
+      recoveryItemCount: 0,
+      blockedCount: 0,
+      retryAvailableCount: 0,
+      needsHumanReviewCount: 0,
+      readyCount: 0,
+      nextActions: ["Keep Model Gateway run receipts with the audit-preparation handoff packet."],
+      items: [],
+      notLegalAdviceBoundary: "Not legal advice. Model Gateway run recovery packets are audit preparation metadata only."
     };
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/evidence-manifest")) {
     return {
       manifestVersion: "lexproof-evidence-vault-manifest-v1",
       workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      itemCount: 0,
+      items: [],
+      bundleHash: "c".repeat(64),
       notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/evidence-lineage-digest")) {
+    return {
+      digestVersion: "lexproof-evidence-vault-lineage-digest-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      readinessStatus: "empty",
+      manifestHash: "c".repeat(64),
+      itemCount: 0,
+      statusCounts: {},
+      lineageCounts: {
+        activeRecords: 0,
+        replacedRecords: 0,
+        openRejectedRecords: 0,
+        lineageLinkCount: 0,
+        linkedControlCount: 0,
+        linkedRiskFlagCount: 0
+      },
+      lineageLinks: [],
+      activeEvidenceIds: [],
+      openRejectedEvidenceIds: [],
+      linkedControlIds: [],
+      linkedRiskFlagIds: [],
+      nextActions: ["Add metadata-only evidence records, then sync the Evidence Vault before counsel handoff."],
+      digestHash: "8".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/source-reviews/packet")) {
+    return {
+      packetVersion: "lexproof-server-source-review-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      status: "empty",
+      recordCount: 0,
+      ledgerHashes: [],
+      statusCounts: {
+        current: 0,
+        pendingReview: 0,
+        metadataNeeded: 0
+      },
+      reviewStatusCounts: {
+        current: 0,
+        reviewDue: 0,
+        metadataMissing: 0
+      },
+      priorityCounts: {
+        P0: 0,
+        P1: 0,
+        P2: 0
+      },
+      matchingBehaviorChanged: false,
+      records: [],
+      nextActions: ["Sync Source Review Ledger metadata before counsel handoff."],
+      packetHash: "9".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Server Source Review packets are audit preparation lineage metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/source-approvals/packet")) {
+    return {
+      packetVersion: "lexproof-server-source-approval-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      status: "empty",
+      recordCount: 0,
+      queueHashes: [],
+      statusCounts: {
+        pendingReview: 0
+      },
+      approvalStatusCounts: {
+        approvalRequired: 0,
+        metadataRequired: 0
+      },
+      reviewStatusCounts: {
+        current: 0,
+        reviewDue: 0,
+        metadataMissing: 0
+      },
+      priorityCounts: {
+        P0: 0,
+        P1: 0
+      },
+      matchingBehaviorChanged: false,
+      records: [],
+      nextActions: ["Sync Source Approval Queue metadata before counsel handoff when source review freshness is due."],
+      packetHash: "4".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
     };
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/queue")) {
     return {
       queueVersion: "lexproof-server-human-review-queue-v1",
       workspaceId: "demo-smoke-preflight",
+      recoveryPacket: {
+        packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+        workspaceId: "demo-smoke-preflight",
+        generatedAt: "2026-07-01T00:00:00.000Z",
+        packetHash: "b".repeat(64),
+        status: "ready",
+        summary: {
+          totalRecoveryCount: 0,
+          returnedCount: 0,
+          rejectedCount: 0,
+          nextAction: "No returned or rejected server human review records currently need recovery.",
+          notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+        },
+        nextActions: ["No returned or rejected server human review records currently need recovery."],
+        items: [],
+        notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+      },
       notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/exports/counsel-pack/recovery")) {
+    return {
+      packetVersion: "lexproof-counsel-pack-export-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      packetHash: "f".repeat(64),
+      recordCount: 0,
+      recoveryItemCount: 0,
+      blockedCount: 0,
+      needsSourceReviewCount: 0,
+      needsReviewCount: 0,
+      readyCount: 0,
+      nextActions: ["No Counsel Pack export records need recovery."],
+      items: [],
+      notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/audit-log/export")) {
+    return {
+      exportVersion: "lexproof-audit-log-export-v1",
+      workspaceId: "demo-smoke-preflight",
+      exportedAt: "2026-07-01T00:00:00.000Z",
+      exportHash: "d".repeat(64),
+      integrityChainHash: "e".repeat(64),
+      integrityStatus: "empty",
+      integritySummary: "No server audit log events are available yet; run the Secure Review Journey before final handoff.",
+      eventCount: 0,
+      actionCounts: {},
+      actors: [],
+      targetTypes: [],
+      dataBoundaryStatus: "clean",
+      exportAllowed: true,
+      boundaryBlockerCount: 0,
+      boundaryWarningCount: 0,
+      detectedClasses: [],
+      boundaryFindings: [],
+      remediation: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."],
+      nextActions: [
+        "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+        "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+      ],
+      events: [],
+      notLegalAdviceBoundary: "Not legal advice. Audit Log exports are review workspace metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle")) {
+    return {
+      bundleVersion: "lexproof-integration-policy-evaluation-receipt-bundle-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      bundleHash: "7".repeat(64),
+      recordCount: 0,
+      policyCount: 0,
+      missingPolicyIds: ["object-storage", "document-parser", "chain-anchor", "grc-destination"],
+      readyCount: 0,
+      needsPolicyCount: 0,
+      blockedCount: 0,
+      externalEnablementAllowed: false,
+      nextActions: ["Evaluate server integration policies before any adapter enablement review."],
+      records: [],
+      notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
     };
   }
   if (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Anchor, CheckCircle2, ClipboardCheck, Download, FileText, History, Printer, Save, ServerCog, ShieldAlert } from "lucide-react";
 import { SectionHeader } from "./AuditWizard";
 import { ManifestDriftGuardPanel } from "./ManifestDriftGuardPanel";
@@ -23,9 +23,12 @@ import {
 import type { CounselPackTemplate, CounselPackTemplateId } from "../lib/counselPackTemplates";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
 import {
+  createCounselPackExportRecoveryPacket,
   createCounselPackExportRecordReceipt,
+  downloadCounselPackExportRecoveryPacketJson,
   downloadCounselPackExportRecordReceiptJson
 } from "../lib/counselPackExportRecordReceipt";
+import type { CounselPackExportRecoveryPacket } from "../lib/counselPackExportRecordReceipt";
 import type { CounselQuestion } from "../lib/counselQuestions";
 import type { DataBoundaryReport } from "../lib/dataBoundary";
 import type { SubmissionFit } from "../lib/auditEngine";
@@ -538,12 +541,51 @@ function ServerExportRecordsPanel({
   onApiBaseUrlChange: (value: string) => void;
   onCreate: () => Promise<void> | void;
 }) {
+  const [recoveryPacket, setRecoveryPacket] = useState<CounselPackExportRecoveryPacket | null>(null);
+  const [recoveryPacketError, setRecoveryPacketError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (records.length === 0) {
+      setRecoveryPacket(null);
+      setRecoveryPacketError("");
+      return;
+    }
+
+    setRecoveryPacketError("");
+    void createCounselPackExportRecoveryPacket(records[0]?.workspaceId ?? slug(projectName), records)
+      .then((packet) => {
+        if (!cancelled) {
+          setRecoveryPacket(packet);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecoveryPacket(null);
+          setRecoveryPacketError("Unable to build Counsel Pack export recovery packet from server export metadata.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectName, records]);
+
   const downloadReceipt = async (record: CounselPackExportRecord) => {
     const receipt = await createCounselPackExportRecordReceipt(record);
     downloadCounselPackExportRecordReceiptJson(
       `${slug(projectName)}-server-export-v${record.version}-receipt.json`,
       receipt
     );
+  };
+
+  const downloadRecoveryPacket = () => {
+    if (!recoveryPacket) {
+      return;
+    }
+
+    downloadCounselPackExportRecoveryPacketJson(`${slug(projectName)}-server-export-recovery-packet.json`, recoveryPacket);
   };
 
   return (
@@ -578,6 +620,60 @@ function ServerExportRecordsPanel({
           {error.recoveryAction ? <small>{error.recoveryAction}</small> : null}
           <small>{error.notLegalAdviceBoundary}</small>
         </div>
+      ) : null}
+      {recoveryPacketError ? (
+        <div className="save-state server-export-error" role="status">
+          <p>{recoveryPacketError}</p>
+          <small>Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only.</small>
+        </div>
+      ) : null}
+      {recoveryPacket ? (
+        <section className={`server-export-recovery ${recoveryPacket.recoveryItemCount > 0 ? "needs-action" : "ready"}`}>
+          <div className="panel-title compact-title">
+            <ClipboardCheck size={17} aria-hidden="true" />
+            <h4>Server Export Recovery Packet</h4>
+          </div>
+          <p className="section-note">{recoveryPacket.notLegalAdviceBoundary}</p>
+          <div className="server-export-recovery-facts">
+            <VersionFact label="Packet" value={shortHash(recoveryPacket.packetHash)} />
+            <VersionFact label="Records" value={String(recoveryPacket.recordCount)} />
+            <VersionFact label="Recovery" value={String(recoveryPacket.recoveryItemCount)} />
+            <VersionFact label="Blocked" value={String(recoveryPacket.blockedCount)} />
+            <VersionFact label="Source review" value={String(recoveryPacket.needsSourceReviewCount)} />
+            <VersionFact label="Needs review" value={String(recoveryPacket.needsReviewCount)} />
+          </div>
+          <div className="server-export-recovery-actions" role="status" aria-label="Server Export Recovery Packet actions">
+            <strong>
+              {recoveryPacket.recoveryItemCount > 0
+                ? "Export recovery active"
+                : "Export recovery clear"}
+            </strong>
+            {recoveryPacket.nextActions.map((action) => (
+              <span key={action}>{action}</span>
+            ))}
+            <button type="button" className="secondary" onClick={downloadRecoveryPacket}>
+              <Download size={16} aria-hidden="true" />
+              Download Export Recovery Packet JSON
+            </button>
+          </div>
+          {recoveryPacket.items.some((item) => item.recoveryStatus !== "ready") ? (
+            <div className="server-export-recovery-items">
+              {recoveryPacket.items
+                .filter((item) => item.recoveryStatus !== "ready")
+                .slice(0, 3)
+                .map((item) => (
+                  <article key={item.exportRecordId} className={`server-export-recovery-item ${item.recoveryStatus}`}>
+                    <header>
+                      <span>{item.priority}</span>
+                      <strong>{item.recoveryStatus}</strong>
+                    </header>
+                    <p>{item.artifactName}</p>
+                    <small>{item.recoveryAction}</small>
+                  </article>
+                ))}
+            </div>
+          ) : null}
+        </section>
       ) : null}
       {records.length === 0 ? (
         <p className="empty-state">No server Counsel Pack export records have been created for this project yet.</p>

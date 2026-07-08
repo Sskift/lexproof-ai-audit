@@ -8,7 +8,9 @@ import {
   createHumanReviewTimeline,
   exportHumanReviewRecoveryPacketJson,
   exportHumanReviewTimelineJson,
-  humanReviewStatusToEvidenceStatus
+  humanReviewStatusToEvidenceStatus,
+  parseStoredHumanReviewDecisions,
+  sanitizeHumanReviewDecision
 } from "./humanReviewWorkflow";
 import type { AIEventRecord } from "./modelIntake";
 import type { EvidenceItem } from "./projectModel";
@@ -62,6 +64,9 @@ const aiEvent: AIEventRecord = {
   createdAt: "2026-06-30T00:00:00.000Z",
   updatedAt: "2026-06-30T00:00:00.000Z"
 };
+
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 const sourceReview: RegulatorySourceReview = {
   status: "review-due",
@@ -273,6 +278,129 @@ describe("human review workflow", () => {
       updatedAt: "2026-06-30T01:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. Human review decisions track audit preparation workflow status only."
     });
+  });
+
+  it("redacts unsafe reviewer metadata before saving human review decisions", () => {
+    const queue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [counselReview],
+      evidenceItems: [evidence],
+      aiEvents: [aiEvent]
+    });
+
+    const decision = createHumanReviewDecision(
+      queue.items[1],
+      {
+        status: "rejected",
+        reviewer: `Outside counsel ${apiKey}`,
+        decisionNote: `Reject final legal decision until raw KYC packet, passport file, and private key ${privateKey} are removed.`
+      },
+      "2026-06-30T01:00:00.000Z"
+    );
+    const serialized = JSON.stringify(decision);
+
+    expect(decision.reviewer).toContain("[redacted-api-key]");
+    expect(decision.decisionNote).toContain("[redacted-legal-conclusion]");
+    expect(decision.decisionNote).toContain("[redacted-raw-kyc]");
+    expect(decision.decisionNote).toContain("[redacted-identity-document]");
+    expect(decision.decisionNote).toContain("[redacted-private-key]");
+    expect(decision.notLegalAdviceBoundary).toContain("Not legal advice");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport file|final legal decision/i);
+  });
+
+  it("sanitizes human review decisions before local persistence", () => {
+    const decision = sanitizeHumanReviewDecision({
+      decisionVersion: "lexproof-human-review-decision-v1",
+      id: "tampered-id",
+      projectId: `project-1 ${apiKey}`,
+      targetType: "ai-event",
+      targetId: `event-1 ${apiKey}`,
+      title: `AI Review ${apiKey} final legal decision`,
+      status: "reviewed",
+      reviewer: `Outside counsel ${apiKey}`,
+      decisionNote: `Reject raw KYC packet, passport file, and private key ${privateKey}.`,
+      dueAt: "2026-07-01T00:00:00.000Z",
+      updatedAt: "2026-07-02T00:00:00.000Z",
+      notLegalAdviceBoundary: "Not legal advice. Human review decisions track audit preparation workflow status only."
+    });
+    const serialized = JSON.stringify(decision);
+
+    expect(decision.id).not.toBe("tampered-id");
+    expect(decision.projectId).toContain("[redacted-api-key]");
+    expect(decision.targetId).toContain("[redacted-api-key]");
+    expect(decision.title).toContain("[redacted-api-key]");
+    expect(decision.title).toContain("[redacted-legal-conclusion]");
+    expect(decision.reviewer).toContain("[redacted-api-key]");
+    expect(decision.decisionNote).toContain("[redacted-raw-kyc]");
+    expect(decision.decisionNote).toContain("[redacted-identity-document]");
+    expect(decision.decisionNote).toContain("[redacted-private-key]");
+    expect(decision.notLegalAdviceBoundary).toBe("Not legal advice. Human review decisions track audit preparation workflow status only.");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport file|final legal decision/i);
+  });
+
+  it("recovers only valid sanitized human review decisions from local storage", () => {
+    const queue = createHumanReviewQueue({
+      projectId: "project-1",
+      counselReviews: [counselReview],
+      evidenceItems: [evidence],
+      aiEvents: [aiEvent]
+    });
+    const decision = createHumanReviewDecision(
+      queue.items[1],
+      {
+        status: "reviewed",
+        reviewer: "Outside counsel",
+        decisionNote: "Reviewed AI output for audit-prep handoff."
+      },
+      "2026-06-30T01:00:00.000Z"
+    );
+
+    const recovered = parseStoredHumanReviewDecisions(
+      JSON.stringify([
+        {
+          ...decision,
+          title: `AI Review ${apiKey}`,
+          reviewer: `Reviewer ${apiKey}`,
+          decisionNote: `final legal decision after raw KYC packet, passport file, and private key ${privateKey}.`,
+          ignoredRawEvidence: "passport file should not survive"
+        },
+        { ...decision, id: "human-review-ai-event-tampered" },
+        { ...decision, status: "approved" },
+        { ...decision, dueAt: "July 5, 2026" },
+        { ...decision, notLegalAdviceBoundary: "Legal advice." }
+      ])
+    );
+    const [recoveredDecision] = recovered;
+    if (!recoveredDecision) {
+      throw new Error("Expected a recovered human review decision.");
+    }
+    const serialized = JSON.stringify(recovered);
+
+    expect(recovered).toHaveLength(1);
+    expect(recoveredDecision.title).toContain("[redacted-api-key]");
+    expect(recoveredDecision.reviewer).toContain("[redacted-api-key]");
+    expect(recoveredDecision.decisionNote).toContain("[redacted-legal-conclusion]");
+    expect(recoveredDecision.decisionNote).toContain("[redacted-raw-kyc]");
+    expect(recoveredDecision.decisionNote).toContain("[redacted-identity-document]");
+    expect(recoveredDecision.decisionNote).toContain("[redacted-private-key]");
+    expect(recoveredDecision.status).toBe("reviewed");
+    expect(recoveredDecision.notLegalAdviceBoundary).toBe(
+      "Not legal advice. Human review decisions track audit preparation workflow status only."
+    );
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toContain("ignoredRawEvidence");
+    expect(serialized).not.toMatch(/raw KYC packet|passport file|final legal decision/i);
+  });
+
+  it("returns an empty decision recovery set for malformed local storage payloads", () => {
+    expect(parseStoredHumanReviewDecisions("{not json")).toEqual([]);
+    expect(parseStoredHumanReviewDecisions(JSON.stringify({ decisionVersion: "lexproof-human-review-decision-v1" }))).toEqual([]);
+    expect(parseStoredHumanReviewDecisions(null)).toEqual([]);
   });
 
   it("adds due dates and applies the latest decision as status history grows", () => {

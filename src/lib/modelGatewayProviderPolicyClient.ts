@@ -7,6 +7,7 @@ import type {
 } from "./modelGatewayProviderPolicy";
 import type { ModelConnectReceipt } from "./modelConnect";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { redactIntegrationPolicyReport } from "./integrationPolicyReportRedaction";
 
 export type FetchModelGatewayProviderPolicyInput = {
   apiBaseUrl?: string;
@@ -115,11 +116,11 @@ function validateProviderPolicyReport(payload: unknown): ModelGatewayProviderPol
     throw invalidResponseError("Provider policy response has invalid control metadata.");
   }
 
-  if (!Array.isArray(payload.nextActions) || !payload.nextActions.every((action) => typeof action === "string")) {
+  if (!isNonEmptyStringArray(payload.nextActions)) {
     throw invalidResponseError("Provider policy response has invalid next actions.");
   }
 
-  return payload as ModelGatewayProviderPolicyReport;
+  return redactIntegrationPolicyReport(payload as ModelGatewayProviderPolicyReport);
 }
 
 function isProviderPolicyAdapterReport(value: unknown): value is ModelGatewayProviderPolicyAdapterReport {
@@ -157,6 +158,14 @@ function isProviderPolicyControl(value: unknown): value is ModelGatewayProviderP
 
 function isProviderPolicyStatus(value: unknown): value is ModelGatewayProviderPolicyStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as ModelGatewayProviderPolicyStatus);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((action) => typeof action === "string" && action.trim().length > 0)
+  );
 }
 
 function invalidResponseError(message: string): ModelGatewayProviderPolicyClientError {

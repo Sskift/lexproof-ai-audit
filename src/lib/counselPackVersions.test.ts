@@ -8,7 +8,9 @@ import {
   downloadCounselPackVersionDiffJson,
   downloadCounselPackVersionJson,
   exportCounselPackVersionDiffJson,
-  exportCounselPackVersionJson
+  exportCounselPackVersionJson,
+  parseStoredCounselPackVersions,
+  sanitizeCounselPackVersionRecord
 } from "./counselPackVersions";
 import type { JurisdictionReadinessDigest } from "./jurisdictionReadinessDigest";
 import type { ProjectProfile } from "./projectModel";
@@ -358,5 +360,95 @@ describe("counsel pack version records", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
+  });
+
+  it("sanitizes and validates stored Counsel Pack version records before recovery", async () => {
+    const valid = await createCounselPackVersionRecord({
+      project,
+      audit,
+      manifest,
+      regulatorySourcePack,
+      jurisdictionReadinessDigest,
+      markdown: "# Counsel Pack\n\nNot legal advice.",
+      counselReviews: reviews,
+      previousVersions: [],
+      exportedAt: "2026-06-30T01:00:00.000Z"
+    });
+    const unsafe = {
+      ...valid,
+      projectName: "Export Desk apiKey=supersecretvalue",
+      title: "Final legal decision for passport file",
+      reviewStatuses: [
+        {
+          ...valid.reviewStatuses[0],
+          reviewer: "ana@example.com",
+          evidenceSummary:
+            "Raw KYC packet and 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef were attached."
+        }
+      ],
+      extraRawMarkdown: "# Raw Markdown must not survive"
+    };
+
+    const restored = parseStoredCounselPackVersions(
+      JSON.stringify([
+        unsafe,
+        { ...valid, id: "bad-boundary", notLegalAdviceBoundary: "Legal advice approved." },
+        { ...valid, id: "bad-hash", manifestHash: "not-a-hash" },
+        { ...valid, id: "bad-risk", riskLevel: "urgent" },
+        { ...valid, id: "bad-exported", exportedAt: "June 30, 2026" },
+        { ...valid, id: "bad-source-url", sourcePack: [{ title: "Source", url: "javascript:alert(1)" }] }
+      ])
+    );
+
+    expect(restored).toHaveLength(1);
+    expect(JSON.stringify(restored[0])).not.toContain("supersecretvalue");
+    expect(JSON.stringify(restored[0])).not.toContain("Final legal decision");
+    expect(JSON.stringify(restored[0])).not.toContain("passport file");
+    expect(JSON.stringify(restored[0])).not.toContain("ana@example.com");
+    expect(JSON.stringify(restored[0])).not.toContain("Raw KYC packet");
+    expect(JSON.stringify(restored[0])).not.toContain("0x1234567890abcdef");
+    expect(restored[0]).not.toHaveProperty("extraRawMarkdown");
+    expect(restored[0]?.title).toContain("[redacted-legal-conclusion]");
+    expect(restored[0]?.reviewStatuses[0]?.evidenceSummary).toContain("[redacted-raw-kyc]");
+    expect(parseStoredCounselPackVersions("{not-json")).toEqual([]);
+  });
+
+  it("sanitizes exported version JSON and diff summaries from unsafe local mutations", async () => {
+    const record = await createCounselPackVersionRecord({
+      project,
+      audit,
+      manifest,
+      regulatorySourcePack,
+      markdown: "# Counsel Pack\n\nNot legal advice.",
+      counselReviews: reviews,
+      previousVersions: [],
+      exportedAt: "2026-06-30T01:00:00.000Z"
+    });
+    const unsafe = sanitizeCounselPackVersionRecord({
+      ...record,
+      title: "Legal opinion with passport document",
+      diffFromPrevious: {
+        diffVersion: "lexproof-counsel-pack-version-diff-v1",
+        previousVersion: 1,
+        nextVersion: 2,
+        manifestHashChanged: false,
+        markdownHashChanged: false,
+        regulatorySourcePackHashChanged: false,
+        jurisdictionReadinessDigestHashChanged: false,
+        reviewStatusChanges: [],
+        addedSourceCount: 0,
+        removedSourceCount: 0,
+        summary: "Compliance decision references raw KYC dump.",
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack version diffs are audit preparation change metadata only."
+      }
+    });
+    const json = exportCounselPackVersionJson(unsafe);
+
+    expect(json).not.toContain("Legal opinion");
+    expect(json).not.toContain("passport document");
+    expect(json).not.toContain("Compliance decision");
+    expect(json).not.toContain("raw KYC dump");
+    expect(json).toContain("[redacted-legal-conclusion]");
+    expect(json).toContain("[redacted-identity-document]");
   });
 });

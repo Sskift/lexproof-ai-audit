@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { analyzeAuditProfile } from "./auditEngine";
+import { createEvidenceItemsFromTemplate } from "./evidenceTemplates";
 import { createRegulatoryControlMatrix, exportRegulatoryControlMatrixJson } from "./regulatoryControlMatrix";
 import { createRegulatoryControlMatrixFilterOptions, filterRegulatoryControlMatrixControls } from "./regulatoryControlMatrixFilters";
 import { createRegulatoryGraph } from "./regulatoryGraph";
@@ -129,6 +130,52 @@ describe("createRegulatoryControlMatrix", () => {
         "Hong Kong HKMA stablecoin AML/CFT and user-protection evidence"
       ]
     });
+  });
+
+  it("routes EU AI Act provider quality controls to counsel when source and evidence are current", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("ai-compliance-workflow").map((item, index) => ({
+      ...item,
+      id: `ai-provider-matrix-${index + 1}`,
+      status: "verified" as const
+    }));
+    const project: ProjectProfile = {
+      ...globalLaunchProject,
+      id: "project-eu-ai-provider-control-matrix",
+      projectName: "EuroModel Provider Dossier",
+      jurisdictions: ["European Union"],
+      entityType: "High-risk AI provider preparing a provider conformity file",
+      assetModel:
+        "High-risk AI provider quality management system, risk management system, technical documentation, data governance, record-keeping logs, instructions for use, and provider conformity file review",
+      userType: "EU deployer compliance reviewers and local counsel",
+      custodyModel: "No asset safekeeping; AI provider evidence is metadata-only",
+      dataSensitivity: "Training data governance summaries with raw records excluded",
+      aiUsage: "Manual provider quality dossier for counsel review",
+      blockchainUse: "No ledger output for this source-control fixture",
+      operatingStage: "Pre-market provider quality-system review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(project);
+    const graph = createRegulatoryGraph(project, audit, project.evidenceItems);
+    const sourceReview = createRegulatorySourceReview(graph, { asOf: "2026-07-15T00:00:00.000Z" });
+
+    const matrix = createRegulatoryControlMatrix({ graph, sourceReview });
+    const providerControl = matrix.controls.find((item) => item.clauseId === "eu-ai-act-high-risk-provider-quality-documentation");
+
+    expect(matrix.summary.readyForCounselCount).toBeGreaterThanOrEqual(1);
+    expect(providerControl).toEqual(
+      expect.objectContaining({
+        controlId: "control-eu-ai-act-high-risk-provider-quality-documentation",
+        clauseId: "eu-ai-act-high-risk-provider-quality-documentation",
+        topic: "ai-governance",
+        status: "ready-for-counsel",
+        sourceReviewStatus: "current",
+        evidenceCoverageStatus: "covered",
+        openEvidenceRequestCount: 0,
+        localCounselRole: "EU AI Act high-risk provider / quality-system counsel",
+        nextAction: "Route EU AI Act high-risk provider / quality-system counsel control to counsel review with covered evidence."
+      })
+    );
+    expect(JSON.stringify(matrix)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("routes stale sources to source review even when evidence is covered", () => {

@@ -1,4 +1,10 @@
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import {
+  redactModelGatewayRun,
+  redactModelGatewayRunRecoveryPacket,
+  redactModelGatewayRunSummary
+} from "./modelGatewayRunRedaction";
+import type { ModelGatewayRunRecoveryPacket, ModelGatewayRunRecoveryPacketItem } from "./modelGatewayRunReceipt";
 import type { ModelGatewayRun, ModelGatewayRunSummary } from "./phase2Types";
 
 export type FetchModelGatewayRunsInput = {
@@ -47,7 +53,7 @@ export async function fetchModelGatewayRuns({
     throw clientErrorFromPayload(payload, "Model Gateway run refresh failed.", "MODEL_GATEWAY_RUN_REFRESH_FAILED");
   }
 
-  return validateModelGatewayRunSummaries(payload);
+  return validateModelGatewayRunSummaries(payload).map(redactModelGatewayRunSummary);
 }
 
 export async function fetchModelGatewayRun({
@@ -70,7 +76,29 @@ export async function fetchModelGatewayRun({
     throw clientErrorFromPayload(payload, "Model Gateway run lookup failed.", "MODEL_GATEWAY_RUN_LOOKUP_FAILED");
   }
 
-  return validateModelGatewayRun(payload);
+  return redactModelGatewayRun(validateModelGatewayRun(payload));
+}
+
+export async function fetchModelGatewayRunRecoveryPacket({
+  apiBaseUrl,
+  workspaceId,
+  fetcher = globalThis.fetch?.bind(globalThis)
+}: FetchModelGatewayRunsInput): Promise<ModelGatewayRunRecoveryPacket> {
+  if (!fetcher) {
+    throw new ModelGatewayRunClientError("Fetch is required to refresh the Model Gateway run recovery packet.", {
+      code: "MODEL_GATEWAY_RUN_FETCH_UNAVAILABLE",
+      recoveryAction: "Run this action in a browser or provide a fetch-compatible API client."
+    });
+  }
+
+  const response = await fetcher(buildModelGatewayRunRecoveryPacketUrl(apiBaseUrl, workspaceId), { method: "GET" });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw clientErrorFromPayload(payload, "Model Gateway run recovery packet refresh failed.", "MODEL_GATEWAY_RUN_RECOVERY_REFRESH_FAILED");
+  }
+
+  return redactModelGatewayRunRecoveryPacket(validateModelGatewayRunRecoveryPacket(payload));
 }
 
 export function buildModelGatewayRunsUrl(apiBaseUrl: string | undefined, workspaceId: string): string {
@@ -84,6 +112,10 @@ export function buildModelGatewayRunsUrl(apiBaseUrl: string | undefined, workspa
 
   const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
   return `${base}/api/workspaces/${encodeURIComponent(workspace)}/model-runs`;
+}
+
+export function buildModelGatewayRunRecoveryPacketUrl(apiBaseUrl: string | undefined, workspaceId: string): string {
+  return `${buildModelGatewayRunsUrl(apiBaseUrl, workspaceId)}/recovery`;
 }
 
 export function buildModelGatewayRunUrl(apiBaseUrl: string | undefined, workspaceId: string, runId: string): string {
@@ -118,6 +150,14 @@ function validateModelGatewayRun(payload: unknown): ModelGatewayRun {
   return payload;
 }
 
+function validateModelGatewayRunRecoveryPacket(payload: unknown): ModelGatewayRunRecoveryPacket {
+  if (!isModelGatewayRunRecoveryPacket(payload)) {
+    throw invalidResponseError("Model Gateway run recovery packet response contains invalid metadata.");
+  }
+
+  return payload;
+}
+
 function isModelGatewayRunSummary(value: unknown): value is ModelGatewayRunSummary {
   if (!isRecord(value)) {
     return false;
@@ -130,9 +170,9 @@ function isModelGatewayRunSummary(value: unknown): value is ModelGatewayRunSumma
     isRunStatus(value.status) &&
     isRedactionStatus(value.redactionStatus) &&
     isHumanReviewStatus(value.humanReviewStatus) &&
-    typeof value.payloadHash === "string" &&
-    typeof value.responseHash === "string" &&
-    typeof value.sourceEvidenceHash === "string" &&
+    isSha256(value.payloadHash) &&
+    isModelGatewayResponseHash(value.responseHash) &&
+    isSha256(value.sourceEvidenceHash) &&
     isRetryState(value.retryState) &&
     (value.errorCode === undefined || typeof value.errorCode === "string") &&
     (value.errorMessage === undefined || typeof value.errorMessage === "string") &&
@@ -158,13 +198,14 @@ function isModelGatewayRun(value: unknown): value is ModelGatewayRun {
     typeof value.purpose === "string" &&
     isRunStatus(value.status) &&
     isRedactionStatus(value.redactionStatus) &&
-    typeof value.payloadHash === "string" &&
-    typeof value.responseHash === "string" &&
-    typeof value.sourceEvidenceHash === "string" &&
+    isSha256(value.payloadHash) &&
+    isModelGatewayResponseHash(value.responseHash) &&
+    isSha256(value.sourceEvidenceHash) &&
     isProviderMetadata(value.providerMetadata) &&
     isHumanReviewStatus(value.humanReviewStatus) &&
-    typeof value.attempt === "number" &&
-    typeof value.maxAttempts === "number" &&
+    isPositiveInteger(value.attempt) &&
+    isPositiveInteger(value.maxAttempts) &&
+    value.attempt <= value.maxAttempts &&
     isRetryState(value.retryState) &&
     (value.errorCode === undefined || typeof value.errorCode === "string") &&
     (value.errorMessage === undefined || typeof value.errorMessage === "string") &&
@@ -173,6 +214,73 @@ function isModelGatewayRun(value: unknown): value is ModelGatewayRun {
     typeof value.createdAt === "string" &&
     (value.completedAt === undefined || typeof value.completedAt === "string") &&
     value.notLegalAdviceBoundary === MODEL_GATEWAY_RUN_BOUNDARY
+  );
+}
+
+function isModelGatewayRunRecoveryPacket(value: unknown): value is ModelGatewayRunRecoveryPacket {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const items = Array.isArray(value.items) ? value.items : [];
+  const blockedCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "blocked").length;
+  const retryAvailableCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "retry-available").length;
+  const needsHumanReviewCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "needs-human-review").length;
+  const readyCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "ready").length;
+  const recoveryItemCount = items.filter((item) => isRecord(item) && item.recoveryStatus !== "ready").length;
+
+  return (
+    value.packetVersion === "lexproof-model-gateway-run-recovery-packet-v1" &&
+    typeof value.workspaceId === "string" &&
+    typeof value.generatedAt === "string" &&
+    isSha256(value.packetHash) &&
+    isNonNegativeInteger(value.runCount) &&
+    value.runCount === items.length &&
+    isNonNegativeInteger(value.recoveryItemCount) &&
+    value.recoveryItemCount === recoveryItemCount &&
+    isNonNegativeInteger(value.blockedCount) &&
+    value.blockedCount === blockedCount &&
+    isNonNegativeInteger(value.retryAvailableCount) &&
+    value.retryAvailableCount === retryAvailableCount &&
+    isNonNegativeInteger(value.needsHumanReviewCount) &&
+    value.needsHumanReviewCount === needsHumanReviewCount &&
+    isNonNegativeInteger(value.readyCount) &&
+    value.readyCount === readyCount &&
+    (value.latestRunId === undefined || typeof value.latestRunId === "string") &&
+    isNonEmptyStringArray(value.nextActions) &&
+    items.every(isModelGatewayRunRecoveryPacketItem) &&
+    value.notLegalAdviceBoundary === "Not legal advice. Model Gateway run recovery packets are audit preparation metadata only."
+  );
+}
+
+function isModelGatewayRunRecoveryPacketItem(value: unknown): value is ModelGatewayRunRecoveryPacketItem {
+  if (!isRecord(value) || !isRecord(value.hashes)) {
+    return false;
+  }
+
+  return (
+    typeof value.runId === "string" &&
+    typeof value.providerLabel === "string" &&
+    typeof value.model === "string" &&
+    isRunStatus(value.status) &&
+    isRedactionStatus(value.redactionStatus) &&
+    isHumanReviewStatus(value.humanReviewStatus) &&
+    isRetryState(value.retryState) &&
+    typeof value.requiresHumanReview === "boolean" &&
+    isRecoveryStatus(value.recoveryStatus) &&
+    isRecoveryPriority(value.priority) &&
+    typeof value.recoveryAction === "string" &&
+    isRecoveryHash(value.hashes.payloadHash) &&
+    isRecoveryHash(value.hashes.responseHash) &&
+    isRecoveryHash(value.hashes.sourceEvidenceHash) &&
+    (value.errorCode === undefined || typeof value.errorCode === "string") &&
+    (value.errorMessage === undefined || typeof value.errorMessage === "string") &&
+    Array.isArray(value.remediationSteps) &&
+    value.remediationSteps.every((step) => typeof step === "string") &&
+    (value.createdAt === undefined || typeof value.createdAt === "string") &&
+    (value.completedAt === undefined || typeof value.completedAt === "string") &&
+    value.notLegalAdviceBoundary ===
+      "Not legal advice. Model Gateway run recovery items are audit preparation workflow metadata only."
   );
 }
 
@@ -216,6 +324,14 @@ function isRetryState(value: unknown): value is ModelGatewayRunSummary["retrySta
   );
 }
 
+function isRecoveryStatus(value: unknown): value is ModelGatewayRunRecoveryPacketItem["recoveryStatus"] {
+  return value === "blocked" || value === "retry-available" || value === "needs-human-review" || value === "ready";
+}
+
+function isRecoveryPriority(value: unknown): value is ModelGatewayRunRecoveryPacketItem["priority"] {
+  return value === "P0" || value === "P1" || value === "P2" || value === "P3";
+}
+
 function clientErrorFromPayload(payload: unknown, fallbackMessage: string, fallbackCode: string): ModelGatewayRunClientError {
   const errorPayload = asSafeApiErrorResponse(payload);
   return new ModelGatewayRunClientError(errorPayload.error ?? fallbackMessage, {
@@ -235,4 +351,32 @@ function invalidResponseError(message: string): ModelGatewayRunClientError {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isSha256(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function isModelGatewayResponseHash(value: unknown): value is string {
+  return value === "" || isSha256(value);
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every(isNonEmptyString);
+}
+
+function isRecoveryHash(value: unknown): value is string {
+  return value === "not-available" || isSha256(value);
 }

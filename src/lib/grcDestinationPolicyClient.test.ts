@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { fetchGrcDestinationPolicyReport } from "./grcDestinationPolicyClient";
 import type { GrcDestinationPolicyContext, GrcDestinationPolicyReport } from "./grcDestinationPolicy";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 const readyReport: GrcDestinationPolicyReport = {
   reportVersion: "lexproof-grc-destination-policy-v1",
   generatedAt: "2026-07-01T00:00:00.000Z",
@@ -136,5 +139,101 @@ describe("GRC destination policy client", () => {
       code: "GRC_DESTINATION_POLICY_INVALID_RESPONSE",
       recoveryAction: "Verify the Phase 2 API is returning the metadata-only GRC destination policy contract."
     });
+  });
+
+  it("rejects destination policy responses with blank next actions before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...readyReport,
+        nextActions: ["Keep external GRC ticket creation disabled until a separate destination adapter enablement review.", "   "]
+      })
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchGrcDestinationPolicyReport({
+        apiBaseUrl: "https://api.lexproof.test",
+        fetcher,
+        context: {
+          workspaceId: "workspace-grc",
+          remediationItemCount: 1,
+          exportSafetyStatus: "clean",
+          exportBlockerCount: 0,
+          integrationAdapterStatus: "ready",
+          localTicketExportAvailable: true
+        },
+        policy: {
+          policyOwner: "GRC owner",
+          destinationSystem: "jira",
+          destinationQueue: "LEGAL-AUDIT",
+          fieldMappingApproved: true,
+          authenticationPolicyApproved: true,
+          redactionPolicyApproved: true,
+          ticketOwnershipApproved: true,
+          retryAndAuditLoggingApproved: true,
+          noSensitiveMaterialConfirmed: true,
+          humanReviewRequired: true,
+          notes: ""
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "GRC_DESTINATION_POLICY_INVALID_RESPONSE",
+      recoveryAction: "Verify the Phase 2 API is returning the metadata-only GRC destination policy contract."
+    });
+  });
+
+  it("redacts classified text from otherwise valid destination policy responses before UI use", async () => {
+    const pollutedReport: GrcDestinationPolicyReport = {
+      ...readyReport,
+      controls: [
+        {
+          ...readyReport.controls[0],
+          label: `Destination scope ${apiKey}`,
+          evidence: `Destination evidence copied raw KYC packet and apiKey=${apiKey} before a legal opinion.`,
+          recoveryAction: `Remove private key ${privateKey} and passport file before destination review.`
+        }
+      ],
+      nextActions: [`Resolve apiKey=${apiKey}, raw KYC packet, and compliance decision before GRC review.`]
+    };
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => pollutedReport
+    })) as unknown as typeof fetch;
+
+    const report = await fetchGrcDestinationPolicyReport({
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher,
+      context: {
+        workspaceId: "workspace-grc",
+        remediationItemCount: 1,
+        exportSafetyStatus: "clean",
+        exportBlockerCount: 0,
+        integrationAdapterStatus: "ready",
+        localTicketExportAvailable: true
+      },
+      policy: {
+        policyOwner: "GRC owner",
+        destinationSystem: "jira",
+        destinationQueue: "LEGAL-AUDIT",
+        fieldMappingApproved: true,
+        authenticationPolicyApproved: true,
+        redactionPolicyApproved: true,
+        ticketOwnershipApproved: true,
+        retryAndAuditLoggingApproved: true,
+        noSensitiveMaterialConfirmed: true,
+        humanReviewRequired: true,
+        notes: ""
+      }
+    });
+    const serialized = JSON.stringify(report);
+
+    expect(report).not.toBe(pollutedReport);
+    expect(report.controls[0].evidence).toContain("[redacted-raw-kyc]");
+    expect(report.nextActions[0]).toContain("[redacted-legal-conclusion]");
+    expect(serialized).toContain("[redacted-api-key]");
+    expect(serialized).toContain("[redacted-private-key]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport file|legal opinion|compliance decision/i);
   });
 });

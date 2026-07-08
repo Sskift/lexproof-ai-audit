@@ -31,13 +31,20 @@ export type DemoApiRouteCheck = {
     | "api-preflight-report"
     | "model-gateway-adapters"
     | "model-gateway-provider-policy"
+    | "model-gateway-run-recovery"
     | "evidence-vault-manifest"
+    | "evidence-vault-lineage-digest"
     | "human-review-queue"
     | "source-review-ledger"
+    | "source-review-packet"
     | "source-approval-queue"
+    | "source-approval-packet"
     | "counsel-pack-exports"
+    | "counsel-pack-export-recovery"
     | "audit-log"
-    | "integration-policy-evaluations";
+    | "audit-log-export"
+    | "integration-policy-evaluations"
+    | "integration-policy-receipt-bundle";
   label: string;
   status: "ready" | "failed";
   url: string;
@@ -183,22 +190,39 @@ const apiRoutePreflightSpecs: Array<{
     id: "model-gateway-provider-policy",
     label: "Model Gateway provider policy",
     path: "/api/model-gateway/provider-policy",
-    validate: (payload) => isRecord(payload) && payload.reportVersion === "lexproof-model-gateway-provider-policy-v1",
-    readyDetail: "Model Gateway provider policy report is reachable."
+    validate: isDemoModelGatewayProviderPolicyPayload,
+    readyDetail: "Model Gateway provider policy report is reachable with disabled external adapters and recovery metadata."
+  },
+  {
+    id: "model-gateway-run-recovery",
+    label: "Model Gateway run recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/model-runs/recovery`,
+    validate: isDemoModelGatewayRunRecoveryPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Model Gateway run recovery route is reachable with packet hash metadata for an empty demo workspace."
   },
   {
     id: "evidence-vault-manifest",
     label: "Evidence Vault manifest",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/evidence-manifest`,
-    validate: (payload) => isRecord(payload) && payload.manifestVersion === "lexproof-evidence-vault-manifest-v1",
-    readyDetail: "Evidence Vault manifest route is reachable for an empty demo workspace."
+    validate: isDemoEvidenceVaultManifestPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.bundleHash) : undefined),
+    readyDetail: "Evidence Vault manifest route is reachable with a bundle hash and metadata boundary for a demo workspace."
+  },
+  {
+    id: "evidence-vault-lineage-digest",
+    label: "Evidence Vault lineage digest",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/evidence-lineage-digest`,
+    validate: isDemoEvidenceVaultLineageDigestPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.digestHash) : undefined),
+    readyDetail: "Evidence Vault lineage digest route is reachable with digest hash metadata for an empty demo workspace."
   },
   {
     id: "human-review-queue",
     label: "Human Review queue",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/queue`,
-    validate: (payload) => isRecord(payload) && payload.queueVersion === "lexproof-server-human-review-queue-v1",
-    readyDetail: "Human Review queue route is reachable for an empty demo workspace."
+    validate: isDemoHumanReviewQueuePayload,
+    readyDetail: "Human Review queue route is reachable with server recovery packet metadata for an empty demo workspace."
   },
   {
     id: "source-review-ledger",
@@ -208,11 +232,27 @@ const apiRoutePreflightSpecs: Array<{
     readyDetail: "Source Review Ledger route is reachable for persisted metadata checks."
   },
   {
+    id: "source-review-packet",
+    label: "Source Review packet",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/source-reviews/packet`,
+    validate: isDemoServerSourceReviewPacketPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Source Review packet route is reachable with packet hash metadata for an empty demo workspace."
+  },
+  {
     id: "source-approval-queue",
     label: "Source Approval Queue",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/source-approvals`,
     validate: Array.isArray,
     readyDetail: "Source Approval Queue route is reachable for persisted metadata checks."
+  },
+  {
+    id: "source-approval-packet",
+    label: "Source Approval packet",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/source-approvals/packet`,
+    validate: isDemoServerSourceApprovalPacketPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Source Approval packet route is reachable with packet hash metadata for an empty demo workspace."
   },
   {
     id: "counsel-pack-exports",
@@ -222,6 +262,14 @@ const apiRoutePreflightSpecs: Array<{
     readyDetail: "Counsel Pack export record route is reachable."
   },
   {
+    id: "counsel-pack-export-recovery",
+    label: "Counsel Pack export recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/exports/counsel-pack/recovery`,
+    validate: isDemoCounselPackExportRecoveryPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Counsel Pack export recovery route is reachable with packet hash metadata for an empty demo workspace."
+  },
+  {
     id: "audit-log",
     label: "Audit Log",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/audit-log`,
@@ -229,11 +277,27 @@ const apiRoutePreflightSpecs: Array<{
     readyDetail: "Audit Log route is reachable."
   },
   {
+    id: "audit-log-export",
+    label: "Audit Log export",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/audit-log/export`,
+    validate: isDemoAuditLogExportPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.exportHash) : undefined),
+    readyDetail: "Audit Log export route is reachable with integrity chain metadata for an empty demo workspace."
+  },
+  {
     id: "integration-policy-evaluations",
     label: "Integration Policy Evaluation receipts",
     path: `/api/workspaces/${demoPreflightWorkspaceId}/integration-policy-evaluations`,
     validate: Array.isArray,
     readyDetail: "Integration Policy Evaluation receipt route is reachable."
+  },
+  {
+    id: "integration-policy-receipt-bundle",
+    label: "Integration Policy receipt bundle",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/integration-policy-evaluations/bundle`,
+    validate: isDemoIntegrationPolicyReceiptBundlePayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.bundleHash) : undefined),
+    readyDetail: "Integration Policy receipt bundle route is reachable with missing-policy metadata for an empty demo workspace."
   }
 ];
 const screenshotPathPrefix = "docs/assets/screenshots/";
@@ -776,6 +840,374 @@ function preserveSha256(value: unknown): string | undefined {
   return /^[a-f0-9]{64}$/.test(normalized) ? normalized : undefined;
 }
 
+function isDemoEvidenceVaultManifestPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.manifestVersion !== "lexproof-evidence-vault-manifest-v1") {
+    return false;
+  }
+
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    typeof payload.itemCount === "number" &&
+    Number.isInteger(payload.itemCount) &&
+    payload.itemCount >= 0 &&
+    Array.isArray(payload.items) &&
+    payload.items.length === payload.itemCount &&
+    preserveSha256(payload.bundleHash) !== undefined &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Evidence manifests summarize audit preparation metadata only."
+  );
+}
+
+function isDemoHumanReviewQueuePayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.queueVersion !== "lexproof-server-human-review-queue-v1") {
+    return false;
+  }
+
+  const recoveryPacket = payload.recoveryPacket;
+  if (!isRecord(recoveryPacket)) {
+    return false;
+  }
+
+  const summary = recoveryPacket.summary;
+  return (
+    recoveryPacket.packetVersion === "lexproof-server-human-review-recovery-packet-v1" &&
+    typeof recoveryPacket.generatedAt === "string" &&
+    preserveSha256(recoveryPacket.packetHash) !== undefined &&
+    (recoveryPacket.status === "ready" || recoveryPacket.status === "needs-recovery") &&
+    Array.isArray(recoveryPacket.items) &&
+    Array.isArray(recoveryPacket.nextActions) &&
+    recoveryPacket.nextActions.length > 0 &&
+    recoveryPacket.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    isRecord(summary) &&
+    typeof summary.totalRecoveryCount === "number" &&
+    typeof summary.nextAction === "string" &&
+    summary.nextAction.trim().length > 0 &&
+    summary.notLegalAdviceBoundary === "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only." &&
+    recoveryPacket.notLegalAdviceBoundary === "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+  );
+}
+
+function isDemoModelGatewayRunRecoveryPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-model-gateway-run-recovery-packet-v1") {
+    return false;
+  }
+
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    typeof payload.runCount === "number" &&
+    Number.isInteger(payload.runCount) &&
+    payload.runCount >= 0 &&
+    typeof payload.recoveryItemCount === "number" &&
+    Number.isInteger(payload.recoveryItemCount) &&
+    payload.recoveryItemCount >= 0 &&
+    typeof payload.blockedCount === "number" &&
+    Number.isInteger(payload.blockedCount) &&
+    payload.blockedCount >= 0 &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    Array.isArray(payload.items) &&
+    payload.items.length === payload.runCount &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Model Gateway run recovery packets are audit preparation metadata only."
+  );
+}
+
+function isDemoModelGatewayProviderPolicyPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.reportVersion !== "lexproof-model-gateway-provider-policy-v1") {
+    return false;
+  }
+
+  const adapters = Array.isArray(payload.adapters) ? payload.adapters : null;
+  const controls = Array.isArray(payload.controls) ? payload.controls : null;
+  if (!adapters || !controls) {
+    return false;
+  }
+
+  const enabledProviderCount = adapters.filter((adapter) => isRecord(adapter) && adapter.enabled === true).length;
+  const deferredProviderCount = adapters.filter((adapter) => isRecord(adapter) && adapter.enabled === false).length;
+  const hasMockOnlyEnabledAdapter = adapters.some(
+    (adapter) => isRecord(adapter) && adapter.provider === "mock" && adapter.mode === "local-mock" && adapter.enabled === true
+  );
+  const externalAdaptersDisabled = adapters.every(
+    (adapter) => isRecord(adapter) && (adapter.mode === "local-mock" || adapter.enabled === false)
+  );
+
+  return (
+    typeof payload.generatedAt === "string" &&
+    isModelGatewayProviderPolicyStatus(payload.overallStatus) &&
+    payload.enabledProviderCount === enabledProviderCount &&
+    payload.deferredProviderCount === deferredProviderCount &&
+    hasMockOnlyEnabledAdapter &&
+    externalAdaptersDisabled &&
+    adapters.every(isDemoModelGatewayProviderPolicyAdapter) &&
+    controls.length > 0 &&
+    controls.every(isDemoModelGatewayProviderPolicyControl) &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
+  );
+}
+
+function isDemoModelGatewayProviderPolicyAdapter(adapter: unknown): boolean {
+  if (!isRecord(adapter)) {
+    return false;
+  }
+
+  return (
+    typeof adapter.provider === "string" &&
+    typeof adapter.label === "string" &&
+    typeof adapter.enabled === "boolean" &&
+    typeof adapter.mode === "string" &&
+    typeof adapter.credentialPolicy === "string" &&
+    isModelGatewayProviderPolicyStatus(adapter.status) &&
+    typeof adapter.readinessEvidence === "string" &&
+    Array.isArray(adapter.requiredControls) &&
+    adapter.requiredControls.length > 0 &&
+    adapter.requiredControls.every((controlId) => typeof controlId === "string" && controlId.trim().length > 0) &&
+    (adapter.disabledReason === undefined || typeof adapter.disabledReason === "string")
+  );
+}
+
+function isDemoModelGatewayProviderPolicyControl(control: unknown): boolean {
+  if (!isRecord(control)) {
+    return false;
+  }
+
+  return (
+    typeof control.id === "string" &&
+    typeof control.label === "string" &&
+    isModelGatewayProviderPolicyStatus(control.status) &&
+    typeof control.evidence === "string" &&
+    typeof control.recoveryAction === "string" &&
+    control.recoveryAction.trim().length > 0
+  );
+}
+
+function isModelGatewayProviderPolicyStatus(value: unknown): boolean {
+  return value === "ready" || value === "needs-policy" || value === "blocked" || value === "disabled";
+}
+
+function isDemoEvidenceVaultLineageDigestPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.digestVersion !== "lexproof-evidence-vault-lineage-digest-v1") {
+    return false;
+  }
+
+  const lineageCounts = payload.lineageCounts;
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    (payload.readinessStatus === "empty" ||
+      payload.readinessStatus === "ready" ||
+      payload.readinessStatus === "needs-replacement" ||
+      payload.readinessStatus === "needs-manifest") &&
+    (payload.manifestHash === null || preserveSha256(payload.manifestHash) !== undefined) &&
+    typeof payload.itemCount === "number" &&
+    Number.isInteger(payload.itemCount) &&
+    payload.itemCount >= 0 &&
+    isRecord(payload.statusCounts) &&
+    isRecord(lineageCounts) &&
+    typeof lineageCounts.activeRecords === "number" &&
+    Number.isInteger(lineageCounts.activeRecords) &&
+    lineageCounts.activeRecords >= 0 &&
+    typeof lineageCounts.openRejectedRecords === "number" &&
+    Number.isInteger(lineageCounts.openRejectedRecords) &&
+    lineageCounts.openRejectedRecords >= 0 &&
+    Array.isArray(payload.lineageLinks) &&
+    Array.isArray(payload.activeEvidenceIds) &&
+    Array.isArray(payload.openRejectedEvidenceIds) &&
+    Array.isArray(payload.linkedControlIds) &&
+    Array.isArray(payload.linkedRiskFlagIds) &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    preserveSha256(payload.digestHash) !== undefined &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+  );
+}
+
+function isDemoServerSourceReviewPacketPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-server-source-review-packet-v1") {
+    return false;
+  }
+
+  const statusCounts = payload.statusCounts;
+  const reviewStatusCounts = payload.reviewStatusCounts;
+  const priorityCounts = payload.priorityCounts;
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    (payload.status === "empty" || payload.status === "ready" || payload.status === "needs-review" || payload.status === "metadata-needed") &&
+    typeof payload.recordCount === "number" &&
+    Number.isInteger(payload.recordCount) &&
+    payload.recordCount >= 0 &&
+    Array.isArray(payload.ledgerHashes) &&
+    payload.ledgerHashes.every((hash) => typeof hash === "string" && preserveSha256(hash) !== undefined) &&
+    isRecord(statusCounts) &&
+    isNonNegativeInteger(statusCounts.current) &&
+    isNonNegativeInteger(statusCounts.pendingReview) &&
+    isNonNegativeInteger(statusCounts.metadataNeeded) &&
+    isRecord(reviewStatusCounts) &&
+    isNonNegativeInteger(reviewStatusCounts.current) &&
+    isNonNegativeInteger(reviewStatusCounts.reviewDue) &&
+    isNonNegativeInteger(reviewStatusCounts.metadataMissing) &&
+    isRecord(priorityCounts) &&
+    isNonNegativeInteger(priorityCounts.P0) &&
+    isNonNegativeInteger(priorityCounts.P1) &&
+    isNonNegativeInteger(priorityCounts.P2) &&
+    payload.matchingBehaviorChanged === false &&
+    Array.isArray(payload.records) &&
+    payload.records.length === payload.recordCount &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Server Source Review packets are audit preparation lineage metadata only."
+  );
+}
+
+function isDemoServerSourceApprovalPacketPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-server-source-approval-packet-v1") {
+    return false;
+  }
+
+  const statusCounts = payload.statusCounts;
+  const approvalStatusCounts = payload.approvalStatusCounts;
+  const reviewStatusCounts = payload.reviewStatusCounts;
+  const priorityCounts = payload.priorityCounts;
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    (payload.status === "empty" ||
+      payload.status === "ready" ||
+      payload.status === "needs-approval" ||
+      payload.status === "metadata-needed") &&
+    typeof payload.recordCount === "number" &&
+    Number.isInteger(payload.recordCount) &&
+    payload.recordCount >= 0 &&
+    Array.isArray(payload.queueHashes) &&
+    payload.queueHashes.every((hash) => typeof hash === "string" && preserveSha256(hash) !== undefined) &&
+    isRecord(statusCounts) &&
+    isNonNegativeInteger(statusCounts.pendingReview) &&
+    isRecord(approvalStatusCounts) &&
+    isNonNegativeInteger(approvalStatusCounts.approvalRequired) &&
+    isNonNegativeInteger(approvalStatusCounts.metadataRequired) &&
+    isRecord(reviewStatusCounts) &&
+    isNonNegativeInteger(reviewStatusCounts.current) &&
+    isNonNegativeInteger(reviewStatusCounts.reviewDue) &&
+    isNonNegativeInteger(reviewStatusCounts.metadataMissing) &&
+    isRecord(priorityCounts) &&
+    isNonNegativeInteger(priorityCounts.P0) &&
+    isNonNegativeInteger(priorityCounts.P1) &&
+    payload.matchingBehaviorChanged === false &&
+    Array.isArray(payload.records) &&
+    payload.records.length === payload.recordCount &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
+  );
+}
+
+function isDemoCounselPackExportRecoveryPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-counsel-pack-export-recovery-packet-v1") {
+    return false;
+  }
+
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    typeof payload.recordCount === "number" &&
+    Number.isInteger(payload.recordCount) &&
+    payload.recordCount >= 0 &&
+    typeof payload.recoveryItemCount === "number" &&
+    Number.isInteger(payload.recoveryItemCount) &&
+    payload.recoveryItemCount >= 0 &&
+    typeof payload.blockedCount === "number" &&
+    Number.isInteger(payload.blockedCount) &&
+    payload.blockedCount >= 0 &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    Array.isArray(payload.items) &&
+    payload.items.length === payload.recordCount &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
+  );
+}
+
+function isDemoAuditLogExportPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.exportVersion !== "lexproof-audit-log-export-v1") {
+    return false;
+  }
+
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.exportedAt === "string" &&
+    preserveSha256(payload.exportHash) !== undefined &&
+    preserveSha256(payload.integrityChainHash) !== undefined &&
+    isAuditLogExportIntegrityStatus(payload.integrityStatus) &&
+    typeof payload.integritySummary === "string" &&
+    typeof payload.eventCount === "number" &&
+    Number.isInteger(payload.eventCount) &&
+    payload.eventCount >= 0 &&
+    Array.isArray(payload.events) &&
+    payload.events.length === payload.eventCount &&
+    isAuditLogExportBoundaryStatus(payload.dataBoundaryStatus) &&
+    typeof payload.exportAllowed === "boolean" &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Audit Log exports are review workspace metadata only."
+  );
+}
+
+function isDemoIntegrationPolicyReceiptBundlePayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.bundleVersion !== "lexproof-integration-policy-evaluation-receipt-bundle-v1") {
+    return false;
+  }
+
+  return (
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    preserveSha256(payload.bundleHash) !== undefined &&
+    typeof payload.recordCount === "number" &&
+    Number.isInteger(payload.recordCount) &&
+    payload.recordCount >= 0 &&
+    typeof payload.policyCount === "number" &&
+    Number.isInteger(payload.policyCount) &&
+    payload.policyCount >= 0 &&
+    Array.isArray(payload.missingPolicyIds) &&
+    typeof payload.readyCount === "number" &&
+    Number.isInteger(payload.readyCount) &&
+    payload.readyCount >= 0 &&
+    typeof payload.needsPolicyCount === "number" &&
+    Number.isInteger(payload.needsPolicyCount) &&
+    payload.needsPolicyCount >= 0 &&
+    typeof payload.blockedCount === "number" &&
+    Number.isInteger(payload.blockedCount) &&
+    payload.blockedCount >= 0 &&
+    payload.externalEnablementAllowed === false &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    Array.isArray(payload.records) &&
+    payload.records.length === payload.recordCount &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+  );
+}
+
+function isAuditLogExportIntegrityStatus(value: unknown): boolean {
+  return value === "verified" || value === "needs-review" || value === "blocked" || value === "empty";
+}
+
+function isAuditLogExportBoundaryStatus(value: unknown): boolean {
+  return value === "clean" || value === "needs-review" || value === "blocked";
+}
+
 function unique(values: string[]): string[] {
   return Array.from(new Set(values));
 }
@@ -807,6 +1239,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isStringRecord(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every((item) => typeof item === "string");
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
 function stringValue(value: unknown): string {

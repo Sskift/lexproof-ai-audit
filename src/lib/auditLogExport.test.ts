@@ -56,7 +56,8 @@ describe("createAuditLogExport", () => {
       exportAllowed: true,
       boundaryBlockerCount: 0,
       boundaryWarningCount: 0,
-      detectedClasses: []
+      detectedClasses: [],
+      nextActions: ["Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."]
     });
     expect(exportRecord.exportHash).toMatch(/^[a-f0-9]{64}$/);
     expect(exportRecord.integrityChainHash).toMatch(/^[a-f0-9]{64}$/);
@@ -120,7 +121,7 @@ describe("createAuditLogExport", () => {
           actorId: `reviewer ${apiKey}`,
           beforeHash: privateKey,
           afterHash: apiKey,
-          summary: `Blocked ${apiKey}, private key ${privateKey}, and raw KYC packet before handoff.`
+          summary: `Blocked ${apiKey}, private key ${privateKey}, raw_KYC passport A1234567, final-legal-decision, and passport data before handoff.`
         })
       ],
       exportedAt: "2026-06-30T00:01:00.000Z"
@@ -149,13 +150,26 @@ describe("createAuditLogExport", () => {
       "Remove secrets, private-key material, and raw KYC references from Audit Log source records before handoff.",
       "Confirm wallet addresses, KYC references, and personal-data mentions are metadata-only or redacted before sharing."
     ]);
+    expect(exportRecord.nextActions).toEqual([
+      "Resolve Audit Log data-boundary blockers before downloading or sharing the export.",
+      "Remove secrets, private-key material, and raw KYC references from Audit Log source records before handoff.",
+      "Confirm wallet addresses, KYC references, and personal-data mentions are metadata-only or redacted before sharing."
+    ]);
     expect(json).toContain("[redacted-api-key]");
     expect(json).toContain("[redacted-private-key]");
     expect(json).toContain("[redacted-raw-kyc]");
+    expect(json).toContain("[redacted-legal-conclusion]");
+    expect(json).toContain("[redacted-identity-document]");
     expect(json).toContain("\"dataBoundaryStatus\": \"blocked\"");
+    expect(json).not.toContain("[redacted-[redacted-raw-kyc]]");
     expect(json).not.toContain(apiKey);
     expect(json).not.toContain(privateKey);
     expect(json).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    expect(json).not.toContain("raw_KYC");
+    expect(json).not.toContain("raw-KYC");
+    expect(json).not.toContain("A1234567");
+    expect(json).not.toContain("passport data");
+    expect(json).not.toContain("final-legal-decision");
   });
 
   it("marks wallet-address findings as review warnings without blocking the redacted export", () => {
@@ -187,6 +201,10 @@ describe("createAuditLogExport", () => {
         expect.objectContaining({ field: "summary", dataClass: "wallet-address", severity: "warn" })
       ])
     );
+    expect(exportRecord.nextActions).toEqual([
+      "Confirm warning-level Audit Log metadata with the reviewer before external handoff.",
+      "Confirm wallet addresses, KYC references, and personal-data mentions are metadata-only or redacted before sharing."
+    ]);
     expect(json).toContain("[redacted-wallet-address]");
     expect(json).not.toContain(walletAddress);
   });
@@ -209,6 +227,10 @@ describe("createAuditLogExport", () => {
     expect(exportRecord.lastEventAt).toBeUndefined();
     expect(exportRecord.dataBoundaryStatus).toBe("clean");
     expect(exportRecord.exportAllowed).toBe(true);
+    expect(exportRecord.nextActions).toEqual([
+      "Run Secure Review Journey or clear Audit Log filters before final handoff.",
+      "Keep Audit Log exports metadata-only and re-run the boundary check before external handoff."
+    ]);
     expect(exportAuditLogJson(exportRecord)).toContain("Not legal advice");
   });
 });

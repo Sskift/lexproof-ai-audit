@@ -1,6 +1,13 @@
 import { hashEvidenceItem } from "./evidenceManifest";
 import type { EvidenceItem } from "./projectModel";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import {
+  redactEvidenceVaultManifestResponse,
+  redactEvidenceVaultRecordResponse,
+  redactEvidenceVaultRecordResponses,
+  redactEvidenceVaultReplacementResult,
+  redactEvidenceVaultSyncResult
+} from "./evidenceVaultRedaction";
 
 export type EvidenceVaultRecordResponse = {
   recordVersion: "lexproof-evidence-vault-record-v1";
@@ -189,9 +196,11 @@ export async function syncEvidenceLedgerToVault(input: EvidenceVaultSyncInput): 
           linkedControlIds: snapshot.linkedControlIds
         })
       });
-      records.push(await readJsonResponse<EvidenceVaultRecordResponse>(patchResponse, "Evidence Vault status update failed."));
+      records.push(
+        redactEvidenceVaultRecordResponse(await readJsonResponse<EvidenceVaultRecordResponse>(patchResponse, "Evidence Vault status update failed."))
+      );
     } else {
-      records.push(uploaded);
+      records.push(redactEvidenceVaultRecordResponse(uploaded));
     }
   }
 
@@ -201,12 +210,12 @@ export async function syncEvidenceLedgerToVault(input: EvidenceVaultSyncInput): 
     fetcher
   });
 
-  return {
+  return redactEvidenceVaultSyncResult({
     records,
     manifest,
     syncedAt: new Date().toISOString(),
     notLegalAdviceBoundary: "Not legal advice. Evidence Vault sync creates audit preparation metadata only."
-  };
+  });
 }
 
 export async function fetchEvidenceVaultManifest(input: EvidenceVaultClientOptions): Promise<EvidenceVaultManifestResponse> {
@@ -214,7 +223,7 @@ export async function fetchEvidenceVaultManifest(input: EvidenceVaultClientOptio
   const fetcher = resolveFetcher(input.fetcher);
   const response = await fetcher(buildEvidenceVaultUrl(input.apiBaseUrl, workspaceId, "evidence-manifest"), { method: "GET" });
 
-  return readJsonResponse<EvidenceVaultManifestResponse>(response, "Evidence Vault manifest fetch failed.");
+  return redactEvidenceVaultManifestResponse(await readJsonResponse<EvidenceVaultManifestResponse>(response, "Evidence Vault manifest fetch failed."));
 }
 
 export async function listEvidenceVaultRecords(input: EvidenceVaultClientOptions): Promise<EvidenceVaultRecordResponse[]> {
@@ -222,7 +231,7 @@ export async function listEvidenceVaultRecords(input: EvidenceVaultClientOptions
   const fetcher = resolveFetcher(input.fetcher);
   const response = await fetcher(buildEvidenceVaultUrl(input.apiBaseUrl, workspaceId, "evidence"), { method: "GET" });
 
-  return readJsonResponse<EvidenceVaultRecordResponse[]>(response, "Evidence Vault records fetch failed.");
+  return redactEvidenceVaultRecordResponses(await readJsonResponse<EvidenceVaultRecordResponse[]>(response, "Evidence Vault records fetch failed."));
 }
 
 export async function replaceEvidenceVaultRecord(input: EvidenceVaultReplacementInput): Promise<EvidenceVaultReplacementResult> {
@@ -244,7 +253,7 @@ export async function replaceEvidenceVaultRecord(input: EvidenceVaultReplacement
     body: createVaultUploadFormData(snapshot, input.replacementReason)
   });
 
-  return readJsonResponse<EvidenceVaultReplacementResult>(response, "Evidence Vault replacement failed.");
+  return redactEvidenceVaultReplacementResult(await readJsonResponse<EvidenceVaultReplacementResult>(response, "Evidence Vault replacement failed."));
 }
 
 function createVaultUploadFormData(snapshot: EvidenceVaultSnapshot, replacementReason?: string): FormData {

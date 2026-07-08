@@ -141,6 +141,12 @@ export type CreateHumanReviewRecoveryPacketInput = {
 
 const RECOVERY_PACKET_BOUNDARY = "Not legal advice. Human review recovery packets are audit preparation workflow metadata only." as const;
 const RECOVERY_ITEM_BOUNDARY = "Not legal advice. Human review recovery items are audit preparation workflow metadata only." as const;
+const HUMAN_REVIEW_DECISION_BOUNDARY =
+  "Not legal advice. Human review decisions track audit preparation workflow status only." as const;
+const humanReviewTargetTypes = ["risk-flag", "ai-event", "evidence", "clause-match", "counsel-pack"] as const;
+const humanReviewStatuses = ["needs-review", "in-review", "needs-more-evidence", "reviewed", "rejected"] as const;
+const LEGAL_CONCLUSION_PATTERN =
+  /\b(final legal decision|legal opinion|legal approval|legally compliant|legally non-compliant|compliance decision)\b/gi;
 
 export function createHumanReviewQueue(input: CreateHumanReviewQueueInput): HumanReviewQueue {
   const decisionsById = createLatestDecisionMap(input.decisions ?? []);
@@ -164,20 +170,64 @@ export function createHumanReviewDecision(
   update: HumanReviewDecisionUpdate,
   updatedAt = new Date().toISOString()
 ): HumanReviewDecision {
+  const targetId = sanitize(item.targetId);
+  const safeUpdatedAt = strictIsoTimestamp(updatedAt) ?? new Date().toISOString();
+  const dueAt = strictIsoTimestamp(update.dueAt?.trim() || item.dueAt) ?? safeUpdatedAt;
+
   return {
     decisionVersion: "lexproof-human-review-decision-v1",
-    id: decisionId(item.targetType, item.targetId),
-    projectId: item.projectId,
+    id: decisionId(item.targetType, targetId),
+    projectId: sanitize(item.projectId),
     targetType: item.targetType,
-    targetId: item.targetId,
-    title: item.title,
-    status: update.status,
-    reviewer: update.reviewer.trim(),
-    decisionNote: update.decisionNote.trim(),
-    dueAt: update.dueAt?.trim() || item.dueAt,
-    updatedAt,
-    notLegalAdviceBoundary: "Not legal advice. Human review decisions track audit preparation workflow status only."
+    targetId,
+    title: sanitize(item.title),
+    status: toHumanReviewStatus(update.status) ?? "needs-review",
+    reviewer: sanitize(update.reviewer),
+    decisionNote: sanitize(update.decisionNote),
+    dueAt,
+    updatedAt: safeUpdatedAt,
+    notLegalAdviceBoundary: HUMAN_REVIEW_DECISION_BOUNDARY
   };
+}
+
+export function sanitizeHumanReviewDecision(decision: HumanReviewDecision): HumanReviewDecision {
+  const targetType = toHumanReviewTargetType(decision.targetType) ?? "risk-flag";
+  const targetId = sanitize(decision.targetId);
+
+  return {
+    decisionVersion: "lexproof-human-review-decision-v1",
+    id: decisionId(targetType, targetId),
+    projectId: sanitize(decision.projectId),
+    targetType,
+    targetId,
+    title: sanitize(decision.title),
+    status: toHumanReviewStatus(decision.status) ?? "needs-review",
+    reviewer: sanitize(decision.reviewer),
+    decisionNote: sanitize(decision.decisionNote),
+    dueAt: strictIsoTimestamp(decision.dueAt) ?? sanitize(decision.dueAt),
+    updatedAt: strictIsoTimestamp(decision.updatedAt) ?? sanitize(decision.updatedAt),
+    notLegalAdviceBoundary: HUMAN_REVIEW_DECISION_BOUNDARY
+  };
+}
+
+export function parseStoredHumanReviewDecisions(raw: string | null | undefined): HumanReviewDecision[] {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((item) => {
+      const decision = normalizeHumanReviewDecision(item);
+      return decision ? [decision] : [];
+    });
+  } catch {
+    return [];
+  }
 }
 
 export function createHumanReviewTimeline(input: CreateHumanReviewTimelineInput): HumanReviewTimelineEntry[] {
@@ -324,6 +374,59 @@ export function humanReviewStatusToCounselReviewStatus(status: HumanReviewStatus
     return "blocked";
   }
   return "ready-for-counsel";
+}
+
+function normalizeHumanReviewDecision(value: unknown): HumanReviewDecision | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Partial<Record<keyof HumanReviewDecision, unknown>>;
+  const targetType = toHumanReviewTargetType(record.targetType);
+  const targetId = requiredDecisionText(record.targetId);
+  const projectId = requiredDecisionText(record.projectId);
+  const title = requiredDecisionText(record.title);
+  const status = toHumanReviewStatus(record.status);
+  const reviewer = optionalDecisionText(record.reviewer);
+  const decisionNote = optionalDecisionText(record.decisionNote);
+  const dueAt = strictIsoTimestamp(record.dueAt);
+  const updatedAt = strictIsoTimestamp(record.updatedAt);
+
+  if (
+    record.decisionVersion !== "lexproof-human-review-decision-v1" ||
+    record.notLegalAdviceBoundary !== HUMAN_REVIEW_DECISION_BOUNDARY ||
+    !targetType ||
+    !targetId ||
+    !projectId ||
+    !title ||
+    !status ||
+    reviewer === null ||
+    decisionNote === null ||
+    !dueAt ||
+    !updatedAt
+  ) {
+    return null;
+  }
+
+  const id = decisionId(targetType, targetId);
+  if (record.id !== id) {
+    return null;
+  }
+
+  return sanitizeHumanReviewDecision({
+    decisionVersion: "lexproof-human-review-decision-v1",
+    id,
+    projectId,
+    targetType,
+    targetId,
+    title,
+    status,
+    reviewer,
+    decisionNote,
+    dueAt,
+    updatedAt,
+    notLegalAdviceBoundary: HUMAN_REVIEW_DECISION_BOUNDARY
+  });
 }
 
 function createRiskReviewQueueItem(review: CounselReviewItem): HumanReviewQueueItem {
@@ -702,9 +805,42 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(value);
 }
 
+function requiredDecisionText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const text = sanitize(value);
+  return text.length > 0 ? text : null;
+}
+
+function optionalDecisionText(value: unknown): string | null {
+  return typeof value === "string" ? sanitize(value) : null;
+}
+
+function toHumanReviewTargetType(value: unknown): HumanReviewTargetType | null {
+  return typeof value === "string" && humanReviewTargetTypes.includes(value as HumanReviewTargetType)
+    ? (value as HumanReviewTargetType)
+    : null;
+}
+
+function toHumanReviewStatus(value: unknown): HumanReviewStatus | null {
+  return typeof value === "string" && humanReviewStatuses.includes(value as HumanReviewStatus) ? (value as HumanReviewStatus) : null;
+}
+
+function strictIsoTimestamp(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const timestamp = value.trim();
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(timestamp) && !Number.isNaN(Date.parse(timestamp))
+    ? timestamp
+    : null;
+}
+
 function sanitize(value: string): string {
-  return redactDataBoundaryText(value.replace(/\s+/g, " ").trim()).replace(
-    /\b(passport|driver'?s? license|national id)(?:\s+(file|document|record))?\b/gi,
-    "[redacted-identity-document]"
-  );
+  return redactDataBoundaryText(value.replace(/\s+/g, " ").trim())
+    .replace(/\b(passport|driver'?s? license|national id)(?:\s+(file|document|record))?\b/gi, "[redacted-identity-document]")
+    .replace(LEGAL_CONCLUSION_PATTERN, "[redacted-legal-conclusion]");
 }

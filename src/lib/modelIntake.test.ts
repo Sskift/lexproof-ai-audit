@@ -6,6 +6,8 @@ import {
   downloadModelIntakeJson,
   exportModelIntakeJson,
   hashAIEventRecord,
+  parseStoredAIEvents,
+  parseStoredModelIntakeProfile,
   validateModelConnectionProfile,
   type AIEventRecord,
   type ModelConnectionProfile
@@ -83,6 +85,88 @@ describe("validateModelConnectionProfile", () => {
       readiness: "blocked",
       blockers: ["Model intake profile metadata must not include credentials, private keys, wallet secrets, raw KYC, or personal data."]
     });
+  });
+});
+
+describe("parseStoredModelIntakeProfile", () => {
+  it("recovers a sanitized model intake profile without restoring credentials or raw KYC data classes", () => {
+    const recovered = parseStoredModelIntakeProfile(
+      JSON.stringify({
+        ...profile,
+        providerName: `Gateway ${apiKey}`,
+        modelName: `model ${privateKey}`,
+        useCase: "Create a final legal decision from passport data.",
+        decisionRole: "final-legal-decision",
+        dataClasses: ["policy metadata", "raw KYC packet", "policy metadata"],
+        humanReviewOwner: "Reviewer bearer token abcdef1234567890"
+      }),
+      profile
+    );
+    const serialized = JSON.stringify(recovered);
+
+    expect(recovered.providerName).toContain("[redacted-api-key]");
+    expect(recovered.modelName).toContain("[redacted-private-key]");
+    expect(recovered.useCase).toContain("[redacted-legal-conclusion]");
+    expect(recovered.useCase).toContain("[redacted-personal-data]");
+    expect(recovered.dataClasses).toEqual(["policy metadata"]);
+    expect(recovered.humanReviewOwner).toContain("bearer token [redacted-secret]");
+    expect(recovered.decisionRole).toBe("final-legal-decision");
+    expect(validateModelConnectionProfile(recovered).errors).toContain("Models cannot be registered as final legal decision-makers.");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport data|final legal decision|abcdef1234567890/i);
+  });
+
+  it("falls back when stored profile JSON has invalid shape or unsafe-only data classes", () => {
+    expect(parseStoredModelIntakeProfile("{not json", profile)).toBe(profile);
+    expect(parseStoredModelIntakeProfile(JSON.stringify({ ...profile, endpointType: "unmanaged-adapter" }), profile)).toBe(profile);
+    expect(parseStoredModelIntakeProfile(JSON.stringify({ ...profile, dataClasses: ["raw KYC packet"] }), profile)).toBe(profile);
+  });
+});
+
+describe("parseStoredAIEvents", () => {
+  it("recovers only valid sanitized AI event metadata from local storage", () => {
+    const recovered = parseStoredAIEvents(
+      JSON.stringify([
+        {
+          ...event,
+          inputSummary: `Review raw KYC packet using ${apiKey}.`,
+          outputSummary: `final legal decision after passport data review and private key ${privateKey}.`,
+          modelAction: "Generated legal opinion with bearer token abcdef1234567890.",
+          sourceRunId: `run-${apiKey}`,
+          ignoredRawEvidence: "passport data should not survive"
+        },
+        { ...event, id: "event-invalid-status", reviewStatus: "approved" },
+        { ...event, id: "event-invalid-created", createdAt: "June 29, 2026" },
+        { id: "event-missing-fields", projectId: "project-1" }
+      ])
+    );
+    const [recoveredEvent] = recovered;
+    if (!recoveredEvent) {
+      throw new Error("Expected a recovered AI event.");
+    }
+    const serialized = JSON.stringify(recovered);
+
+    expect(recovered).toHaveLength(1);
+    expect(recoveredEvent.reviewStatus).toBe("needs-review");
+    expect(recoveredEvent.inputSummary).toContain("[redacted-raw-kyc]");
+    expect(recoveredEvent.inputSummary).toContain("[redacted-api-key]");
+    expect(recoveredEvent.outputSummary).toContain("[redacted-legal-conclusion]");
+    expect(recoveredEvent.outputSummary).toContain("[redacted-personal-data]");
+    expect(recoveredEvent.outputSummary).toContain("[redacted-private-key]");
+    expect(recoveredEvent.modelAction).toContain("[redacted-legal-conclusion]");
+    expect(recoveredEvent.modelAction).toContain("bearer token [redacted-secret]");
+    expect(recoveredEvent.sourceRunId).toContain("[redacted-api-key]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toContain("ignoredRawEvidence");
+    expect(serialized).not.toMatch(/raw KYC packet|passport data|final legal decision|legal opinion|abcdef1234567890/i);
+  });
+
+  it("returns an empty recovery set for malformed AI event storage payloads", () => {
+    expect(parseStoredAIEvents("{not json")).toEqual([]);
+    expect(parseStoredAIEvents(JSON.stringify({ id: "event-1" }))).toEqual([]);
+    expect(parseStoredAIEvents(null)).toEqual([]);
   });
 });
 

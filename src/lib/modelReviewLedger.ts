@@ -67,6 +67,30 @@ export async function createModelReviewRun(input: CreateModelReviewRunInput): Pr
   };
 }
 
+export function parseStoredModelReviewRuns(raw: string | null | undefined): ModelReviewRun[] {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((item) => {
+      const run = sanitizeModelReviewRun(item);
+      return run ? [run] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+export function sanitizeModelReviewRun(value: unknown): ModelReviewRun | null {
+  return normalizeModelReviewRun(value);
+}
+
 export async function runAIReviewWithLedger(
   project: ProjectProfile,
   audit: AuditResult,
@@ -98,7 +122,12 @@ export async function runAIReviewWithLedger(
 }
 
 export function exportModelReviewRunJson(run: ModelReviewRun): string {
-  return `${JSON.stringify(run, null, 2)}\n`;
+  const normalizedRun = sanitizeModelReviewRun(run);
+  if (!normalizedRun) {
+    throw new Error("Model review run export requires a valid metadata-only run.");
+  }
+
+  return `${JSON.stringify(normalizedRun, null, 2)}\n`;
 }
 
 export function downloadModelReviewRunJson(filename: string, run: ModelReviewRun): void {
@@ -141,6 +170,106 @@ function mergeUnique(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
+function normalizeModelReviewRun(value: unknown): ModelReviewRun | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Partial<Record<keyof ModelReviewRun, unknown>>;
+  if (record.runVersion !== "lexproof-ai-review-run-v1") {
+    return null;
+  }
+
+  const runId = strictRunId(record.runId);
+  const generatedAt = strictIsoTimestamp(record.generatedAt);
+  const projectId = safeRequiredText(record.projectId);
+  const projectName = safeRequiredText(record.projectName);
+  const providerLabel = safeRequiredText(record.providerLabel);
+  const model = safeRequiredText(record.model);
+  const redactionStatus = strictRedactionStatus(record.redactionStatus);
+  const payloadHash = strictSha256(record.payloadHash);
+  const responseHash = strictSha256(record.responseHash);
+  const riskFlagCount = strictCount(record.riskFlagCount);
+  const evidenceSummaryCount = strictCount(record.evidenceSummaryCount);
+  const missingEvidenceCount = strictCount(record.missingEvidenceCount);
+
+  if (
+    !runId ||
+    !generatedAt ||
+    !projectId ||
+    !projectName ||
+    !providerLabel ||
+    !model ||
+    !redactionStatus ||
+    !payloadHash ||
+    !responseHash ||
+    riskFlagCount === null ||
+    evidenceSummaryCount === null ||
+    missingEvidenceCount === null ||
+    record.boundary !== "AI-assisted draft for audit preparation only. Not legal advice."
+  ) {
+    return null;
+  }
+
+  return {
+    runVersion: "lexproof-ai-review-run-v1",
+    runId,
+    generatedAt,
+    projectId,
+    projectName,
+    providerLabel,
+    model,
+    redactionStatus,
+    payloadHash,
+    responseHash,
+    riskFlagCount,
+    evidenceSummaryCount,
+    missingEvidenceCount,
+    boundary: "AI-assisted draft for audit preparation only. Not legal advice."
+  };
+}
+
 function createSafeLedgerDisplayText(value: string): string {
   return redactSensitiveContent(value).replace(/\s+/g, " ").trim();
+}
+
+function safeRequiredText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const text = createSafeLedgerDisplayText(value);
+  return text.length > 0 ? text : null;
+}
+
+function strictRunId(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const runId = value.trim();
+  return /^ai-run-[a-f0-9]{16}$/.test(runId) ? runId : null;
+}
+
+function strictIsoTimestamp(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const timestamp = value.trim();
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(timestamp) && !Number.isNaN(Date.parse(timestamp))
+    ? timestamp
+    : null;
+}
+
+function strictRedactionStatus(value: unknown): RedactionReport["status"] | null {
+  return value === "clean" || value === "needs-review" || value === "blocked" ? value : null;
+}
+
+function strictSha256(value: unknown): string | null {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value) ? value : null;
+}
+
+function strictCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 100_000 ? value : null;
 }

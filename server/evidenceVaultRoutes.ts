@@ -1,6 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { createEvidenceVaultManifest } from "../src/lib/evidenceVaultManifest.js";
+import { createEvidenceVaultLineageDigest } from "../src/lib/evidenceVaultLineageDigest.js";
 import { validateEvidenceVaultStatusTransition } from "../src/lib/evidenceVaultWorkflow.js";
+import { redactClassifiedText } from "../src/lib/dataClassification.js";
+import { validateEvidenceMetadataBoundary } from "../src/lib/evidenceUploadBoundary.js";
 import { createAuditLogRecord, type EvidenceVaultRecord } from "../src/lib/phase2Types.js";
 import {
   createEvidenceVaultRecordFromUpload,
@@ -20,7 +23,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
 
   server.post<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/evidence", async (request, reply) => {
     try {
-      const upload = await readMultipartFile(request);
+      const upload = await readMultipartFile(request, "Evidence upload must use multipart/form-data.");
 
       if (!upload) {
         return reply.status(400).send(createEvidenceFileRequiredError());
@@ -102,6 +105,16 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
     return createEvidenceVaultManifest({ workspaceId: request.params.workspaceId, records });
   });
 
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/evidence-lineage-digest", async (request) => {
+    const records = await repository.listEvidenceVaultRecords(request.params.workspaceId);
+    const manifest = await createEvidenceVaultManifest({ workspaceId: request.params.workspaceId, records });
+    return createEvidenceVaultLineageDigest({
+      workspaceId: request.params.workspaceId,
+      records,
+      manifest
+    });
+  });
+
   server.patch<{ Params: { workspaceId: string; evidenceId: string }; Body: UpdateEvidenceRequestBody }>(
     "/api/workspaces/:workspaceId/evidence/:evidenceId",
     async (request, reply) => {
@@ -112,7 +125,8 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
       }
 
       try {
-        const nextStatus = request.body.status ?? existing.status;
+        const payload = parseUpdateEvidenceRequestBody(request.body);
+        const nextStatus = payload.status ?? existing.status;
         assertEvidenceVaultStatus(nextStatus);
         const transition = validateEvidenceVaultStatusTransition(existing.status, nextStatus);
 
@@ -120,7 +134,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
           return reply.status(409).send(createEvidenceStatusTransitionError(transition));
         }
 
-        const updated = updateEvidenceVaultRecord(existing, request.body);
+        const updated = updateEvidenceVaultRecord(existing, payload);
         await repository.updateEvidenceVaultRecord(updated);
         await repository.appendAuditLogRecord(
           createAuditLogRecord({
@@ -170,7 +184,7 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
       }
 
       try {
-        const upload = await readMultipartFile(request);
+        const upload = await readMultipartFile(request, "Evidence replacement upload must use multipart/form-data.");
 
         if (!upload) {
           return reply.status(400).send(createReplacementEvidenceFileRequiredError());
@@ -271,12 +285,14 @@ export function registerEvidenceVaultRoutes(server: FastifyInstance, options: Ev
   );
 }
 
-type UpdateEvidenceRequestBody = {
+type UpdateEvidenceRequestBody = unknown;
+
+type ParsedUpdateEvidenceRequestBody = {
   status?: EvidenceVaultRecord["status"];
   owner?: string;
   sourceNote?: string;
-  linkedRiskFlagIds?: string[] | string;
-  linkedControlIds?: string[] | string;
+  linkedRiskFlagIds?: string[];
+  linkedControlIds?: string[];
 };
 
 type MultipartField = {
@@ -290,25 +306,71 @@ type MultipartUpload = {
   toBuffer(): Promise<Buffer>;
 };
 
-function updateEvidenceVaultRecord(record: EvidenceVaultRecord, input: UpdateEvidenceRequestBody): EvidenceVaultRecord {
+function parseUpdateEvidenceRequestBody(value: unknown): ParsedUpdateEvidenceRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Evidence update payload must be a JSON object.");
+  }
+
+  return {
+    status: optionalEvidenceVaultStatusField(value.status),
+    owner: optionalStringField(value.owner, "Evidence owner must be a string."),
+    sourceNote: optionalStringField(value.sourceNote, "Evidence source note must be a string."),
+    linkedRiskFlagIds: optionalStringListField(
+      value.linkedRiskFlagIds,
+      "Evidence linked risk flag IDs must be strings or a comma-separated string."
+    ),
+    linkedControlIds: optionalStringListField(
+      value.linkedControlIds,
+      "Evidence linked control IDs must be strings or a comma-separated string."
+    )
+  };
+}
+
+function updateEvidenceVaultRecord(record: EvidenceVaultRecord, input: ParsedUpdateEvidenceRequestBody): EvidenceVaultRecord {
   const status = input.status ?? record.status;
   assertEvidenceVaultStatus(status);
+  const linkedRiskFlagIds = normalizeRiskFlagIds(input.linkedRiskFlagIds) ?? record.linkedRiskFlagIds;
+  const linkedControlIds = normalizeControlIds(input.linkedControlIds) ?? record.linkedControlIds;
+  const rawOwner = input.owner === undefined ? record.owner : input.owner.trim() || record.owner;
+  const rawSourceNote = input.sourceNote === undefined ? record.sourceNote : input.sourceNote.trim();
+  const metadataBoundary = validateEvidenceMetadataBoundary({
+    filename: record.filename,
+    owner: rawOwner,
+    sourceNote: rawSourceNote,
+    linkedRiskFlagIds,
+    linkedControlIds,
+    replacementReason: record.replacementReason
+  });
+
+  if (!metadataBoundary.valid) {
+    throw new Error(metadataBoundary.errors.join(" "));
+  }
 
   return {
     ...record,
     status,
-    owner: input.owner?.trim() || record.owner,
-    sourceNote: input.sourceNote?.trim() ?? record.sourceNote,
-    linkedRiskFlagIds: normalizeRiskFlagIds(input.linkedRiskFlagIds) ?? record.linkedRiskFlagIds,
-    linkedControlIds: normalizeControlIds(input.linkedControlIds) ?? record.linkedControlIds,
+    owner: sanitizeVaultMetadata(rawOwner) || record.owner,
+    sourceNote: sanitizeVaultMetadata(rawSourceNote),
+    linkedRiskFlagIds,
+    linkedControlIds,
+    metadataBoundaryWarnings: metadataBoundary.warningFindings.length > 0 ? metadataBoundary.warningFindings : undefined,
     version: record.version + 1,
     updatedAt: new Date().toISOString()
   };
 }
 
-async function readMultipartFile(request: unknown): Promise<MultipartUpload | undefined> {
-  const fileRequest = request as { file: () => Promise<MultipartUpload | undefined> };
-  return fileRequest.file();
+async function readMultipartFile(request: unknown, invalidMultipartMessage: string): Promise<MultipartUpload | undefined> {
+  const fileRequest = request as { file?: () => Promise<MultipartUpload | undefined> };
+
+  if (typeof fileRequest.file !== "function") {
+    throw new Error(invalidMultipartMessage);
+  }
+
+  try {
+    return await fileRequest.file();
+  } catch {
+    throw new Error(invalidMultipartMessage);
+  }
 }
 
 function getMultipartFieldValue(upload: MultipartUpload, key: string, fallback: string): string {
@@ -333,28 +395,73 @@ function parseBooleanField(value: string): boolean {
   return value.trim().toLowerCase() === "true";
 }
 
-function normalizeRiskFlagIds(value: UpdateEvidenceRequestBody["linkedRiskFlagIds"]): string[] | undefined {
+function optionalEvidenceVaultStatusField(value: unknown): EvidenceVaultRecord["status"] | undefined {
   if (value === undefined) {
     return undefined;
   }
 
-  if (Array.isArray(value)) {
-    return Array.from(new Set(value.map((item) => item.trim().toLowerCase()).filter(Boolean)));
+  if (typeof value !== "string") {
+    throw new Error("Evidence status must be draft, requested, received, submitted, under-review, verified, rejected, or superseded.");
   }
 
-  return Array.from(new Set(parseCsv(value).map((item) => item.toLowerCase())));
+  assertEvidenceVaultStatus(value);
+  return value;
 }
 
-function normalizeControlIds(value: UpdateEvidenceRequestBody["linkedControlIds"]): string[] | undefined {
+function optionalStringField(value: unknown, message: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  throw new Error(message);
+}
+
+function optionalStringListField(value: unknown, message: string): string[] | undefined {
   if (value === undefined) {
     return undefined;
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => item.trim()).filter(Boolean);
+    if (!value.every((item) => typeof item === "string")) {
+      throw new Error(message);
+    }
+
+    return value;
   }
 
-  return parseCsv(value);
+  if (typeof value === "string") {
+    return parseCsv(value);
+  }
+
+  throw new Error(message);
+}
+
+function normalizeRiskFlagIds(value: ParsedUpdateEvidenceRequestBody["linkedRiskFlagIds"]): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return Array.from(new Set(value.map((item) => item.trim().toLowerCase()).filter(Boolean)));
+}
+
+function normalizeControlIds(value: ParsedUpdateEvidenceRequestBody["linkedControlIds"]): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return value.map((item) => item.trim()).filter(Boolean);
+}
+
+function sanitizeVaultMetadata(value: string): string {
+  return redactClassifiedText(value.trim());
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function assertEvidenceVaultStatus(status: string): asserts status is EvidenceVaultRecord["status"] {

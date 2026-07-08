@@ -20,13 +20,20 @@ export type ApiPreflightCapability = {
 export type ApiPreflightRouteFamilyId =
   | "model-gateway-adapters"
   | "model-gateway-provider-policy"
+  | "model-gateway-run-recovery"
   | "evidence-vault-manifest"
+  | "evidence-vault-lineage-digest"
   | "human-review-queue"
   | "source-review-ledger"
+  | "source-review-packet"
   | "source-approval-queue"
+  | "source-approval-packet"
   | "counsel-pack-exports"
+  | "counsel-pack-export-recovery"
   | "audit-log"
-  | "integration-policy-evaluations";
+  | "audit-log-export"
+  | "integration-policy-evaluations"
+  | "integration-policy-receipt-bundle";
 
 export type ApiPreflightRouteFamily = {
   id: ApiPreflightRouteFamilyId;
@@ -96,7 +103,7 @@ const defaultCapabilities: ApiPreflightCapability[] = [
   {
     id: "human-review",
     status: "repository-ready",
-    summary: "Human Review routes persist queue, returned, rejected, and reviewed workflow metadata."
+    summary: "Human Review routes persist queue, returned, rejected, reviewed, and recovery-packet workflow metadata."
   },
   {
     id: "exports",
@@ -106,7 +113,7 @@ const defaultCapabilities: ApiPreflightCapability[] = [
   {
     id: "audit-log",
     status: "repository-ready",
-    summary: "Audit Log routes expose filtered metadata records without raw payloads or legal conclusions."
+    summary: "Audit Log routes expose filtered metadata records and integrity exports without raw payloads or legal conclusions."
   },
   {
     id: "source-review",
@@ -136,11 +143,26 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     sideEffectBoundary: "Provider policy metadata only; disabled external providers stay disabled."
   }),
   createRouteFamily({
+    id: "model-gateway-run-recovery",
+    label: "Model Gateway run recovery",
+    path: "/api/workspaces/:workspaceId/model-runs/recovery",
+    responseContract: "ModelGatewayRunRecoveryPacket",
+    sideEffectBoundary: "Run recovery packet returns model-run hashes, retry state, human-review blockers, and recovery actions only."
+  }),
+  createRouteFamily({
     id: "evidence-vault-manifest",
     label: "Evidence Vault manifest",
     path: "/api/workspaces/:workspaceId/evidence-manifest",
     responseContract: "EvidenceVaultManifest",
     sideEffectBoundary: "Manifest generation returns persisted evidence metadata and hashes without raw file bytes."
+  }),
+  createRouteFamily({
+    id: "evidence-vault-lineage-digest",
+    label: "Evidence Vault lineage digest",
+    path: "/api/workspaces/:workspaceId/evidence-lineage-digest",
+    responseContract: "EvidenceVaultLineageDigest",
+    sideEffectBoundary:
+      "Lineage digest returns active/replaced/rejected counts, manifest hash, lineage links, and linked control IDs without raw evidence."
   }),
   createRouteFamily({
     id: "human-review-queue",
@@ -157,11 +179,25 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     sideEffectBoundary: "Source review list returns persisted source metadata only and cannot change matching behavior."
   }),
   createRouteFamily({
+    id: "source-review-packet",
+    label: "Source Review packet",
+    path: "/api/workspaces/:workspaceId/source-reviews/packet",
+    responseContract: "ServerRegulatorySourceReviewPacket",
+    sideEffectBoundary: "Source review packet returns record hashes, ledger hashes, review counts, and recovery actions only."
+  }),
+  createRouteFamily({
     id: "source-approval-queue",
     label: "Source Approval Queue",
     path: "/api/workspaces/:workspaceId/source-approvals",
     responseContract: "RegulatorySourceApprovalRecord[]",
     sideEffectBoundary: "Source approval list returns approval-gate metadata only and cannot approve legal conclusions."
+  }),
+  createRouteFamily({
+    id: "source-approval-packet",
+    label: "Source Approval packet",
+    path: "/api/workspaces/:workspaceId/source-approvals/packet",
+    responseContract: "ServerRegulatorySourceApprovalPacket",
+    sideEffectBoundary: "Source approval packet returns queue hashes, approval-gate counts, record hashes, and recovery actions only."
   }),
   createRouteFamily({
     id: "counsel-pack-exports",
@@ -171,6 +207,13 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     sideEffectBoundary: "Export list returns artifact hashes and metadata only, never raw Markdown or PDF content."
   }),
   createRouteFamily({
+    id: "counsel-pack-export-recovery",
+    label: "Counsel Pack export recovery",
+    path: "/api/workspaces/:workspaceId/exports/counsel-pack/recovery",
+    responseContract: "CounselPackExportRecoveryPacket",
+    sideEffectBoundary: "Export recovery packet returns record hashes, readiness blockers, and recovery actions only."
+  }),
+  createRouteFamily({
     id: "audit-log",
     label: "Audit Log",
     path: "/api/workspaces/:workspaceId/audit-log",
@@ -178,11 +221,26 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     sideEffectBoundary: "Audit log reads filtered metadata, before/after hashes, and redacted summaries only."
   }),
   createRouteFamily({
+    id: "audit-log-export",
+    label: "Audit Log export",
+    path: "/api/workspaces/:workspaceId/audit-log/export",
+    responseContract: "AuditLogExportRecord",
+    sideEffectBoundary: "Audit log export returns redacted event hashes, integrity chain hash, and boundary findings only."
+  }),
+  createRouteFamily({
     id: "integration-policy-evaluations",
     label: "Integration Policy Evaluation receipts",
     path: "/api/workspaces/:workspaceId/integration-policy-evaluations",
     responseContract: "IntegrationPolicyEvaluationRecord[]",
     sideEffectBoundary: "Receipt lookup returns policy hashes and adapter readiness metadata without external writes."
+  }),
+  createRouteFamily({
+    id: "integration-policy-receipt-bundle",
+    label: "Integration Policy receipt bundle",
+    path: "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle",
+    responseContract: "IntegrationPolicyEvaluationReceiptBundle",
+    sideEffectBoundary:
+      "Receipt bundle returns persisted policy receipt hashes, missing policy IDs, disabled enablement state, and next actions only."
   })
 ];
 

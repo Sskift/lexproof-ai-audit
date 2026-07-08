@@ -81,6 +81,16 @@ describe("integration policy route module", () => {
         url: "/api/integrations/grc-destination/policy",
         payload: { context: {}, policy: "create an external legal decision ticket" },
         expectedError: "Integration policy draft must be a JSON object."
+      },
+      {
+        url: "/api/integrations/object-storage/policy",
+        payload: { context: { evidenceCount: "2" }, policy: {} },
+        expectedError: "Integration policy numeric fields must be non-negative integers."
+      },
+      {
+        url: "/api/integrations/document-parser/policy",
+        payload: { context: {}, policy: { rawDocumentRetentionDays: -1 } },
+        expectedError: "Integration policy numeric fields must be non-negative integers."
       }
     ];
 
@@ -110,6 +120,57 @@ describe("integration policy route module", () => {
     }
 
     await server.close();
+  });
+
+  it("rejects malformed integration policy root payloads before evaluation or persistence", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerIntegrationPolicyRoutes(server, { repository });
+    const cases: Array<{ url: string; payload?: unknown }> = [
+      { url: "/api/integrations/object-storage/policy" },
+      {
+        url: "/api/integrations/document-parser/policy",
+        payload: ["raw document body with apiKey=sk-live-abcdef1234567890abcdef1234567890"]
+      },
+      {
+        url: "/api/integrations/chain-anchor/policy",
+        payload: ["wallet private key 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"]
+      },
+      {
+        url: "/api/integrations/grc-destination/policy",
+        payload: ["create external legal decision ticket from raw KYC passport packet"]
+      }
+    ];
+
+    for (const testCase of cases) {
+      const response = await server.inject({
+        method: "POST",
+        url: testCase.url,
+        ...(testCase.payload === undefined ? {} : { payload: testCase.payload })
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          code: "INTEGRATION_POLICY_INVALID_PAYLOAD",
+          error: "Integration policy payload must be a JSON object.",
+          recoveryAction:
+            "Send metadata-only integration context and policy JSON objects without raw documents, credentials, [redacted-raw-kyc], personal data, private keys, wallet secrets, legal conclusions, or external write commands.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        })
+      );
+      expect(response.body).not.toContain("sk-live-abcdef");
+      expect(response.body).not.toContain("0xabcdef");
+      expect(response.body).not.toContain("apiKey");
+      expect(response.body.toLowerCase()).not.toContain("passport packet");
+      expect(response.body.toLowerCase()).not.toContain("external legal decision");
+    }
+
+    expect(await repository.listIntegrationPolicyEvaluationRecords("workspace-policy-malformed-root")).toEqual([]);
+    expect(await repository.listAuditLogRecords("workspace-policy-malformed-root")).toEqual([]);
+
+    await server.close();
+    await repository.close();
   });
 
   it("persists workspace policy evaluation receipts and audit log records without storing unsafe payload material", async () => {
@@ -184,6 +245,41 @@ describe("integration policy route module", () => {
     ]);
     expect(listResponse.body).not.toContain("raw ticket body");
     expect(listResponse.body).not.toContain("sk-live-abcdef");
+
+    const bundleResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-policy-receipts/integration-policy-evaluations/bundle"
+    });
+    expect(bundleResponse.statusCode).toBe(200);
+    expect(bundleResponse.json()).toEqual(
+      expect.objectContaining({
+        bundleVersion: "lexproof-integration-policy-evaluation-receipt-bundle-v1",
+        workspaceId: "workspace-policy-receipts",
+        bundleHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        recordCount: 1,
+        policyCount: 1,
+        missingPolicyIds: ["object-storage", "document-parser", "chain-anchor"],
+        readyCount: 1,
+        needsPolicyCount: 0,
+        blockedCount: 0,
+        externalEnablementAllowed: false,
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+      })
+    );
+    expect(bundleResponse.json().records).toEqual([
+      expect.objectContaining({
+        id: response.json().evaluationRecord.id,
+        policyId: "grc-destination",
+        overallStatus: "ready",
+        reportHash: response.json().evaluationRecord.reportHash,
+        contextHash: response.json().evaluationRecord.contextHash,
+        policyHash: response.json().evaluationRecord.policyHash,
+        externalCapabilityAllowed: false
+      })
+    ]);
+    expect(bundleResponse.body).not.toContain("raw ticket body");
+    expect(bundleResponse.body).not.toContain("webhookSecret");
+    expect(bundleResponse.body).not.toContain("sk-live-abcdef");
 
     expect(await repository.listAuditLogRecords("workspace-policy-receipts")).toEqual([
       expect.objectContaining({

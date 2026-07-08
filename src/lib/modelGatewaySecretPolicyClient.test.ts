@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { fetchModelGatewaySecretPolicyReport } from "./modelGatewaySecretPolicyClient";
 import type { ModelGatewaySecretPolicyReport } from "./modelGatewaySecretPolicy";
 
+const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 const secretPolicyReport: ModelGatewaySecretPolicyReport = {
   reportVersion: "lexproof-model-gateway-secret-policy-v1",
   generatedAt: "2026-07-01T00:00:00.000Z",
@@ -86,6 +89,78 @@ describe("model gateway secret policy client", () => {
         }
       })
     ).rejects.toThrow("Secret policy response is missing the required Not legal advice boundary.");
+  });
+
+  it("rejects secret policy reports with blank next actions before the UI trusts them", async () => {
+    const fetcher = vi.fn(async () =>
+      jsonResponse(
+        {
+          ...secretPolicyReport,
+          nextActions: ["Keep external provider proxying disabled until an adapter enablement change is reviewed.", "   "]
+        },
+        200
+      )
+    ) as unknown as typeof fetch;
+
+    await expect(
+      fetchModelGatewaySecretPolicyReport({
+        fetcher,
+        policy: {
+          policyOwner: "Security",
+          kmsBackedStorageApproved: true,
+          rotationDays: 30,
+          accessReviewCadence: "quarterly",
+          providerAllowlistApproved: true,
+          egressLoggingApproved: true,
+          incidentResponseRunbookApproved: true,
+          noClientSecretPersistence: true,
+          humanReviewRequired: true,
+          notes: ""
+        }
+      })
+    ).rejects.toThrow("Secret policy response has invalid next actions.");
+  });
+
+  it("redacts classified text from otherwise valid secret policy responses before UI use", async () => {
+    const pollutedReport: ModelGatewaySecretPolicyReport = {
+      ...secretPolicyReport,
+      controls: [
+        {
+          ...secretPolicyReport.controls[0],
+          label: `KMS-backed secret storage ${apiKey}`,
+          evidence: `Secret policy evidence copied raw KYC packet and apiKey=${apiKey} before a legal opinion.`,
+          recoveryAction: `Remove private key ${privateKey} and passport file before secret policy review.`
+        }
+      ],
+      nextActions: [`Resolve apiKey=${apiKey}, raw KYC packet, and final legal decision before proxying.`]
+    };
+    const fetcher = vi.fn(async () => jsonResponse(pollutedReport, 200)) as unknown as typeof fetch;
+
+    const report = await fetchModelGatewaySecretPolicyReport({
+      fetcher,
+      policy: {
+        policyOwner: "Security",
+        kmsBackedStorageApproved: true,
+        rotationDays: 30,
+        accessReviewCadence: "quarterly",
+        providerAllowlistApproved: true,
+        egressLoggingApproved: true,
+        incidentResponseRunbookApproved: true,
+        noClientSecretPersistence: true,
+        humanReviewRequired: true,
+        notes: ""
+      }
+    });
+    const serialized = JSON.stringify(report);
+
+    expect(report).not.toBe(pollutedReport);
+    expect(report.controls[0].evidence).toContain("[redacted-raw-kyc]");
+    expect(report.nextActions[0]).toContain("[redacted-legal-conclusion]");
+    expect(serialized).toContain("[redacted-api-key]");
+    expect(serialized).toContain("[redacted-private-key]");
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(privateKey);
+    expect(serialized).not.toMatch(/raw KYC packet|passport file|legal opinion|final legal decision/i);
   });
 });
 

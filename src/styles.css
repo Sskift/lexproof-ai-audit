@@ -2509,6 +2509,23 @@ textarea {
   gap: 8px;
 }
 
+.server-source-packet-actions {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #f7fafc;
+  padding: 8px;
+  color: #53616f;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.server-source-packet-actions strong {
+  color: #26333f;
+  font-size: 0.82rem;
+}
+
 .source-approval-item {
   display: grid;
   gap: 6px;
@@ -3476,6 +3493,61 @@ textarea {
   gap: 8px;
 }
 
+.integration-policy-server-bundle {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  overflow-wrap: anywhere;
+}
+
+.integration-policy-server-bundle.synced {
+  border-color: #b8d8c8;
+  background: #f8fffb;
+}
+
+.integration-policy-server-bundle.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.integration-policy-server-bundle > p,
+.integration-policy-server-bundle > small {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+}
+
+.integration-policy-server-bundle-facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.integration-policy-server-bundle-actions {
+  display: grid;
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #53616f;
+  overflow-wrap: anywhere;
+}
+
+.integration-policy-server-bundle-actions strong,
+.integration-policy-server-bundle-actions span {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.integration-policy-server-bundle-actions strong {
+  color: #172431;
+}
+
 .model-gateway-provider-policy {
   display: grid;
   gap: 10px;
@@ -3918,6 +3990,55 @@ textarea {
   line-height: 1.4;
 }
 
+.model-run-recovery-packet {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.model-run-recovery-packet.synced {
+  border-color: #b8d8c8;
+  background: #f8fffb;
+}
+
+.model-run-recovery-packet.error {
+  border-color: #e2a7a1;
+  background: #fff8f6;
+}
+
+.model-run-recovery-packet > p,
+.model-run-recovery-packet > small {
+  margin: 0;
+  color: #53616f;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.model-run-recovery-facts {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.model-run-recovery-actions {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #53616f;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.model-run-recovery-actions strong {
+  color: #172431;
+}
+
 .model-evaluation-policy {
   display: grid;
   gap: 5px;
@@ -4287,6 +4408,62 @@ textarea {
 
 .human-review-recovery-actions button {
   white-space: nowrap;
+}
+
+.server-human-review-recovery {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.server-human-review-recovery-facts,
+.server-human-review-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.server-human-review-next-action {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.server-human-review-next-action strong,
+.server-human-review-next-action span,
+.server-human-review-next-action small {
+  min-width: 0;
+  margin: 0;
+}
+
+.server-human-review-packet-actions {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #53616f;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.server-human-review-packet-actions strong {
+  color: #172431;
+}
+
+.server-human-review-error {
+  display: grid;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+
+.server-human-review-controls button {
+  min-height: 40px;
 }
 
 .human-review-timeline > p {
@@ -7755,6 +7932,64 @@ textarea {
   gap: 12px;
 }
 
+.server-export-recovery {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.server-export-recovery.needs-action {
+  border-color: #e8c66a;
+  background: #fffaf0;
+}
+
+.server-export-recovery-facts,
+.server-export-recovery-items {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.server-export-recovery-actions,
+.server-export-recovery-item {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #d9e2e8;
+  border-radius: 8px;
+  background: #fbfdfe;
+  overflow-wrap: anywhere;
+}
+
+.server-export-recovery-actions strong,
+.server-export-recovery-actions span,
+.server-export-recovery-item strong,
+.server-export-recovery-item p,
+.server-export-recovery-item small {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.server-export-recovery-item header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.server-export-recovery-item header span {
+  border-radius: 999px;
+  background: #e5f0ed;
+  color: #0c5f55;
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
 .server-export-row {
   display: grid;
   gap: 10px;
@@ -8906,6 +9141,8 @@ textarea {
   .receipt-grid,
   .counsel-version-facts,
   .server-export-controls,
+  .server-export-recovery-facts,
+  .server-export-recovery-items,
   .export-template-header,
   .export-template-grid,
   .data-boundary-metrics,
@@ -8942,12 +9179,14 @@ textarea {
   .template-grid,
   .audit-log-facts,
   .model-run-ledger-facts,
+  .model-run-recovery-facts,
   .evaluation-facts,
   .integration-adapter-grid,
   .integration-dossier-policy-list,
   .integration-enablement-gate-list,
   .integration-policy-receipt-coverage-list,
   .integration-policy-receipt-list,
+  .integration-policy-server-bundle-facts,
   .judge-handoff-readiness,
   .judge-handoff-recovery-actions,
   .judge-handoff-summary,
@@ -8965,6 +9204,8 @@ textarea {
   .secret-policy-control-list,
   .grc-ticket-list,
   .human-review-recovery-packet,
+  .server-human-review-recovery-facts,
+  .server-human-review-controls,
   .retention-grid,
   .retention-remediation-grid,
   .recertification-grid,

@@ -6,9 +6,11 @@ import { registerEvidenceVaultRoutes } from "./evidenceVaultRoutes";
 import { createMemoryReviewWorkspaceRepository } from "./reviewWorkspaceRepository";
 
 const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
+const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const walletAddress = "0x1111111111111111111111111111111111111111";
 
 describe("Evidence Vault route module", () => {
-  it("registers metadata-only upload, list, update, manifest, and duplicate-blocker routes", async () => {
+  it("registers metadata-only upload, list, update, manifest, lineage digest, and duplicate-blocker routes", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();
     await server.register(multipart);
@@ -66,7 +68,8 @@ describe("Evidence Vault route module", () => {
 
     const manifestResponse = await server.inject({ method: "GET", url: "/api/workspaces/workspace-evidence-routes/evidence-manifest" });
     expect(manifestResponse.statusCode).toBe(200);
-    expect(manifestResponse.json()).toEqual(
+    const manifest = manifestResponse.json();
+    expect(manifest).toEqual(
       expect.objectContaining({
         manifestVersion: "lexproof-evidence-vault-manifest-v1",
         workspaceId: "workspace-evidence-routes",
@@ -75,7 +78,7 @@ describe("Evidence Vault route module", () => {
         notLegalAdviceBoundary: "Not legal advice. Evidence manifests summarize audit preparation metadata only."
       })
     );
-    expect(manifestResponse.json().items[0]).toEqual(
+    expect(manifest.items[0]).toEqual(
       expect.objectContaining({
         evidenceId: evidence.id,
         status: "verified",
@@ -83,6 +86,38 @@ describe("Evidence Vault route module", () => {
         linkedControlIds: ["control-eu-mica-title-ii-white-paper", "control-us-sec-cftc-crypto-asset-interpretation"]
       })
     );
+
+    const lineageResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-evidence-routes/evidence-lineage-digest"
+    });
+    expect(lineageResponse.statusCode).toBe(200);
+    expect(lineageResponse.json()).toEqual(
+      expect.objectContaining({
+        digestVersion: "lexproof-evidence-vault-lineage-digest-v1",
+        workspaceId: "workspace-evidence-routes",
+        readinessStatus: "ready",
+        manifestHash: manifest.bundleHash,
+        itemCount: 1,
+        statusCounts: expect.objectContaining({ verified: 1 }),
+        lineageCounts: expect.objectContaining({
+          activeRecords: 1,
+          replacedRecords: 0,
+          openRejectedRecords: 0,
+          lineageLinkCount: 0,
+          linkedControlCount: 2,
+          linkedRiskFlagCount: 2
+        }),
+        lineageLinks: [],
+        activeEvidenceIds: [evidence.id],
+        openRejectedEvidenceIds: [],
+        linkedControlIds: ["control-eu-mica-title-ii-white-paper", "control-us-sec-cftc-crypto-asset-interpretation"],
+        linkedRiskFlagIds: ["custody", "governance"],
+        digestHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        notLegalAdviceBoundary: "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only."
+      })
+    );
+    expect(lineageResponse.body.toLowerCase()).not.toContain("board approval memo");
 
     const duplicateForm = new FormData();
     duplicateForm.append("file", Buffer.from("board approval memo"), {
@@ -156,6 +191,246 @@ describe("Evidence Vault route module", () => {
     expect(response.body).not.toContain(apiKey);
     expect(response.body.toLowerCase()).not.toContain("api_key");
     expect(await repository.listEvidenceVaultRecords("workspace-evidence-boundary")).toEqual([]);
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("rejects non-multipart evidence upload and replacement requests without evaluating raw bodies", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await server.register(multipart);
+    registerEvidenceVaultRoutes(server, { repository });
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-non-multipart/evidence",
+      payload: {
+        rawEvidenceBody: `raw KYC passport packet with apiKey=${apiKey}`
+      }
+    });
+
+    expect(uploadResponse.statusCode).toBe(400);
+    expect(uploadResponse.json()).toEqual(
+      expect.objectContaining({
+        code: "EVIDENCE_UPLOAD_FAILED",
+        error: "Evidence upload must use multipart/form-data.",
+        recoveryAction: "Retry with a multipart evidence file and metadata-only fields.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+    expect(uploadResponse.body).not.toContain(apiKey);
+    expect(uploadResponse.body).not.toContain("rawEvidenceBody");
+    expect(uploadResponse.body.toLowerCase()).not.toContain("passport packet");
+    expect(await repository.listEvidenceVaultRecords("workspace-evidence-non-multipart")).toEqual([]);
+    expect(await repository.listAuditLogRecords("workspace-evidence-non-multipart")).toEqual([]);
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", Buffer.from("replacement boundary memo"), {
+      filename: "replacement-boundary.txt",
+      contentType: "text/plain"
+    });
+    uploadForm.append("owner", "Compliance");
+    uploadForm.append("containsRawKycOrPersonalData", "false");
+
+    const initialUploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-non-multipart-replacement/evidence",
+      headers: uploadForm.getHeaders(),
+      payload: uploadForm
+    });
+    expect(initialUploadResponse.statusCode).toBe(201);
+    const evidence = initialUploadResponse.json();
+
+    const rejectedResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-evidence-non-multipart-replacement/evidence/${evidence.id}`,
+      payload: {
+        status: "rejected",
+        sourceNote: "Reviewer rejected this metadata record."
+      }
+    });
+    expect(rejectedResponse.statusCode).toBe(200);
+    const auditLogBeforeReplacement = await repository.listAuditLogRecords("workspace-evidence-non-multipart-replacement");
+
+    const replacementResponse = await server.inject({
+      method: "POST",
+      url: `/api/workspaces/workspace-evidence-non-multipart-replacement/evidence/${evidence.id}/replacement`,
+      payload: {
+        replacementReason: `Use raw KYC packet and private key ${privateKey} with apiKey=${apiKey}`
+      }
+    });
+
+    expect(replacementResponse.statusCode).toBe(400);
+    expect(replacementResponse.json()).toEqual(
+      expect.objectContaining({
+        code: "EVIDENCE_REPLACEMENT_FAILED",
+        error: "Evidence replacement upload must use multipart/form-data.",
+        recoveryAction: "Retry with a replacement file, metadata-only fields, and a lineage reason.",
+        notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+      })
+    );
+    expect(replacementResponse.body).not.toContain(apiKey);
+    expect(replacementResponse.body).not.toContain(privateKey);
+    expect(replacementResponse.body).not.toContain("replacementReason");
+    expect(replacementResponse.body.toLowerCase()).not.toContain("raw kyc");
+    expect(await repository.findEvidenceVaultRecord("workspace-evidence-non-multipart-replacement", evidence.id)).toEqual(
+      expect.objectContaining({
+        id: evidence.id,
+        status: "rejected",
+        version: 2
+      })
+    );
+    expect(await repository.listAuditLogRecords("workspace-evidence-non-multipart-replacement")).toEqual(auditLogBeforeReplacement);
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("rejects malformed evidence updates before mutating records or audit logs", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await server.register(multipart);
+    registerEvidenceVaultRoutes(server, { repository });
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", Buffer.from("patch boundary memo"), {
+      filename: "patch-boundary.txt",
+      contentType: "text/plain"
+    });
+    uploadForm.append("owner", "Compliance");
+    uploadForm.append("sourceNote", "Patch boundary memo.");
+    uploadForm.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-update-boundary/evidence",
+      headers: uploadForm.getHeaders(),
+      payload: uploadForm
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const evidence = uploadResponse.json();
+
+    const cases: Array<{ payload?: unknown; expectedError: string | RegExp }> = [
+      {
+        expectedError: "Evidence update payload must be a JSON object."
+      },
+      {
+        payload: {
+          owner: { apiKey }
+        },
+        expectedError: "Evidence owner must be a string."
+      },
+      {
+        payload: {
+          linkedRiskFlagIds: ["governance", { apiKey }]
+        },
+        expectedError: "Evidence linked risk flag IDs must be strings or a comma-separated string."
+      },
+      {
+        payload: {
+          sourceNote: `Do not persist API key ${apiKey}, private key ${privateKey}, or raw KYC packet.`
+        },
+        expectedError: /credential-material.*private-key-material.*raw-kyc/
+      }
+    ];
+
+    for (const item of cases) {
+      const response = await server.inject({
+        method: "PATCH",
+        url: `/api/workspaces/workspace-evidence-update-boundary/evidence/${evidence.id}`,
+        ...(item.payload === undefined ? {} : { payload: item.payload })
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          code: "EVIDENCE_UPDATE_FAILED",
+          recoveryAction: "Use a supported Evidence Vault status and keep review decisions as audit-prep workflow metadata.",
+          notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
+        })
+      );
+      if (typeof item.expectedError === "string") {
+        expect(response.json().error).toBe(item.expectedError);
+      } else {
+        expect(response.json().error).toMatch(item.expectedError);
+      }
+      expect(response.body).not.toContain(apiKey);
+      expect(response.body).not.toContain(privateKey);
+      expect(response.body).not.toContain("raw KYC packet");
+      expect(response.body).not.toContain("apiKey");
+      expect(await repository.findEvidenceVaultRecord("workspace-evidence-update-boundary", evidence.id)).toEqual(
+        expect.objectContaining({
+          id: evidence.id,
+          status: "received",
+          owner: "Compliance",
+          sourceNote: "Patch boundary memo.",
+          version: 1
+        })
+      );
+      expect(await repository.listAuditLogRecords("workspace-evidence-update-boundary")).toEqual([
+        expect.objectContaining({
+          action: "evidence.created",
+          targetId: evidence.id
+        })
+      ]);
+    }
+
+    await server.close();
+    await repository.close();
+  });
+
+  it("redacts warning-class evidence update metadata while preserving review findings", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await server.register(multipart);
+    registerEvidenceVaultRoutes(server, { repository });
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", Buffer.from("warning metadata memo"), {
+      filename: "warning-metadata.txt",
+      contentType: "text/plain"
+    });
+    uploadForm.append("owner", "Compliance");
+    uploadForm.append("sourceNote", "Warning metadata memo.");
+    uploadForm.append("containsRawKycOrPersonalData", "false");
+
+    const uploadResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-evidence-update-warning/evidence",
+      headers: uploadForm.getHeaders(),
+      payload: uploadForm
+    });
+    expect(uploadResponse.statusCode).toBe(201);
+    const evidence = uploadResponse.json();
+
+    const updateResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-evidence-update-warning/evidence/${evidence.id}`,
+      payload: {
+        sourceNote: `Treasury signer wallet ${walletAddress} and contact jane.founder@example.com require counsel review.`,
+        linkedRiskFlagIds: "custody,governance"
+      }
+    });
+
+    expect(updateResponse.statusCode).toBe(200);
+    expect(updateResponse.json()).toEqual(
+      expect.objectContaining({
+        id: evidence.id,
+        status: "received",
+        sourceNote: expect.stringContaining("[redacted-wallet-address]"),
+        linkedRiskFlagIds: ["custody", "governance"],
+        version: 2
+      })
+    );
+    expect(updateResponse.json().metadataBoundaryWarnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ dataClass: "wallet-address", severity: "warn" }),
+        expect.objectContaining({ dataClass: "personal-data", severity: "warn" })
+      ])
+    );
+    expect(updateResponse.body).not.toContain(walletAddress);
+    expect(updateResponse.body).not.toContain("jane.founder@example.com");
 
     await server.close();
     await repository.close();
@@ -252,6 +527,45 @@ describe("Evidence Vault route module", () => {
         expect.objectContaining({ parentEvidenceId: original.id, status: "received" })
       ])
     );
+
+    const lineageResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-replacement-routes/evidence-lineage-digest"
+    });
+    expect(lineageResponse.statusCode).toBe(200);
+    expect(lineageResponse.json()).toEqual(
+      expect.objectContaining({
+        digestVersion: "lexproof-evidence-vault-lineage-digest-v1",
+        workspaceId: "workspace-replacement-routes",
+        readinessStatus: "ready",
+        itemCount: 2,
+        lineageCounts: expect.objectContaining({
+          activeRecords: 1,
+          replacedRecords: 1,
+          openRejectedRecords: 0,
+          lineageLinkCount: 1,
+          linkedControlCount: 1,
+          linkedRiskFlagCount: 1
+        }),
+        activeEvidenceIds: [replacementResponse.json().replacement.id],
+        openRejectedEvidenceIds: [],
+        linkedControlIds: ["control-eu-mica-title-ii-white-paper"],
+        linkedRiskFlagIds: ["governance"],
+        digestHash: expect.stringMatching(/^[a-f0-9]{64}$/)
+      })
+    );
+    expect(lineageResponse.json().lineageLinks).toEqual([
+      expect.objectContaining({
+        parentEvidenceId: original.id,
+        replacementEvidenceId: replacementResponse.json().replacement.id,
+        parentStatus: "superseded",
+        replacementStatus: "received",
+        replacementVersion: 3,
+        replacementReasonHash: expect.stringMatching(/^[a-f0-9]{64}$/)
+      })
+    ]);
+    expect(lineageResponse.body).not.toContain("Reviewer rejected the first memo because approval scope was incomplete.");
+    expect(lineageResponse.body).not.toContain("Replacement memo with corrected approval scope.");
 
     expect(await repository.listAuditLogRecords("workspace-replacement-routes")).toEqual(
       expect.arrayContaining([

@@ -1,4 +1,5 @@
-import type { EvidenceItem, EvidenceOwner } from "./projectModel";
+import { redactClassifiedText } from "./dataClassification";
+import { evidenceOwners, type EvidenceItem, type EvidenceOwner } from "./projectModel";
 
 export type EvidenceAuditAction =
   | "created"
@@ -32,6 +33,20 @@ type EvidenceAuditEventInput = {
   changedFields: string[];
   createdAt?: string;
 };
+
+const EVIDENCE_AUDIT_EVENT_BOUNDARY = "Not legal advice. Evidence audit trail events are local audit preparation metadata." as const;
+const evidenceAuditActions = [
+  "created",
+  "updated",
+  "removed",
+  "template-applied",
+  "source-gap-requested",
+  "source-gap-refreshed"
+] as const;
+const evidenceAuditActors = [...evidenceOwners, "System"] as const;
+const evidenceAuditChangedFields = ["label", "kind", "content", "source", "status", "owner", "removed"] as const;
+const legalConclusionPattern =
+  /\b(final\s+legal\s+decision|legal\s+opinion|legal\s+approval|legally\s+compliant|legally\s+non-compliant|compliance\s+decision)\b/gi;
 
 const materialEvidenceFields: Array<keyof EvidenceItem> = ["label", "kind", "content", "source", "status", "owner"];
 
@@ -92,7 +107,77 @@ export function createEvidenceRemovedEvent(
 }
 
 export function exportEvidenceAuditTrailJson(events: EvidenceAuditEvent[]): string {
-  return `${JSON.stringify({ trailVersion: "lexproof-evidence-audit-trail-v1", events }, null, 2)}\n`;
+  return `${JSON.stringify({ trailVersion: "lexproof-evidence-audit-trail-v1", events: events.map(sanitizeEvidenceAuditEvent) }, null, 2)}\n`;
+}
+
+export function parseStoredEvidenceAuditEvents(raw: string | null | undefined): EvidenceAuditEvent[] {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.flatMap((item) => {
+          const event = parseEvidenceAuditEvent(item);
+          return event ? [event] : [];
+        })
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function parseEvidenceAuditEvent(value: unknown): EvidenceAuditEvent | null {
+  if (!isRecord(value) || value.eventVersion !== "lexproof-evidence-audit-event-v1") {
+    return null;
+  }
+  if (value.notLegalAdviceBoundary !== EVIDENCE_AUDIT_EVENT_BOUNDARY) {
+    return null;
+  }
+  if (
+    !isNonEmptyString(value.id) ||
+    !isNonEmptyString(value.projectId) ||
+    !isNonEmptyString(value.evidenceId) ||
+    !isNonEmptyString(value.evidenceLabel) ||
+    !isOneOf(value.action, evidenceAuditActions) ||
+    !isOneOf(value.actor, evidenceAuditActors) ||
+    !isChangedFields(value.changedFields) ||
+    typeof value.summary !== "string" ||
+    !isStrictIsoTimestamp(value.createdAt)
+  ) {
+    return null;
+  }
+
+  return sanitizeEvidenceAuditEvent({
+    eventVersion: "lexproof-evidence-audit-event-v1",
+    id: value.id,
+    projectId: value.projectId,
+    evidenceId: value.evidenceId,
+    evidenceLabel: value.evidenceLabel,
+    action: value.action,
+    actor: value.actor,
+    changedFields: value.changedFields,
+    summary: value.summary,
+    createdAt: value.createdAt,
+    notLegalAdviceBoundary: EVIDENCE_AUDIT_EVENT_BOUNDARY
+  });
+}
+
+export function sanitizeEvidenceAuditEvent(event: EvidenceAuditEvent): EvidenceAuditEvent {
+  return {
+    eventVersion: "lexproof-evidence-audit-event-v1",
+    id: sanitizeEvidenceAuditText(event.id) || "evidence-event",
+    projectId: sanitizeEvidenceAuditText(event.projectId) || "project",
+    evidenceId: sanitizeEvidenceAuditText(event.evidenceId) || "evidence",
+    evidenceLabel: sanitizeEvidenceAuditText(event.evidenceLabel) || "Untitled evidence",
+    action: event.action,
+    actor: event.actor,
+    changedFields: event.changedFields.map(sanitizeEvidenceAuditText).filter(Boolean),
+    summary: sanitizeEvidenceAuditText(event.summary),
+    createdAt: sanitizeEvidenceAuditText(event.createdAt),
+    notLegalAdviceBoundary: EVIDENCE_AUDIT_EVENT_BOUNDARY
+  };
 }
 
 export function downloadEvidenceAuditTrailJson(filename: string, events: EvidenceAuditEvent[]): void {
@@ -109,21 +194,24 @@ export function downloadEvidenceAuditTrailJson(filename: string, events: Evidenc
 }
 
 function createEvidenceAuditEvent(input: EvidenceAuditEventInput): EvidenceAuditEvent {
-  const createdAt = input.createdAt ?? new Date().toISOString();
-  const label = input.evidence.label.trim() || "Untitled evidence";
+  const createdAt = isStrictIsoTimestamp(input.createdAt) ? input.createdAt : new Date().toISOString();
+  const projectId = sanitizeEvidenceAuditText(input.projectId) || "project";
+  const evidenceId = sanitizeEvidenceAuditText(input.evidence.id ?? "untracked-evidence") || "untracked-evidence";
+  const label = sanitizeEvidenceAuditText(input.evidence.label) || "Untitled evidence";
+  const changedFields = input.changedFields.map(String).map(sanitizeEvidenceAuditText).filter(Boolean);
 
   return {
     eventVersion: "lexproof-evidence-audit-event-v1",
-    id: `evidence-event-${hashEventId(input.projectId, input.evidence.id ?? label, input.action, createdAt)}`,
-    projectId: input.projectId,
-    evidenceId: input.evidence.id ?? "untracked-evidence",
+    id: `evidence-event-${hashEventId(projectId, evidenceId, input.action, createdAt)}`,
+    projectId,
+    evidenceId,
     evidenceLabel: label,
     action: input.action,
     actor: input.actor,
-    changedFields: input.changedFields.map(String),
-    summary: createSummary(input.action, label, input.changedFields.map(String)),
+    changedFields,
+    summary: sanitizeEvidenceAuditText(createSummary(input.action, label, changedFields)),
     createdAt,
-    notLegalAdviceBoundary: "Not legal advice. Evidence audit trail events are local audit preparation metadata."
+    notLegalAdviceBoundary: EVIDENCE_AUDIT_EVENT_BOUNDARY
   };
 }
 
@@ -146,4 +234,36 @@ function hashEventId(...parts: string[]): string {
     hash = (hash * 31 + payload.charCodeAt(index)) >>> 0;
   }
   return hash.toString(16).padStart(8, "0");
+}
+
+function sanitizeEvidenceAuditText(value: string): string {
+  return redactClassifiedText(value)
+    .replace(/\b(?:passport|driver'?s?\s+license|national\s+id|government\s+id)\s+(?:file|document|record|scan|image)\b/gi, "[redacted-identity-document]")
+    .replace(legalConclusionPattern, "[redacted-legal-conclusion]")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isOneOf<const T extends readonly string[]>(value: unknown, options: T): value is T[number] {
+  return typeof value === "string" && options.includes(value);
+}
+
+function isChangedFields(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every((field) => isOneOf(field, evidenceAuditChangedFields));
+}
+
+function isStrictIsoTimestamp(value: unknown): value is string {
+  if (typeof value !== "string") {
+    return false;
+  }
+  const parsed = new Date(value);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString() === value;
 }

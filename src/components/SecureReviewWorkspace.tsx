@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bot, CheckCircle2, ClipboardList, DatabaseZap, Download, FileText, PlayCircle, RefreshCcw, ServerCog, ShieldCheck, UserCheck } from "lucide-react";
 import type { AuditResult } from "../lib/auditEngine";
-import { AuditLogClientError, fetchAuditLogRecords } from "../lib/auditLogClient";
+import { AuditLogClientError, fetchAuditLogExport } from "../lib/auditLogClient";
 import {
   createAuditLogExport,
   downloadAuditLogJson,
@@ -15,9 +15,11 @@ import {
 } from "../lib/modelGatewayEvaluation";
 import {
   createModelGatewayRunReceipt,
-  downloadModelGatewayRunReceiptJson
+  downloadModelGatewayRunReceiptJson,
+  downloadModelGatewayRunRecoveryPacketJson,
+  type ModelGatewayRunRecoveryPacket
 } from "../lib/modelGatewayRunReceipt";
-import { ModelGatewayRunClientError, fetchModelGatewayRuns } from "../lib/modelGatewayRunClient";
+import { ModelGatewayRunClientError, fetchModelGatewayRunRecoveryPacket, fetchModelGatewayRuns } from "../lib/modelGatewayRunClient";
 import type { ModelConnectReceipt } from "../lib/modelConnect";
 import { createModelGatewayRunSummary, type AuditLogRecord, type ModelGatewayRun, type ModelGatewayRunSummary } from "../lib/phase2Types";
 import type { ProjectProfile } from "../lib/projectModel";
@@ -288,11 +290,12 @@ function AuditLogExplorerPanel({
   onAuditLogExportChange?: SecureReviewWorkspaceProps["onAuditLogExportChange"];
 }) {
   const [records, setRecords] = useState<AuditLogRecord[]>(initialRecords);
+  const [serverExportRecord, setServerExportRecord] = useState<AuditLogExportRecord | null>(null);
   const [filters, setFilters] = useState<AuditLogFilterInput>({});
   const [refreshStatus, setRefreshStatus] = useState<AuditLogExplorerStatus>("idle");
   const [refreshError, setRefreshError] = useState("");
   const [refreshRecoveryAction, setRefreshRecoveryAction] = useState("");
-  const exportRecord = useMemo(
+  const localExportRecord = useMemo(
     () =>
       createAuditLogExport({
         workspaceId,
@@ -300,8 +303,13 @@ function AuditLogExplorerPanel({
       }),
     [records, workspaceId]
   );
+  const exportRecord = serverExportRecord ?? localExportRecord;
   const latestAction = exportRecord.events.at(-1)?.action ?? "none";
   const visibleEvents = exportRecord.events.slice(-4).reverse();
+  const auditLogRecoveryActions = useMemo(
+    () => createAuditLogRecoveryActions(exportRecord, visibleEvents.length),
+    [exportRecord, visibleEvents.length]
+  );
 
   useEffect(() => {
     onAuditLogExportChange?.(exportRecord);
@@ -309,6 +317,7 @@ function AuditLogExplorerPanel({
 
   useEffect(() => {
     setRecords(initialRecords);
+    setServerExportRecord(null);
     setRefreshStatus("idle");
     setRefreshError("");
     setRefreshRecoveryAction("");
@@ -327,12 +336,12 @@ function AuditLogExplorerPanel({
     setRefreshRecoveryAction("");
 
     try {
-      const nextRecords = await fetchAuditLogRecords({
+      const nextExportRecord = await fetchAuditLogExport({
         apiBaseUrl,
         workspaceId,
         filters
       });
-      setRecords(nextRecords);
+      setServerExportRecord(nextExportRecord);
       setRefreshStatus("synced");
     } catch (error) {
       setRefreshStatus("error");
@@ -398,14 +407,16 @@ function AuditLogExplorerPanel({
         </label>
       </div>
       <div className="model-evaluation-actions">
-        <span>Refresh reads metadata-only server records through the Phase 2 Audit Log route.</span>
+        <span>Refresh reads the metadata-only server export artifact through the Phase 2 Audit Log route.</span>
         <button type="button" className="secondary" disabled={refreshStatus === "syncing"} onClick={() => void refreshAuditLog()}>
           <RefreshCcw size={16} aria-hidden="true" />
           {refreshStatus === "syncing" ? "Refreshing Server Audit Log" : "Refresh Server Audit Log"}
         </button>
       </div>
       {refreshStatus === "synced" ? (
-        <span className="save-state">Audit Log refreshed: {records.length} metadata-only record{records.length === 1 ? "" : "s"}.</span>
+        <span className="save-state">
+          Audit Log export refreshed: {exportRecord.eventCount} metadata-only event{exportRecord.eventCount === 1 ? "" : "s"}.
+        </span>
       ) : null}
       {refreshError ? (
         <div className="provider-policy-error" role="alert">
@@ -423,6 +434,19 @@ function AuditLogExplorerPanel({
         <JourneyFact label="Audit actors" value={exportRecord.actors.join(", ") || "none"} />
         <JourneyFact label="Target types" value={exportRecord.targetTypes.join(", ") || "none"} />
       </div>
+      {auditLogRecoveryActions.length ? (
+        <div
+          className={`provider-policy-error audit-log-recovery ${exportRecord.integrityStatus}`}
+          role={exportRecord.exportAllowed ? "status" : "alert"}
+          aria-label="Audit Log recovery guidance"
+        >
+          <strong>Audit Log recovery {exportRecord.integrityStatus}</strong>
+          {auditLogRecoveryActions.map((action) => (
+            <span key={action}>{action}</span>
+          ))}
+          <small>{exportRecord.notLegalAdviceBoundary}</small>
+        </div>
+      ) : null}
       <div className="audit-log-event-list" aria-label="Audit Log Events">
         {visibleEvents.length ? (
           visibleEvents.map((event) => (
@@ -460,6 +484,16 @@ function AuditLogExplorerPanel({
   );
 }
 
+function createAuditLogRecoveryActions(exportRecord: AuditLogExportRecord, visibleEventCount: number): string[] {
+  if (exportRecord.integrityStatus === "verified" && exportRecord.exportAllowed && visibleEventCount > 0) {
+    return [];
+  }
+
+  return Array.from(new Set([...exportRecord.nextActions, ...exportRecord.remediation])).filter(
+    (action) => action.trim().length > 0
+  );
+}
+
 type ModelGatewayRunLedgerStatus = "idle" | "syncing" | "synced" | "error";
 type ModelGatewayRunReceiptStatus = "idle" | "building" | "downloaded" | "error";
 
@@ -479,6 +513,10 @@ function ModelGatewayRunLedgerPanel({
   const [receiptStatus, setReceiptStatus] = useState<ModelGatewayRunReceiptStatus>("idle");
   const [receiptHash, setReceiptHash] = useState("");
   const [receiptError, setReceiptError] = useState("");
+  const [recoveryPacket, setRecoveryPacket] = useState<ModelGatewayRunRecoveryPacket | null>(null);
+  const [recoveryPacketStatus, setRecoveryPacketStatus] = useState<ModelGatewayRunLedgerStatus>("idle");
+  const [recoveryPacketError, setRecoveryPacketError] = useState("");
+  const [recoveryPacketRecoveryAction, setRecoveryPacketRecoveryAction] = useState("");
   const visibleRuns = runs.slice(-4).reverse();
   const latestRun = visibleRuns[0];
 
@@ -490,6 +528,10 @@ function ModelGatewayRunLedgerPanel({
     setReceiptStatus("idle");
     setReceiptHash("");
     setReceiptError("");
+    setRecoveryPacket(null);
+    setRecoveryPacketStatus("idle");
+    setRecoveryPacketError("");
+    setRecoveryPacketRecoveryAction("");
   }, [initialRun, workspaceId]);
 
   const refreshModelRuns = async () => {
@@ -536,6 +578,42 @@ function ModelGatewayRunLedgerPanel({
       setReceiptStatus("error");
       setReceiptError(error instanceof Error ? error.message : "Model Gateway run receipt export failed.");
     }
+  };
+
+  const refreshRecoveryPacket = async () => {
+    setRecoveryPacketStatus("syncing");
+    setRecoveryPacketError("");
+    setRecoveryPacketRecoveryAction("");
+
+    try {
+      const packet = await fetchModelGatewayRunRecoveryPacket({
+        apiBaseUrl,
+        workspaceId
+      });
+      setRecoveryPacket(packet);
+      setRecoveryPacketStatus("synced");
+    } catch (error) {
+      setRecoveryPacket(null);
+      setRecoveryPacketStatus("error");
+      if (error instanceof ModelGatewayRunClientError) {
+        setRecoveryPacketError(error.message);
+        setRecoveryPacketRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setRecoveryPacketError(error instanceof Error ? error.message : "Model Gateway run recovery packet refresh failed.");
+      setRecoveryPacketRecoveryAction("Start the Phase 2 API and retry Model Gateway run recovery packet refresh.");
+    }
+  };
+
+  const downloadRecoveryPacket = () => {
+    if (!recoveryPacket) {
+      return;
+    }
+
+    downloadModelGatewayRunRecoveryPacketJson(
+      `model-gateway-run-${safeFilenamePart(workspaceId)}-recovery-packet.json`,
+      recoveryPacket
+    );
   };
 
   return (
@@ -588,6 +666,63 @@ function ModelGatewayRunLedgerPanel({
           <small>Not legal advice. Model Gateway run refresh is review workspace metadata only.</small>
         </div>
       ) : null}
+      <section className={`model-run-recovery-packet ${recoveryPacketStatus}`} aria-label="Server Model Run Recovery Packet">
+        <div className="split-title compact-title">
+          <div>
+            <ClipboardList size={16} aria-hidden="true" />
+            <h4>Server Model Run Recovery Packet</h4>
+          </div>
+          <span className="workflow-status disabled">
+            {recoveryPacket ? `${recoveryPacket.recoveryItemCount} recovery item${recoveryPacket.recoveryItemCount === 1 ? "" : "s"}` : "not refreshed"}
+          </span>
+        </div>
+        <p>
+          {recoveryPacket
+            ? `${recoveryPacket.runCount} persisted Model Gateway run${recoveryPacket.runCount === 1 ? "" : "s"} checked for retry, blocker, and Human Review recovery.`
+            : "Refresh the persisted server packet to verify Model Gateway run recovery state after reload."}
+        </p>
+        {recoveryPacket ? (
+          <div className="run-facts model-run-recovery-facts">
+            <JourneyFact label="Packet" value={shortHash(recoveryPacket.packetHash)} />
+            <JourneyFact label="Runs" value={String(recoveryPacket.runCount)} />
+            <JourneyFact label="Recovery" value={String(recoveryPacket.recoveryItemCount)} />
+            <JourneyFact label="Blocked" value={String(recoveryPacket.blockedCount)} />
+            <JourneyFact label="Retry" value={String(recoveryPacket.retryAvailableCount)} />
+            <JourneyFact label="Human review" value={String(recoveryPacket.needsHumanReviewCount)} />
+          </div>
+        ) : null}
+        {recoveryPacket ? (
+          <div className="model-run-recovery-actions" role="status" aria-label="Model Run Recovery Packet actions">
+            <strong>Recovery actions</strong>
+            {recoveryPacket.nextActions.map((action) => (
+              <span key={action}>{action}</span>
+            ))}
+          </div>
+        ) : null}
+        {recoveryPacketError ? (
+          <div className="provider-policy-error" role="alert">
+            <strong>{recoveryPacketError}</strong>
+            {recoveryPacketRecoveryAction ? <span>{recoveryPacketRecoveryAction}</span> : null}
+            <small>Not legal advice. Model Gateway run recovery packets are metadata-only audit preparation records.</small>
+          </div>
+        ) : null}
+        <div className="model-evaluation-actions">
+          <button
+            type="button"
+            className="secondary"
+            disabled={recoveryPacketStatus === "syncing"}
+            onClick={() => void refreshRecoveryPacket()}
+          >
+            <RefreshCcw size={16} aria-hidden="true" />
+            {recoveryPacketStatus === "syncing" ? "Refreshing Recovery Packet" : "Refresh Model Run Recovery Packet"}
+          </button>
+          <button type="button" className="secondary" disabled={!recoveryPacket} onClick={downloadRecoveryPacket}>
+            <Download size={16} aria-hidden="true" />
+            Download Model Run Recovery Packet JSON
+          </button>
+        </div>
+        <small>{recoveryPacket?.notLegalAdviceBoundary ?? "Not legal advice. Model Gateway run recovery packets are audit preparation metadata only."}</small>
+      </section>
       {latestRun ? (
         <div className="run-facts model-run-ledger-facts">
           <JourneyFact label="Latest run" value={latestRun.id} />

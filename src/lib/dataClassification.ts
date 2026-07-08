@@ -93,7 +93,7 @@ const classificationRules: ClassificationRule[] = [
   {
     dataClass: "raw-kyc",
     severity: "block",
-    pattern: /\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi,
+    pattern: /\b((?<!redacted-)raw[_\-\s]+kyc|kyc[_\-\s]+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi,
     message: "Raw KYC material must stay outside Counsel Pack exports."
   },
   {
@@ -175,7 +175,7 @@ export function redactClassifiedText(value: string): string {
     .replace(/\bsk-(?:live|test|proj|[a-z0-9])[-_A-Za-z0-9]{12,}\b/g, "[redacted-api-key]")
     .replace(new RegExp(evmWalletAddressPattern.source, "gi"), "[redacted-wallet-address]")
     .replace(/\b[a-fA-F0-9]{24,}\b/g, "[redacted-hex-material]")
-    .replace(/\b(raw\s+kyc|kyc\s+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi, "[redacted-raw-kyc]")
+    .replace(/\b((?<!redacted-)raw[_\-\s]+kyc|kyc[_\-\s]+(packet|file|document|upload|room|dump|csv|spreadsheet))\b/gi, "[redacted-raw-kyc]")
     .replace(new RegExp(emailPattern.source, "gi"), "[redacted-email]")
     .replace(new RegExp(ssnPattern.source, "gi"), "[redacted-ssn]")
     .replace(new RegExp(passportIdPattern.source, "gi"), "[redacted-passport-id]")
@@ -194,7 +194,7 @@ function isNegatedKycReference(text: string, matchIndex: number): boolean {
   const windowStart = Math.max(0, matchIndex - 32);
   const windowEnd = Math.min(text.length, matchIndex + 48);
   const window = text.slice(windowStart, windowEnd).toLowerCase();
-  return /\b(no|without|exclude|excluded|excludes|excluding|not)\b.{0,24}\b(raw\s+)?kyc\b/.test(window);
+  return /\b(no|without|exclude|excluded|excludes|excluding|not)\b.{0,24}\b(raw[_\-\s]+)?kyc\b/.test(window);
 }
 
 function createRedactedSnippet(text: string, matchIndex: number): string {

@@ -1,3 +1,4 @@
+import { classifyDataBoundaryText, type ClassifiedDataFinding } from "./dataClassification";
 import { validateProjectProfile, type EvidenceItem, type ProjectProfile } from "./projectModel";
 
 export const PROJECT_PERSISTENCE_BOUNDARY =
@@ -7,6 +8,7 @@ export type ProjectPersistenceIssueReason =
   | "corrupt-json"
   | "invalid-shape"
   | "unsafe-project-metadata"
+  | "unsafe-evidence-metadata"
   | "unsafe-autosave-blocked";
 
 export type ProjectWorkspaceRecoveryNotice = {
@@ -59,11 +61,11 @@ export function parseStoredProjectSnapshot(raw: string | null | undefined): Stor
     };
   }
 
-  const safety = assessProjectPersistenceSafety(parsed);
-  if (!safety.canPersist) {
+  const unsafeStoredReason = getUnsafeStoredProjectReason(parsed);
+  if (unsafeStoredReason) {
     return {
       project: null,
-      notice: createProjectWorkspaceRecoveryNotice("unsafe-project-metadata"),
+      notice: createProjectWorkspaceRecoveryNotice(unsafeStoredReason),
       shouldClearStoredProject: true
     };
   }
@@ -76,10 +78,7 @@ export function parseStoredProjectSnapshot(raw: string | null | undefined): Stor
 }
 
 export function assessProjectPersistenceSafety(project: Partial<ProjectProfile>): ProjectPersistenceSafetyReport {
-  const validation = validateProjectProfile(project);
-  const unsafeMetadataFound = validation.errors.includes(unsafeProjectMetadataError);
-
-  if (!unsafeMetadataFound) {
+  if (!getUnsafeStoredProjectReason(project)) {
     return {
       canPersist: true,
       notice: null
@@ -125,12 +124,70 @@ export function createProjectWorkspaceRecoveryNotice(reason: ProjectPersistenceI
     };
   }
 
+  if (reason === "unsafe-evidence-metadata") {
+    return {
+      ...base,
+      title: "Unsafe saved evidence was blocked",
+      message: "The saved evidence metadata appeared to include credentials, private keys, raw KYC, personal identifiers, or wallet addresses.",
+      recoveryAction: "Start from a clean project and recreate evidence as metadata-only summaries before autosave resumes."
+    };
+  }
+
   return {
     ...base,
     title: "Workspace autosave blocked",
-    message: "Project metadata appears to include unsafe material and was not written to localStorage.",
-    recoveryAction: "Remove credentials, private keys, raw KYC, direct personal identifiers, and wallet addresses from project fields before saving."
+    message: "Workspace metadata appears to include unsafe material and was not written to localStorage.",
+    recoveryAction:
+      "Remove credentials, private keys, raw KYC, direct personal identifiers, and wallet addresses from project or evidence fields before saving."
   };
+}
+
+function getUnsafeStoredProjectReason(
+  project: Partial<ProjectProfile>
+): Extract<ProjectPersistenceIssueReason, "unsafe-project-metadata" | "unsafe-evidence-metadata"> | null {
+  const validation = validateProjectProfile(project);
+  if (validation.errors.includes(unsafeProjectMetadataError)) {
+    return "unsafe-project-metadata";
+  }
+
+  if (containsUnsafeEvidencePersistenceMetadata(project.evidenceItems)) {
+    return "unsafe-evidence-metadata";
+  }
+
+  return null;
+}
+
+function containsUnsafeEvidencePersistenceMetadata(evidenceItems: unknown): boolean {
+  if (!Array.isArray(evidenceItems)) {
+    return false;
+  }
+
+  const metadata = evidenceItems
+    .flatMap((item) => {
+      if (!isRecord(item)) {
+        return [];
+      }
+      return [item.id, item.label, item.kind, item.content, item.source, item.status, item.owner, item.addedAt, item.updatedAt];
+    })
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+
+  return classifyDataBoundaryText(metadata).some(isUnsafePersistenceFinding);
+}
+
+function isUnsafePersistenceFinding(finding: ClassifiedDataFinding): boolean {
+  if (finding.severity === "block") {
+    return true;
+  }
+
+  if (finding.dataClass === "wallet-address") {
+    return true;
+  }
+
+  return (
+    finding.dataClass === "personal-data" &&
+    /\[redacted-(?:email|phone|ssn|passport-id|personal-data)\]/.test(finding.redactedSnippet)
+  );
 }
 
 function isProjectProfileShape(value: unknown): value is ProjectProfile {

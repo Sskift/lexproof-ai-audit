@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createAuditLogRecord, type WorkspaceRecord } from "../src/lib/phase2Types.js";
+import { classifyDataBoundaryText } from "../src/lib/dataClassification.js";
 import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
 import { sha256Hex, stableStringify } from "./routeHash.js";
@@ -13,7 +14,8 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
 
   server.post<{ Body: CreateWorkspaceRequestBody }>("/api/workspaces", async (request, reply) => {
     try {
-      const workspace = createWorkspaceRecord(request.body);
+      const payload = parseCreateWorkspaceRequestBody(request.body);
+      const workspace = createWorkspaceRecord(payload);
       await repository.saveWorkspaceRecord(workspace);
       await repository.appendAuditLogRecord(
         createAuditLogRecord({
@@ -60,7 +62,8 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
       }
 
       try {
-        const updated = updateWorkspaceRecord(existing, request.body);
+        const payload = parseUpdateWorkspaceRequestBody(request.body);
+        const updated = updateWorkspaceRecord(existing, payload);
         await repository.updateWorkspaceRecord(updated);
         await repository.appendAuditLogRecord(
           createAuditLogRecord({
@@ -89,7 +92,9 @@ export function registerWorkspaceRoutes(server: FastifyInstance, options: Worksp
   );
 }
 
-type CreateWorkspaceRequestBody = {
+type CreateWorkspaceRequestBody = unknown;
+
+type ParsedCreateWorkspaceRequestBody = {
   id?: string;
   name: string;
   organizationName: string;
@@ -97,18 +102,60 @@ type CreateWorkspaceRequestBody = {
   status?: WorkspaceRecord["status"];
 };
 
-type UpdateWorkspaceRequestBody = {
+type UpdateWorkspaceRequestBody = unknown;
+
+type ParsedUpdateWorkspaceRequestBody = {
   name?: string;
   organizationName?: string;
   ownerId?: string;
   status?: WorkspaceRecord["status"];
 };
 
-function createWorkspaceRecord(input: CreateWorkspaceRequestBody): WorkspaceRecord {
+type WorkspaceMetadataBoundaryInput = {
+  id?: string;
+  name?: string;
+  organizationName?: string;
+  ownerId?: string;
+};
+
+function parseCreateWorkspaceRequestBody(value: unknown): ParsedCreateWorkspaceRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Workspace creation payload must be a JSON object.");
+  }
+
+  const payload = {
+    id: optionalStringField(value.id, "Workspace ID must be a string."),
+    name: stringField(value.name, "Workspace name must be a string."),
+    organizationName: stringField(value.organizationName, "Workspace organization name must be a string."),
+    ownerId: stringField(value.ownerId, "Workspace owner ID must be a string."),
+    status: optionalWorkspaceStatusField(value.status)
+  };
+
+  assertWorkspaceMetadataBoundary(payload);
+  return payload;
+}
+
+function parseUpdateWorkspaceRequestBody(value: unknown): ParsedUpdateWorkspaceRequestBody {
+  if (!isRecord(value)) {
+    throw new Error("Workspace update payload must be a JSON object.");
+  }
+
+  const payload = {
+    name: optionalStringField(value.name, "Workspace name must be a string."),
+    organizationName: optionalStringField(value.organizationName, "Workspace organization name must be a string."),
+    ownerId: optionalStringField(value.ownerId, "Workspace owner ID must be a string."),
+    status: optionalWorkspaceStatusField(value.status)
+  };
+
+  assertWorkspaceMetadataBoundary(payload);
+  return payload;
+}
+
+function createWorkspaceRecord(input: ParsedCreateWorkspaceRequestBody): WorkspaceRecord {
   const createdAt = new Date().toISOString();
-  const name = input.name?.trim() ?? "";
-  const organizationName = input.organizationName?.trim() ?? "";
-  const ownerId = input.ownerId?.trim() ?? "";
+  const name = input.name.trim();
+  const organizationName = input.organizationName.trim();
+  const ownerId = input.ownerId.trim();
   const status = input.status ?? "draft";
 
   if (!name) {
@@ -138,7 +185,7 @@ function createWorkspaceRecord(input: CreateWorkspaceRequestBody): WorkspaceReco
   };
 }
 
-function updateWorkspaceRecord(record: WorkspaceRecord, input: UpdateWorkspaceRequestBody): WorkspaceRecord {
+function updateWorkspaceRecord(record: WorkspaceRecord, input: ParsedUpdateWorkspaceRequestBody): WorkspaceRecord {
   const status = input.status ?? record.status;
   assertWorkspaceStatus(status);
 
@@ -150,6 +197,53 @@ function updateWorkspaceRecord(record: WorkspaceRecord, input: UpdateWorkspaceRe
     status,
     updatedAt: new Date().toISOString()
   };
+}
+
+function assertWorkspaceMetadataBoundary(input: WorkspaceMetadataBoundaryInput): void {
+  const blockedClasses = new Set(
+    [input.id, input.name, input.organizationName, input.ownerId]
+      .filter((value): value is string => typeof value === "string")
+      .flatMap((value) => classifyDataBoundaryText(value))
+      .filter((finding) => finding.severity === "block")
+      .map((finding) => finding.dataClass)
+  );
+
+  if (blockedClasses.size > 0) {
+    throw new Error(`Workspace metadata must not include ${Array.from(blockedClasses).sort().join(", ")}.`);
+  }
+}
+
+function optionalWorkspaceStatusField(value: unknown): WorkspaceRecord["status"] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error("Workspace status must be draft, active, or archived.");
+  }
+
+  assertWorkspaceStatus(value);
+  return value;
+}
+
+function optionalStringField(value: unknown, message: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return stringField(value, message);
+}
+
+function stringField(value: unknown, message: string): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  throw new Error(message);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function assertWorkspaceStatus(status: string): asserts status is WorkspaceRecord["status"] {

@@ -16,13 +16,13 @@ lexproof-ai-audit/
     app.ts                   # Fastify app composition and shared hooks
     index.ts                 # API process entry point
     systemRoutes.ts          # Health and API preflight system routes
-    modelGatewayRoutes.ts    # Model Gateway adapter, run, lookup, and summary routes
+    modelGatewayRoutes.ts    # Model Gateway adapter, run, lookup, and recovery routes
     integrationPolicyRoutes.ts # Metadata-only integration policy evaluation routes
-    counselPackExportRoutes.ts # Counsel Pack export-record create/list/lookup routes
+    counselPackExportRoutes.ts # Counsel Pack export-record create/list/lookup/recovery routes
     humanReviewRoutes.ts     # Human Review create/list/queue/update and linked target sync routes
-    evidenceVaultRoutes.ts   # Evidence Vault upload/list/update/replacement/manifest routes
-    sourceReviewRoutes.ts    # Source Review Ledger metadata sync/list routes
-    sourceApprovalRoutes.ts  # Source Update Approval Queue metadata sync/list routes
+    evidenceVaultRoutes.ts   # Evidence Vault upload/list/update/replacement/manifest/lineage-digest routes
+    sourceReviewRoutes.ts    # Source Review Ledger metadata sync/list/packet routes
+    sourceApprovalRoutes.ts  # Source Update Approval Queue metadata sync/list/packet routes
     workspaceRoutes.ts       # Workspace create/read/update routes
     auditLogRoutes.ts        # Audit Log listing routes
     apiError.ts              # Typed API error responses with the audit-prep boundary
@@ -78,6 +78,7 @@ lexproof-ai-audit/
       modelGatewayProviderPolicyClient.ts # Browser client for metadata-only provider policy refresh
       modelGatewaySecretPolicy.ts # Metadata-only secret policy readiness reports and JSON export
       modelGatewaySecretPolicyClient.ts # Browser client for secret policy evaluation
+      modelGatewayRunReceipt.ts # Metadata-only Model Gateway run receipts and recovery packets
       objectStoragePolicy.ts # Metadata-only object storage policy readiness reports and JSON export
       objectStoragePolicyClient.ts # Browser client for object storage policy evaluation
       documentParserPolicy.ts # Metadata-only document parser policy readiness reports and JSON export
@@ -88,6 +89,7 @@ lexproof-ai-audit/
       grcDestinationPolicyClient.ts # Browser client for GRC destination policy evaluation
       modelGatewayEvaluation.ts # Metadata-only Model Gateway evaluation artifacts and JSON export
       auditLogExport.ts      # Metadata-only Secure Review audit log export artifacts with integrity digest hashes
+      integrationPolicyEvaluation.ts # Server policy evaluation receipt records and bundle export
       integrationEnablementDossier.ts # Hashed metadata-only adapter/policy enablement dossier
       projectModel.ts        # Project/evidence types and validation
       counselQuestions.ts    # Deterministic and AI-assisted counsel question queue helpers
@@ -111,7 +113,7 @@ lexproof-ai-audit/
       phase2Types.ts         # Phase 2 backend-boundary type contracts and pure helpers
       phase2ApiContracts.ts  # Phase 2 API route, boundary, and Prisma schema draft contracts
       serverHumanReviewEffects.ts # Server-side Human Review effects on linked records
-      serverHumanReviewQueue.ts # Server-side Human Review queue filtering and summaries
+      serverHumanReviewQueue.ts # Server-side Human Review queue filtering, summaries, and recovery packets
       jurisdictionChecklist.ts # Jurisdiction checklist generation
       jurisdictionPacks.ts  # Jurisdiction policy controls and local-counsel routing
       regulatoryGraph.ts    # Official-source trigger matching and evidence coverage graph
@@ -120,10 +122,10 @@ lexproof-ai-audit/
       jurisdictionReadinessDigest.ts # Metadata-only per-jurisdiction handoff digest and hash
       regulatorySourceReview.ts # Source review freshness and reviewer-note ledger
       sourceFreshnessBoard.ts # Metadata-only source review scheduling board and hash
-      regulatorySourceReviewSync.ts # Metadata-only Source Review Ledger sync records and ledger hash
-      regulatorySourceReviewClient.ts # Browser client for Source Review Ledger API sync
+      regulatorySourceReviewSync.ts # Metadata-only Source Review Ledger sync records, server packet, and ledger hash
+      regulatorySourceReviewClient.ts # Browser client for Source Review Ledger API sync and server packet refresh
       regulatorySourceApproval.ts # Source update approval queue and metadata-only JSON export
-      regulatorySourceApprovalSync.ts # Metadata-only Source Approval sync records and queue hash
+      regulatorySourceApprovalSync.ts # Metadata-only Source Approval sync records, server packet, and queue hash
       regulatorySourceApprovalClient.ts # Browser client for Source Approval API sync
       regulatorySourcePack.ts # Metadata-only regulatory source pack JSON artifact
       submissionPack.ts      # Metadata-only hackathon submission pack artifact and stable hash
@@ -424,18 +426,20 @@ Source freshness boards are audit preparation scheduling metadata only. They do 
 Own server-syncable Source Review Ledger metadata:
 
 - `createRegulatorySourceReviewSyncResult({ workspaceId, sourceReview, createdBy })` converts a Source Review Ledger into metadata-only persisted records with a stable ledger hash.
+- `createServerRegulatorySourceReviewPacket({ workspaceId, records })` turns persisted source review records into a metadata-only server packet with record hashes, ledger hashes, counts, recovery actions, and no reviewer-note body text.
 - `hashRegulatorySourceReviewLedger(sourceReview)` hashes normalized source review records and refresh actions so source metadata changes are detectable.
 - `syncRegulatorySourceReviewLedger(...)` posts only whitelisted ledger fields to `POST /api/workspaces/:workspaceId/source-reviews` and validates the response before the UI trusts it.
 
 Source review sync records keep `matchingBehaviorChanged: false`. They do not ingest raw source bodies, store credentials, process KYC or personal data, refresh source matching behavior, or create legal conclusions.
 
-### `src/lib/regulatorySourceApproval.ts`
+### `src/lib/regulatorySourceApproval.ts` and `src/lib/regulatorySourceApprovalSync.ts`
 
 Owns source update approval workflow metadata for the Regulatory Command Center:
 
 - `createRegulatorySourceApprovalQueue(sourceReview, options)` turns `review-due` and `metadata-missing` source review records into approval-gated queue items.
 - Queue items distinguish `approval-required` from `metadata-required`, carry priority, source lineage, next action, and an approval gate that source updates cannot change matching behavior until counsel or compliance review records refreshed source metadata.
 - `exportRegulatorySourceApprovalQueueJson(queue)` and `downloadRegulatorySourceApprovalQueueJson(filename, queue)` produce metadata-only JSON for the command center.
+- `createServerRegulatorySourceApprovalPacket({ workspaceId, records })` turns persisted Source Approval records into a metadata-only server packet with queue hashes, record hashes, approval-gate counts, recovery actions, and no reviewer-note body text.
 
 Source update approval queues are audit preparation workflow metadata only. They do not refresh sources automatically, scrape laws, decide source currency, or make compliance conclusions.
 
@@ -504,7 +508,9 @@ Workspace actions are audit preparation workflow prompts only. They do not make 
 Owns reviewed official-source reference seeds for the Regulatory Source Graph:
 
 - US SEC/CFTC crypto asset interpretation.
+- US SEC Investment Adviser Marketing Rule.
 - EU MiCA Regulation (EU) 2023/1114.
+- EU AI Act Regulation (EU) 2024/1689 AI literacy, transparency, high-risk provider quality/documentation, and justice/ADR perimeter routing.
 - UK FCA PS23/6 and FG23/3 cryptoasset financial promotions materials.
 - Singapore MAS PSN02 digital payment token AML/CFT materials.
 - Swiss FINMA ICO/token classification guidance.
@@ -578,6 +584,16 @@ Owns metadata-only Model Gateway evaluation artifacts:
 
 The evaluation record is audit preparation metadata only. It does not store raw prompts, raw model output, provider credentials, KYC data, legal conclusions, or proof that a model response is correct.
 
+### `src/lib/modelGatewayRunReceipt.ts`
+
+Owns metadata-only Model Gateway run receipts and workspace recovery packets:
+
+- `createModelGatewayRunReceipt(run)` converts a persisted gateway run into a redacted receipt with provider policy metadata, payload/response/source-evidence hashes, retry state, human-review status, remediation, and a stable receipt hash.
+- `createModelGatewayRunRecoveryPacket(workspaceId, runs)` groups saved gateway runs into blocked, retry-available, needs-human-review, and ready counts with per-run priorities and recovery actions.
+- `exportModelGatewayRunRecoveryPacketJson(packet)` and `downloadModelGatewayRunRecoveryPacketJson(filename, packet)` export the recovery packet without raw prompts, responses, credentials, private keys, KYC, personal data, or legal conclusions.
+
+The recovery packet is audit preparation metadata only. It supports operational recovery and judge/API readiness checks; it does not enable external providers or decide legal/compliance status.
+
 ### `src/lib/auditLogExport.ts`
 
 Owns metadata-only Secure Review audit-log exports:
@@ -614,7 +630,8 @@ Evidence Vault manifests are audit preparation metadata only. They do not expose
 Owns Evidence Vault lineage handoff behavior for persisted metadata:
 
 - `createEvidenceVaultLineageDigest({ workspaceId, records, manifest })` summarizes active, replaced, open-rejected, lineage-link, linked-control, linked-risk, and manifest-hash state.
-- `exportEvidenceVaultLineageDigestJson(digest)` and `downloadEvidenceVaultLineageDigestJson(filename, digest)` provide the Evidence Ledger download surface.
+- `GET /api/workspaces/:workspaceId/evidence-lineage-digest` and `exportEvidenceVaultLineageDigestJson(digest)` provide server and Evidence Ledger download surfaces.
+- `downloadEvidenceVaultLineageDigestJson(filename, digest)` provides the local browser download surface.
 - The hash payload excludes `generatedAt` and source-note body text, while replacement links, replacement reason hashes, status counts, and manifest hashes change the digest hash.
 
 Evidence Vault lineage digests are audit preparation metadata only. They do not expose raw file bytes, source-note body text, raw KYC, credentials, personal data, or legal conclusions.
@@ -650,7 +667,7 @@ This module is a contract draft only. It does not create a backend, upload files
 
 Owns the Phase 2 backend design-spike contracts:
 
-- `listPhase2ApiRoutes()` returns the review workspace API route table for workspaces, evidence vault, model gateway, human review, exports, and audit log domains.
+- `listPhase2ApiRoutes()` returns the review workspace API route table for workspaces, evidence vault, model gateway, model-run recovery, human review, exports, and audit log domains.
 - `validateModelGatewayBoundary()` blocks model gateway requests that bypass Redaction Gate, include credential material, include raw KYC/personal data, request final legal decisions, lack a human-review owner, or route data classes outside the approved audit-prep metadata boundary.
 - `validateEvidenceUploadBoundary()` blocks evidence upload metadata that embeds raw document content, raw KYC/personal data, missing hashes, or missing file metadata.
 - `createPhase2PrismaSchemaDraft()` returns the SQLite/Prisma persistence draft for `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, `CounselPackExportRecord`, and `AuditLogRecord`.
@@ -732,6 +749,18 @@ Owns W9 adapter readiness behavior:
 
 The registry is audit preparation metadata only. It does not call external providers, persist secrets, upload raw files, run OCR, create GRC tickets, write chain transactions, or change deterministic audit scoring.
 
+### `src/lib/integrationPolicyEvaluation.ts`
+
+Owns persisted W9 integration policy receipt metadata:
+
+- `createIntegrationPolicyEvaluationRecord(input)` projects server-evaluated object storage, document parser, chain anchor, and GRC destination policy reports into metadata-only receipt records with report/context/policy hashes.
+- `createIntegrationPolicyEvaluationReceiptBundle(input)` turns persisted workspace receipts into one hashable bundle with missing policy IDs, blocked/needs-policy counts, next actions, `externalEnablementAllowed: false`, and a stable bundle hash that ignores `generatedAt`.
+- `exportIntegrationPolicyEvaluationReceiptBundleJson()` and `downloadIntegrationPolicyEvaluationReceiptBundleJson()` serialize and download the receipt bundle for adapter enablement review.
+- Receipt records and bundles redact credential-like, private-key-like, raw-KYC, and personal-identifier text before handoff.
+- `server/integrationPolicyRoutes.ts` exposes `GET /api/workspaces/:workspaceId/integration-policy-evaluations/bundle` so the API preflight and judge smoke path can verify the same receipt-bundle artifact after reload.
+
+The receipt bundle is audit preparation metadata only. It does not store policy payload bodies, credentials, raw evidence, raw documents, raw KYC, external write commands, or adapter secrets.
+
 ### `src/lib/integrationEnablementDossier.ts`
 
 Owns the W9 adapter enablement handoff artifact:
@@ -801,6 +830,16 @@ Owns the browser-to-Phase-2 API call for server export records:
 - The request includes manifest hash, Markdown artifact hash, artifact size, review summary, source count, Regulatory Source Pack hash, source review status, Jurisdiction Readiness Digest hash/status/handoff flag, and the Not legal advice boundary.
 - It does not send raw Markdown, PDF bytes, credentials, raw KYC, or personal data.
 
+### `src/lib/counselPackExportRecordReceipt.ts`
+
+Owns metadata-only server export record receipts and recovery packets:
+
+- `createCounselPackExportRecordReceipt(record)` turns one persisted Counsel Pack export record into a redacted receipt with artifact/source/manifest hashes, jurisdiction readiness metadata, recovery action, stable receipt hash, and Not legal advice boundary.
+- `createCounselPackExportRecoveryPacket(workspaceId, records)` turns a workspace export-record list into a stable recovery packet with blocked, needs-source-review, needs-review, and ready counts plus per-record recovery actions.
+- `exportCounselPackExportRecordReceiptJson()` and `exportCounselPackExportRecoveryPacketJson()` serialize readable JSON for counsel/compliance handoff.
+
+Receipts and recovery packets do not store raw Markdown/PDF content, upload evidence, decide legal readiness, or replace counsel review.
+
 ### `src/data/sampleProfiles.ts`
 
 Owns seeded demo scenarios. Each scenario should represent a realistic legal/compliance posture:
@@ -859,7 +898,7 @@ Components are intentionally presentational and interaction-focused:
 - `AIReviewPanel` shows Model Access Workflow, Model Connection Readiness, the Redaction Gate, runs model-assisted review, and shows missing evidence.
 - `ModelSettingsPanel` configures mock or OpenAI-compatible model settings without persisting API keys.
 - `ModelIntakePanel` edits model connection profile metadata, AI event records, reviewers, review statuses, event hashes, human-review readiness, and standalone Model Intake JSON export.
-- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source freshness lanes, source update approval gates, control matrices, jurisdiction evidence maps, jurisdiction readiness digest, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `sourceFreshnessBoard.ts`, `regulatorySourceApproval.ts`, `regulatoryControlMatrix.ts`, `jurisdictionEvidenceMap.ts`, and `jurisdictionReadinessDigest.ts`.
+- `RegulatoryCommandCenter` renders jurisdiction readiness, official-source clause triggers, source review freshness, source freshness lanes, server Source Review packet refresh/download status, source update approval gates, server Source Approval packet refresh/download status, control matrices, jurisdiction evidence maps, jurisdiction readiness digest, evidence gaps, manifest readiness, source links, and counsel handoff status from `regulatoryGraph.ts`, `regulatorySourceReview.ts`, `regulatorySourceReviewSync.ts`, `sourceFreshnessBoard.ts`, `regulatorySourceApproval.ts`, `regulatorySourceApprovalSync.ts`, `regulatoryControlMatrix.ts`, `jurisdictionEvidenceMap.ts`, and `jurisdictionReadinessDigest.ts`.
 - `SecureReviewWorkspace` runs the backend journey and renders workspace, Evidence Vault, Model Gateway Evaluation, Human Review, Audit Log Export, and audit log status without exposing raw model payloads or credentials.
 - `SecurityReviewChecklistPanel` renders the integration security gates from `securityReviewChecklist.ts` and navigates users back to Model Connect, Evidence Ledger, or Counsel Pack recovery surfaces.
 - `IntegrationReadinessPanel` renders adapter readiness, Integration Enablement Dossier, Model Gateway provider/secret policy controls, Object Storage Policy Evaluation, Document Parser Policy Evaluation, Chain Anchor Policy Evaluation, GRC Destination Policy Evaluation, server sync states, recovery states, and metadata-only JSON downloads while keeping external providers, object storage, raw-document parsing, chain anchoring, and external ticket creation disabled by default.
@@ -881,9 +920,11 @@ Phase 1 is intentionally local-first. React state, browser `localStorage`, pure 
 
 Phase 2 introduces a small backend boundary without replacing the current workbench. The professional-prototype shape is Node.js + TypeScript + Fastify + SQLite + Prisma, with local filesystem evidence storage only for development. The backend should own durable workspace records, evidence upload metadata, model gateway receipts, human review records, server-side exports, and audit logs. The frontend should keep rendering the workbench and should call typed backend APIs only after the contracts are stable.
 
-The executable API contract draft lives in `src/lib/phase2ApiContracts.ts`, and the active backlog direction lives in `docs/plan.md`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest routes, Integration object-storage policy evaluation, Integration document-parser policy evaluation, Integration chain-anchor policy evaluation, Integration GRC destination policy evaluation, mock Model Gateway run routes, Human Review create/update/list/queue-view routes, Counsel Pack export-record create/list/read routes, and Audit Log listing/filtering. `server/app.ts` composes shared hooks and route modules; `server/systemRoutes.ts`, `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/integrationPolicyRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, `server/evidenceVaultRoutes.ts`, and `server/auditLogRoutes.ts` are route modules split out of the monolithic app while preserving route contracts and repository-backed audit logging. `server/apiError.ts` provides the shared typed error response shape; Workspace, Evidence Vault, Model Gateway, Integration policy, Human Review, Counsel Pack export, and Audit Log filter failures now include stable codes, the audit-prep boundary, and recovery guidance where useful. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, real object storage, real chain anchoring, real GRC ticket creation, and real provider proxying are still deferred.
+The executable API contract draft lives in `src/lib/phase2ApiContracts.ts`, and the active backlog direction lives in `docs/plan.md`. The backend now exposes `GET /api/health`, Model Gateway adapter readiness, Workspace create/read/update routes, multipart Evidence Vault upload/list/update/replacement/manifest/lineage-digest routes, Integration object-storage policy evaluation, Integration document-parser policy evaluation, Integration chain-anchor policy evaluation, Integration GRC destination policy evaluation, Integration Policy Evaluation receipt list/bundle routes, mock Model Gateway run list/lookup/recovery routes, Human Review create/update/list/queue-view routes, Source Review sync/list/packet routes, Source Approval sync/list/packet routes, Counsel Pack export-record create/list/read/recovery routes, and Audit Log listing/filtering. `server/app.ts` composes shared hooks and route modules; `server/systemRoutes.ts`, `server/workspaceRoutes.ts`, `server/modelGatewayRoutes.ts`, `server/integrationPolicyRoutes.ts`, `server/counselPackExportRoutes.ts`, `server/humanReviewRoutes.ts`, `server/evidenceVaultRoutes.ts`, and `server/auditLogRoutes.ts` are route modules split out of the monolithic app while preserving route contracts and repository-backed audit logging. `server/apiError.ts` provides the shared typed error response shape; Workspace, Evidence Vault, Model Gateway, Integration policy, Human Review, Counsel Pack export, and Audit Log filter failures now include stable codes, the audit-prep boundary, and recovery guidance where useful. `server/index.ts` uses Prisma/SQLite through `server/reviewWorkspaceRepository.ts`; tests can still use the memory adapter for isolated route checks. Raw file persistence, OCR, server-rendered PDF export, real object storage, real chain anchoring, real GRC ticket creation, and real provider proxying are still deferred.
 
-Source Review Ledger persistence is implemented in `server/sourceReviewRoutes.ts`, backed by memory and Prisma repository methods in `server/reviewWorkspaceRepository.ts`. `POST /api/workspaces/:workspaceId/source-reviews` stores metadata-only source review records plus an audit-log entry; `GET /api/workspaces/:workspaceId/source-reviews` lists those records. The route rejects credentials, private-key-like values, raw KYC, personal data, raw source bodies, and legal conclusions, and it never changes regulatory matching behavior.
+Source Review Ledger persistence is implemented in `server/sourceReviewRoutes.ts`, backed by memory and Prisma repository methods in `server/reviewWorkspaceRepository.ts`. `POST /api/workspaces/:workspaceId/source-reviews` stores metadata-only source review records plus an audit-log entry; `GET /api/workspaces/:workspaceId/source-reviews` lists those records; `GET /api/workspaces/:workspaceId/source-reviews/packet` returns a metadata-only server packet with record hashes, ledger hashes, counts, recovery actions, and no reviewer-note body text. The route rejects credentials, private-key-like values, raw KYC, personal data, raw source bodies, and legal conclusions, and it never changes regulatory matching behavior.
+
+Source Approval persistence is implemented in `server/sourceApprovalRoutes.ts`. `POST /api/workspaces/:workspaceId/source-approvals` stores metadata-only approval-gate records plus an audit-log entry; `GET /api/workspaces/:workspaceId/source-approvals` lists those records; `GET /api/workspaces/:workspaceId/source-approvals/packet` returns a metadata-only server packet with record hashes, queue hashes, approval and metadata-required counts, recovery actions, and no reviewer-note body text. The route never approves legal conclusions, never refreshes source matching, and keeps `matchingBehaviorChanged: false`.
 
 ### Model Gateway Responsibilities
 
@@ -894,11 +935,12 @@ Source Review Ledger persistence is implemented in `server/sourceReviewRoutes.ts
 - evaluate metadata-only provider and secret policy reports without enabling external provider proxying
 - record provider label, model, purpose, payload hash, response hash, source evidence hash, status, redaction status, retry state, and provider policy metadata
 - persist blocked/failed run receipts with error codes and remediation steps
+- return metadata-only workspace run recovery packets with stable packet hashes and redacted recovery actions
 - automatically queue human-review-required records for completed Model Gateway output
 
 The gateway must keep model output as draft audit preparation. It must not change deterministic risk scoring, produce legal advice, or make final compliance decisions.
 
-`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, evaluates metadata-only provider and secret policy reports, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters remain disabled placeholders even when secret policy controls evaluate ready, until a separate adapter enablement review is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository, automatically creates a `model-run` Human Review request for completed output, and appends audit-log records for both the run and the review queue action. It does not call external providers or store credentials.
+`server/modelGatewayService.ts` implements the first gateway seam: it exposes adapter readiness, evaluates metadata-only provider and secret policy reports, validates redaction, allowed data classes, credential, KYC, final-decision, human-review, and provider-adapter boundaries, then creates a mock run receipt with payload hash, response hash, source evidence hash, provider metadata, retry state, and human-review status. Boundary failures and disabled adapter attempts create safe failure receipts with error codes, retry state, and remediation steps. The backend enables only the local mock adapter in Phase 2A; OpenAI-compatible and enterprise-proxy adapters remain disabled placeholders even when secret policy controls evaluate ready, until a separate adapter enablement review is approved. `server/modelGatewayRoutes.ts` persists successful and failed run receipts through the repository, exposes `GET /api/workspaces/:workspaceId/model-runs/recovery` for metadata-only recovery packets, automatically creates a `model-run` Human Review request for completed output, and appends audit-log records for both the run and the review queue action. It does not call external providers or store credentials.
 
 ### Integration Policy Responsibilities
 
@@ -911,7 +953,7 @@ The gateway must keep model output as draft audit preparation. It must not chang
 - return `externalDocumentParsingAllowed: false` even when all controls are ready
 - return `externalGrcTicketCreationAllowed: false` even when all controls are ready
 
-`src/lib/objectStoragePolicy.ts` owns the object-storage policy report and JSON export. `src/lib/objectStoragePolicyClient.ts` posts only whitelisted context and policy fields from the workbench. `server/integrationPolicyRoutes.ts` exposes `POST /api/integrations/object-storage/policy`, sanitizes request fields, and returns a Not legal advice report without storing records, uploading objects, accepting raw evidence bytes, or enabling a real object storage adapter.
+`src/lib/objectStoragePolicy.ts` owns the object-storage policy report and JSON export. `src/lib/objectStoragePolicyClient.ts` posts only whitelisted context and policy fields from the workbench. `server/integrationPolicyRoutes.ts` exposes `POST /api/integrations/object-storage/policy`, persists metadata-only evaluation receipts when a workspace ID is provided, exposes receipt list/bundle GET routes, sanitizes request fields, and returns a Not legal advice report without uploading objects, accepting raw evidence bytes, or enabling a real object storage adapter.
 
 `src/lib/chainAnchorPolicy.ts` owns the simulated chain-anchor policy report and JSON export. `src/lib/chainAnchorPolicyClient.ts` posts only whitelisted context and policy fields from the workbench: workspace/evidence/retention/export/manifest/Counsel Pack version metadata plus owner, network, custody, signer, logging, privacy, public-payload, consent, no-raw-evidence, human-review, and notes. `server/integrationPolicyRoutes.ts` exposes `POST /api/integrations/chain-anchor/policy`, sanitizes request fields, blocks unsafe metadata such as credentials, private keys, raw KYC, personal data, signed-transaction instructions, and real chain-write requests, and returns a Not legal advice report without wallet signing, transaction submission, raw evidence transfer, or real blockchain anchoring.
 
@@ -935,7 +977,7 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 
 `src/lib/evidenceVaultWorkflow.ts` owns the shared Evidence Vault status machine. `server/evidenceVaultRoutes.ts` uses it before PATCH writes so rejected evidence cannot be directly reactivated and superseded records stay historical; users must use the replacement endpoint to preserve parent/child lineage. `server/evidenceVaultService.ts` implements the first evidence boundary: it receives upload bytes in process memory, computes server-side SHA-256, returns metadata-only `EvidenceVaultRecord` values, detects active duplicate hashes, and builds replacement lineage for rejected records. It does not persist files or expose raw document content through JSON.
 
-`src/lib/evidenceVaultLineageDigest.ts` turns those persisted metadata records plus the server manifest hash into a downloadable lineage digest from `EvidenceLedger`, so reviewers can see active, replaced, and open rejected states without exposing source-note body text or treating evidence status as legal approval.
+`src/lib/evidenceVaultLineageDigest.ts` turns those persisted metadata records plus the server manifest hash into a metadata-only lineage digest. `GET /api/workspaces/:workspaceId/evidence-lineage-digest` exposes the same active, replaced, open rejected, lineage-link, linked-control, linked-risk, next-action, and digest-hash metadata for API preflight and handoff checks, while `EvidenceLedger` can still download the local digest without exposing source-note body text or treating evidence status as legal approval.
 
 `src/lib/evidenceUploadBoundary.ts` is called by `server/evidenceVaultService.ts` before record creation so unsafe metadata is blocked server-side even if a client bypasses the UI retention gate. It reuses `src/lib/dataClassification.ts` for scanner coverage and returns class-level errors without echoing credentials, private keys, or raw KYC snippets.
 
@@ -946,12 +988,13 @@ The Phase 2 draft must not store raw KYC or personal data. Secure document parsi
 - let reviewers mark items as `under-review`, `reviewed`, `rejected`, or `needs-more-evidence`
 - sync evidence-target and model-run-target review decisions back to linked workflow metadata
 - preserve comments, reviewer identity, due dates, status history, and audit-log IDs as workflow metadata
+- attach a metadata-only recovery packet with a stable hash to server queue views when records are rejected or returned for more evidence
 - export a review timeline JSON for counsel/compliance handoff
 - include human-review status in exports
 
 Human review records are not signed legal opinions. They track audit preparation workflow status for counsel and compliance review.
 
-`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `src/lib/serverHumanReviewQueue.ts` creates metadata-only server queue views with target/status/reviewer counts and next actions. `src/lib/serverHumanReviewEffects.ts` maps evidence-target review decisions to Evidence Vault status updates and model-run-target decisions to Model Gateway `humanReviewStatus` updates without treating review as legal approval. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. `server/humanReviewRoutes.ts` persists records through the repository, returns filtered queue views, validates create/update payloads, returns typed error codes for recoverable failures, syncs linked evidence/model-run status when applicable, and appends audit-log records for create/update/sync actions.
+`src/lib/humanReviewWorkflow.ts` implements the local review queue, due-date defaults, latest-decision projection, linked evidence/model/risk status mapping, and review timeline export. `src/lib/serverHumanReviewQueue.ts` creates metadata-only server queue views with target/status/reviewer counts, next actions, and a redacted recovery packet hash for rejected or returned records. `src/lib/serverHumanReviewEffects.ts` maps evidence-target review decisions to Evidence Vault status updates and model-run-target decisions to Model Gateway `humanReviewStatus` updates without treating review as legal approval. `server/humanReviewService.ts` implements review record creation and status updates for the Phase 2 API skeleton. `server/humanReviewRoutes.ts` persists records through the repository, returns filtered queue views, validates create/update payloads, returns typed error codes for recoverable failures, syncs linked evidence/model-run status when applicable, and appends audit-log records for create/update/sync actions.
 
 ### Counsel Pack Export Record Responsibilities
 
@@ -960,7 +1003,7 @@ Human review records are not signed legal opinions. They track audit preparation
 - reject raw Markdown/PDF content, raw KYC/personal data, credential material, invalid hashes, and invalid artifact metadata
 - append audit-log records when a server export record is created
 
-`server/counselPackExportService.ts` implements export-record validation and metadata construction. `src/lib/counselPackExportClient.ts` maps local Pack Version metadata into the Phase 2 API request. `server/counselPackExportRoutes.ts` persists records through the repository, exposes create/list/lookup routes, appends audit-log records, returns typed error codes for unsafe payloads and missing records, and intentionally does not render PDFs or store raw Counsel Pack content.
+`server/counselPackExportService.ts` implements export-record validation and metadata construction. `src/lib/counselPackExportClient.ts` maps local Pack Version metadata into the Phase 2 API request. `server/counselPackExportRoutes.ts` persists records through the repository, exposes create/list/lookup/recovery routes, appends audit-log records, returns typed error codes for unsafe payloads and missing records, and intentionally does not render PDFs or store raw Counsel Pack content. The recovery route returns a metadata-only packet with stable packet hash, stale-source and review-blocker counts, and next actions across saved export records.
 
 ### Audit Log Responsibilities
 
@@ -970,7 +1013,7 @@ Human review records are not signed legal opinions. They track audit preparation
 
 Audit logs are review metadata. They are not real chain anchors, signed approvals, or legal conclusions.
 
-`src/lib/auditLogFilters.ts` normalizes and validates server audit-log query filters for actor, action, target type, and target ID. `server/auditLogRoutes.ts` lists persisted audit-log records for a workspace through the repository and applies those filters while returning typed errors for unsupported filter values. Audit-log export shaping stays in `src/lib/auditLogExport.ts`; it derives per-event entry hashes, a stable export hash, and an integrity chain hash from redacted metadata only. The route returns stored metadata records and does not expose raw evidence, raw model payloads, credentials, or legal conclusions.
+`src/lib/auditLogFilters.ts` normalizes and validates server audit-log query filters for actor, action, target type, and target ID. `server/auditLogRoutes.ts` lists persisted audit-log records for a workspace through the repository, applies those filters, returns typed errors for unsupported filter values, and exposes a filtered metadata-only Audit Log export artifact. `src/lib/auditLogClient.ts` builds the listing and export URLs, redacts safe API errors, and validates export hashes, integrity-chain metadata, event entries, boundary findings, and the Not legal advice boundary before client code trusts the artifact. Audit-log export shaping stays in `src/lib/auditLogExport.ts`; it derives per-event entry hashes, a stable export hash, and an integrity chain hash from redacted metadata only. The routes return stored metadata records or redacted export artifacts and do not expose raw evidence, raw model payloads, credentials, or legal conclusions.
 
 `server/reviewWorkspaceRepository.ts` provides both an in-memory adapter for tests and a Prisma/SQLite adapter for the API process. The Prisma schema covers only `WorkspaceRecord`, `EvidenceVaultRecord`, `ModelGatewayRun`, `HumanReviewRecord`, `CounselPackExportRecord`, and `AuditLogRecord`.
 
@@ -1026,7 +1069,7 @@ Domain tests live next to the audit engine and cover:
 - counsel pack model intake export
 - model review run payload and response hashing
 - model review run JSON export
-- Model Gateway evaluation record generation, redaction, and JSON export
+- Model Gateway evaluation record generation, run receipt and recovery packet generation, redaction, and JSON export
 - Audit Log Export record generation, redaction, sorting, counts, and JSON export
 - counsel pack Markdown content
 - counsel pack template recommendation and template-specific Markdown agenda behavior
@@ -1048,7 +1091,7 @@ Domain tests live next to the audit engine and cover:
 - Phase 2 evidence vault validation, model gateway summary, and audit-log helper behavior
 - Phase 2 API route contracts, Model Gateway boundary validation, Evidence Upload boundary validation, and Prisma schema draft scope
 - Phase 2 Fastify system-route registration, typed API error responses, Workspace route-module registration, Evidence Vault route-module registration, and server-side Evidence Vault metadata hashing
-- Phase 2 Model Gateway adapter readiness, mock run routes, Human Review route-module registration, persisted review routes, filtered server-side review queue views, and linked evidence/model-run review status sync
+- Phase 2 Model Gateway adapter readiness, mock run and run recovery routes, Human Review route-module registration, persisted review routes, filtered server-side review queue views, and linked evidence/model-run review status sync
 - Phase 2 Counsel Pack export-record creation, route validation, repository persistence, audit-log route-module registration/filtering, and audit-log creation
 - Phase 2 Prisma/SQLite repository persistence for Workspace, Evidence Vault, Model Gateway, Human Review, Counsel Pack Export, and Audit Log records
 - source-linked risk issue card generation

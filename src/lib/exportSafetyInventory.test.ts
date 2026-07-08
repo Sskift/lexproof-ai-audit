@@ -446,8 +446,7 @@ describe("createExportSafetyInventory", () => {
         available: true,
         metadataOnly: true,
         rawContentIncluded: false,
-        recoveryAction:
-          "Remove secrets, private-key material, and [redacted-raw-kyc] references from Audit Log source records before handoff."
+        recoveryAction: "Resolve Audit Log data-boundary blockers before downloading or sharing the export."
       })
     );
     expect(artifact?.blockers.join(" ")).toContain("Audit Log Export boundary status is blocked");

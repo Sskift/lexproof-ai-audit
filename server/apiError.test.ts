@@ -36,10 +36,12 @@ describe("API error responses", () => {
     const apiKey = "sk-live-abcdef1234567890abcdef1234567890";
     const privateKey = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const response = createApiErrorResponse({
-      error: new Error(`Provider rejected ${apiKey}, private key ${privateKey}, raw KYC packet, and final legal decision.`),
+      error: new Error(
+        `Provider rejected ${apiKey}, private key ${privateKey}, raw_KYC passport A1234567, passport data, and final-legal-decision.`
+      ),
       code: "MODEL_GATEWAY_FAILED",
       fallbackMessage: "Model Gateway request failed.",
-      recoveryAction: `Remove ${apiKey}, private key ${privateKey}, raw KYC packet, and legal opinion before retrying.`
+      recoveryAction: `Remove apiKey=${apiKey}, private key ${privateKey}, raw-KYC data, and legal_opinion before retrying.`
     });
     const serialized = JSON.stringify(response);
 
@@ -47,13 +49,19 @@ describe("API error responses", () => {
     expect(response.error).toContain("[redacted-private-key]");
     expect(response.error).toContain("[redacted-raw-kyc]");
     expect(response.error).toContain("[redacted-legal-conclusion]");
-    expect(response.recoveryAction).toContain("[redacted-api-key]");
+    expect(response.recoveryAction).toContain("[redacted-secret]");
     expect(response.recoveryAction).toContain("[redacted-private-key]");
     expect(response.recoveryAction).toContain("[redacted-raw-kyc]");
     expect(response.recoveryAction).toContain("[redacted-legal-conclusion]");
     expect(serialized).not.toContain(apiKey);
     expect(serialized).not.toContain(privateKey);
-    expect(serialized).not.toMatch(/raw KYC packet|final legal decision|legal opinion/i);
+    expect(serialized).not.toContain("apiKey=");
+    expect(serialized).not.toContain("raw_KYC");
+    expect(serialized).not.toContain("raw-KYC");
+    expect(serialized).not.toContain("A1234567");
+    expect(serialized).not.toContain("passport data");
+    expect(serialized).not.toContain("final-legal-decision");
+    expect(serialized).not.toContain("legal_opinion");
     expect(response.notLegalAdviceBoundary).toBe(API_NOT_LEGAL_ADVICE_BOUNDARY);
   });
 });

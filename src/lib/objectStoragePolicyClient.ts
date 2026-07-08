@@ -6,6 +6,7 @@ import type {
 } from "./objectStoragePolicy";
 import type { IntegrationAdapterStatus } from "./integrationReadiness";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { redactIntegrationPolicyReport } from "./integrationPolicyReportRedaction";
 
 export type FetchObjectStoragePolicyReportInput = {
   apiBaseUrl?: string;
@@ -131,11 +132,11 @@ function validateObjectStoragePolicyReport(payload: unknown): ObjectStoragePolic
     throw invalidResponseError("Object storage policy response has invalid control metadata.");
   }
 
-  if (!Array.isArray(payload.nextActions) || !payload.nextActions.every((action) => typeof action === "string")) {
+  if (!isNonEmptyStringArray(payload.nextActions)) {
     throw invalidResponseError("Object storage policy response has invalid next actions.");
   }
 
-  return payload as ObjectStoragePolicyReport;
+  return redactIntegrationPolicyReport(payload as ObjectStoragePolicyReport);
 }
 
 function isObjectStoragePolicyControl(value: unknown): value is ObjectStoragePolicyControl {
@@ -154,6 +155,14 @@ function isObjectStoragePolicyControl(value: unknown): value is ObjectStoragePol
 
 function isIntegrationAdapterStatus(value: unknown): value is IntegrationAdapterStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as IntegrationAdapterStatus);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((action) => typeof action === "string" && action.trim().length > 0)
+  );
 }
 
 function invalidResponseError(message: string): ObjectStoragePolicyClientError {

@@ -1,4 +1,4 @@
-import { redactClassifiedText } from "./dataClassification";
+import { redactApiErrorText } from "./apiErrorRedaction";
 
 export type SafeApiErrorResponse = {
   error?: string;
@@ -7,8 +7,6 @@ export type SafeApiErrorResponse = {
   notLegalAdviceBoundary?: string;
 };
 
-const LEGAL_CONCLUSION_PATTERN =
-  /\b(final legal decision|legal opinion|legal approval|legally compliant|legally non-compliant|compliance decision)\b/gi;
 const CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,119}$/;
 
 export function asSafeApiErrorResponse(value: unknown): SafeApiErrorResponse {
@@ -29,11 +27,7 @@ function safeTextField(value: unknown): string | undefined {
     return undefined;
   }
 
-  const redacted = redactClassifiedText(value.replace(/\s+/g, " ").trim())
-    .replace(/\b(seed phrase|mnemonic|private key)\b/gi, "[redacted-private-key]")
-    .replace(/\b(passport data|passport document|passport file)\b/gi, "[redacted-personal-data]")
-    .replace(LEGAL_CONCLUSION_PATTERN, "[redacted-legal-conclusion]")
-    .trim();
+  const redacted = redactApiErrorText(value.replace(/\s+/g, " ").trim());
 
   return redacted || undefined;
 }

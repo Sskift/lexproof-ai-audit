@@ -944,6 +944,86 @@ describe("createRegulatoryGraph", () => {
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("matches EU AI Act high-risk provider quality and documentation controls without legal conclusions", () => {
+    const providerProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-ai-provider-quality",
+      projectName: "EuroModel Provider Dossier",
+      jurisdictions: ["European Union"],
+      entityType: "High-risk AI provider preparing a provider conformity file",
+      assetModel:
+        "High-risk AI provider quality management system, risk management system, technical documentation, data governance, record-keeping logs, instructions for use, and provider conformity file review",
+      userType: "EU deployer compliance reviewers and local counsel",
+      custodyModel: "No asset safekeeping; AI provider evidence is metadata-only",
+      dataSensitivity: "Training data governance summaries with raw records excluded",
+      aiUsage: "Manual provider quality dossier for counsel review",
+      blockchainUse: "No ledger output for this source-control fixture",
+      operatingStage: "Pre-market provider quality-system review before local counsel signoff",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(providerProject);
+    const graph = createRegulatoryGraph(providerProject, audit, providerProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["eu-ai-act-high-risk-provider-quality-documentation"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-high-risk-provider-quality-documentation")).toMatchObject({
+      jurisdiction: "European Union",
+      regulator: "European Union",
+      sourceUrl: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+      citation: "Regulation (EU) 2024/1689, Articles 9-14 and 17",
+      topic: "ai-governance",
+      coverageStatus: "missing",
+      localCounselRole: "EU AI Act high-risk provider / quality-system counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "EU AI Act high-risk provider QMS and risk-management evidence",
+        "EU AI Act technical documentation, data governance, and logging evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks EU AI Act high-risk provider controls covered when AI template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("ai-compliance-workflow").map((item, index) => ({
+      ...item,
+      id: `ai-provider-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const providerProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-eu-ai-provider-quality-covered",
+      jurisdictions: ["European Union"],
+      entityType: "High-risk AI provider preparing a provider conformity file",
+      assetModel:
+        "High-risk AI provider quality management system, risk management system, technical documentation, data governance, record-keeping logs, instructions for use, and provider conformity file review",
+      userType: "EU deployer compliance reviewers and local counsel",
+      custodyModel: "No asset safekeeping; AI provider evidence is metadata-only",
+      dataSensitivity: "Training data governance summaries with raw records excluded",
+      aiUsage: "Manual provider quality dossier for counsel review",
+      blockchainUse: "No ledger output for this source-control fixture",
+      operatingStage: "Pre-market provider quality-system review before local counsel signoff",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(providerProject);
+    const graph = createRegulatoryGraph(providerProject, audit, providerProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "eu-ai-act-high-risk-provider-quality-documentation")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: [
+        "EU AI Act provider QMS and risk-management register",
+        "EU AI Act technical documentation and data-governance register"
+      ]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "eu-ai-act-high-risk-provider-quality-documentation" })])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("matches ABA, US NIST, NYC AEDT, California CCPA ADMT, Colorado ADMT, EU AI Act, UK ICO, and Singapore Agentic AI workflow source controls without legal conclusions", () => {
     const audit = analyzeAuditProfile(aiLegalWorkflowProject);
     const graph = createRegulatoryGraph(aiLegalWorkflowProject, audit, aiLegalWorkflowProject.evidenceItems);
@@ -2518,6 +2598,9 @@ describe("createRegulatoryGraph", () => {
       expect.arrayContaining(["us-sec-reg-d-accredited-investor-verification"])
     );
     expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
+      expect.arrayContaining(["us-sec-investment-adviser-marketing-rule"])
+    );
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).not.toEqual(
       expect.arrayContaining(["us-ofac-virtual-currency-sanctions-compliance"])
     );
     expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-ftc-endorsement-advertising-guides")).toMatchObject({
@@ -2553,6 +2636,47 @@ describe("createRegulatoryGraph", () => {
         "EU MiCA marketing notification and publication-timing evidence",
         "UAE VARA marketing approval and risk-warning evidence",
         "UAE VARA KOL, incentive, and marketing recordkeeping evidence"
+      ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("matches US SEC investment adviser marketing source controls only for adviser or private-fund facts", () => {
+    const adviserMarketingProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-us-adviser-marketing-rule",
+      projectName: "AdviserSignal Campaign Review",
+      jurisdictions: ["United States"],
+      entityType: "SEC-registered investment adviser marketing team",
+      assetModel:
+        "Investment advisory services and private fund investor communication campaign with testimonial, endorsement, third-party rating, and performance results review questions",
+      userType: "Prospective advisory clients, private fund investors, and US investment adviser counsel",
+      custodyModel: "No custody; campaign archive stores metadata-only advertisement and review records",
+      dataSensitivity: "Audience-segment summaries, Form ADV reporting metadata, and books-and-records owner only; no raw investor records",
+      aiUsage: "AI drafts adviser marketing evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved advertisement archive metadata",
+      operatingStage: "Planned investment adviser marketing campaign before US counsel review",
+      evidenceItems: []
+    };
+    const audit = analyzeAuditProfile(adviserMarketingProject);
+    const graph = createRegulatoryGraph(adviserMarketingProject, audit, adviserMarketingProject.evidenceItems);
+
+    expect(graph.matchedClauses.map((clause) => clause.clauseId)).toEqual(
+      expect.arrayContaining(["us-sec-investment-adviser-marketing-rule"])
+    );
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-investment-adviser-marketing-rule")).toMatchObject({
+      jurisdiction: "United States",
+      regulator: "U.S. Securities and Exchange Commission",
+      citation: "17 C.F.R. 275.206(4)-1; SEC Investment Adviser Marketing Rule compliance guide",
+      sourceUrl: "https://www.sec.gov/resources-small-businesses/small-business-compliance-guides/investment-adviser-marketing",
+      topic: "marketing",
+      coverageStatus: "missing",
+      localCounselRole: "US investment adviser marketing counsel"
+    });
+    expect(graph.evidenceGaps.map((gap) => gap.title)).toEqual(
+      expect.arrayContaining([
+        "US SEC adviser advertisement, testimonial, and endorsement evidence",
+        "US SEC adviser performance presentation and recordkeeping evidence"
       ])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
@@ -2676,6 +2800,46 @@ describe("createRegulatoryGraph", () => {
         expect.objectContaining({ clauseId: "uae-vara-va-regulations-activity-scope" }),
         expect.objectContaining({ clauseId: "uae-vara-marketing-regulations-2024" })
       ])
+    );
+    expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks US SEC investment adviser marketing controls covered when template evidence is verified", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("marketing-claims-review").map((item, index) => ({
+      ...item,
+      id: `adviser-marketing-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const adviserMarketingProject: ProjectProfile = {
+      ...baseProject,
+      id: "project-us-adviser-marketing-template-covered",
+      projectName: "AdviserSignal Campaign Review",
+      jurisdictions: ["United States"],
+      entityType: "SEC-registered investment adviser marketing team",
+      assetModel:
+        "Investment advisory services and private fund investor communication campaign with testimonial, endorsement, third-party rating, and performance results review questions",
+      userType: "Prospective advisory clients, private fund investors, and US investment adviser counsel",
+      custodyModel: "No custody; campaign archive stores metadata-only advertisement and review records",
+      dataSensitivity: "Audience-segment summaries, Form ADV reporting metadata, and books-and-records owner only; no raw investor records",
+      aiUsage: "AI drafts adviser marketing evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved advertisement archive metadata",
+      operatingStage: "Planned investment adviser marketing campaign before US counsel review",
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(adviserMarketingProject);
+    const graph = createRegulatoryGraph(adviserMarketingProject, audit, adviserMarketingProject.evidenceItems);
+
+    expect(graph.matchedClauses.find((clause) => clause.clauseId === "us-sec-investment-adviser-marketing-rule")).toMatchObject({
+      coverageStatus: "covered",
+      coveredEvidenceCount: 2,
+      totalEvidenceRequestCount: 2,
+      matchedEvidenceLabels: [
+        "Investment adviser advertisement and promoter review file",
+        "Investment adviser performance presentation support file"
+      ]
+    });
+    expect(graph.evidenceGaps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ clauseId: "us-sec-investment-adviser-marketing-rule" })])
     );
     expect(JSON.stringify(graph)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });

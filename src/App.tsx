@@ -45,8 +45,14 @@ import {
 } from "./lib/counselPackTemplates";
 import {
   createCounselPackVersionRecord,
+  parseStoredCounselPackVersions,
+  sanitizeCounselPackVersionRecord,
   type CounselPackVersionRecord
 } from "./lib/counselPackVersions";
+import {
+  parseStoredCounselPackExportRecords,
+  sanitizeCounselPackExportRecord
+} from "./lib/counselPackExportRecords";
 import {
   createCounselHandoffChecklist,
   type CounselHandoffChecklist
@@ -54,6 +60,8 @@ import {
 import {
   createDefaultCounselReviewItems,
   mergeCounselReviewQueues,
+  parseStoredCounselReviews,
+  sanitizeCounselReviewItem,
   type CounselReviewItem
 } from "./lib/counselReview";
 import {
@@ -61,6 +69,8 @@ import {
   createManualCounselQuestion,
   createQuestionsFromAIReview,
   mergeCounselQuestionQueues,
+  parseStoredCounselQuestions,
+  sanitizeCounselQuestion,
   sortCounselQuestionsForReview,
   type CounselQuestion
 } from "./lib/counselQuestions";
@@ -70,6 +80,8 @@ import {
   createEvidenceCreatedEvent,
   createEvidenceRemovedEvent,
   createEvidenceUpdateEvent,
+  parseStoredEvidenceAuditEvents,
+  sanitizeEvidenceAuditEvent,
   type EvidenceAuditAction,
   type EvidenceAuditEvent
 } from "./lib/evidenceAuditTrail";
@@ -201,16 +213,21 @@ import {
   humanReviewStatusToAIEventStatus,
   humanReviewStatusToCounselReviewStatus,
   humanReviewStatusToEvidenceStatus,
+  parseStoredHumanReviewDecisions,
+  sanitizeHumanReviewDecision,
   type HumanReviewDecision,
   type HumanReviewDecisionUpdate,
   type HumanReviewQueueItem
 } from "./lib/humanReviewWorkflow";
 import { createEvidenceRequestFromRequirement } from "./lib/missingEvidenceWorkflow";
-import { runAIReviewWithLedger, type ModelReviewRun } from "./lib/modelReviewLedger";
+import { parseStoredModelReviewRuns, runAIReviewWithLedger, sanitizeModelReviewRun, type ModelReviewRun } from "./lib/modelReviewLedger";
 import {
+  DEFAULT_MODEL_SETTINGS,
   createMockModelProvider,
   createOpenAICompatibleModelProvider,
   ModelProviderClientError,
+  parseStoredModelSettings,
+  sanitizeModelSettingsForStorage,
   validateModelSettings,
   type ModelSettings
 } from "./lib/modelProvider";
@@ -220,7 +237,10 @@ import {
   applyAIEventReviewUpdate,
   buildModelIntakeSummary,
   createAIReviewEventFromRun,
+  parseStoredAIEvents,
+  parseStoredModelIntakeProfile,
   sanitizeAIEventRecord,
+  sanitizeModelConnectionProfile,
   type AIEventRecord,
   type ModelConnectionProfile,
   type ModelIntakeSummary
@@ -260,14 +280,18 @@ import {
 } from "./lib/regulatorySourcePack";
 import { createRegulatorySourceApprovalQueue } from "./lib/regulatorySourceApproval";
 import {
+  fetchRegulatorySourceApprovalPacket,
   fetchRegulatorySourceApprovalRecords,
   RegulatorySourceApprovalClientError,
   syncRegulatorySourceApprovalQueue
 } from "./lib/regulatorySourceApprovalClient";
+import type { ServerRegulatorySourceApprovalPacket } from "./lib/regulatorySourceApprovalSync";
 import {
+  fetchRegulatorySourceReviewPacket,
   RegulatorySourceReviewClientError,
   syncRegulatorySourceReviewLedger
 } from "./lib/regulatorySourceReviewClient";
+import type { ServerRegulatorySourceReviewPacket } from "./lib/regulatorySourceReviewSync";
 import {
   createRegulatorySourceReviewPacket,
   type RegulatorySourceReviewPacket
@@ -499,12 +523,22 @@ export default function App() {
     useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [sourceApprovalRecordRefreshError, setSourceApprovalRecordRefreshError] = useState("");
   const [sourceApprovalRecordRefreshRecoveryAction, setSourceApprovalRecordRefreshRecoveryAction] = useState("");
+  const [sourceApprovalPacket, setSourceApprovalPacket] = useState<ServerRegulatorySourceApprovalPacket | null>(null);
+  const [sourceApprovalPacketRefreshStatus, setSourceApprovalPacketRefreshStatus] =
+    useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [sourceApprovalPacketRefreshError, setSourceApprovalPacketRefreshError] = useState("");
+  const [sourceApprovalPacketRefreshRecoveryAction, setSourceApprovalPacketRefreshRecoveryAction] = useState("");
   const [sourceReviewApiBaseUrl, setSourceReviewApiBaseUrl] = useState("");
   const [sourceReviewAsOf, setSourceReviewAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [sourceReviewSyncResult, setSourceReviewSyncResult] = useState<RegulatorySourceReviewSyncResult | null>(null);
   const [sourceReviewSyncStatus, setSourceReviewSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [sourceReviewSyncError, setSourceReviewSyncError] = useState("");
   const [sourceReviewSyncRecoveryAction, setSourceReviewSyncRecoveryAction] = useState("");
+  const [serverSourceReviewPacket, setServerSourceReviewPacket] = useState<ServerRegulatorySourceReviewPacket | null>(null);
+  const [serverSourceReviewPacketRefreshStatus, setServerSourceReviewPacketRefreshStatus] =
+    useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [serverSourceReviewPacketRefreshError, setServerSourceReviewPacketRefreshError] = useState("");
+  const [serverSourceReviewPacketRefreshRecoveryAction, setServerSourceReviewPacketRefreshRecoveryAction] = useState("");
   const [jurisdictionEvidenceMap, setJurisdictionEvidenceMap] = useState<JurisdictionEvidenceMap | null>(null);
   const [jurisdictionReadinessDigest, setJurisdictionReadinessDigest] = useState<JurisdictionReadinessDigest | null>(null);
   const [sourceFreshnessBoard, setSourceFreshnessBoard] = useState<SourceFreshnessBoard | null>(null);
@@ -541,6 +575,10 @@ export default function App() {
     () => sourceApprovalRecords.filter((record) => record.workspaceId === project.id),
     [project.id, sourceApprovalRecords]
   );
+  const activeSourceApprovalPacket =
+    sourceApprovalPacket?.workspaceId === project.id ? sourceApprovalPacket : null;
+  const activeServerSourceReviewPacket =
+    serverSourceReviewPacket?.workspaceId === project.id ? serverSourceReviewPacket : null;
   useEffect(() => {
     setModelGatewayEvaluation(null);
     setAuditLogExportRecord(null);
@@ -1624,20 +1662,29 @@ export default function App() {
   }, [project, validation.valid]);
 
   useEffect(() => {
-    const { apiKey: _apiKey, ...nonSecretSettings } = modelSettings;
-    safeStorage()?.setItem(MODEL_SETTINGS_KEY, JSON.stringify(nonSecretSettings));
+    safeStorage()?.setItem(MODEL_SETTINGS_KEY, JSON.stringify(sanitizeModelSettingsForStorage(modelSettings)));
   }, [modelSettings]);
 
   useEffect(() => {
-    safeStorage()?.setItem(MODEL_REVIEW_RUNS_KEY, JSON.stringify(aiReviewRuns.slice(0, 20)));
+    safeStorage()?.setItem(
+      MODEL_REVIEW_RUNS_KEY,
+      JSON.stringify(
+        aiReviewRuns
+          .flatMap((run) => {
+            const sanitizedRun = sanitizeModelReviewRun(run);
+            return sanitizedRun ? [sanitizedRun] : [];
+          })
+          .slice(0, 20)
+      )
+    );
   }, [aiReviewRuns]);
 
   useEffect(() => {
-    safeStorage()?.setItem(MODEL_INTAKE_PROFILE_KEY, JSON.stringify(modelIntakeProfile));
+    safeStorage()?.setItem(MODEL_INTAKE_PROFILE_KEY, JSON.stringify(sanitizeModelConnectionProfile(modelIntakeProfile)));
   }, [modelIntakeProfile]);
 
   useEffect(() => {
-    safeStorage()?.setItem(MODEL_INTAKE_EVENTS_KEY, JSON.stringify(aiEvents.slice(0, 80)));
+    safeStorage()?.setItem(MODEL_INTAKE_EVENTS_KEY, JSON.stringify(aiEvents.map(sanitizeAIEventRecord).slice(0, 80)));
   }, [aiEvents]);
 
   useEffect(() => {
@@ -1651,27 +1698,36 @@ export default function App() {
   }, [audit, project, riskEvidenceCoverage]);
 
   useEffect(() => {
-    safeStorage()?.setItem(COUNSEL_QUESTIONS_KEY, JSON.stringify(counselQuestions.slice(0, 80)));
+    safeStorage()?.setItem(COUNSEL_QUESTIONS_KEY, JSON.stringify(counselQuestions.map(sanitizeCounselQuestion).slice(0, 80)));
   }, [counselQuestions]);
 
   useEffect(() => {
-    safeStorage()?.setItem(COUNSEL_REVIEWS_KEY, JSON.stringify(counselReviews.slice(0, 80)));
+    safeStorage()?.setItem(COUNSEL_REVIEWS_KEY, JSON.stringify(counselReviews.map(sanitizeCounselReviewItem).slice(0, 80)));
   }, [counselReviews]);
 
   useEffect(() => {
-    safeStorage()?.setItem(COUNSEL_PACK_VERSIONS_KEY, JSON.stringify(counselPackVersions.slice(0, 120)));
+    safeStorage()?.setItem(
+      COUNSEL_PACK_VERSIONS_KEY,
+      JSON.stringify(counselPackVersions.map(sanitizeCounselPackVersionRecord).slice(0, 120))
+    );
   }, [counselPackVersions]);
 
   useEffect(() => {
-    safeStorage()?.setItem(COUNSEL_PACK_SERVER_EXPORTS_KEY, JSON.stringify(counselPackServerExports.slice(0, 120)));
+    safeStorage()?.setItem(
+      COUNSEL_PACK_SERVER_EXPORTS_KEY,
+      JSON.stringify(counselPackServerExports.map(sanitizeCounselPackExportRecord).slice(0, 120))
+    );
   }, [counselPackServerExports]);
 
   useEffect(() => {
-    safeStorage()?.setItem(EVIDENCE_AUDIT_TRAIL_KEY, JSON.stringify(evidenceAuditEvents.slice(0, 120)));
+    safeStorage()?.setItem(
+      EVIDENCE_AUDIT_TRAIL_KEY,
+      JSON.stringify(evidenceAuditEvents.map(sanitizeEvidenceAuditEvent).slice(0, 120))
+    );
   }, [evidenceAuditEvents]);
 
   useEffect(() => {
-    safeStorage()?.setItem(HUMAN_REVIEW_DECISIONS_KEY, JSON.stringify(humanReviewDecisions.slice(0, 120)));
+    safeStorage()?.setItem(HUMAN_REVIEW_DECISIONS_KEY, JSON.stringify(humanReviewDecisions.map(sanitizeHumanReviewDecision).slice(0, 120)));
   }, [humanReviewDecisions]);
 
   const updateProject = (nextProject: ProjectProfile) => {
@@ -1969,7 +2025,7 @@ export default function App() {
 
   const updateCounselQuestion = (id: string, updates: Partial<CounselQuestion>) => {
     setCounselQuestions((current) =>
-      current.map((question) => (question.id === id ? { ...question, ...updates } : question))
+      current.map((question) => (question.id === id ? sanitizeCounselQuestion({ ...question, ...updates }) : question))
     );
   };
 
@@ -1979,7 +2035,9 @@ export default function App() {
 
   const updateCounselReview = (id: string, updates: Partial<CounselReviewItem>) => {
     setCounselReviews((current) =>
-      current.map((review) => (review.id === id ? { ...review, ...updates, updatedAt: new Date().toISOString() } : review))
+      current.map((review) =>
+        review.id === id ? sanitizeCounselReviewItem({ ...review, ...updates, updatedAt: new Date().toISOString() }) : review
+      )
     );
   };
 
@@ -2028,7 +2086,7 @@ export default function App() {
       apiBaseUrl
     });
 
-    setCounselPackServerExports((current) => [record, ...current].slice(0, 120));
+    setCounselPackServerExports((current) => [sanitizeCounselPackExportRecord(record), ...current].slice(0, 120));
   };
 
   const trackIntegrationPolicyEvaluationRecord = (report: unknown) => {
@@ -2315,6 +2373,30 @@ export default function App() {
     }
   };
 
+  const refreshSourceApprovalPacket = async () => {
+    setSourceApprovalPacketRefreshStatus("syncing");
+    setSourceApprovalPacketRefreshError("");
+    setSourceApprovalPacketRefreshRecoveryAction("");
+
+    try {
+      const packet = await fetchRegulatorySourceApprovalPacket({
+        apiBaseUrl: sourceApprovalApiBaseUrl,
+        workspaceId: project.id
+      });
+      setSourceApprovalPacket(packet);
+      setSourceApprovalPacketRefreshStatus("synced");
+    } catch (error) {
+      setSourceApprovalPacketRefreshStatus("error");
+      if (error instanceof RegulatorySourceApprovalClientError) {
+        setSourceApprovalPacketRefreshError(error.message);
+        setSourceApprovalPacketRefreshRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setSourceApprovalPacketRefreshError(error instanceof Error ? error.message : "Source approval packet refresh failed.");
+      setSourceApprovalPacketRefreshRecoveryAction("Start the Phase 2 API and retry source approval packet refresh.");
+    }
+  };
+
   const syncSourceReviewLedger = async () => {
     setSourceReviewSyncStatus("syncing");
     setSourceReviewSyncError("");
@@ -2338,6 +2420,30 @@ export default function App() {
       }
       setSourceReviewSyncError(error instanceof Error ? error.message : "Source review sync failed.");
       setSourceReviewSyncRecoveryAction("Start the Phase 2 API and retry source review sync.");
+    }
+  };
+
+  const refreshServerSourceReviewPacket = async () => {
+    setServerSourceReviewPacketRefreshStatus("syncing");
+    setServerSourceReviewPacketRefreshError("");
+    setServerSourceReviewPacketRefreshRecoveryAction("");
+
+    try {
+      const packet = await fetchRegulatorySourceReviewPacket({
+        apiBaseUrl: sourceReviewApiBaseUrl,
+        workspaceId: project.id
+      });
+      setServerSourceReviewPacket(packet);
+      setServerSourceReviewPacketRefreshStatus("synced");
+    } catch (error) {
+      setServerSourceReviewPacketRefreshStatus("error");
+      if (error instanceof RegulatorySourceReviewClientError) {
+        setServerSourceReviewPacketRefreshError(error.message);
+        setServerSourceReviewPacketRefreshRecoveryAction(error.recoveryAction);
+        return;
+      }
+      setServerSourceReviewPacketRefreshError(error instanceof Error ? error.message : "Source review packet refresh failed.");
+      setServerSourceReviewPacketRefreshRecoveryAction("Start the Phase 2 API and retry source review packet refresh.");
     }
   };
 
@@ -2436,6 +2542,10 @@ export default function App() {
             sourceReviewSyncStatus={sourceReviewSyncStatus}
             sourceReviewSyncError={sourceReviewSyncError}
             sourceReviewSyncRecoveryAction={sourceReviewSyncRecoveryAction}
+            serverSourceReviewPacket={activeServerSourceReviewPacket}
+            serverSourceReviewPacketRefreshStatus={serverSourceReviewPacketRefreshStatus}
+            serverSourceReviewPacketRefreshError={serverSourceReviewPacketRefreshError}
+            serverSourceReviewPacketRefreshRecoveryAction={serverSourceReviewPacketRefreshRecoveryAction}
             sourceApprovalQueue={regulatorySourceApprovalQueue}
             sourceApprovalApiBaseUrl={sourceApprovalApiBaseUrl}
             sourceApprovalSyncResult={sourceApprovalSyncResult}
@@ -2446,6 +2556,10 @@ export default function App() {
             sourceApprovalRecordRefreshStatus={sourceApprovalRecordRefreshStatus}
             sourceApprovalRecordRefreshError={sourceApprovalRecordRefreshError}
             sourceApprovalRecordRefreshRecoveryAction={sourceApprovalRecordRefreshRecoveryAction}
+            sourceApprovalPacket={activeSourceApprovalPacket}
+            sourceApprovalPacketRefreshStatus={sourceApprovalPacketRefreshStatus}
+            sourceApprovalPacketRefreshError={sourceApprovalPacketRefreshError}
+            sourceApprovalPacketRefreshRecoveryAction={sourceApprovalPacketRefreshRecoveryAction}
             controlMatrix={regulatoryControlMatrix}
             jurisdictionEvidenceMap={jurisdictionEvidenceMap}
             jurisdictionReadinessDigest={jurisdictionReadinessDigest}
@@ -2464,9 +2578,11 @@ export default function App() {
             onSourceReviewApiBaseUrlChange={setSourceReviewApiBaseUrl}
             onSourceReviewAsOfChange={setSourceReviewAsOf}
             onSyncSourceReviewLedger={syncSourceReviewLedger}
+            onRefreshServerSourceReviewPacket={refreshServerSourceReviewPacket}
             onSourceApprovalApiBaseUrlChange={setSourceApprovalApiBaseUrl}
             onSyncSourceApprovalQueue={syncSourceApprovalQueue}
             onRefreshSourceApprovalRecords={refreshSourceApprovalRecords}
+            onRefreshSourceApprovalPacket={refreshSourceApprovalPacket}
             onNavigate={setActiveTab}
             onRequestSourceGapEvidence={requestSourceGapEvidence}
           />
@@ -2492,6 +2608,7 @@ export default function App() {
             registry={integrationReadinessRegistry}
             enablementDossier={integrationEnablementDossier}
             enablementGate={integrationEnablementGate}
+            workspaceId={project.id}
             integrationPolicyEvaluationRecords={activeIntegrationPolicyEvaluationRecords}
             integrationPolicyEvaluationApiBaseUrl={integrationPolicyEvaluationApiBaseUrl}
             integrationPolicyEvaluationSyncStatus={integrationPolicyEvaluationSyncStatus}
@@ -2613,6 +2730,7 @@ export default function App() {
             <HumanReviewPanel
               queue={humanReviewQueue}
               decisions={currentHumanReviewDecisions}
+              projectId={project.id}
               projectName={project.projectName}
               onSaveDecision={saveHumanReviewDecision}
             />
@@ -2996,43 +3114,12 @@ function loadStoredProject() {
 }
 
 function loadStoredModelSettings(): ModelSettings {
-  const fallback: ModelSettings = {
-    provider: "mock",
-    model: "lexproof-mock"
-  };
-  const raw = safeStorage()?.getItem(MODEL_SETTINGS_KEY);
-  if (!raw) {
-    return fallback;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<ModelSettings>;
-    if (parsed.provider === "mock" || parsed.provider === "openai-compatible") {
-      return {
-        provider: parsed.provider,
-        model: parsed.model || (parsed.provider === "mock" ? "lexproof-mock" : ""),
-        baseUrl: parsed.baseUrl
-      };
-    }
-  } catch {
-    return fallback;
-  }
-
-  return fallback;
+  return parseStoredModelSettings(safeStorage()?.getItem(MODEL_SETTINGS_KEY), DEFAULT_MODEL_SETTINGS);
 }
 
 function loadStoredModelReviewRuns(): ModelReviewRun[] {
   const raw = safeStorage()?.getItem(MODEL_REVIEW_RUNS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as ModelReviewRun[];
-    return Array.isArray(parsed) ? parsed.filter((run) => run.runVersion === "lexproof-ai-review-run-v1") : [];
-  } catch {
-    return [];
-  }
+  return parseStoredModelReviewRuns(raw);
 }
 
 function loadStoredModelIntakeProfile(): ModelConnectionProfile {
@@ -3046,148 +3133,42 @@ function loadStoredModelIntakeProfile(): ModelConnectionProfile {
     humanReviewOwner: "Compliance"
   };
   const raw = safeStorage()?.getItem(MODEL_INTAKE_PROFILE_KEY);
-  if (!raw) {
-    return fallback;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as ModelConnectionProfile;
-    if (parsed && typeof parsed.providerName === "string" && Array.isArray(parsed.dataClasses)) {
-      return parsed;
-    }
-  } catch {
-    return fallback;
-  }
-
-  return fallback;
+  return parseStoredModelIntakeProfile(raw, fallback);
 }
 
 function loadStoredAIEvents(): AIEventRecord[] {
   const raw = safeStorage()?.getItem(MODEL_INTAKE_EVENTS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as AIEventRecord[];
-    return Array.isArray(parsed)
-      ? parsed
-          .filter((event) => typeof event.id === "string" && typeof event.projectId === "string")
-          .map(sanitizeAIEventRecord)
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredAIEvents(raw);
 }
 
 function loadStoredCounselQuestions(): CounselQuestion[] {
   const raw = safeStorage()?.getItem(COUNSEL_QUESTIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as CounselQuestion[];
-    return Array.isArray(parsed)
-      ? parsed.filter((question) => question.notLegalAdviceBoundary === "Not legal advice. Counsel questions are audit preparation prompts only.")
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredCounselQuestions(raw);
 }
 
 function loadStoredCounselReviews(): CounselReviewItem[] {
   const raw = safeStorage()?.getItem(COUNSEL_REVIEWS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as CounselReviewItem[];
-    return Array.isArray(parsed)
-      ? parsed.filter((review) => review.notLegalAdviceBoundary === "Not legal advice. Counsel review status is audit preparation workflow only.")
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredCounselReviews(raw);
 }
 
 function loadStoredCounselPackVersions(): CounselPackVersionRecord[] {
   const raw = safeStorage()?.getItem(COUNSEL_PACK_VERSIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as CounselPackVersionRecord[];
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (record) =>
-            record.recordVersion === "lexproof-counsel-pack-version-v1" &&
-            record.notLegalAdviceBoundary ===
-              "Not legal advice. Counsel Pack version records are audit preparation export metadata only."
-        )
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredCounselPackVersions(raw);
 }
 
 function loadStoredCounselPackServerExports(): CounselPackExportRecord[] {
   const raw = safeStorage()?.getItem(COUNSEL_PACK_SERVER_EXPORTS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as CounselPackExportRecord[];
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (record) =>
-            record.recordVersion === "lexproof-counsel-pack-export-record-v1" &&
-            record.notLegalAdviceBoundary ===
-              "Not legal advice. Counsel Pack export records are audit preparation metadata only."
-        )
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredCounselPackExportRecords(raw);
 }
 
 function loadStoredEvidenceAuditEvents(): EvidenceAuditEvent[] {
   const raw = safeStorage()?.getItem(EVIDENCE_AUDIT_TRAIL_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as EvidenceAuditEvent[];
-    return Array.isArray(parsed)
-      ? parsed.filter((event) => event.eventVersion === "lexproof-evidence-audit-event-v1" && typeof event.projectId === "string")
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredEvidenceAuditEvents(raw);
 }
 
 function loadStoredHumanReviewDecisions(): HumanReviewDecision[] {
   const raw = safeStorage()?.getItem(HUMAN_REVIEW_DECISIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as HumanReviewDecision[];
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (decision) =>
-            decision.decisionVersion === "lexproof-human-review-decision-v1" &&
-            decision.notLegalAdviceBoundary === "Not legal advice. Human review decisions track audit preparation workflow status only."
-        )
-      : [];
-  } catch {
-    return [];
-  }
+  return parseStoredHumanReviewDecisions(raw);
 }
 
 function mergeQuestionsForProject(

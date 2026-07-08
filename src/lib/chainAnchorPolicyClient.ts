@@ -5,6 +5,7 @@ import type {
   ChainAnchorPolicyReport
 } from "./chainAnchorPolicy";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
+import { redactIntegrationPolicyReport } from "./integrationPolicyReportRedaction";
 
 export type FetchChainAnchorPolicyReportInput = {
   apiBaseUrl?: string;
@@ -140,11 +141,11 @@ function validateChainAnchorPolicyReport(payload: unknown): ChainAnchorPolicyRep
     throw invalidResponseError("Chain anchor policy response has invalid control metadata.");
   }
 
-  if (!Array.isArray(payload.nextActions) || !payload.nextActions.every((action) => typeof action === "string")) {
+  if (!isNonEmptyStringArray(payload.nextActions)) {
     throw invalidResponseError("Chain anchor policy response has invalid next actions.");
   }
 
-  return payload as ChainAnchorPolicyReport;
+  return redactIntegrationPolicyReport(payload as ChainAnchorPolicyReport);
 }
 
 function isChainAnchorPolicyControl(value: unknown): value is ChainAnchorPolicyControl {
@@ -163,6 +164,14 @@ function isChainAnchorPolicyControl(value: unknown): value is ChainAnchorPolicyC
 
 function isChainAnchorPolicyStatus(value: unknown): value is ChainAnchorPolicyStatus {
   return typeof value === "string" && ALLOWED_STATUSES.includes(value as ChainAnchorPolicyStatus);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((action) => typeof action === "string" && action.trim().length > 0)
+  );
 }
 
 function invalidResponseError(message: string): ChainAnchorPolicyClientError {

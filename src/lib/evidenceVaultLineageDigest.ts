@@ -47,6 +47,23 @@ export type CreateEvidenceVaultLineageDigestInput = {
   generatedAt?: string;
 };
 
+type BrowserDownloadAnchor = {
+  href: string;
+  download: string;
+  click: () => void;
+};
+
+type BrowserDownloadRuntime = {
+  Blob: new (parts: string[], options?: { type?: string }) => unknown;
+  URL: {
+    createObjectURL: (blob: unknown) => string;
+    revokeObjectURL: (url: string) => void;
+  };
+  document: {
+    createElement: (tagName: "a") => BrowserDownloadAnchor;
+  };
+};
+
 const NOT_LEGAL_ADVICE_BOUNDARY =
   "Not legal advice. Evidence Vault lineage digests summarize audit preparation metadata only.";
 
@@ -99,13 +116,18 @@ export function exportEvidenceVaultLineageDigestJson(digest: EvidenceVaultLineag
 }
 
 export function downloadEvidenceVaultLineageDigestJson(filename: string, digest: EvidenceVaultLineageDigest): void {
-  const blob = new Blob([exportEvidenceVaultLineageDigestJson(digest)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
+  const runtime = globalThis as unknown as Partial<BrowserDownloadRuntime>;
+  if (!runtime.Blob || !runtime.URL?.createObjectURL || !runtime.URL.revokeObjectURL || !runtime.document?.createElement) {
+    return;
+  }
+
+  const blob = new runtime.Blob([exportEvidenceVaultLineageDigestJson(digest)], { type: "application/json;charset=utf-8" });
+  const url = runtime.URL.createObjectURL(blob);
+  const anchor = runtime.document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
-  URL.revokeObjectURL(url);
+  runtime.URL.revokeObjectURL(url);
 }
 
 async function createLineageLinks(records: EvidenceVaultRecord[]): Promise<EvidenceVaultLineageLink[]> {

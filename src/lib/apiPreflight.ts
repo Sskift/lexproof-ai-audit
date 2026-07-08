@@ -35,7 +35,8 @@ export type ApiPreflightRouteFamilyId =
   | "audit-log"
   | "audit-log-export"
   | "integration-policy-evaluations"
-  | "integration-policy-receipt-bundle";
+  | "integration-policy-receipt-bundle"
+  | "integration-policy-receipt-recovery";
 
 export type ApiPreflightRouteFamily = {
   id: ApiPreflightRouteFamilyId;
@@ -258,6 +259,14 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     responseContract: "IntegrationPolicyEvaluationReceiptBundle",
     sideEffectBoundary:
       "Receipt bundle returns persisted policy receipt hashes, missing policy IDs, disabled enablement state, and next actions only."
+  }),
+  createRouteFamily({
+    id: "integration-policy-receipt-recovery",
+    label: "Integration Policy receipt recovery",
+    path: "/api/workspaces/:workspaceId/integration-policy-evaluations/recovery",
+    responseContract: "IntegrationPolicyReceiptRecoveryPacket",
+    sideEffectBoundary:
+      "Receipt recovery packet returns missing, blocked, needs-policy, and stale receipt recovery actions without external writes."
   })
 ];
 

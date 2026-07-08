@@ -47,7 +47,7 @@ describe("api preflight report", () => {
     expect(exported).not.toContain("sk-live");
     expect(exported).not.toContain("0x1111111111111111111111111111111111111111111111111111111111111111");
     expect(exported).toContain("Not legal advice");
-    expect(report.routeFamilyCount).toBe(18);
+    expect(report.routeFamilyCount).toBe(19);
     expect(report.routeFamilies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -59,6 +59,11 @@ describe("api preflight report", () => {
           id: "evidence-vault-lineage-recovery",
           path: "/api/workspaces/:workspaceId/evidence-lineage-recovery",
           responseContract: "EvidenceVaultLineageRecoveryPacket"
+        }),
+        expect.objectContaining({
+          id: "integration-policy-receipt-recovery",
+          path: "/api/workspaces/:workspaceId/integration-policy-evaluations/recovery",
+          responseContract: "IntegrationPolicyReceiptRecoveryPacket"
         })
       ])
     );

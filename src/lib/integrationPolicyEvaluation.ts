@@ -69,6 +69,69 @@ export type IntegrationPolicyEvaluationReceiptBundle = {
   notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only.";
 };
 
+export type IntegrationPolicyReceiptRecoveryStatus =
+  | "missing-receipt"
+  | "blocked"
+  | "needs-policy"
+  | "stale-receipt"
+  | "ready";
+
+export type IntegrationPolicyReceiptRecoveryPriority = "P0" | "P1" | "P2";
+
+export type IntegrationPolicyReceiptRecoveryItem = {
+  itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1";
+  policyId: IntegrationPolicyId;
+  policyLabel: string;
+  recordId: string | null;
+  supersededByRecordId: string | null;
+  reportVersion: string | null;
+  overallStatus: IntegrationPolicyEvaluationRecord["overallStatus"] | "missing";
+  reportHash: string | null;
+  contextHash: string | null;
+  policyHash: string | null;
+  externalCapabilityAllowed: false;
+  externalCapabilityStatus: string;
+  recoveryStatus: IntegrationPolicyReceiptRecoveryStatus;
+  priority: IntegrationPolicyReceiptRecoveryPriority;
+  recoveryAction: string;
+  notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only.";
+};
+
+export type IntegrationPolicyReceiptRecoveryPacketStatus =
+  | "empty"
+  | "missing-receipts"
+  | "blocked"
+  | "needs-policy"
+  | "stale-receipts"
+  | "ready";
+
+export type IntegrationPolicyReceiptRecoveryPacketSummary = {
+  totalRecoveryCount: number;
+  missingPolicyCount: number;
+  blockedCount: number;
+  needsPolicyCount: number;
+  staleReceiptCount: number;
+  readyPolicyCount: number;
+  latestReceiptCount: number;
+  nextAction: string;
+  notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only.";
+};
+
+export type IntegrationPolicyReceiptRecoveryPacket = {
+  packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1";
+  workspaceId: string;
+  generatedAt: string;
+  status: IntegrationPolicyReceiptRecoveryPacketStatus;
+  recordCount: number;
+  policyCount: number;
+  externalEnablementAllowed: false;
+  summary: IntegrationPolicyReceiptRecoveryPacketSummary;
+  items: IntegrationPolicyReceiptRecoveryItem[];
+  nextActions: string[];
+  packetHash: string;
+  notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only.";
+};
+
 export type CreateIntegrationPolicyEvaluationRecordInput = {
   workspaceId: string;
   policyId: IntegrationPolicyId;
@@ -83,6 +146,10 @@ const NOT_LEGAL_ADVICE =
   "Not legal advice. Integration policy evaluation records are audit preparation metadata only." as const;
 const RECEIPT_BUNDLE_NOT_LEGAL_ADVICE =
   "Not legal advice. Integration policy receipt bundles are audit preparation metadata only." as const;
+const RECEIPT_RECOVERY_NOT_LEGAL_ADVICE =
+  "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only." as const;
+const RECEIPT_RECOVERY_ITEM_NOT_LEGAL_ADVICE =
+  "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only." as const;
 const INTEGRATION_POLICY_IDS: IntegrationPolicyId[] = ["object-storage", "document-parser", "chain-anchor", "grc-destination"];
 
 export async function createIntegrationPolicyEvaluationRecord({
@@ -226,6 +293,64 @@ export function downloadIntegrationPolicyEvaluationReceiptBundleJson(
   browser.URL.revokeObjectURL(url);
 }
 
+export async function createIntegrationPolicyReceiptRecoveryPacket(input: {
+  workspaceId: string;
+  records: IntegrationPolicyEvaluationRecord[];
+  generatedAt?: string;
+}): Promise<IntegrationPolicyReceiptRecoveryPacket> {
+  const workspaceId = sanitize(input.workspaceId) || "local-workspace";
+  const records = input.records
+    .filter((record) => record.workspaceId === workspaceId)
+    .map(validateReceiptBundleRecord)
+    .sort(compareRecoveryRecords);
+  const latestRecords = createLatestReceiptMap(records);
+  const items = createReceiptRecoveryItems(records, latestRecords).sort(compareRecoveryItems);
+  const summary = createReceiptRecoverySummary(items, latestRecords.size);
+  const status = createReceiptRecoveryPacketStatus(summary, records.length);
+  const nextActions = createReceiptRecoveryNextActions(items, summary, records.length);
+  const hashPayload = {
+    packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1" as const,
+    workspaceId,
+    status,
+    recordCount: records.length,
+    policyCount: latestRecords.size,
+    externalEnablementAllowed: false as const,
+    summary,
+    items,
+    nextActions,
+    notLegalAdviceBoundary: RECEIPT_RECOVERY_NOT_LEGAL_ADVICE
+  };
+
+  return {
+    ...hashPayload,
+    generatedAt: input.generatedAt ?? new Date().toISOString(),
+    packetHash: await sha256Hex(stableStringify(hashPayload))
+  };
+}
+
+export function exportIntegrationPolicyReceiptRecoveryPacketJson(packet: IntegrationPolicyReceiptRecoveryPacket): string {
+  return `${JSON.stringify(packet, null, 2)}\n`;
+}
+
+export function downloadIntegrationPolicyReceiptRecoveryPacketJson(
+  filename: string,
+  packet: IntegrationPolicyReceiptRecoveryPacket
+): void {
+  const browser = resolveBrowserDownloadGlobals();
+  const blob = new browser.Blob([exportIntegrationPolicyReceiptRecoveryPacketJson(packet)], {
+    type: "application/json;charset=utf-8"
+  });
+  const url = browser.URL.createObjectURL(blob);
+  const link = browser.document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+  link.style.display = "none";
+  browser.document.body.appendChild(link);
+  link.click();
+  link.remove();
+  browser.URL.revokeObjectURL(url);
+}
+
 function toBundleRecord(record: IntegrationPolicyEvaluationRecord): IntegrationPolicyEvaluationReceiptBundleRecord {
   return {
     id: sanitize(record.id),
@@ -252,6 +377,283 @@ function validateReceiptBundleRecord(record: IntegrationPolicyEvaluationRecord):
   }
 
   return record;
+}
+
+function createLatestReceiptMap(records: IntegrationPolicyEvaluationRecord[]): Map<IntegrationPolicyId, IntegrationPolicyEvaluationRecord> {
+  const latestRecords = new Map<IntegrationPolicyId, IntegrationPolicyEvaluationRecord>();
+
+  for (const record of records) {
+    const existing = latestRecords.get(record.policyId);
+    if (!existing || compareLatestReceipt(record, existing) > 0) {
+      latestRecords.set(record.policyId, record);
+    }
+  }
+
+  return latestRecords;
+}
+
+function createReceiptRecoveryItems(
+  records: IntegrationPolicyEvaluationRecord[],
+  latestRecords: Map<IntegrationPolicyId, IntegrationPolicyEvaluationRecord>
+): IntegrationPolicyReceiptRecoveryItem[] {
+  const items: IntegrationPolicyReceiptRecoveryItem[] = [];
+
+  for (const policyId of INTEGRATION_POLICY_IDS) {
+    const latestRecord = latestRecords.get(policyId);
+    items.push(latestRecord ? createLatestReceiptRecoveryItem(latestRecord) : createMissingReceiptRecoveryItem(policyId));
+  }
+
+  const latestRecordIds = new Set(Array.from(latestRecords.values()).map((record) => record.id));
+  for (const staleRecord of records.filter((record) => !latestRecordIds.has(record.id))) {
+    const supersededByRecordId = latestRecords.get(staleRecord.policyId)?.id ?? null;
+    items.push(createStaleReceiptRecoveryItem(staleRecord, supersededByRecordId));
+  }
+
+  return items;
+}
+
+function createMissingReceiptRecoveryItem(policyId: IntegrationPolicyId): IntegrationPolicyReceiptRecoveryItem {
+  return {
+    itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+    policyId,
+    policyLabel: labelPolicyId(policyId),
+    recordId: null,
+    supersededByRecordId: null,
+    reportVersion: null,
+    overallStatus: "missing",
+    reportHash: null,
+    contextHash: null,
+    policyHash: null,
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: "missing-server-receipt",
+    recoveryStatus: "missing-receipt",
+    priority: "P0",
+    recoveryAction: `Evaluate ${labelPolicyId(policyId)} on the server before any adapter enablement review.`,
+    notLegalAdviceBoundary: RECEIPT_RECOVERY_ITEM_NOT_LEGAL_ADVICE
+  };
+}
+
+function createLatestReceiptRecoveryItem(record: IntegrationPolicyEvaluationRecord): IntegrationPolicyReceiptRecoveryItem {
+  const recoveryStatus = createLatestReceiptRecoveryStatus(record);
+
+  return {
+    itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+    policyId: record.policyId,
+    policyLabel: labelPolicyId(record.policyId),
+    recordId: sanitize(record.id),
+    supersededByRecordId: null,
+    reportVersion: sanitize(record.reportVersion),
+    overallStatus: record.overallStatus,
+    reportHash: record.reportHash,
+    contextHash: record.contextHash,
+    policyHash: record.policyHash,
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: sanitize(record.externalCapabilityStatus),
+    recoveryStatus,
+    priority: priorityForReceiptRecoveryStatus(recoveryStatus),
+    recoveryAction: createLatestReceiptRecoveryAction(record, recoveryStatus),
+    notLegalAdviceBoundary: RECEIPT_RECOVERY_ITEM_NOT_LEGAL_ADVICE
+  };
+}
+
+function createStaleReceiptRecoveryItem(
+  record: IntegrationPolicyEvaluationRecord,
+  supersededByRecordId: string | null
+): IntegrationPolicyReceiptRecoveryItem {
+  return {
+    itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+    policyId: record.policyId,
+    policyLabel: labelPolicyId(record.policyId),
+    recordId: sanitize(record.id),
+    supersededByRecordId: supersededByRecordId ? sanitize(supersededByRecordId) : null,
+    reportVersion: sanitize(record.reportVersion),
+    overallStatus: record.overallStatus,
+    reportHash: record.reportHash,
+    contextHash: record.contextHash,
+    policyHash: record.policyHash,
+    externalCapabilityAllowed: false,
+    externalCapabilityStatus: sanitize(record.externalCapabilityStatus),
+    recoveryStatus: "stale-receipt",
+    priority: "P2",
+    recoveryAction: `Use the latest ${labelPolicyId(record.policyId)} receipt before adapter enablement review; keep this older receipt only for audit lineage.`,
+    notLegalAdviceBoundary: RECEIPT_RECOVERY_ITEM_NOT_LEGAL_ADVICE
+  };
+}
+
+function createLatestReceiptRecoveryStatus(record: IntegrationPolicyEvaluationRecord): IntegrationPolicyReceiptRecoveryStatus {
+  if (record.overallStatus === "blocked") {
+    return "blocked";
+  }
+  if (record.overallStatus === "needs-policy") {
+    return "needs-policy";
+  }
+  return "ready";
+}
+
+function createLatestReceiptRecoveryAction(
+  record: IntegrationPolicyEvaluationRecord,
+  recoveryStatus: IntegrationPolicyReceiptRecoveryStatus
+): string {
+  if (recoveryStatus === "blocked" || recoveryStatus === "needs-policy") {
+    return sanitize(record.nextActions[0] ?? "Refresh this integration policy receipt before adapter enablement review.");
+  }
+
+  return `Keep the latest ${labelPolicyId(record.policyId)} receipt with the disabled-adapter enablement dossier.`;
+}
+
+function createReceiptRecoverySummary(
+  items: IntegrationPolicyReceiptRecoveryItem[],
+  latestReceiptCount: number
+): IntegrationPolicyReceiptRecoveryPacketSummary {
+  const totalRecoveryCount = items.filter((item) => item.recoveryStatus !== "ready").length;
+  const missingPolicyCount = items.filter((item) => item.recoveryStatus === "missing-receipt").length;
+  const blockedCount = items.filter((item) => item.recoveryStatus === "blocked").length;
+  const needsPolicyCount = items.filter((item) => item.recoveryStatus === "needs-policy").length;
+  const staleReceiptCount = items.filter((item) => item.recoveryStatus === "stale-receipt").length;
+  const readyPolicyCount = items.filter((item) => item.recoveryStatus === "ready").length;
+
+  return {
+    totalRecoveryCount,
+    missingPolicyCount,
+    blockedCount,
+    needsPolicyCount,
+    staleReceiptCount,
+    readyPolicyCount,
+    latestReceiptCount,
+    nextAction: createReceiptRecoverySummaryAction({
+      totalRecoveryCount,
+      missingPolicyCount,
+      blockedCount,
+      needsPolicyCount,
+      staleReceiptCount
+    }),
+    notLegalAdviceBoundary: RECEIPT_RECOVERY_NOT_LEGAL_ADVICE
+  };
+}
+
+function createReceiptRecoverySummaryAction({
+  totalRecoveryCount,
+  missingPolicyCount,
+  blockedCount,
+  needsPolicyCount,
+  staleReceiptCount
+}: Pick<
+  IntegrationPolicyReceiptRecoveryPacketSummary,
+  "totalRecoveryCount" | "missingPolicyCount" | "blockedCount" | "needsPolicyCount" | "staleReceiptCount"
+>): string {
+  if (totalRecoveryCount === 0) {
+    return "Keep integration adapters disabled and attach the latest policy receipts to the enablement dossier.";
+  }
+  if (missingPolicyCount > 0) {
+    return "Evaluate every missing server integration policy before any adapter enablement review.";
+  }
+  if (blockedCount > 0) {
+    return "Resolve blocked integration policy receipts before any external adapter enablement review.";
+  }
+  if (needsPolicyCount > 0) {
+    return "Complete needs-policy controls and refresh the affected integration policy receipts.";
+  }
+  if (staleReceiptCount > 0) {
+    return "Use only the latest receipt per integration policy for enablement review and keep older receipts for audit lineage.";
+  }
+  return "Keep integration adapters disabled and attach the latest policy receipts to the enablement dossier.";
+}
+
+function createReceiptRecoveryPacketStatus(
+  summary: IntegrationPolicyReceiptRecoveryPacketSummary,
+  recordCount: number
+): IntegrationPolicyReceiptRecoveryPacketStatus {
+  if (recordCount === 0) {
+    return "empty";
+  }
+  if (summary.missingPolicyCount > 0) {
+    return "missing-receipts";
+  }
+  if (summary.blockedCount > 0) {
+    return "blocked";
+  }
+  if (summary.needsPolicyCount > 0) {
+    return "needs-policy";
+  }
+  if (summary.staleReceiptCount > 0) {
+    return "stale-receipts";
+  }
+  return "ready";
+}
+
+function createReceiptRecoveryNextActions(
+  items: IntegrationPolicyReceiptRecoveryItem[],
+  summary: IntegrationPolicyReceiptRecoveryPacketSummary,
+  recordCount: number
+): string[] {
+  if (recordCount === 0) {
+    return [
+      "Evaluate object storage, document parser, chain anchor, and GRC destination policies before any adapter enablement review."
+    ];
+  }
+
+  const actions = unique(items.filter((item) => item.recoveryStatus !== "ready").map((item) => item.recoveryAction));
+  actions.push(summary.nextAction);
+  actions.push("Keep external providers, storage, parsers, GRC destinations, and chain writes disabled until a separate enablement review.");
+  return unique(actions);
+}
+
+function compareRecoveryRecords(
+  left: IntegrationPolicyEvaluationRecord,
+  right: IntegrationPolicyEvaluationRecord
+): number {
+  const policy = comparePolicyIds(left.policyId, right.policyId);
+  if (policy !== 0) {
+    return policy;
+  }
+  return compareLatestReceipt(left, right);
+}
+
+function compareLatestReceipt(left: IntegrationPolicyEvaluationRecord, right: IntegrationPolicyEvaluationRecord): number {
+  const time = left.createdAt.localeCompare(right.createdAt);
+  return time === 0 ? left.id.localeCompare(right.id) : time;
+}
+
+function compareRecoveryItems(left: IntegrationPolicyReceiptRecoveryItem, right: IntegrationPolicyReceiptRecoveryItem): number {
+  const status = recoveryStatusWeight(left.recoveryStatus) - recoveryStatusWeight(right.recoveryStatus);
+  if (status !== 0) {
+    return status;
+  }
+  const policy = comparePolicyIds(left.policyId, right.policyId);
+  if (policy !== 0) {
+    return policy;
+  }
+  return (left.recordId ?? "").localeCompare(right.recordId ?? "");
+}
+
+function recoveryStatusWeight(status: IntegrationPolicyReceiptRecoveryStatus): number {
+  if (status === "missing-receipt") {
+    return 0;
+  }
+  if (status === "blocked") {
+    return 1;
+  }
+  if (status === "needs-policy") {
+    return 2;
+  }
+  if (status === "stale-receipt") {
+    return 3;
+  }
+  return 4;
+}
+
+function priorityForReceiptRecoveryStatus(status: IntegrationPolicyReceiptRecoveryStatus): IntegrationPolicyReceiptRecoveryPriority {
+  if (status === "missing-receipt" || status === "blocked") {
+    return "P0";
+  }
+  if (status === "needs-policy") {
+    return "P1";
+  }
+  return "P2";
+}
+
+function unique(values: string[]): string[] {
+  return Array.from(new Set(values));
 }
 
 function createReceiptBundleNextActions(

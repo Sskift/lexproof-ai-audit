@@ -476,11 +476,12 @@ describe("demo readiness", () => {
             expect.objectContaining({ id: "counsel-pack-export-recovery", status: "ready", artifactHash: "f".repeat(64) }),
             expect.objectContaining({ id: "audit-log-export", status: "ready", artifactHash: "d".repeat(64) }),
             expect.objectContaining({ id: "integration-policy-evaluations", status: "ready" }),
-            expect.objectContaining({ id: "integration-policy-receipt-bundle", status: "ready", artifactHash: "7".repeat(64) })
+            expect.objectContaining({ id: "integration-policy-receipt-bundle", status: "ready", artifactHash: "7".repeat(64) }),
+            expect.objectContaining({ id: "integration-policy-receipt-recovery", status: "ready", artifactHash: "2".repeat(64) })
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(19);
+      expect(apiCheck.routeChecks).toHaveLength(20);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -527,6 +528,10 @@ describe("demo readiness", () => {
     });
     expect(fetcher).toHaveBeenCalledWith(
       "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle",
+      { method: "GET" }
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/recovery",
       { method: "GET" }
     );
     expect(preflight).toEqual({
@@ -596,6 +601,12 @@ describe("demo readiness", () => {
           detail: "Integration Policy receipt bundle route is reachable with missing-policy metadata for an empty demo workspace."
         }),
         expect.objectContaining({
+          id: "integration-policy-receipt-recovery",
+          status: "ready",
+          artifactHash: "2".repeat(64),
+          detail: "Integration Policy receipt recovery route is reachable with packet hash metadata for an empty demo workspace."
+        }),
+        expect.objectContaining({
           id: "counsel-pack-export-recovery",
           status: "ready",
           artifactHash: "f".repeat(64),
@@ -636,7 +647,7 @@ describe("demo readiness", () => {
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(19);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(20);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -727,6 +738,11 @@ describe("demo readiness", () => {
     {
       label: "Audit Log export",
       path: "/api/workspaces/demo-smoke-preflight/audit-log/export",
+      updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
+    },
+    {
+      label: "Integration Policy receipt recovery",
+      path: "/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/recovery",
       updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
     }
   ])("fails API preflight when $label next actions are an empty array", async ({ label, path, updatePayload }) => {
@@ -1148,6 +1164,40 @@ describe("demo readiness", () => {
     );
   });
 
+  it("fails API preflight when the Integration Policy receipt recovery next actions are empty", async () => {
+    const fetcher = vi.fn(async (url: RequestInfo | URL) => {
+      const value = String(url);
+      if (value.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/recovery")) {
+        const payload = createDemoApiPayload(value);
+        if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+          throw new Error("Expected demo Integration Policy receipt recovery payload.");
+        }
+        return createJsonResponse(
+          {
+            ...payload,
+            nextActions: ["Evaluate object storage, document parser, chain anchor, and GRC destination policies before any adapter enablement review.", "   "]
+          },
+          200
+        );
+      }
+      return createJsonResponse(createDemoApiPayload(value), 200);
+    }) as unknown as typeof fetch;
+
+    const preflight = await checkDemoApiPreflight({
+      apiBaseUrl: "http://127.0.0.1:8787",
+      checkedAt: "2026-07-01T00:00:00.000Z",
+      fetcher
+    });
+
+    expect(preflight.status).toBe("failed");
+    if (preflight.status !== "failed") {
+      throw new Error("Expected failed API preflight.");
+    }
+    expect(preflight.error).toBe(
+      "Integration Policy receipt recovery: Integration Policy receipt recovery response is missing expected metadata."
+    );
+  });
+
   it("sanitizes failed API preflight errors without leaking credential material", async () => {
     const fetcher = vi.fn(async () =>
       createJsonResponse({ error: "Server rejected sk-live-abcdef1234567890abcdef1234567890 in demo metadata." }, 500)
@@ -1184,7 +1234,7 @@ function createDemoApiPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 18,
+      routeFamilyCount: 19,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -1520,6 +1570,107 @@ function createDemoApiPayload(url: string): unknown {
       nextActions: ["Evaluate server integration policies before any adapter enablement review."],
       records: [],
       notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/recovery")) {
+    return {
+      packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      status: "empty",
+      recordCount: 0,
+      policyCount: 0,
+      externalEnablementAllowed: false,
+      summary: {
+        totalRecoveryCount: 4,
+        missingPolicyCount: 4,
+        blockedCount: 0,
+        needsPolicyCount: 0,
+        staleReceiptCount: 0,
+        readyPolicyCount: 0,
+        latestReceiptCount: 0,
+        nextAction: "Evaluate every missing server integration policy before any adapter enablement review.",
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+      },
+      items: [
+        {
+          itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+          policyId: "object-storage",
+          policyLabel: "Object Storage Policy",
+          recordId: null,
+          supersededByRecordId: null,
+          reportVersion: null,
+          overallStatus: "missing",
+          reportHash: null,
+          contextHash: null,
+          policyHash: null,
+          externalCapabilityAllowed: false,
+          externalCapabilityStatus: "missing-server-receipt",
+          recoveryStatus: "missing-receipt",
+          priority: "P0",
+          recoveryAction: "Evaluate Object Storage Policy on the server before any adapter enablement review.",
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+        },
+        {
+          itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+          policyId: "document-parser",
+          policyLabel: "Document Parser Policy",
+          recordId: null,
+          supersededByRecordId: null,
+          reportVersion: null,
+          overallStatus: "missing",
+          reportHash: null,
+          contextHash: null,
+          policyHash: null,
+          externalCapabilityAllowed: false,
+          externalCapabilityStatus: "missing-server-receipt",
+          recoveryStatus: "missing-receipt",
+          priority: "P0",
+          recoveryAction: "Evaluate Document Parser Policy on the server before any adapter enablement review.",
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+        },
+        {
+          itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+          policyId: "chain-anchor",
+          policyLabel: "Chain Anchor Policy",
+          recordId: null,
+          supersededByRecordId: null,
+          reportVersion: null,
+          overallStatus: "missing",
+          reportHash: null,
+          contextHash: null,
+          policyHash: null,
+          externalCapabilityAllowed: false,
+          externalCapabilityStatus: "missing-server-receipt",
+          recoveryStatus: "missing-receipt",
+          priority: "P0",
+          recoveryAction: "Evaluate Chain Anchor Policy on the server before any adapter enablement review.",
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+        },
+        {
+          itemVersion: "lexproof-integration-policy-receipt-recovery-item-v1",
+          policyId: "grc-destination",
+          policyLabel: "GRC Destination Policy",
+          recordId: null,
+          supersededByRecordId: null,
+          reportVersion: null,
+          overallStatus: "missing",
+          reportHash: null,
+          contextHash: null,
+          policyHash: null,
+          externalCapabilityAllowed: false,
+          externalCapabilityStatus: "missing-server-receipt",
+          recoveryStatus: "missing-receipt",
+          priority: "P0",
+          recoveryAction: "Evaluate GRC Destination Policy on the server before any adapter enablement review.",
+          notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery items are audit preparation metadata only."
+        }
+      ],
+      nextActions: [
+        "Evaluate object storage, document parser, chain anchor, and GRC destination policies before any adapter enablement review."
+      ],
+      packetHash: "2".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
     };
   }
   if (

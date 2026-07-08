@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createObjectStoragePolicyReport } from "./objectStoragePolicy";
 import {
   createIntegrationPolicyEvaluationRecord,
   createIntegrationPolicyEvaluationReceiptBundle,
+  createIntegrationPolicyReceiptRecoveryPacket,
+  downloadIntegrationPolicyReceiptRecoveryPacketJson,
   exportIntegrationPolicyEvaluationReceiptBundleJson,
+  exportIntegrationPolicyReceiptRecoveryPacketJson,
   isIntegrationPolicyEvaluationRecord
 } from "./integrationPolicyEvaluation";
 import type { IntegrationPolicyEvaluationRecord } from "./integrationPolicyEvaluation";
@@ -231,5 +234,184 @@ describe("integration policy evaluation records", () => {
     expect(json).not.toContain("sk-live");
     expect(json).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(json.toLowerCase()).not.toContain("raw kyc");
+  });
+
+  it("creates a stable receipt recovery packet for missing, blocked, and stale receipts", async () => {
+    const olderObjectStorageRecord = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "workspace-integration-policy",
+      policyId: "object-storage",
+      report,
+      context: { workspaceId: "workspace-integration-policy", manifestHash: "a".repeat(64) },
+      policy: { policyOwner: "Storage owner", retentionDays: 365 },
+      evaluatorId: "Storage owner",
+      createdAt: "2026-07-03T00:00:00.000Z"
+    });
+    const latestObjectStorageRecord = await createIntegrationPolicyEvaluationRecord({
+      workspaceId: "workspace-integration-policy",
+      policyId: "object-storage",
+      report,
+      context: { workspaceId: "workspace-integration-policy", manifestHash: "b".repeat(64) },
+      policy: { policyOwner: "Storage owner", retentionDays: 180 },
+      evaluatorId: "Storage owner",
+      createdAt: "2026-07-03T00:03:00.000Z"
+    });
+    const blockedParserRecord: IntegrationPolicyEvaluationRecord = {
+      recordVersion: "lexproof-integration-policy-evaluation-record-v1",
+      id: "integration-policy-evaluation-parser-blocked",
+      workspaceId: "workspace-integration-policy",
+      policyId: "document-parser",
+      reportVersion: "lexproof-document-parser-policy-v1",
+      overallStatus: "blocked",
+      approvedControlCount: 2,
+      requiredControlCount: 9,
+      externalCapabilityAllowed: false,
+      externalCapabilityStatus: "blocked-by-metadata",
+      reportHash: "c".repeat(64),
+      contextHash: "d".repeat(64),
+      policyHash: "e".repeat(64),
+      evaluatorId: "Parser owner",
+      source: "server",
+      createdAt: "2026-07-03T00:02:00.000Z",
+      nextActions: [
+        "Remove private key 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa and raw KYC before parser review."
+      ],
+      notLegalAdviceBoundary: "Not legal advice. Integration policy evaluation records are audit preparation metadata only."
+    };
+
+    const first = await createIntegrationPolicyReceiptRecoveryPacket({
+      workspaceId: "workspace-integration-policy",
+      records: [olderObjectStorageRecord, latestObjectStorageRecord, blockedParserRecord],
+      generatedAt: "2026-07-03T00:04:00.000Z"
+    });
+    const second = await createIntegrationPolicyReceiptRecoveryPacket({
+      workspaceId: "workspace-integration-policy",
+      records: [blockedParserRecord, latestObjectStorageRecord, olderObjectStorageRecord],
+      generatedAt: "2026-07-03T00:05:00.000Z"
+    });
+    const json = exportIntegrationPolicyReceiptRecoveryPacketJson(first);
+
+    expect(first).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+        workspaceId: "workspace-integration-policy",
+        status: "missing-receipts",
+        recordCount: 3,
+        policyCount: 2,
+        externalEnablementAllowed: false,
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(first.summary).toEqual(
+      expect.objectContaining({
+        totalRecoveryCount: 4,
+        missingPolicyCount: 2,
+        blockedCount: 1,
+        needsPolicyCount: 0,
+        staleReceiptCount: 1,
+        readyPolicyCount: 1,
+        latestReceiptCount: 2,
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(first.packetHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(first.packetHash).toBe(second.packetHash);
+    expect(first.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          policyId: "chain-anchor",
+          recordId: null,
+          recoveryStatus: "missing-receipt",
+          priority: "P0"
+        }),
+        expect.objectContaining({
+          policyId: "document-parser",
+          recordId: "integration-policy-evaluation-parser-blocked",
+          recoveryStatus: "blocked",
+          priority: "P0"
+        }),
+        expect.objectContaining({
+          policyId: "object-storage",
+          recordId: olderObjectStorageRecord.id,
+          supersededByRecordId: latestObjectStorageRecord.id,
+          recoveryStatus: "stale-receipt",
+          priority: "P2"
+        }),
+        expect.objectContaining({
+          policyId: "object-storage",
+          recordId: latestObjectStorageRecord.id,
+          recoveryStatus: "ready",
+          priority: "P2"
+        })
+      ])
+    );
+    expect(first.nextActions.every((action) => action.trim().length > 0)).toBe(true);
+    expect(json).toContain("lexproof-integration-policy-receipt-recovery-packet-v1");
+    expect(json).toContain("[redacted-private-key-or-wallet-material]");
+    expect(json).toContain("[redacted-sensitive-material]");
+    expect(json).not.toContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    expect(json.toLowerCase()).not.toContain("raw kyc");
+  });
+
+  it("creates an empty recovery packet that still lists missing integration policy receipts", async () => {
+    const packet = await createIntegrationPolicyReceiptRecoveryPacket({
+      workspaceId: "workspace-empty-policy",
+      records: [],
+      generatedAt: "2026-07-03T00:00:00.000Z"
+    });
+
+    expect(packet).toEqual(
+      expect.objectContaining({
+        status: "empty",
+        recordCount: 0,
+        policyCount: 0,
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/)
+      })
+    );
+    expect(packet.summary).toMatchObject({
+      totalRecoveryCount: 4,
+      missingPolicyCount: 4,
+      latestReceiptCount: 0
+    });
+    expect(packet.items).toHaveLength(4);
+    expect(packet.items.every((item) => item.recoveryStatus === "missing-receipt")).toBe(true);
+    expect(packet.nextActions).toEqual([
+      "Evaluate object storage, document parser, chain anchor, and GRC destination policies before any adapter enablement review."
+    ]);
+  });
+
+  it("downloads receipt recovery packet JSON in the browser", async () => {
+    const packet = await createIntegrationPolicyReceiptRecoveryPacket({
+      workspaceId: "workspace-download-policy",
+      records: [],
+      generatedAt: "2026-07-03T00:00:00.000Z"
+    });
+    const click = vi.fn();
+    const remove = vi.fn();
+    const appendChild = vi.fn();
+    const createElement = vi.fn(() => ({
+      href: "",
+      download: "",
+      style: { display: "" },
+      click,
+      remove
+    }));
+    const createObjectURL = vi.fn(() => "blob:integration-policy-recovery");
+    const revokeObjectURL = vi.fn();
+
+    vi.stubGlobal("Blob", Blob);
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+    vi.stubGlobal("document", { body: { appendChild }, createElement });
+
+    try {
+      downloadIntegrationPolicyReceiptRecoveryPacketJson("integration-policy-recovery", packet);
+
+      expect(createElement).toHaveBeenCalledWith("a");
+      expect(appendChild).toHaveBeenCalled();
+      expect(click).toHaveBeenCalled();
+      expect(remove).toHaveBeenCalled();
+      expect(revokeObjectURL).toHaveBeenCalledWith("blob:integration-policy-recovery");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

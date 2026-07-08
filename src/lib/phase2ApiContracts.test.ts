@@ -254,6 +254,16 @@ describe("Phase 2 backend API contracts", () => {
     expect(routes).toContainEqual(
       expect.objectContaining({
         method: "GET",
+        path: "/api/workspaces/:workspaceId/integration-policy-evaluations/recovery",
+        domain: "integrations",
+        requestContract: "IntegrationPolicyReceiptRecoveryRequest",
+        responseContract: "IntegrationPolicyReceiptRecoveryPacket",
+        implemented: true
+      })
+    );
+    expect(routes).toContainEqual(
+      expect.objectContaining({
+        method: "GET",
         path: "/api/workspaces/:workspaceId/reviews/queue",
         domain: "human-review",
         implemented: true,

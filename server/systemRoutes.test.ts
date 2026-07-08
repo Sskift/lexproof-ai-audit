@@ -92,10 +92,14 @@ describe("System route module", () => {
         expect.objectContaining({
           id: "integration-policy-receipt-bundle",
           path: "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle"
+        }),
+        expect.objectContaining({
+          id: "integration-policy-receipt-recovery",
+          path: "/api/workspaces/:workspaceId/integration-policy-evaluations/recovery"
         })
       ])
     );
-    expect(payload.routeFamilyCount).toBe(18);
+    expect(payload.routeFamilyCount).toBe(19);
     expect(payload.implementedRoutes).toEqual(expect.arrayContaining([expect.objectContaining({ path: "/api/preflight" })]));
     expect(JSON.stringify(payload)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
 

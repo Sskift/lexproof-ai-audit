@@ -1939,6 +1939,10 @@ describe("App", () => {
         "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/bundle",
         { method: "GET" }
       );
+      expect(fetchMock).toHaveBeenCalledWith(
+        "http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/recovery",
+        { method: "GET" }
+      );
 
       await act(async () => {
         fireEvent.click(smokeChecklist.getByRole("button", { name: /Download Demo Smoke Checklist JSON/i }));
@@ -1986,7 +1990,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 19/19 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 20/20 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -6883,7 +6887,7 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 18,
+      routeFamilyCount: 19,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -7219,6 +7223,34 @@ function createDemoApiMockPayload(url: string): unknown {
       nextActions: ["Evaluate server integration policies before any adapter enablement review."],
       records: [],
       notLegalAdviceBoundary: "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+    };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/integration-policy-evaluations/recovery")) {
+    return {
+      packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+      workspaceId: "demo-smoke-preflight",
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      status: "empty",
+      recordCount: 0,
+      policyCount: 0,
+      externalEnablementAllowed: false,
+      summary: {
+        totalRecoveryCount: 4,
+        missingPolicyCount: 4,
+        blockedCount: 0,
+        needsPolicyCount: 0,
+        staleReceiptCount: 0,
+        readyPolicyCount: 0,
+        latestReceiptCount: 0,
+        nextAction: "Evaluate every missing server integration policy before any adapter enablement review.",
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+      },
+      items: [],
+      nextActions: [
+        "Evaluate object storage, document parser, chain anchor, and GRC destination policies before any adapter enablement review."
+      ],
+      packetHash: "2".repeat(64),
+      notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
     };
   }
   if (

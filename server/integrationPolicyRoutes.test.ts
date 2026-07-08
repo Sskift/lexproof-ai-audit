@@ -281,6 +281,55 @@ describe("integration policy route module", () => {
     expect(bundleResponse.body).not.toContain("webhookSecret");
     expect(bundleResponse.body).not.toContain("sk-live-abcdef");
 
+    const recoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-policy-receipts/integration-policy-evaluations/recovery"
+    });
+    expect(recoveryResponse.statusCode).toBe(200);
+    expect(recoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-integration-policy-receipt-recovery-packet-v1",
+        workspaceId: "workspace-policy-receipts",
+        status: "missing-receipts",
+        recordCount: 1,
+        policyCount: 1,
+        externalEnablementAllowed: false,
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(recoveryResponse.json().summary).toEqual(
+      expect.objectContaining({
+        totalRecoveryCount: 3,
+        missingPolicyCount: 3,
+        blockedCount: 0,
+        needsPolicyCount: 0,
+        staleReceiptCount: 0,
+        readyPolicyCount: 1,
+        latestReceiptCount: 1,
+        notLegalAdviceBoundary: "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+      })
+    );
+    expect(recoveryResponse.json().items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          policyId: "object-storage",
+          recordId: null,
+          recoveryStatus: "missing-receipt",
+          priority: "P0"
+        }),
+        expect.objectContaining({
+          policyId: "grc-destination",
+          recordId: response.json().evaluationRecord.id,
+          recoveryStatus: "ready",
+          priority: "P2"
+        })
+      ])
+    );
+    expect(recoveryResponse.body).not.toContain("raw ticket body");
+    expect(recoveryResponse.body).not.toContain("webhookSecret");
+    expect(recoveryResponse.body).not.toContain("sk-live-abcdef");
+
     expect(await repository.listAuditLogRecords("workspace-policy-receipts")).toEqual([
       expect.objectContaining({
         action: "integration-policy.evaluated",

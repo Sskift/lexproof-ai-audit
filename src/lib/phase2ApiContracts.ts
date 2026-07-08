@@ -218,6 +218,14 @@ export function listPhase2ApiRoutes(): Phase2ApiRoute[] {
       true
     ),
     createRoute(
+      "GET",
+      "/api/workspaces/:workspaceId/integration-policy-evaluations/recovery",
+      "integrations",
+      "IntegrationPolicyReceiptRecoveryRequest",
+      "IntegrationPolicyReceiptRecoveryPacket",
+      true
+    ),
+    createRoute(
       "POST",
       "/api/workspaces/:workspaceId/exports/counsel-pack",
       "exports",

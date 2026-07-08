@@ -180,6 +180,14 @@ const apiRoutePreflightSpecs = [
     validate: isDemoIntegrationPolicyReceiptBundlePayload,
     extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.bundleHash) : undefined),
     readyDetail: "Integration Policy receipt bundle route is reachable with missing-policy metadata for an empty demo workspace."
+  },
+  {
+    id: "integration-policy-receipt-recovery",
+    label: "Integration Policy receipt recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/integration-policy-evaluations/recovery`,
+    validate: isDemoIntegrationPolicyReceiptRecoveryPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Integration Policy receipt recovery route is reachable with packet hash metadata for an empty demo workspace."
   }
 ];
 
@@ -1076,6 +1084,52 @@ function isDemoIntegrationPolicyReceiptBundlePayload(payload) {
     Array.isArray(payload.records) &&
     payload.records.length === payload.recordCount &&
     payload.notLegalAdviceBoundary === "Not legal advice. Integration policy receipt bundles are audit preparation metadata only."
+  );
+}
+
+function isDemoIntegrationPolicyReceiptRecoveryPayload(payload) {
+  const summary = isRecord(payload) ? payload.summary : null;
+
+  return (
+    isRecord(payload) &&
+    payload.packetVersion === "lexproof-integration-policy-receipt-recovery-packet-v1" &&
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    isSha256(payload.packetHash) &&
+    isIntegrationPolicyReceiptRecoveryPacketStatus(payload.status) &&
+    Number.isInteger(payload.recordCount) &&
+    payload.recordCount >= 0 &&
+    Number.isInteger(payload.policyCount) &&
+    payload.policyCount >= 0 &&
+    payload.externalEnablementAllowed === false &&
+    isRecord(summary) &&
+    isNonNegativeInteger(summary.totalRecoveryCount) &&
+    isNonNegativeInteger(summary.missingPolicyCount) &&
+    isNonNegativeInteger(summary.blockedCount) &&
+    isNonNegativeInteger(summary.needsPolicyCount) &&
+    isNonNegativeInteger(summary.staleReceiptCount) &&
+    isNonNegativeInteger(summary.readyPolicyCount) &&
+    isNonNegativeInteger(summary.latestReceiptCount) &&
+    typeof summary.nextAction === "string" &&
+    summary.nextAction.trim().length > 0 &&
+    summary.notLegalAdviceBoundary === "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only." &&
+    Array.isArray(payload.items) &&
+    payload.items.length >= payload.policyCount &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    payload.notLegalAdviceBoundary === "Not legal advice. Integration policy receipt recovery packets are audit preparation metadata only."
+  );
+}
+
+function isIntegrationPolicyReceiptRecoveryPacketStatus(value) {
+  return (
+    value === "empty" ||
+    value === "missing-receipts" ||
+    value === "blocked" ||
+    value === "needs-policy" ||
+    value === "stale-receipts" ||
+    value === "ready"
   );
 }
 

@@ -23,6 +23,7 @@ import {
 import {
   createIntegrationPolicyEvaluationReceiptBundle,
   createIntegrationPolicyEvaluationRecord,
+  createIntegrationPolicyReceiptRecoveryPacket,
   type IntegrationPolicyEvaluationReport,
   type IntegrationPolicyEvaluationRecord,
   type IntegrationPolicyId
@@ -99,6 +100,15 @@ export function registerIntegrationPolicyRoutes(server: FastifyInstance, options
       "/api/workspaces/:workspaceId/integration-policy-evaluations/bundle",
       async (request) =>
         createIntegrationPolicyEvaluationReceiptBundle({
+          workspaceId: request.params.workspaceId,
+          records: (await options.repository?.listIntegrationPolicyEvaluationRecords(request.params.workspaceId)) ?? []
+        })
+    );
+
+    server.get<{ Params: { workspaceId: string } }>(
+      "/api/workspaces/:workspaceId/integration-policy-evaluations/recovery",
+      async (request) =>
+        createIntegrationPolicyReceiptRecoveryPacket({
           workspaceId: request.params.workspaceId,
           records: (await options.repository?.listIntegrationPolicyEvaluationRecords(request.params.workspaceId)) ?? []
         })

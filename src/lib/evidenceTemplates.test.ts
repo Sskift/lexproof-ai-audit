@@ -95,6 +95,9 @@ describe("evidence templates", () => {
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
     const investorEligibilityReview = items.find((item) => item.label === "Investor eligibility review");
     const walletSanctionsControls = items.find((item) => item.label === "Wallet sanctions screening and escalation controls");
+    const cvcTransferControls = items.find(
+      (item) => item.label === "US FinCEN CVC MSB and BSA transfer control register"
+    );
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -137,6 +140,10 @@ describe("evidence templates", () => {
     expect(walletSanctionsControls?.content).toContain("OFAC sanctions screening");
     expect(walletSanctionsControls?.content).toContain("blocked property escalation");
     expect(walletSanctionsControls?.content).toContain("without raw KYC or wallet secrets");
+    expect(cvcTransferControls?.content).toContain("FinCEN CVC business model");
+    expect(cvcTransferControls?.content).toContain("MSB registration handoff");
+    expect(cvcTransferControls?.content).toContain("Travel Rule transmittal recordkeeping");
+    expect(cvcTransferControls?.content).toContain("without raw KYC or full wallet histories");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

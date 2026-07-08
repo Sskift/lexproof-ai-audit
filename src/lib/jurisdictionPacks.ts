@@ -137,6 +137,33 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-fincen-cvc-msb-bsa-transfer-control",
+        title: "FinCEN CVC MSB and BSA transfer-recordkeeping control",
+        owner: "Compliance",
+        priority: "P0",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-fincen-cvc-msb-bsa-travel-rule",
+          "fincen",
+          "cvc",
+          "convertible virtual currency",
+          "business model",
+          "hosted wallet",
+          "money transmission",
+          "msb",
+          "aml program",
+          "compliance officer",
+          "transaction monitoring",
+          "sar and ctr",
+          "travel rule",
+          "transmittal recordkeeping",
+          "originator",
+          "beneficiary",
+          "retention owner",
+          "reviewer owner"
+        ]
+      },
+      {
         id: "us-custody-control",
         title: "Custody and wallet authority control",
         owner: "Compliance",

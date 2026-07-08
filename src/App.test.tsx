@@ -1986,7 +1986,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 17/17 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 18/18 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -6883,7 +6883,7 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 16,
+      routeFamilyCount: 17,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -6991,6 +6991,9 @@ function createDemoApiMockPayload(url: string): unknown {
       nextActions: ["Keep external provider proxying disabled until provider allowlist and egress logging are reviewed."],
       notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
     };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/model-runs")) {
+    return [];
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/model-runs/recovery")) {
     return {

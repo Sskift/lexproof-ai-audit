@@ -31,6 +31,7 @@ export type DemoApiRouteCheck = {
     | "api-preflight-report"
     | "model-gateway-adapters"
     | "model-gateway-provider-policy"
+    | "model-gateway-run-ledger"
     | "model-gateway-run-recovery"
     | "evidence-vault-manifest"
     | "evidence-vault-lineage-digest"
@@ -192,6 +193,13 @@ const apiRoutePreflightSpecs: Array<{
     path: "/api/model-gateway/provider-policy",
     validate: isDemoModelGatewayProviderPolicyPayload,
     readyDetail: "Model Gateway provider policy report is reachable with disabled external adapters and recovery metadata."
+  },
+  {
+    id: "model-gateway-run-ledger",
+    label: "Server Model Run Ledger",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/model-runs`,
+    validate: Array.isArray,
+    readyDetail: "Server Model Run Ledger route is reachable for persisted metadata checks."
   },
   {
     id: "model-gateway-run-recovery",

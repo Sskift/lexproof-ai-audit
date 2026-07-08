@@ -62,6 +62,10 @@ describe("System route module", () => {
       expect.arrayContaining([
         expect.objectContaining({ id: "model-gateway-provider-policy", path: "/api/model-gateway/provider-policy" }),
         expect.objectContaining({
+          id: "model-gateway-run-ledger",
+          path: "/api/workspaces/:workspaceId/model-runs"
+        }),
+        expect.objectContaining({
           id: "model-gateway-run-recovery",
           path: "/api/workspaces/:workspaceId/model-runs/recovery"
         }),
@@ -87,7 +91,7 @@ describe("System route module", () => {
         })
       ])
     );
-    expect(payload.routeFamilyCount).toBe(16);
+    expect(payload.routeFamilyCount).toBe(17);
     expect(payload.implementedRoutes).toEqual(expect.arrayContaining([expect.objectContaining({ path: "/api/preflight" })]));
     expect(JSON.stringify(payload)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
 

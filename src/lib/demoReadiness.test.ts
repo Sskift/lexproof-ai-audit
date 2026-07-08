@@ -466,6 +466,7 @@ describe("demo readiness", () => {
               status: "ready",
               detail: "Model Gateway provider policy report is reachable with disabled external adapters and recovery metadata."
             }),
+            expect.objectContaining({ id: "model-gateway-run-ledger", status: "ready" }),
             expect.objectContaining({ id: "model-gateway-run-recovery", status: "ready", artifactHash: "6".repeat(64) }),
             expect.objectContaining({ id: "evidence-vault-manifest", status: "ready", artifactHash: "c".repeat(64) }),
             expect.objectContaining({ id: "evidence-vault-lineage-digest", status: "ready", artifactHash: "8".repeat(64) }),
@@ -478,7 +479,7 @@ describe("demo readiness", () => {
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(17);
+      expect(apiCheck.routeChecks).toHaveLength(18);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -499,6 +500,9 @@ describe("demo readiness", () => {
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/health", { method: "GET" });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/preflight", { method: "GET" });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/model-gateway/adapters", { method: "GET" });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/model-runs", {
+      method: "GET"
+    });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/model-runs/recovery", {
       method: "GET"
     });
@@ -561,6 +565,11 @@ describe("demo readiness", () => {
           detail: "Model Gateway provider policy report is reachable with disabled external adapters and recovery metadata."
         }),
         expect.objectContaining({
+          id: "model-gateway-run-ledger",
+          status: "ready",
+          detail: "Server Model Run Ledger route is reachable for persisted metadata checks."
+        }),
+        expect.objectContaining({
           id: "model-gateway-run-recovery",
           status: "ready",
           artifactHash: "6".repeat(64),
@@ -617,7 +626,7 @@ describe("demo readiness", () => {
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(17);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(18);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -1160,7 +1169,7 @@ function createDemoApiPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 16,
+      routeFamilyCount: 17,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -1268,6 +1277,9 @@ function createDemoApiPayload(url: string): unknown {
       nextActions: ["Keep external provider proxying disabled until provider allowlist and egress logging are reviewed."],
       notLegalAdviceBoundary: "Not legal advice. Model Gateway provider policy is audit preparation metadata only."
     };
+  }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/model-runs")) {
+    return [];
   }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/model-runs/recovery")) {
     return {

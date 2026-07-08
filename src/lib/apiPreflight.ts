@@ -20,6 +20,7 @@ export type ApiPreflightCapability = {
 export type ApiPreflightRouteFamilyId =
   | "model-gateway-adapters"
   | "model-gateway-provider-policy"
+  | "model-gateway-run-ledger"
   | "model-gateway-run-recovery"
   | "evidence-vault-manifest"
   | "evidence-vault-lineage-digest"
@@ -141,6 +142,13 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     path: "/api/model-gateway/provider-policy",
     responseContract: "ModelGatewayProviderPolicyReport",
     sideEffectBoundary: "Provider policy metadata only; disabled external providers stay disabled."
+  }),
+  createRouteFamily({
+    id: "model-gateway-run-ledger",
+    label: "Server Model Run Ledger",
+    path: "/api/workspaces/:workspaceId/model-runs",
+    responseContract: "ModelGatewayRunSummary[]",
+    sideEffectBoundary: "Run ledger returns persisted run hashes, retry state, and human-review status only."
   }),
   createRouteFamily({
     id: "model-gateway-run-recovery",

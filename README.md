@@ -694,7 +694,7 @@ npm run build:server
 npm run start:api
 ```
 
-Once the API is running, the judge smoke CLI checks required npm scripts, demo files, screenshot assets, `/api/health`, `/api/preflight`, and safe GET route families for Model Gateway, Evidence Vault manifest bundle hashes plus lineage digest hashes, Human Review queue plus recovery packet metadata, Source Review Ledger packet hashes plus non-empty next actions, Source Approval Queue packet hashes plus non-empty next actions, Counsel Pack exports plus export recovery packets, Audit Log export integrity metadata and next actions, and Integration Policy Evaluation receipts plus receipt bundle metadata and non-empty next actions without using private credentials:
+Once the API is running, the judge smoke CLI checks required npm scripts, demo files, screenshot assets, `/api/health`, `/api/preflight`, and safe GET route families for Model Gateway adapters, provider policy, Server Model Run Ledger, and run recovery, Evidence Vault manifest bundle hashes plus lineage digest hashes, Human Review queue plus recovery packet metadata, Source Review Ledger packet hashes plus non-empty next actions, Source Approval Queue packet hashes plus non-empty next actions, Counsel Pack exports plus export recovery packets, Audit Log export integrity metadata and next actions, and Integration Policy Evaluation receipts plus receipt bundle metadata and non-empty next actions without using private credentials:
 
 ```bash
 DEMO_API_BASE_URL=http://127.0.0.1:8787 npm run demo:smoke

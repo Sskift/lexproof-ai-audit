@@ -164,6 +164,32 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-nydfs-bitlicense-custody-customer-protection-control",
+        title: "NYDFS BitLicense and custody customer-protection control",
+        owner: "Compliance",
+        priority: "P0",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "control-us-nydfs-bitlicense-custody-customer-protection",
+          "new york",
+          "nydfs",
+          "bitlicense",
+          "limited purpose trust company",
+          "nmls",
+          "money transmission",
+          "customer virtual currency segregation",
+          "omnibus wallet",
+          "per-customer wallet",
+          "internal ledger",
+          "reconciliation",
+          "beneficial interest disclosure",
+          "sub-custody approval",
+          "books and records",
+          "no proprietary use",
+          "reviewer owner"
+        ]
+      },
+      {
         id: "us-custody-control",
         title: "Custody and wallet authority control",
         owner: "Compliance",

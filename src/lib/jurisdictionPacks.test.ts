@@ -157,6 +157,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-nydfs-bitlicense-custody-customer-protection-control",
+          title: "NYDFS BitLicense and custody customer-protection control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-custody-control",
           title: "Custody and wallet authority control",
           status: "needs-evidence"
@@ -542,6 +547,37 @@ describe("createJurisdictionPacks", () => {
       ])
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|full wallet histories|wallet secrets|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US NYDFS BitLicense and custody customer-protection control ready from verified RWA custody evidence only", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-rwa-nydfs-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-nydfs-ready",
+      jurisdictions: ["United States"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [usPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-nydfs-bitlicense-custody-customer-protection-control",
+          title: "NYDFS BitLicense and custody customer-protection control",
+          owner: "Compliance",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["New York NYDFS BitLicense and custody customer-protection register"]
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

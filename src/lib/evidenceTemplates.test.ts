@@ -98,6 +98,9 @@ describe("evidence templates", () => {
     const cvcTransferControls = items.find(
       (item) => item.label === "US FinCEN CVC MSB and BSA transfer control register"
     );
+    const nydfsCustodyControls = items.find(
+      (item) => item.label === "New York NYDFS BitLicense and custody customer-protection register"
+    );
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -144,6 +147,10 @@ describe("evidence templates", () => {
     expect(cvcTransferControls?.content).toContain("MSB registration handoff");
     expect(cvcTransferControls?.content).toContain("Travel Rule transmittal recordkeeping");
     expect(cvcTransferControls?.content).toContain("without raw KYC or full wallet histories");
+    expect(nydfsCustodyControls?.content).toContain("New York virtual currency business activity");
+    expect(nydfsCustodyControls?.content).toContain("BitLicense or limited purpose trust company route");
+    expect(nydfsCustodyControls?.content).toContain("customer virtual currency segregation");
+    expect(nydfsCustodyControls?.content).toContain("no raw KYC, wallet secrets, customer records, or personal data");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

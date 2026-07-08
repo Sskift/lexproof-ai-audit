@@ -94,6 +94,7 @@ describe("evidence templates", () => {
     const items = createEvidenceItemsFromTemplate("tokenized-yield-rwa");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
     const investorEligibilityReview = items.find((item) => item.label === "Investor eligibility review");
+    const walletSanctionsControls = items.find((item) => item.label === "Wallet sanctions screening and escalation controls");
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -133,6 +134,9 @@ describe("evidence templates", () => {
     expect(investorEligibilityReview?.content).toContain("Rule 506(c)");
     expect(investorEligibilityReview?.content).toContain("accredited investor verification");
     expect(investorEligibilityReview?.content).toContain("without customer identity records");
+    expect(walletSanctionsControls?.content).toContain("OFAC sanctions screening");
+    expect(walletSanctionsControls?.content).toContain("blocked property escalation");
+    expect(walletSanctionsControls?.content).toContain("without raw KYC or wallet secrets");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

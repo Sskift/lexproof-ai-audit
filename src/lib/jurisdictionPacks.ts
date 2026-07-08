@@ -117,6 +117,26 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-ofac-virtual-currency-sanctions-control",
+        title: "OFAC virtual-currency sanctions screening and blocked-property control",
+        owner: "Compliance",
+        priority: "P0",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-ofac-virtual-currency-sanctions-compliance",
+          "ofac",
+          "sanctions screening",
+          "wallet screening",
+          "wallet risk",
+          "geolocation",
+          "blocked property",
+          "reporting",
+          "recordkeeping",
+          "escalation",
+          "reviewer owner"
+        ]
+      },
+      {
         id: "us-custody-control",
         title: "Custody and wallet authority control",
         owner: "Compliance",

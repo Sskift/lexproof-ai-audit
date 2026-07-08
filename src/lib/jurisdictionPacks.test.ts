@@ -147,6 +147,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-ofac-virtual-currency-sanctions-control",
+          title: "OFAC virtual-currency sanctions screening and blocked-property control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-custody-control",
           title: "Custody and wallet authority control",
           status: "needs-evidence"
@@ -470,6 +475,37 @@ describe("createJurisdictionPacks", () => {
       ])
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|identity files|personal financial records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US OFAC virtual-currency sanctions control ready from verified RWA wallet-screening evidence only", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `us-rwa-ofac-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-ofac-ready",
+      jurisdictions: ["United States"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [usPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-ofac-virtual-currency-sanctions-control",
+          title: "OFAC virtual-currency sanctions screening and blocked-property control",
+          owner: "Compliance",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["Wallet sanctions screening and escalation controls"]
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

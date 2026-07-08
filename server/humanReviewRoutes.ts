@@ -4,7 +4,11 @@ import {
   createEvidenceVaultStatusEffectFromHumanReview,
   createModelGatewayReviewStatusEffectFromHumanReview
 } from "../src/lib/serverHumanReviewEffects.js";
-import { createServerHumanReviewQueueView, type ServerHumanReviewQueueFilters } from "../src/lib/serverHumanReviewQueue.js";
+import {
+  createServerHumanReviewQueueView,
+  createServerHumanReviewRecoveryPacket,
+  type ServerHumanReviewQueueFilters
+} from "../src/lib/serverHumanReviewQueue.js";
 import { createHumanReviewRecord, updateHumanReviewRecord } from "./humanReviewService.js";
 import { createApiErrorResponse } from "./apiError.js";
 import type { ReviewWorkspaceRepository } from "./reviewWorkspaceRepository.js";
@@ -80,6 +84,26 @@ export function registerHumanReviewRoutes(server: FastifyInstance, options: Huma
       }
     }
   );
+
+  server.get<{ Params: { workspaceId: string } }>("/api/workspaces/:workspaceId/reviews/recovery", async (request, reply) => {
+    try {
+      const records = await repository.listHumanReviewRecords(request.params.workspaceId);
+
+      return createServerHumanReviewRecoveryPacket({
+        workspaceId: request.params.workspaceId,
+        records
+      });
+    } catch (error) {
+      return reply.status(400).send(
+        createApiErrorResponse({
+          error,
+          code: "HUMAN_REVIEW_RECOVERY_FAILED",
+          fallbackMessage: "Human Review recovery packet lookup failed.",
+          recoveryAction: "Refresh server Human Review records before downloading recovery metadata."
+        })
+      );
+    }
+  });
 
   server.patch<{ Params: { workspaceId: string; reviewId: string }; Body: HumanReviewUpdateBody }>(
     "/api/workspaces/:workspaceId/reviews/:reviewId",

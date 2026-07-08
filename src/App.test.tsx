@@ -1990,7 +1990,7 @@ describe("App", () => {
       const exportInventory = within(await screen.findByRole("region", { name: /Export Safety Inventory/i }));
       await waitFor(() => {
         expect(exportInventory.getByText("API Preflight Report JSON")).toBeInTheDocument();
-        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 20/20 safe route checks passed.")).toBeInTheDocument();
+        expect(exportInventory.getByText("Keep API Preflight Report JSON with the judge handoff packet; 21/21 safe route checks passed.")).toBeInTheDocument();
         expect(exportInventory.getByText("Demo Smoke Checklist JSON")).toBeInTheDocument();
         expect(
           exportInventory.getByText("Keep the Demo Smoke Checklist with judge setup notes; 6 commands and 8 smoke steps are represented.")
@@ -6887,7 +6887,7 @@ function createDemoApiMockPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 19,
+      routeFamilyCount: 20,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -7138,27 +7138,14 @@ function createDemoApiMockPayload(url: string): unknown {
       notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
     };
   }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/recovery")) {
+    return createDemoHumanReviewRecoveryMockPayload();
+  }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/queue")) {
     return {
       queueVersion: "lexproof-server-human-review-queue-v1",
       workspaceId: "demo-smoke-preflight",
-      recoveryPacket: {
-        packetVersion: "lexproof-server-human-review-recovery-packet-v1",
-        workspaceId: "demo-smoke-preflight",
-        generatedAt: "2026-07-01T00:00:00.000Z",
-        packetHash: "b".repeat(64),
-        status: "ready",
-        summary: {
-          totalRecoveryCount: 0,
-          returnedCount: 0,
-          rejectedCount: 0,
-          nextAction: "No returned or rejected server human review records currently need recovery.",
-          notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
-        },
-        nextActions: ["No returned or rejected server human review records currently need recovery."],
-        items: [],
-        notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
-      },
+      recoveryPacket: createDemoHumanReviewRecoveryMockPayload(),
       notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
     };
   }
@@ -7264,6 +7251,26 @@ function createDemoApiMockPayload(url: string): unknown {
   }
 
   return {};
+}
+
+function createDemoHumanReviewRecoveryMockPayload() {
+  return {
+    packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+    workspaceId: "demo-smoke-preflight",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    packetHash: "b".repeat(64),
+    status: "ready",
+    summary: {
+      totalRecoveryCount: 0,
+      returnedCount: 0,
+      rejectedCount: 0,
+      nextAction: "No returned or rejected server human review records currently need recovery.",
+      notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+    },
+    nextActions: ["No returned or rejected server human review records currently need recovery."],
+    items: [],
+    notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+  };
 }
 
 function installAppLocalStorage(initialValues: Record<string, string> = {}) {

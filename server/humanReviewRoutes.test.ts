@@ -222,6 +222,131 @@ describe("Human Review route module", () => {
     await repository.close();
   });
 
+  it("serves a standalone redacted Human Review recovery packet", async () => {
+    const server = Fastify({ logger: false });
+    const repository = createMemoryReviewWorkspaceRepository();
+    await registerHumanReviewRoutes(server, { repository });
+
+    const rejectedResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-recovery/reviews",
+      payload: {
+        targetType: "evidence",
+        targetId: "evidence-vault-unsafe",
+        reviewerId: "ops@example.com",
+        comment: "Review evidence metadata before export reliance."
+      }
+    });
+    expect(rejectedResponse.statusCode).toBe(201);
+
+    const returnedResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-recovery/reviews",
+      payload: {
+        targetType: "model-run",
+        targetId: "model-gateway-run-unsafe",
+        reviewerId: "Counsel",
+        comment: "Review model run receipt before audit-prep reliance."
+      }
+    });
+    expect(returnedResponse.statusCode).toBe(201);
+
+    const reviewedResponse = await server.inject({
+      method: "POST",
+      url: "/api/workspaces/workspace-human-review-recovery/reviews",
+      payload: {
+        targetType: "risk-flag",
+        targetId: "risk-ready",
+        reviewerId: "Counsel",
+        comment: "Review deterministic risk flag."
+      }
+    });
+    expect(reviewedResponse.statusCode).toBe(201);
+
+    const rejectedUpdateResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-human-review-recovery/reviews/${rejectedResponse.json().id}`,
+      payload: {
+        status: "rejected",
+        comment: `Reject stale raw KYC packet with ${apiKey} and passport file; do not mark compliant.`
+      }
+    });
+    expect(rejectedUpdateResponse.statusCode).toBe(200);
+
+    const returnedUpdateResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-human-review-recovery/reviews/${returnedResponse.json().id}`,
+      payload: {
+        status: "needs-more-evidence",
+        comment: `Needs source context before any legal approval claim involving ${privateKey}.`
+      }
+    });
+    expect(returnedUpdateResponse.statusCode).toBe(200);
+
+    const reviewedUpdateResponse = await server.inject({
+      method: "PATCH",
+      url: `/api/workspaces/workspace-human-review-recovery/reviews/${reviewedResponse.json().id}`,
+      payload: {
+        status: "reviewed",
+        comment: "Closed as audit-prep workflow metadata."
+      }
+    });
+    expect(reviewedUpdateResponse.statusCode).toBe(200);
+
+    const recoveryResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-human-review-recovery/reviews/recovery"
+    });
+    const queueResponse = await server.inject({
+      method: "GET",
+      url: "/api/workspaces/workspace-human-review-recovery/reviews/queue"
+    });
+
+    expect(recoveryResponse.statusCode).toBe(200);
+    expect(queueResponse.statusCode).toBe(200);
+    expect(recoveryResponse.json()).toEqual(
+      expect.objectContaining({
+        packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+        workspaceId: "workspace-human-review-recovery",
+        packetHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        status: "needs-recovery",
+        summary: {
+          totalRecoveryCount: 2,
+          returnedCount: 1,
+          rejectedCount: 1,
+          nextAction:
+            "evidence evidence-vault-unsafe: Create replacement Evidence Vault metadata before relying on this record for export readiness.",
+          notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+        },
+        nextActions: [
+          "evidence evidence-vault-unsafe: Create replacement Evidence Vault metadata before relying on this record for export readiness.",
+          "model-run model-gateway-run-unsafe: Attach missing evidence context before relying on the model run receipt."
+        ],
+        items: [
+          expect.objectContaining({
+            targetType: "evidence",
+            status: "rejected",
+            severity: "blocked",
+            reviewerId: "[redacted-email]",
+            reviewerComment: expect.stringContaining("[redacted-api-key]")
+          }),
+          expect.objectContaining({
+            targetType: "model-run",
+            status: "needs-more-evidence",
+            severity: "needs-action",
+            reviewerComment: expect.stringContaining("[redacted-private-key]")
+          })
+        ],
+        notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+      })
+    );
+    expect(recoveryResponse.json().packetHash).toBe(queueResponse.json().recoveryPacket.packetHash);
+    expect(recoveryResponse.body).not.toMatch(/sk-live|passport file|raw KYC packet|legal approval|\bcompliant\b|0xaaaaaaaa/i);
+
+    await server.close();
+    await repository.close();
+  });
+
   it("creates and filters clause-match review records without treating source review as legal advice", async () => {
     const server = Fastify({ logger: false });
     const repository = createMemoryReviewWorkspaceRepository();

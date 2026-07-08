@@ -37,6 +37,7 @@ export type DemoApiRouteCheck = {
     | "evidence-vault-lineage-digest"
     | "evidence-vault-lineage-recovery"
     | "human-review-queue"
+    | "human-review-recovery"
     | "source-review-ledger"
     | "source-review-packet"
     | "source-approval-queue"
@@ -241,6 +242,14 @@ const apiRoutePreflightSpecs: Array<{
     path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/queue`,
     validate: isDemoHumanReviewQueuePayload,
     readyDetail: "Human Review queue route is reachable with server recovery packet metadata for an empty demo workspace."
+  },
+  {
+    id: "human-review-recovery",
+    label: "Human Review recovery",
+    path: `/api/workspaces/${demoPreflightWorkspaceId}/reviews/recovery`,
+    validate: isDemoHumanReviewRecoveryPacketPayload,
+    extractArtifactHash: (payload) => (isRecord(payload) ? preserveSha256(payload.packetHash) : undefined),
+    readyDetail: "Human Review recovery route is reachable with packet hash metadata for an empty demo workspace."
   },
   {
     id: "source-review-ledger",
@@ -889,27 +898,32 @@ function isDemoHumanReviewQueuePayload(payload: unknown): boolean {
     return false;
   }
 
-  const recoveryPacket = payload.recoveryPacket;
-  if (!isRecord(recoveryPacket)) {
+  return payload.workspaceId === demoPreflightWorkspaceId && isDemoHumanReviewRecoveryPacketPayload(payload.recoveryPacket);
+}
+
+function isDemoHumanReviewRecoveryPacketPayload(payload: unknown): boolean {
+  if (!isRecord(payload) || payload.packetVersion !== "lexproof-server-human-review-recovery-packet-v1") {
     return false;
   }
 
-  const summary = recoveryPacket.summary;
+  const summary = payload.summary;
   return (
-    recoveryPacket.packetVersion === "lexproof-server-human-review-recovery-packet-v1" &&
-    typeof recoveryPacket.generatedAt === "string" &&
-    preserveSha256(recoveryPacket.packetHash) !== undefined &&
-    (recoveryPacket.status === "ready" || recoveryPacket.status === "needs-recovery") &&
-    Array.isArray(recoveryPacket.items) &&
-    Array.isArray(recoveryPacket.nextActions) &&
-    recoveryPacket.nextActions.length > 0 &&
-    recoveryPacket.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
+    payload.workspaceId === demoPreflightWorkspaceId &&
+    typeof payload.generatedAt === "string" &&
+    preserveSha256(payload.packetHash) !== undefined &&
+    (payload.status === "ready" || payload.status === "needs-recovery") &&
+    Array.isArray(payload.items) &&
+    Array.isArray(payload.nextActions) &&
+    payload.nextActions.length > 0 &&
+    payload.nextActions.every((action) => typeof action === "string" && action.trim().length > 0) &&
     isRecord(summary) &&
     typeof summary.totalRecoveryCount === "number" &&
+    typeof summary.returnedCount === "number" &&
+    typeof summary.rejectedCount === "number" &&
     typeof summary.nextAction === "string" &&
     summary.nextAction.trim().length > 0 &&
     summary.notLegalAdviceBoundary === "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only." &&
-    recoveryPacket.notLegalAdviceBoundary === "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+    payload.notLegalAdviceBoundary === "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
   );
 }
 

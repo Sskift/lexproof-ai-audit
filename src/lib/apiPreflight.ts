@@ -26,6 +26,7 @@ export type ApiPreflightRouteFamilyId =
   | "evidence-vault-lineage-digest"
   | "evidence-vault-lineage-recovery"
   | "human-review-queue"
+  | "human-review-recovery"
   | "source-review-ledger"
   | "source-review-packet"
   | "source-approval-queue"
@@ -188,6 +189,13 @@ const defaultRouteFamilies: ApiPreflightRouteFamily[] = [
     path: "/api/workspaces/:workspaceId/reviews/queue",
     responseContract: "ServerHumanReviewQueueView",
     sideEffectBoundary: "Queue view reads review workflow metadata and does not represent legal approval."
+  }),
+  createRouteFamily({
+    id: "human-review-recovery",
+    label: "Human Review recovery",
+    path: "/api/workspaces/:workspaceId/reviews/recovery",
+    responseContract: "ServerHumanReviewRecoveryPacket",
+    sideEffectBoundary: "Recovery packet returns returned/rejected review metadata, packet hashes, and recovery actions only."
   }),
   createRouteFamily({
     id: "source-review-ledger",

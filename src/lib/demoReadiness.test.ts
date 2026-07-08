@@ -475,13 +475,14 @@ describe("demo readiness", () => {
             expect.objectContaining({ id: "source-approval-packet", status: "ready", artifactHash: "4".repeat(64) }),
             expect.objectContaining({ id: "counsel-pack-export-recovery", status: "ready", artifactHash: "f".repeat(64) }),
             expect.objectContaining({ id: "audit-log-export", status: "ready", artifactHash: "d".repeat(64) }),
+            expect.objectContaining({ id: "human-review-recovery", status: "ready", artifactHash: "b".repeat(64) }),
             expect.objectContaining({ id: "integration-policy-evaluations", status: "ready" }),
             expect.objectContaining({ id: "integration-policy-receipt-bundle", status: "ready", artifactHash: "7".repeat(64) }),
             expect.objectContaining({ id: "integration-policy-receipt-recovery", status: "ready", artifactHash: "2".repeat(64) })
           ])
         })
       );
-      expect(apiCheck.routeChecks).toHaveLength(20);
+      expect(apiCheck.routeChecks).toHaveLength(21);
       expect(JSON.stringify(report)).not.toMatch(/\bsk-live\b|private key 0x|raw KYC|legal opinion|final legal decision/i);
     } finally {
       await new Promise<void>((resolveClose, rejectClose) =>
@@ -515,6 +516,9 @@ describe("demo readiness", () => {
       method: "GET"
     });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/evidence-lineage-recovery", {
+      method: "GET"
+    });
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/reviews/recovery", {
       method: "GET"
     });
     expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8787/api/workspaces/demo-smoke-preflight/source-reviews/packet", {
@@ -642,12 +646,18 @@ describe("demo readiness", () => {
           id: "human-review-queue",
           status: "ready",
           detail: "Human Review queue route is reachable with server recovery packet metadata for an empty demo workspace."
+        }),
+        expect.objectContaining({
+          id: "human-review-recovery",
+          status: "ready",
+          artifactHash: "b".repeat(64),
+          detail: "Human Review recovery route is reachable with packet hash metadata for an empty demo workspace."
         })
       ]),
       checkedAt: "2026-07-01T00:00:00.000Z",
       notLegalAdviceBoundary: "Not legal advice. This API creates audit preparation workflow records only."
     });
-    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(20);
+    expect(preflight.status === "ready" ? preflight.routeChecks : []).toHaveLength(21);
   });
 
   it("fails API preflight when a safe route family is missing", async () => {
@@ -714,6 +724,11 @@ describe("demo readiness", () => {
           nextActions: []
         }
       })
+    },
+    {
+      label: "Human Review recovery",
+      path: "/api/workspaces/demo-smoke-preflight/reviews/recovery",
+      updatePayload: (payload: Record<string, unknown>) => ({ ...payload, nextActions: [] })
     },
     {
       label: "Model Gateway run recovery",
@@ -1234,7 +1249,7 @@ function createDemoApiPayload(url: string): unknown {
     return {
       reportVersion: "lexproof-api-preflight-v1",
       status: "ready",
-      routeFamilyCount: 19,
+      routeFamilyCount: 20,
       routeFamilies: [],
       implementedRouteCount: 29,
       implementedRoutes: [],
@@ -1485,27 +1500,14 @@ function createDemoApiPayload(url: string): unknown {
       notLegalAdviceBoundary: "Not legal advice. Server Source Approval packets are audit preparation workflow metadata only."
     };
   }
+  if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/recovery")) {
+    return createDemoHumanReviewRecoveryPacket();
+  }
   if (url.endsWith("/api/workspaces/demo-smoke-preflight/reviews/queue")) {
     return {
       queueVersion: "lexproof-server-human-review-queue-v1",
       workspaceId: "demo-smoke-preflight",
-      recoveryPacket: {
-        packetVersion: "lexproof-server-human-review-recovery-packet-v1",
-        workspaceId: "demo-smoke-preflight",
-        generatedAt: "2026-07-01T00:00:00.000Z",
-        packetHash: "b".repeat(64),
-        status: "ready",
-        summary: {
-          totalRecoveryCount: 0,
-          returnedCount: 0,
-          rejectedCount: 0,
-          nextAction: "No returned or rejected server human review records currently need recovery.",
-          notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
-        },
-        nextActions: ["No returned or rejected server human review records currently need recovery."],
-        items: [],
-        notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
-      },
+      recoveryPacket: createDemoHumanReviewRecoveryPacket(),
       notLegalAdviceBoundary: "Not legal advice. Human review queues are audit preparation workflow metadata only."
     };
   }
@@ -1684,4 +1686,24 @@ function createDemoApiPayload(url: string): unknown {
   }
 
   return {};
+}
+
+function createDemoHumanReviewRecoveryPacket() {
+  return {
+    packetVersion: "lexproof-server-human-review-recovery-packet-v1",
+    workspaceId: "demo-smoke-preflight",
+    generatedAt: "2026-07-01T00:00:00.000Z",
+    packetHash: "b".repeat(64),
+    status: "ready",
+    summary: {
+      totalRecoveryCount: 0,
+      returnedCount: 0,
+      rejectedCount: 0,
+      nextAction: "No returned or rejected server human review records currently need recovery.",
+      notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+    },
+    nextActions: ["No returned or rejected server human review records currently need recovery."],
+    items: [],
+    notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+  };
 }

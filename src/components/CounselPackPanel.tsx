@@ -22,6 +22,7 @@ import {
 } from "../lib/counselPackVersions";
 import type { CounselPackTemplate, CounselPackTemplateId } from "../lib/counselPackTemplates";
 import type { CounselReviewItem, CounselReviewStatus } from "../lib/counselReview";
+import { fetchServerCounselPackExportRecoveryPacket } from "../lib/counselPackExportClient";
 import {
   createCounselPackExportRecoveryPacket,
   createCounselPackExportRecordReceipt,
@@ -44,6 +45,7 @@ const SERVER_EXPORT_ERROR_BOUNDARY =
   "Not legal advice. Counsel Pack export errors are audit preparation workflow metadata only.";
 
 type CounselPackPanelProps = {
+  workspaceId: string;
   projectName: string;
   fit: SubmissionFit;
   manifest: EvidenceManifest | null;
@@ -77,6 +79,7 @@ type ServerExportErrorState = {
 };
 
 export function CounselPackPanel({
+  workspaceId,
   projectName,
   fit,
   manifest,
@@ -259,6 +262,7 @@ export function CounselPackPanel({
         error={serverExportError}
         isCreating={isCreatingServerExport}
         records={serverExportRecords}
+        workspaceId={workspaceId}
         canCreate={counselPackVersions.length > 0 && dataBoundaryReport.exportAllowed}
         disabledReason={
           dataBoundaryReport.exportAllowed ? "Save a Pack Version before creating a server export record." : exportBlockReason
@@ -526,6 +530,7 @@ function ServerExportRecordsPanel({
   error,
   isCreating,
   records,
+  workspaceId,
   canCreate,
   disabledReason,
   onApiBaseUrlChange,
@@ -536,6 +541,7 @@ function ServerExportRecordsPanel({
   error: ServerExportErrorState | null;
   isCreating: boolean;
   records: CounselPackExportRecord[];
+  workspaceId: string;
   canCreate: boolean;
   disabledReason: string;
   onApiBaseUrlChange: (value: string) => void;
@@ -543,6 +549,8 @@ function ServerExportRecordsPanel({
 }) {
   const [recoveryPacket, setRecoveryPacket] = useState<CounselPackExportRecoveryPacket | null>(null);
   const [recoveryPacketError, setRecoveryPacketError] = useState("");
+  const [recoveryPacketRecoveryAction, setRecoveryPacketRecoveryAction] = useState("");
+  const [isRefreshingRecoveryPacket, setIsRefreshingRecoveryPacket] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -554,7 +562,8 @@ function ServerExportRecordsPanel({
     }
 
     setRecoveryPacketError("");
-    void createCounselPackExportRecoveryPacket(records[0]?.workspaceId ?? slug(projectName), records)
+    setRecoveryPacketRecoveryAction("");
+    void createCounselPackExportRecoveryPacket(workspaceId, records)
       .then((packet) => {
         if (!cancelled) {
           setRecoveryPacket(packet);
@@ -564,13 +573,34 @@ function ServerExportRecordsPanel({
         if (!cancelled) {
           setRecoveryPacket(null);
           setRecoveryPacketError("Unable to build Counsel Pack export recovery packet from server export metadata.");
+          setRecoveryPacketRecoveryAction("Refresh the server recovery packet or recreate the metadata-only export record.");
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [projectName, records]);
+  }, [records, workspaceId]);
+
+  const refreshRecoveryPacket = async () => {
+    setRecoveryPacketError("");
+    setRecoveryPacketRecoveryAction("");
+    setIsRefreshingRecoveryPacket(true);
+    try {
+      setRecoveryPacket(
+        await fetchServerCounselPackExportRecoveryPacket({
+          apiBaseUrl,
+          workspaceId
+        })
+      );
+    } catch (caught) {
+      const safeError = toServerExportErrorState(caught);
+      setRecoveryPacketError(safeError.message);
+      setRecoveryPacketRecoveryAction(safeError.recoveryAction ?? "");
+    } finally {
+      setIsRefreshingRecoveryPacket(false);
+    }
+  };
 
   const downloadReceipt = async (record: CounselPackExportRecord) => {
     const receipt = await createCounselPackExportRecordReceipt(record);
@@ -611,6 +641,15 @@ function ServerExportRecordsPanel({
           <ServerCog size={16} aria-hidden="true" />
           {isCreating ? "Creating Server Export Record" : "Create Server Export Record"}
         </button>
+        <button
+          type="button"
+          className="secondary"
+          disabled={isRefreshingRecoveryPacket}
+          onClick={() => void refreshRecoveryPacket()}
+        >
+          <ClipboardCheck size={16} aria-hidden="true" />
+          {isRefreshingRecoveryPacket ? "Refreshing Server Recovery Packet" : "Refresh Server Recovery Packet"}
+        </button>
       </div>
       {!canCreate ? <p className="empty-state">{disabledReason}</p> : null}
       {error ? (
@@ -624,6 +663,7 @@ function ServerExportRecordsPanel({
       {recoveryPacketError ? (
         <div className="save-state server-export-error" role="status">
           <p>{recoveryPacketError}</p>
+          {recoveryPacketRecoveryAction ? <small>{recoveryPacketRecoveryAction}</small> : null}
           <small>Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only.</small>
         </div>
       ) : null}

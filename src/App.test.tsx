@@ -6567,6 +6567,14 @@ describe("App", () => {
     URL.revokeObjectURL = revokeObjectUrl;
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const path = String(url);
+      if (/\/api\/workspaces\/.+\/exports\/counsel-pack\/recovery$/.test(path)) {
+        const workspaceId = decodeURIComponent(
+          path.match(/\/api\/workspaces\/([^/]+)\/exports\/counsel-pack\/recovery$/)?.[1] ?? ""
+        );
+        expect(init?.method).toBe("GET");
+        return appJsonResponse(createCounselPackExportRecoveryMockPayload(workspaceId), 200);
+      }
+
       expect(path).toMatch(/https:\/\/api\.lexproof\.test\/api\/workspaces\/.+\/exports\/counsel-pack$/);
       const workspaceId = decodeURIComponent(path.match(/\/api\/workspaces\/([^/]+)\/exports\/counsel-pack$/)?.[1] ?? "");
       expect(init?.method).toBe("POST");
@@ -6649,6 +6657,14 @@ describe("App", () => {
       ).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledTimes(1);
 
+      fireEvent.click(screen.getByRole("button", { name: /Refresh Server Recovery Packet/i }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(fetchMock).toHaveBeenLastCalledWith(
+        expect.stringMatching(/https:\/\/api\.lexproof\.test\/api\/workspaces\/.+\/exports\/counsel-pack\/recovery$/),
+        expect.objectContaining({ method: "GET" })
+      );
+      expect(screen.getAllByText(/Refresh source review metadata before final external handoff./i).length).toBeGreaterThan(0);
+
       fireEvent.click(screen.getByRole("button", { name: /Download Server Export Receipt JSON/i }));
       await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
       expect(createObjectUrl).toHaveBeenCalledWith(expect.any(Blob));
@@ -6664,7 +6680,7 @@ describe("App", () => {
       const recoveryPayload = await readAppBlobText(capturedBlobs[1]);
       expect(recoveryPayload).toContain("lexproof-counsel-pack-export-recovery-packet-v1");
       expect(recoveryPayload).toContain("packetHash");
-      expect(recoveryPayload).toContain("Resolve jurisdiction readiness blockers before external handoff.");
+      expect(recoveryPayload).toContain("Refresh source review metadata before final external handoff.");
       expect(recoveryPayload).toContain("Not legal advice");
       expect(recoveryPayload).not.toContain("# Counsel Pack");
     } finally {
@@ -7235,6 +7251,52 @@ function createDemoHumanReviewRecoveryMockPayload() {
     nextActions: ["No returned or rejected server human review records currently need recovery."],
     items: [],
     notLegalAdviceBoundary: "Not legal advice. Server Human Review recovery packets are audit preparation workflow metadata only."
+  };
+}
+
+function createCounselPackExportRecoveryMockPayload(workspaceId: string) {
+  return {
+    packetVersion: "lexproof-counsel-pack-export-recovery-packet-v1",
+    workspaceId,
+    generatedAt: "2026-07-08T00:00:00.000Z",
+    packetHash: "f".repeat(64),
+    recordCount: 1,
+    recoveryItemCount: 1,
+    blockedCount: 0,
+    needsSourceReviewCount: 1,
+    needsReviewCount: 0,
+    readyCount: 0,
+    latestExportRecordId: "counsel-pack-export-ui",
+    nextActions: ["Refresh source review metadata before final external handoff."],
+    items: [
+      {
+        exportRecordId: "counsel-pack-export-ui",
+        version: 1,
+        artifactName: "yieldpassport-counsel-pack-v1.md",
+        createdAt: "2026-06-30T08:30:00.000Z",
+        sourceReviewStatus: "review-due",
+        jurisdictionReadinessStatus: "ready-for-counsel",
+        jurisdictionHandoffAllowed: true,
+        reviewSummary: {
+          total: 7,
+          reviewed: 7,
+          readyForCounsel: 7,
+          needsEvidence: 0,
+          blocked: 0,
+          open: 0
+        },
+        recoveryStatus: "needs-source-review",
+        priority: "P1",
+        recoveryAction: "Refresh source review metadata before final external handoff.",
+        hashes: {
+          manifestHash: "a".repeat(64),
+          artifactHash: "b".repeat(64),
+          sourcePackHash: "c".repeat(64)
+        },
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery items are audit preparation workflow metadata only."
+      }
+    ],
+    notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
   };
 }
 

@@ -247,6 +247,7 @@ Before step 0, use **Judge Demo Readiness** in **Project Workspace**:
    - Click **Save Pack Version**, update one counsel review status, then click **Save Pack Version** again to show the export diff, **Download Version JSON**, and **Download Diff JSON** actions.
    - Open **Human Review**, filter **Target type** to **Counsel Pack**, and show the saved Pack Version queued for reviewer decision before external handoff. This review status is audit-prep workflow metadata only, not legal approval.
    - Enter `http://127.0.0.1:8787` in **Server export API base URL**, then click **Create Server Export Record** to persist a metadata-only server record for the latest Pack Version.
+   - Click **Refresh Server Recovery Packet** to fetch `GET /api/workspaces/:workspaceId/exports/counsel-pack/recovery`, then show the packet hash, non-empty next actions, stale-source/review-blocker counts, and Not legal advice boundary before downloading the recovery packet JSON.
    - Click **Download Markdown**. Optionally click **Download Version JSON**, **Download Diff JSON**, **Download Manifest JSON**, and **Create Simulated Anchor Receipt**.
    - Screenshot: `docs/assets/screenshots/demo-06-counsel-pack-export.png`.
    - Diff download screenshot: `docs/assets/screenshots/counsel-pack-diff-download.png`.

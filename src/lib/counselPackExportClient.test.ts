@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { CounselPackExportClientError, createServerCounselPackExportRecord } from "./counselPackExportClient";
+import {
+  buildServerCounselPackExportRecoveryPacketUrl,
+  CounselPackExportClientError,
+  createServerCounselPackExportRecord,
+  fetchServerCounselPackExportRecoveryPacket
+} from "./counselPackExportClient";
+import type { CounselPackExportRecoveryPacket } from "./counselPackExportRecordReceipt";
 import type { CounselPackVersionRecord } from "./counselPackVersions";
 import type { CounselPackExportRecord } from "./phase2Types";
 
@@ -99,6 +105,12 @@ const serverRecord: CounselPackExportRecord = {
 };
 
 describe("counsel pack export client", () => {
+  it("builds a standalone server export recovery packet URL", () => {
+    expect(
+      buildServerCounselPackExportRecoveryPacketUrl("https://api.lexproof.test/", "workspace export")
+    ).toBe("https://api.lexproof.test/api/workspaces/workspace%20export/exports/counsel-pack/recovery");
+  });
+
   it("creates server export records from local version metadata without raw Markdown", async () => {
     const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
@@ -326,4 +338,128 @@ describe("counsel pack export client", () => {
       })
     ).rejects.not.toThrow(/passport data|sk-live-abcdef|0x1234567890abcdef|seed phrase|final legal decision/i);
   });
+
+  it("fetches metadata-only server export recovery packets from the standalone route", async () => {
+    const recoveryPacket = createRecoveryPacket();
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(url)).toBe(
+        "https://api.lexproof.test/api/workspaces/workspace-export/exports/counsel-pack/recovery"
+      );
+      expect(init?.method).toBe("GET");
+      return {
+        ok: true,
+        json: async () => recoveryPacket
+      } as Response;
+    });
+
+    const packet = await fetchServerCounselPackExportRecoveryPacket({
+      workspaceId: "workspace-export",
+      apiBaseUrl: "https://api.lexproof.test",
+      fetcher
+    });
+
+    expect(packet).toEqual(recoveryPacket);
+  });
+
+  it("redacts classified text from otherwise valid server export recovery packet responses before UI use", async () => {
+    const recoveryPacket = createRecoveryPacket();
+    recoveryPacket.workspaceId = "workspace-export apiKey=sk-live-abcdef1234567890abcdef1234567890";
+    recoveryPacket.generatedAt = "2026-07-08T00:00:00.000Z legal opinion";
+    recoveryPacket.latestExportRecordId = "counsel-pack-export raw_KYC passport A1234567";
+    recoveryPacket.nextActions = ["Remove private key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef."];
+    recoveryPacket.items[0] = {
+      ...recoveryPacket.items[0],
+      exportRecordId: "export apiKey=sk-live-abcdef1234567890abcdef1234567890",
+      artifactName: "final legal decision raw_KYC passport A1234567.md",
+      recoveryAction: "Do not treat this as a legal conclusion."
+    };
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => recoveryPacket
+    })) as unknown as typeof fetch;
+
+    const packet = await fetchServerCounselPackExportRecoveryPacket({
+      workspaceId: "workspace-export",
+      fetcher
+    });
+    const serialized = JSON.stringify(packet);
+
+    expect(packet.workspaceId).toContain("[redacted-secret]");
+    expect(packet.generatedAt).toContain("[redacted-legal-conclusion]");
+    expect(packet.latestExportRecordId).toContain("[redacted-raw-kyc]");
+    expect(packet.latestExportRecordId).toContain("[redacted-passport-id]");
+    expect(packet.nextActions[0]).toContain("[redacted-private-key]");
+    expect(packet.items[0].exportRecordId).toContain("[redacted-secret]");
+    expect(packet.items[0].artifactName).toContain("[redacted-legal-conclusion]");
+    expect(packet.items[0].artifactName).toContain("[redacted-raw-kyc]");
+    expect(packet.items[0].recoveryAction).toContain("[redacted-legal-conclusion]");
+    expect(serialized).not.toMatch(/apiKey|sk-live-abcdef|raw_KYC|A1234567|private key 0x1234567890abcdef|legal opinion|legal conclusion/i);
+  });
+
+  it("rejects server export recovery packets that omit non-empty next actions", async () => {
+    const recoveryPacket = createRecoveryPacket();
+    recoveryPacket.nextActions = [];
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => recoveryPacket
+    })) as unknown as typeof fetch;
+
+    await expect(
+      fetchServerCounselPackExportRecoveryPacket({
+        workspaceId: "workspace-export",
+        fetcher
+      })
+    ).rejects.toMatchObject({
+      name: "CounselPackExportClientError",
+      code: "COUNSEL_PACK_EXPORT_RECOVERY_RESPONSE_INVALID",
+      recoveryAction:
+        "Verify the Phase 2 API is returning metadata-only Counsel Pack export recovery packet records with non-empty next actions."
+    });
+  });
 });
+
+function createRecoveryPacket(): CounselPackExportRecoveryPacket {
+  return {
+    packetVersion: "lexproof-counsel-pack-export-recovery-packet-v1",
+    workspaceId: "workspace-export",
+    generatedAt: "2026-07-08T00:00:00.000Z",
+    packetHash: "d".repeat(64),
+    recordCount: 1,
+    recoveryItemCount: 1,
+    blockedCount: 0,
+    needsSourceReviewCount: 0,
+    needsReviewCount: 1,
+    readyCount: 0,
+    latestExportRecordId: "counsel-pack-export-server",
+    nextActions: ["Resolve jurisdiction readiness blockers before external handoff."],
+    items: [
+      {
+        exportRecordId: "counsel-pack-export-server",
+        version: 1,
+        artifactName: "yieldpassport-counsel-pack-v2.md",
+        createdAt: "2026-06-30T08:35:00.000Z",
+        sourceReviewStatus: "current",
+        jurisdictionReadinessStatus: "needs-evidence",
+        jurisdictionHandoffAllowed: false,
+        reviewSummary: {
+          total: 7,
+          reviewed: 1,
+          readyForCounsel: 2,
+          needsEvidence: 3,
+          blocked: 0,
+          open: 6
+        },
+        recoveryStatus: "needs-review",
+        priority: "P2",
+        recoveryAction: "Resolve jurisdiction readiness blockers before external handoff.",
+        hashes: {
+          manifestHash: "a".repeat(64),
+          artifactHash: "b".repeat(64),
+          sourcePackHash: "c".repeat(64)
+        },
+        notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery items are audit preparation workflow metadata only."
+      }
+    ],
+    notLegalAdviceBoundary: "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only."
+  };
+}

@@ -837,6 +837,7 @@ Owns metadata-only server export record receipts and recovery packets:
 - `createCounselPackExportRecordReceipt(record)` turns one persisted Counsel Pack export record into a redacted receipt with artifact/source/manifest hashes, jurisdiction readiness metadata, recovery action, stable receipt hash, and Not legal advice boundary.
 - `createCounselPackExportRecoveryPacket(workspaceId, records)` turns a workspace export-record list into a stable recovery packet with blocked, needs-source-review, needs-review, and ready counts plus per-record recovery actions.
 - `exportCounselPackExportRecordReceiptJson()` and `exportCounselPackExportRecoveryPacketJson()` serialize readable JSON for counsel/compliance handoff.
+- `fetchServerCounselPackExportRecoveryPacket()` in `src/lib/counselPackExportClient.ts` refreshes the Phase 2 recovery route, validates packet counts and non-empty next actions, and redacts response text before UI use.
 
 Receipts and recovery packets do not store raw Markdown/PDF content, upload evidence, decide legal readiness, or replace counsel review.
 

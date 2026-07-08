@@ -2768,6 +2768,7 @@ export default function App() {
           ) : null}
           {activeTab === "counsel" ? (
             <CounselPackPanel
+              workspaceId={project.id}
               projectName={project.projectName}
               fit={fit}
               manifest={manifest}

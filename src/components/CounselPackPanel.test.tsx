@@ -20,6 +20,7 @@ describe("CounselPackPanel", () => {
 
     render(
       <CounselPackPanel
+        workspaceId="workspace-counsel-pack-panel"
         projectName="Recovery Desk"
         fit={submissionFit}
         manifest={null}

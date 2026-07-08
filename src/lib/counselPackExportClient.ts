@@ -2,6 +2,10 @@ import type { CounselPackExportRecord } from "./phase2Types";
 import { sanitizeCounselPackVersionRecord, type CounselPackVersionRecord } from "./counselPackVersions";
 import { asSafeApiErrorResponse } from "./apiErrorClient";
 import { parseCounselPackExportRecord } from "./counselPackExportRecords";
+import type {
+  CounselPackExportRecoveryPacket,
+  CounselPackExportRecoveryPacketItem
+} from "./counselPackExportRecordReceipt";
 import { redactClassifiedText } from "./dataClassification";
 
 export type CreateServerCounselPackExportInput = {
@@ -12,12 +16,24 @@ export type CreateServerCounselPackExportInput = {
   fetcher?: typeof fetch;
 };
 
+export type FetchServerCounselPackExportRecoveryPacketInput = {
+  workspaceId: string;
+  apiBaseUrl?: string;
+  fetcher?: typeof fetch;
+};
+
 type ErrorResponse = {
   error?: string;
   code?: string;
   recoveryAction?: string;
   notLegalAdviceBoundary?: string;
 };
+
+const DEFAULT_API_ERROR_BOUNDARY = "Not legal advice. This API creates audit preparation workflow records only." as const;
+const COUNSEL_PACK_EXPORT_RECOVERY_PACKET_BOUNDARY =
+  "Not legal advice. Counsel Pack export recovery packets are audit preparation metadata only." as const;
+const COUNSEL_PACK_EXPORT_RECOVERY_ITEM_BOUNDARY =
+  "Not legal advice. Counsel Pack export recovery items are audit preparation workflow metadata only." as const;
 
 const legalConclusionPattern =
   /\b(final[_\-\s]+legal[_\-\s]+decision|legal[_\-\s]+opinion|legal[_\-\s]+conclusion|legal[_\-\s]+approval|legally[_\-\s]+compliant|legally[_\-\s]+non[_\-\s]+compliant|compliance[_\-\s]+decision)\b/gi;
@@ -114,6 +130,56 @@ export async function createServerCounselPackExportRecord({
   return record;
 }
 
+export async function fetchServerCounselPackExportRecoveryPacket({
+  workspaceId,
+  apiBaseUrl,
+  fetcher = globalThis.fetch?.bind(globalThis)
+}: FetchServerCounselPackExportRecoveryPacketInput): Promise<CounselPackExportRecoveryPacket> {
+  if (!fetcher) {
+    throw new CounselPackExportClientError({
+      message: "Fetch is required to refresh the server Counsel Pack export recovery packet.",
+      code: "COUNSEL_PACK_EXPORT_RECOVERY_FETCH_UNAVAILABLE",
+      recoveryAction: "Run this action in a browser or provide a fetch-compatible API client.",
+      notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
+    });
+  }
+
+  const response = await fetcher(buildServerCounselPackExportRecoveryPacketUrl(apiBaseUrl, workspaceId), {
+    method: "GET"
+  });
+  const payload = (await response.json().catch(() => ({}))) as CounselPackExportRecoveryPacket | ErrorResponse;
+
+  if (!response.ok) {
+    const safeError = asSafeApiErrorResponse(payload);
+    throw new CounselPackExportClientError({
+      message: safeError.error || "Server Counsel Pack export recovery packet refresh failed.",
+      code: safeError.code ?? "COUNSEL_PACK_EXPORT_RECOVERY_REFRESH_FAILED",
+      recoveryAction:
+        safeError.recoveryAction ?? "Start the Phase 2 API and retry Counsel Pack export recovery packet refresh.",
+      notLegalAdviceBoundary: safeError.notLegalAdviceBoundary ?? DEFAULT_API_ERROR_BOUNDARY
+    });
+  }
+
+  return redactCounselPackExportRecoveryPacket(validateCounselPackExportRecoveryPacket(payload));
+}
+
+export function buildServerCounselPackExportRecoveryPacketUrl(
+  apiBaseUrl: string | undefined,
+  workspaceId: string
+): string {
+  const workspace = workspaceId.trim();
+  if (!workspace) {
+    throw new CounselPackExportClientError({
+      message: "Workspace ID is required to refresh the server Counsel Pack export recovery packet.",
+      code: "COUNSEL_PACK_EXPORT_RECOVERY_WORKSPACE_REQUIRED",
+      recoveryAction: "Create or select a workspace before refreshing persisted Counsel Pack export recovery metadata.",
+      notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
+    });
+  }
+
+  return buildWorkspaceUrl(apiBaseUrl, workspace, "exports/counsel-pack/recovery");
+}
+
 function mapJurisdictionReadinessDigest(
   digest: NonNullable<CounselPackVersionRecord["jurisdictionReadinessDigest"]>
 ): NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]> {
@@ -137,6 +203,173 @@ function mapJurisdictionReadinessDigest(
 function buildWorkspaceUrl(apiBaseUrl: string | undefined, workspaceId: string, route: string): string {
   const base = apiBaseUrl?.trim().replace(/\/+$/, "") ?? "";
   return `${base}/api/workspaces/${encodeURIComponent(workspaceId)}/${route}`;
+}
+
+function validateCounselPackExportRecoveryPacket(payload: unknown): CounselPackExportRecoveryPacket {
+  if (!isCounselPackExportRecoveryPacket(payload)) {
+    throw invalidRecoveryPacketResponseError();
+  }
+
+  return payload;
+}
+
+function isCounselPackExportRecoveryPacket(value: unknown): value is CounselPackExportRecoveryPacket {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const items = Array.isArray(value.items) ? value.items : [];
+  const blockedCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "blocked").length;
+  const needsSourceReviewCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "needs-source-review")
+    .length;
+  const needsReviewCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "needs-review").length;
+  const readyCount = items.filter((item) => isRecord(item) && item.recoveryStatus === "ready").length;
+  const recoveryItemCount = items.filter((item) => isRecord(item) && item.recoveryStatus !== "ready").length;
+
+  return (
+    value.packetVersion === "lexproof-counsel-pack-export-recovery-packet-v1" &&
+    typeof value.workspaceId === "string" &&
+    typeof value.generatedAt === "string" &&
+    isSha256Hex(value.packetHash) &&
+    isNonNegativeInteger(value.recordCount) &&
+    value.recordCount === items.length &&
+    isNonNegativeInteger(value.recoveryItemCount) &&
+    value.recoveryItemCount === recoveryItemCount &&
+    isNonNegativeInteger(value.blockedCount) &&
+    value.blockedCount === blockedCount &&
+    isNonNegativeInteger(value.needsSourceReviewCount) &&
+    value.needsSourceReviewCount === needsSourceReviewCount &&
+    isNonNegativeInteger(value.needsReviewCount) &&
+    value.needsReviewCount === needsReviewCount &&
+    isNonNegativeInteger(value.readyCount) &&
+    value.readyCount === readyCount &&
+    (value.latestExportRecordId === undefined || typeof value.latestExportRecordId === "string") &&
+    isNonEmptyStringArray(value.nextActions) &&
+    items.every(isCounselPackExportRecoveryPacketItem) &&
+    value.notLegalAdviceBoundary === COUNSEL_PACK_EXPORT_RECOVERY_PACKET_BOUNDARY
+  );
+}
+
+function isCounselPackExportRecoveryPacketItem(value: unknown): value is CounselPackExportRecoveryPacketItem {
+  if (!isRecord(value) || !isRecord(value.hashes)) {
+    return false;
+  }
+
+  return (
+    typeof value.exportRecordId === "string" &&
+    isPositiveInteger(value.version) &&
+    typeof value.artifactName === "string" &&
+    typeof value.createdAt === "string" &&
+    isSourceReviewStatus(value.sourceReviewStatus) &&
+    (value.jurisdictionReadinessStatus === undefined ||
+      isJurisdictionReadinessStatus(value.jurisdictionReadinessStatus)) &&
+    (value.jurisdictionHandoffAllowed === undefined || typeof value.jurisdictionHandoffAllowed === "boolean") &&
+    isReviewSummary(value.reviewSummary) &&
+    isRecoveryStatus(value.recoveryStatus) &&
+    isRecoveryPriority(value.priority) &&
+    typeof value.recoveryAction === "string" &&
+    value.recoveryAction.trim().length > 0 &&
+    isSha256Hex(value.hashes.manifestHash) &&
+    isSha256Hex(value.hashes.artifactHash) &&
+    isSha256Hex(value.hashes.sourcePackHash) &&
+    value.notLegalAdviceBoundary === COUNSEL_PACK_EXPORT_RECOVERY_ITEM_BOUNDARY
+  );
+}
+
+function redactCounselPackExportRecoveryPacket(
+  packet: CounselPackExportRecoveryPacket
+): CounselPackExportRecoveryPacket {
+  return {
+    ...packet,
+    workspaceId: sanitizeExportRequestText(packet.workspaceId),
+    generatedAt: sanitizeExportRequestText(packet.generatedAt),
+    ...(packet.latestExportRecordId ? { latestExportRecordId: sanitizeExportRequestText(packet.latestExportRecordId) } : {}),
+    nextActions: packet.nextActions.map(sanitizeExportRequestText).filter(Boolean),
+    items: packet.items.map(redactCounselPackExportRecoveryPacketItem)
+  };
+}
+
+function redactCounselPackExportRecoveryPacketItem(
+  item: CounselPackExportRecoveryPacketItem
+): CounselPackExportRecoveryPacketItem {
+  return {
+    ...item,
+    exportRecordId: sanitizeExportRequestText(item.exportRecordId),
+    artifactName: sanitizeExportRequestText(item.artifactName),
+    createdAt: sanitizeExportRequestText(item.createdAt),
+    recoveryAction: sanitizeExportRequestText(item.recoveryAction),
+    reviewSummary: { ...item.reviewSummary },
+    hashes: { ...item.hashes }
+  };
+}
+
+function isReviewSummary(value: unknown): value is CounselPackExportRecord["reviewSummary"] {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isNonNegativeInteger(value.total) &&
+    isNonNegativeInteger(value.reviewed) &&
+    isNonNegativeInteger(value.readyForCounsel) &&
+    isNonNegativeInteger(value.needsEvidence) &&
+    isNonNegativeInteger(value.blocked) &&
+    isNonNegativeInteger(value.open)
+  );
+}
+
+function isSourceReviewStatus(value: unknown): value is CounselPackExportRecord["sourceReviewStatus"] {
+  return value === "current" || value === "review-due" || value === "metadata-missing";
+}
+
+function isJurisdictionReadinessStatus(
+  value: unknown
+): value is NonNullable<CounselPackExportRecord["jurisdictionReadinessDigest"]>["status"] {
+  return (
+    value === "ready-for-counsel" ||
+    value === "needs-evidence" ||
+    value === "needs-source-review" ||
+    value === "metadata-missing" ||
+    value === "no-jurisdictions"
+  );
+}
+
+function isRecoveryStatus(value: unknown): value is CounselPackExportRecoveryPacketItem["recoveryStatus"] {
+  return value === "blocked" || value === "needs-source-review" || value === "needs-review" || value === "ready";
+}
+
+function isRecoveryPriority(value: unknown): value is CounselPackExportRecoveryPacketItem["priority"] {
+  return value === "P0" || value === "P1" || value === "P2" || value === "P3";
+}
+
+function isSha256Hex(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === "string" && item.trim().length > 0);
+}
+
+function invalidRecoveryPacketResponseError(): CounselPackExportClientError {
+  return new CounselPackExportClientError({
+    message: "Server Counsel Pack export recovery packet response did not match the metadata-only contract.",
+    code: "COUNSEL_PACK_EXPORT_RECOVERY_RESPONSE_INVALID",
+    recoveryAction:
+      "Verify the Phase 2 API is returning metadata-only Counsel Pack export recovery packet records with non-empty next actions.",
+    notLegalAdviceBoundary: DEFAULT_API_ERROR_BOUNDARY
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function slug(value: string): string {

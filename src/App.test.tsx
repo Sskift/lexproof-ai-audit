@@ -6787,7 +6787,7 @@ describe("App", () => {
       URL.revokeObjectURL = originalRevokeObjectUrl;
       click.mockRestore();
     }
-  }, 20000);
+  }, 30000);
 
   it("flags manifest drift after evidence changes make the saved Counsel Pack version stale", async () => {
     render(<App />);

@@ -192,6 +192,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-nyc-local-law-144-aedt-employment-decision-control",
+          title: "NYC Local Law 144 AEDT scope, bias-audit, and notice control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-cftc-dao-derivatives-platform-control",
           title: "DAO derivatives-platform and FCM/BSA control",
           status: "needs-evidence"
@@ -971,6 +976,76 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "us-sec-investment-adviser-marketing-rule-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US NYC Local Law 144 AEDT control ready from verified AI workflow evidence only", () => {
+    const nycAedtEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-us-nyc-local-law-144-aedt-employment-decision-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-nyc-aedt-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(nycAedtEvidence.map((item) => item.label)).toEqual([
+      "NYC AEDT scope and bias audit register",
+      "NYC AEDT notice and data retention request register"
+    ]);
+
+    const nycAedtProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-nyc-aedt-ready",
+      projectName: "LexAssist NYC AEDT Review",
+      jurisdictions: ["United States"],
+      entityType: "AI employment workflow deployer preparing NYC AEDT evidence",
+      assetModel:
+        "AI-assisted hiring and promotion workflow with AEDT scope, independent bias audit, public summary, notice, accommodation or alternative-process routing, and retention request handling",
+      userType: "NYC candidates or employees, HR reviewers, compliance reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; NYC AEDT evidence is metadata-only",
+      dataSensitivity:
+        "AEDT source metadata, selection-rate and impact-ratio summaries, and no raw applicant or employee records",
+      aiUsage: "AI drafts hiring or promotion screening evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved NYC AEDT metadata",
+      operatingStage: "Pre-launch NYC AEDT review before local counsel signoff",
+      evidenceItems: nycAedtEvidence
+    };
+    const audit = analyzeAuditProfile(nycAedtProject);
+    const [usPack] = createJurisdictionPacks(nycAedtProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-nyc-local-law-144-aedt-employment-decision-control",
+          title: "NYC Local Law 144 AEDT scope, bias-audit, and notice control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "NYC AEDT scope and bias audit register",
+            "NYC AEDT notice and data retention request register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-aba-formal-opinion-512-legal-ai-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-nist-ai-rmf-governance-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

@@ -333,6 +333,40 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "human accountability",
           "confidential matter text exclusion"
         ]
+      },
+      {
+        id: "us-nyc-local-law-144-aedt-employment-decision-control",
+        title: "NYC Local Law 144 AEDT scope, bias-audit, and notice control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-nyc-local-law-144-aedt-employment-decision-governance",
+          "nyc aedt",
+          "local law 144",
+          "automated employment decision tool",
+          "hiring or promotion",
+          "decision role",
+          "independent auditor",
+          "independent bias audit",
+          "bias audit date",
+          "public summary",
+          "distribution date",
+          "selection or scoring rates",
+          "impact ratios",
+          "data source explanation",
+          "excluded categories",
+          "10 business days notice",
+          "nyc-resident candidate",
+          "employee notice",
+          "job qualifications",
+          "characteristics assessed",
+          "alternative selection process",
+          "reasonable accommodation",
+          "aedt data type",
+          "retention policy request",
+          "no raw applicant or employee records"
+        ]
       }
     ]
   },

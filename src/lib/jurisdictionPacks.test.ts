@@ -984,6 +984,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US GENIUS Act payment stablecoin issuer control ready from verified stablecoin registers only", () => {
+    const sourceFreeGeniusMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-genius-stablecoin-memo",
+      label: "US GENIUS Act payment stablecoin issuer memo",
+      kind: "Memo",
+      content:
+        "US GENIUS Act payment stablecoin issuer, permitted payment stablecoin issuer, state qualified payment stablecoin issuer, federal payment stablecoin regulator, reserve assets, redemption, monthly disclosure, custody, insolvency priority, BSA AML, sanctions compliance, transaction monitoring, suspicious activity, compliance officer, customer-risk metadata boundary, and independent review notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const geniusEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter((item) => item.source?.includes("control-us-genius-payment-stablecoin-issuer-regime"))
       .map((item, index) => ({
@@ -1001,7 +1010,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-us-genius-ready",
       jurisdictions: ["United States"],
-      evidenceItems: geniusEvidence
+      evidenceItems: [sourceFreeGeniusMemo, ...geniusEvidence]
     };
     const audit = analyzeAuditProfile(stablecoinProject);
     const [usPack] = createJurisdictionPacks(stablecoinProject, audit);

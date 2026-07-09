@@ -330,6 +330,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P0",
         relatedFlagIds: ["custody", "sensitive-data", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-us-genius-payment-stablecoin-issuer-regime",
           "genius act",

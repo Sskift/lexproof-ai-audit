@@ -1346,6 +1346,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ca-csa-ctp-pru-custody-investor-protection",
           "canada csa pru",
@@ -1354,7 +1355,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "canadian client",
           "no leverage",
           "value-referenced crypto asset",
-          "prior written consent"
+          "prior written consent",
+          "custody and signer control"
         ]
       },
       {
@@ -1363,6 +1365,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ca-csa-ctp-pru-custody-investor-protection",
           "acceptable third-party custodian",
@@ -1372,7 +1375,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "designated trust account",
           "pledge re-hypothecate",
           "soc 2",
-          "insurance risk mitigation"
+          "insurance risk mitigation",
+          "custody and signer control"
         ]
       }
     ]

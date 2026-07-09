@@ -2845,6 +2845,16 @@ describe("createJurisdictionPacks", () => {
       "Canada CTP PRU custody and investor-protection register"
     ]);
 
+    const sourceFreeCanadaCustodyMemo = {
+      id: "ca-csa-source-free-custody-memo",
+      label: "Source-free Canada CTP custody memo",
+      kind: "Memo",
+      content:
+        "Canada CSA PRU custody review with pre-registration undertaking, registration application, Canadian client access, no leverage, value-referenced crypto asset, prior written consent, acceptable third-party custodian, third-party custodians to hold not less than 80%, hold assets in trust, separate and apart, designated trust account, pledge re-hypothecate restriction, SOC 2, and insurance risk mitigation evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const canadaCustodyProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-ca-csa-custody-ready",
@@ -2861,7 +2871,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Canada CSA CTP custody evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Canada custody evidence metadata",
       operatingStage: "Pre-launch Canada CTP custody and PRU review before local counsel signoff",
-      evidenceItems: canadaCustodyEvidence
+      evidenceItems: [sourceFreeCanadaCustodyMemo, ...canadaCustodyEvidence]
     };
     const audit = analyzeAuditProfile(canadaCustodyProject);
     const [canadaPack] = createJurisdictionPacks(canadaCustodyProject, audit);

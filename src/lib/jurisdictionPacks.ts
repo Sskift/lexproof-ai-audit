@@ -638,8 +638,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
     jurisdiction: "United Kingdom",
     aliases: ["united kingdom", "uk", "great britain"],
     summary:
-      "Prepare financial-promotion, retail access, custody resilience, MLR registration, AML/CTF/CPF, Travel Rule, and launch approval controls.",
-    recommendedRole: "UK financial promotion / crypto counsel",
+      "Prepare financial-promotion, retail access, custody resilience, MLR registration, AML/CTF/CPF, Travel Rule, AI data-protection, and launch approval controls.",
+    recommendedRole: "UK financial promotion / crypto / AI data protection counsel",
     controls: [
       {
         id: "uk-promotion-approval-control",
@@ -712,6 +712,39 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "uk travel rule data flow",
           "uk third-party tool configuration",
           "uk record retrieval"
+        ]
+      },
+      {
+        id: "uk-ico-ai-data-protection-governance-control",
+        title: "ICO AI data-protection and reviewer-decision governance control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-uk-ico-ai-data-protection-governance",
+          "ico ai",
+          "ai data protection",
+          "data protection",
+          "personal data",
+          "model payload redaction",
+          "redaction",
+          "excluded data categories",
+          "approved evidence summaries",
+          "data protection boundary",
+          "personal data exclusion",
+          "source lineage",
+          "explainability",
+          "reviewer",
+          "approval log",
+          "human review",
+          "decision log",
+          "review notes",
+          "fairness",
+          "transparency",
+          "lawfulness",
+          "security",
+          "data minimisation",
+          "data minimization"
         ]
       },
       {

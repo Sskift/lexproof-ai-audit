@@ -266,7 +266,7 @@ describe("createJurisdictionPacks", () => {
     const ukPack = packs.find((pack) => pack.jurisdiction === "United Kingdom");
     expect(ukPack).toMatchObject({
       localCounselRoute: {
-        recommendedRole: "UK financial promotion / crypto counsel"
+        recommendedRole: "UK financial promotion / crypto / AI data protection counsel"
       }
     });
     expect(ukPack?.controls.map((control) => control.title)).toEqual(
@@ -276,6 +276,7 @@ describe("createJurisdictionPacks", () => {
         "Custody operational resilience control",
         "FCA MLR registration and cryptoasset activity-scope control",
         "UK cryptoasset AML, SAR, sanctions, and Travel Rule control",
+        "ICO AI data-protection and reviewer-decision governance control",
         "UK qualifying stablecoin issuer control"
       ])
     );
@@ -1337,7 +1338,7 @@ describe("createJurisdictionPacks", () => {
     expect(ukPack).toMatchObject({
       jurisdiction: "United Kingdom",
       localCounselRoute: {
-        recommendedRole: "UK financial promotion / crypto counsel"
+        recommendedRole: "UK financial promotion / crypto / AI data protection counsel"
       },
       notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
     });
@@ -1362,6 +1363,71 @@ describe("createJurisdictionPacks", () => {
           evidenceLabels: []
         })
       ])
+    );
+    expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the UK ICO AI data-protection governance control ready from verified AI workflow evidence only", () => {
+    const ukIcoEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-uk-ico-ai-data-protection-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `uk-ico-ai-data-protection-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(ukIcoEvidence.map((item) => item.label)).toEqual([
+      "Human review approval log",
+      "Source lineage register",
+      "Model payload redaction checklist"
+    ]);
+
+    const ukAiProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uk-ico-ai-ready",
+      projectName: "LexAssist UK AI Data Protection Review",
+      jurisdictions: ["United Kingdom"],
+      entityType: "AI legal workflow deployer preparing UK ICO data-protection evidence",
+      assetModel:
+        "AI-assisted legal workflow with model-payload redaction, source lineage, explainability notes, reviewer decision logs, and data-protection boundary evidence",
+      userType: "UK legal operations reviewers, data protection reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; UK AI data-protection evidence is metadata-only",
+      dataSensitivity: "Model payload metadata, redaction notes, source-lineage records, and no raw matter text or client identifiers",
+      aiUsage: "AI drafts source-linked audit preparation questions for human review and reviewer decision logging",
+      blockchainUse: "Simulated hash receipt for approved UK AI data-protection metadata",
+      operatingStage: "Pre-launch UK AI data-protection review before local counsel signoff",
+      evidenceItems: ukIcoEvidence
+    };
+    const audit = analyzeAuditProfile(ukAiProject);
+    const [ukPack] = createJurisdictionPacks(ukAiProject, audit);
+
+    expect(ukPack).toMatchObject({
+      jurisdiction: "United Kingdom",
+      localCounselRoute: {
+        recommendedRole: "UK financial promotion / crypto / AI data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(ukPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uk-ico-ai-data-protection-governance-control",
+          title: "ICO AI data-protection and reviewer-decision governance control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Human review approval log", "Source lineage register", "Model payload redaction checklist"]
+        }),
+        expect.objectContaining({
+          id: "uk-qualifying-stablecoin-issuer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(ukPack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["uk-fca-crypto-financial-promotions-control"])
     );
     expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
@@ -1689,7 +1755,7 @@ describe("createJurisdictionPacks", () => {
     expect(ukPack).toMatchObject({
       jurisdiction: "United Kingdom",
       localCounselRoute: {
-        recommendedRole: "UK financial promotion / crypto counsel"
+        recommendedRole: "UK financial promotion / crypto / AI data protection counsel"
       },
       notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
     });
@@ -1713,7 +1779,7 @@ describe("createJurisdictionPacks", () => {
         })
       ])
     );
-    expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

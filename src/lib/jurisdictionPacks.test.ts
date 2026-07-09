@@ -239,6 +239,11 @@ describe("createJurisdictionPacks", () => {
         expect.objectContaining({
           id: "eu-data-minimization-control",
           title: "Data minimization and model-call control"
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-high-risk-provider-quality-documentation-control",
+          title: "AI Act high-risk provider QMS and technical-documentation control",
+          status: "needs-evidence"
         })
       ])
     );
@@ -1003,6 +1008,78 @@ describe("createJurisdictionPacks", () => {
           evidenceLabels: []
         })
       ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU AI Act high-risk provider control ready from verified AI workflow evidence only", () => {
+    const providerEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-eu-ai-act-high-risk-provider-quality-documentation"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-ai-act-provider-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(providerEvidence.map((item) => item.label)).toEqual([
+      "EU AI Act provider QMS and risk-management register",
+      "EU AI Act technical documentation and data-governance register"
+    ]);
+
+    const providerProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-ai-act-provider-ready",
+      projectName: "EuroModel Provider Dossier",
+      jurisdictions: ["European Union"],
+      entityType: "High-risk AI provider preparing a provider conformity file",
+      assetModel:
+        "High-risk AI provider quality management system, risk management system, technical documentation, data governance, record-keeping logs, instructions for use, and provider conformity file review",
+      userType: "EU deployer compliance reviewers and local counsel",
+      custodyModel: "No asset safekeeping; AI provider evidence is metadata-only",
+      dataSensitivity: "Training data governance summaries, validation data metadata, and personal data exclusion notes only",
+      aiUsage: "AI drafts provider quality dossier evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved provider quality metadata",
+      operatingStage: "Pre-market provider quality-system review before local counsel signoff",
+      evidenceItems: providerEvidence
+    };
+    const audit = analyzeAuditProfile(providerProject);
+    const [euPack] = createJurisdictionPacks(providerProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-ai-act-high-risk-provider-quality-documentation-control",
+          title: "AI Act high-risk provider QMS and technical-documentation control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "EU AI Act provider QMS and risk-management register",
+            "EU AI Act technical documentation and data-governance register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "eu-dora-ict-operational-resilience-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "eu-tfr-crypto-asset-transfer-information-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(euPack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["eu-mica-marketing-communications-control", "eu-mica-art-emt-stablecoin-issuer-control"])
     );
     expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);

@@ -266,6 +266,10 @@ describe("evidence templates", () => {
     const aiUsePolicy = items.find((item) => item.label === "AI system use policy");
     const humanReviewLog = items.find((item) => item.label === "Human review approval log");
     const nistGenAiRegister = items.find((item) => item.label === "NIST GenAI output review and provenance register");
+    const euProviderQmsRegister = items.find((item) => item.label === "EU AI Act provider QMS and risk-management register");
+    const euTechnicalDocumentationRegister = items.find(
+      (item) => item.label === "EU AI Act technical documentation and data-governance register"
+    );
     const usLegalAiRegister = items.find(
       (item) => item.label === "US legal AI ethics and professional responsibility register"
     );
@@ -309,6 +313,16 @@ describe("evidence templates", () => {
     expect(nistGenAiRegister?.content).toContain("source provenance");
     expect(nistGenAiRegister?.content).toContain("content-risk escalation");
     expect(nistGenAiRegister?.content).toContain("human accountability");
+    expect(euProviderQmsRegister?.content).toContain("high-risk AI provider role");
+    expect(euProviderQmsRegister?.content).toContain("risk management system");
+    expect(euProviderQmsRegister?.content).toContain("quality management system");
+    expect(euProviderQmsRegister?.content).toContain("instructions for use");
+    expect(euProviderQmsRegister?.content).toContain("provider conformity file boundary");
+    expect(euTechnicalDocumentationRegister?.content).toContain("technical documentation");
+    expect(euTechnicalDocumentationRegister?.content).toContain("data governance");
+    expect(euTechnicalDocumentationRegister?.content).toContain("training data governance");
+    expect(euTechnicalDocumentationRegister?.content).toContain("record-keeping logs");
+    expect(euTechnicalDocumentationRegister?.content).toContain("no raw personal data");
     expect(usLegalAiRegister?.content).toContain("ABA Formal Opinion 512");
     expect(usLegalAiRegister?.content).toContain("model limitations");
     expect(usLegalAiRegister?.content).toContain("prohibited inputs");

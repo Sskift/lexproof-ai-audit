@@ -523,6 +523,32 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["sensitive-data", "ai-workflow"],
         evidenceKeywords: ["data minimization", "retention", "redaction", "model call", "personal data"]
+      },
+      {
+        id: "eu-ai-act-high-risk-provider-quality-documentation-control",
+        title: "AI Act high-risk provider QMS and technical-documentation control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-eu-ai-act-high-risk-provider-quality-documentation",
+          "high-risk ai provider",
+          "provider role",
+          "intended purpose",
+          "risk management system",
+          "quality management system",
+          "instructions for use",
+          "human oversight",
+          "provider conformity file",
+          "technical documentation",
+          "data governance",
+          "training data governance",
+          "validation data",
+          "test data",
+          "record-keeping logs",
+          "accuracy robustness cybersecurity",
+          "no raw personal data"
+        ]
       }
     ]
   },

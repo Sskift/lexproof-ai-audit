@@ -187,6 +187,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-nist-ai-rmf-governance-control",
+          title: "NIST AI RMF governance and GenAI provenance control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-cftc-dao-derivatives-platform-control",
           title: "DAO derivatives-platform and FCM/BSA control",
           status: "needs-evidence"
@@ -878,6 +883,66 @@ describe("createJurisdictionPacks", () => {
             "Human review approval log",
             "US legal AI ethics and professional responsibility register"
           ]
+        }),
+        expect.objectContaining({
+          id: "us-sec-investment-adviser-marketing-rule-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US NIST AI RMF control ready from verified AI workflow evidence only", () => {
+    const nistEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-us-nist-ai-rmf-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-nist-ai-rmf-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(nistEvidence.map((item) => item.label)).toEqual([
+      "AI system use policy",
+      "NIST GenAI output review and provenance register"
+    ]);
+
+    const aiProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-nist-ai-rmf-ready",
+      projectName: "LexAssist Evidence Desk",
+      jurisdictions: ["United States"],
+      entityType: "AI governance and model-risk review workspace",
+      assetModel: "No token sale; AI-assisted legal matter intake and evidence review workflow",
+      userType: "US legal operations team, supervising counsel, and compliance reviewers",
+      custodyModel: "No custody; model workflow cannot approve wallet transfers or hold client assets",
+      dataSensitivity: "Model-risk summaries, source provenance metadata, and reviewer notes only; no confidential matter text",
+      aiUsage: "AI drafts legal and compliance issue-spotting notes for human review",
+      blockchainUse: "Simulated hash receipt for approved model governance metadata",
+      operatingStage: "Planned public AI governance workflow review before counsel reliance",
+      evidenceItems: nistEvidence
+    };
+    const audit = analyzeAuditProfile(aiProject);
+    const [usPack] = createJurisdictionPacks(aiProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-nist-ai-rmf-governance-control",
+          title: "NIST AI RMF governance and GenAI provenance control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["AI system use policy", "NIST GenAI output review and provenance register"]
         }),
         expect.objectContaining({
           id: "us-sec-investment-adviser-marketing-rule-control",

@@ -309,6 +309,30 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "expense treatment",
           "no confidential matter text"
         ]
+      },
+      {
+        id: "us-nist-ai-rmf-governance-control",
+        title: "NIST AI RMF governance and GenAI provenance control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-nist-ai-rmf-governance",
+          "nist ai rmf",
+          "nist ai 600-1",
+          "generative ai profile",
+          "use-case context",
+          "ai risk owner",
+          "risk measurement",
+          "model use limits",
+          "manage-monitor evidence",
+          "output review",
+          "unsupported claims",
+          "source provenance",
+          "content-risk escalation",
+          "human accountability",
+          "confidential matter text exclusion"
+        ]
       }
     ]
   },

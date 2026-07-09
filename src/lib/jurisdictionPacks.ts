@@ -126,6 +126,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P0",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-us-sec-reg-d-accredited-investor-verification",
           "regulation d",

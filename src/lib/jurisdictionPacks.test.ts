@@ -733,6 +733,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US Regulation D eligibility control ready from verified RWA template evidence only", () => {
+    const sourceFreeRegDMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-reg-d-memo",
+      label: "US Regulation D investor eligibility memo",
+      kind: "Memo",
+      content:
+        "US Regulation D, Rule 506(c), offering exemption, private placement, investor eligibility, accredited investor verification, purchaser status, subscription flow, and solicitation controls.",
+      status: "verified",
+      owner: "Counsel"
+    };
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `us-rwa-reg-d-template-${index + 1}`,
@@ -742,7 +751,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-us-reg-d-ready",
       jurisdictions: ["United States"],
-      evidenceItems
+      evidenceItems: [sourceFreeRegDMemo, ...evidenceItems]
     };
     const audit = analyzeAuditProfile(rwaProject);
     const [usPack] = createJurisdictionPacks(rwaProject, audit);

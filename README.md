@@ -185,6 +185,8 @@ The US custody and wallet authority control now becomes evidence-ready only from
 
 US RWA projects now also show a Jurisdiction Checklist SEC/CFTC crypto-asset classification and offering-analysis control that becomes evidence-ready only from metadata-only RWA disclosure assumptions and investor eligibility records carrying `control-us-sec-cftc-crypto-asset-interpretation`, including token-rights, issuer-promise, investment-expectation, staking/yield, yield-assumption, redemption-language, public-distribution, registration-or-exemption-assumption, risk-factor, and review-owner evidence without raw identity files or legal conclusions. The US offering and disclosure control also requires records carrying `control-us-sec-cftc-crypto-asset-interpretation` or `control-us-sec-reg-d-accredited-investor-verification` plus matching disclosure, offering, eligibility, approval-route, or token-terms evidence text, so source-free launch memos remain needs-evidence. Not legal advice.
 
+The US Regulation D eligibility and accredited-investor verification control likewise requires metadata-only records carrying `control-us-sec-reg-d-accredited-investor-verification` plus matching Rule 506, offering-exemption, private-placement, investor-eligibility, accredited-investor, purchaser-status, subscription, or solicitation evidence text, so source-free eligibility memos remain needs-evidence. Not legal advice.
+
 ![US Regulation D RWA source control](docs/assets/screenshots/us-reg-d-rwa-source-control.png)
 
 ![US OFAC virtual-currency sanctions source control](docs/assets/screenshots/us-ofac-rwa-source-control.png)

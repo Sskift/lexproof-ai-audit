@@ -3924,6 +3924,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the EU TFR transfer-information control ready from verified RWA Travel Rule evidence only", () => {
+    const sourceFreeTfrMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "eu-source-free-tfr-transfer-memo",
+      label: "EU TFR Travel Rule transfer memo",
+      kind: "Memo",
+      content:
+        "EU TFR Regulation EU 2023/1113 crypto-asset transfer information, transfer of crypto-assets, Travel Rule, Travel Rule transfer information, counterparty CASP, originator, beneficiary, missing incomplete information, transfer information handling, travel rule exception, counterparty escalation, rejection or return handling, retention owner, and reviewer owner notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const tfrRegister = createEvidenceItemsFromTemplate("tokenized-yield-rwa").find(
       (item) => item.label === "EU TFR Travel Rule transfer information register"
     );
@@ -3935,6 +3944,7 @@ describe("createJurisdictionPacks", () => {
       id: "jurisdiction-pack-eu-tfr-transfer-ready",
       jurisdictions: ["European Union"],
       evidenceItems: [
+        sourceFreeTfrMemo,
         {
           ...tfrRegister!,
           id: "eu-rwa-tfr-transfer-register-1",

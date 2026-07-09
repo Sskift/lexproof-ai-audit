@@ -932,9 +932,10 @@ describe("createJurisdictionPacks", () => {
   it("marks the US NYDFS BitLicense and custody customer-protection control ready from verified RWA custody evidence only", () => {
     const sourceFreeCustodyRunbook: ProjectProfile["evidenceItems"][number] = {
       id: "us-source-free-custody-runbook",
-      label: "Custody and signer control runbook",
+      label: "US New York NYDFS custody and signer control runbook",
       kind: "Runbook",
-      content: "Signer control, wallet control, withdrawal authority, and incident response.",
+      content:
+        "US New York NYDFS BitLicense, limited purpose trust company, NMLS, money transmission, customer virtual currency segregation, omnibus wallet, per-customer wallet, internal ledger, reconciliation, beneficial interest disclosure, sub-custody approval, books and records, no proprietary use, reviewer owner, signer control, withdrawal authority, and incident response notes.",
       status: "verified",
       owner: "Compliance"
     };

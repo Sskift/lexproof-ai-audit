@@ -142,6 +142,11 @@ describe("createJurisdictionPacks", () => {
           evidenceLabels: ["US launch approval memo"]
         }),
         expect.objectContaining({
+          id: "us-sec-cftc-crypto-asset-classification-control",
+          title: "SEC/CFTC crypto-asset classification and offering-analysis control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-reg-d-accredited-investor-verification-control",
           title: "Regulation D eligibility and accredited-investor verification control",
           status: "needs-evidence"
@@ -598,6 +603,67 @@ describe("createJurisdictionPacks", () => {
           title: "Regulation D eligibility and accredited-investor verification control",
           owner: "Counsel",
           priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["Investor eligibility review"]
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|identity files|personal financial records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US SEC/CFTC crypto-asset classification control ready from verified RWA classification evidence only", () => {
+    const classificationEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-us-sec-cftc-crypto-asset-interpretation"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-sec-cftc-classification-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(classificationEvidence.map((item) => item.label)).toEqual([
+      "RWA disclosure assumptions memo",
+      "Investor eligibility review"
+    ]);
+
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-sec-cftc-classification-ready",
+      projectName: "US RWA Classification Review",
+      jurisdictions: ["United States"],
+      entityType: "Tokenized RWA issuer preparing SEC/CFTC classification evidence",
+      assetModel:
+        "Tokenized private-credit note with token rights, issuer promise, investment expectation, staking/yield, yield assumptions, redemption language, public distribution, registration or exemption assumptions, and risk-factor coverage",
+      userType: "US retail investors, accredited investors, issuer reviewers, and US securities / commodities counsel",
+      custodyModel: "No custody in this slice; offering and classification records are metadata-only",
+      dataSensitivity: "Investor eligibility summaries and no raw identity files or personal financial records",
+      aiUsage: "AI drafts US SEC/CFTC classification evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for classification evidence metadata",
+      operatingStage: "Pre-launch US crypto-asset classification and offering-analysis review before counsel signoff",
+      evidenceItems: classificationEvidence
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [usPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-sec-cftc-crypto-asset-classification-control",
+          title: "SEC/CFTC crypto-asset classification and offering-analysis control",
+          owner: "Counsel",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["RWA disclosure assumptions memo", "Investor eligibility review"]
+        }),
+        expect.objectContaining({
+          id: "us-reg-d-accredited-investor-verification-control",
           status: "evidence-ready",
           evidenceLabels: ["Investor eligibility review"]
         })

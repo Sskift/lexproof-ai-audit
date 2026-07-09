@@ -78,6 +78,33 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["disclosure approval", "offering memo", "eligibility review", "go-live signoff", "token terms"]
       },
       {
+        id: "us-sec-cftc-crypto-asset-classification-control",
+        title: "SEC/CFTC crypto-asset classification and offering-analysis control",
+        owner: "Counsel",
+        priority: "P0",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch", "custody"],
+        evidenceKeywords: [
+          "control-us-sec-cftc-crypto-asset-interpretation",
+          "sec cftc crypto asset",
+          "sec/cftc release nos. 33-11412",
+          "file no. s7-2026-09",
+          "crypto security classification",
+          "crypto asset classification",
+          "token rights",
+          "issuer promise",
+          "investment expectation",
+          "staking yield",
+          "staking/yield",
+          "yield assumptions",
+          "redemption language",
+          "public distribution",
+          "registration assumption",
+          "exemption assumption",
+          "risk factor coverage",
+          "review owner"
+        ]
+      },
+      {
         id: "us-reg-d-accredited-investor-verification-control",
         title: "Regulation D eligibility and accredited-investor verification control",
         owner: "Counsel",

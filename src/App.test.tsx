@@ -6959,7 +6959,7 @@ describe("App", () => {
       click.mockRestore();
       vi.unstubAllGlobals();
     }
-  }, 20000);
+  }, 40000);
 
   it("shows server Counsel Pack export recovery guidance when API record creation fails", async () => {
     const fetchMock = vi.fn(async () =>

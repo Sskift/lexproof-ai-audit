@@ -233,6 +233,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "eu-mica-decentralised-casp-perimeter-control",
+          title: "MiCA decentralised DAO and CASP perimeter control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-mica-article-75-casp-custody-control",
           title: "MiCA Article 75 CASP custody and administration control",
           status: "needs-evidence"
@@ -1000,6 +1005,71 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU MiCA decentralised DAO CASP perimeter control ready from verified DAO perimeter evidence only", () => {
+    const micaRegister = createEvidenceItemsFromTemplate("dao-governance-multisig").find(
+      (item) => item.label === "EU MiCA decentralisation and CASP perimeter register"
+    );
+
+    expect(micaRegister).toBeDefined();
+
+    const daoProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-mica-dao-perimeter-ready",
+      projectName: "EU DAO Perimeter Review",
+      jurisdictions: ["European Union"],
+      entityType: "DAO protocol governance committee preparing EU MiCA perimeter evidence",
+      assetModel:
+        "DAO protocol with MiCA decentralisation claims, fully decentralised service assumptions, crypto-asset service perimeter, CASP perimeter, custody service exclusions, trading service exclusions, exchange service exclusions, and advice service exclusions",
+      userType: "EU users, protocol operators, governance voters, marketing owner, responsible owner, and EU MiCA counsel",
+      custodyModel: "No custody in this slice; admin-key and front-end-control assumptions are metadata-only",
+      dataSensitivity: "EU user-access summaries and no raw customer records or personal data",
+      aiUsage: "AI drafts EU MiCA DAO perimeter evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for protocol-upgrade and governance-vote metadata",
+      operatingStage: "Pre-execution EU MiCA DAO perimeter review before counsel signoff",
+      evidenceItems: [
+        {
+          ...micaRegister!,
+          id: "eu-mica-dao-perimeter-register-1",
+          status: "verified" as const
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(daoProject);
+    const [euPack] = createJurisdictionPacks(daoProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-mica-decentralised-casp-perimeter-control",
+          title: "MiCA decentralised DAO and CASP perimeter control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["EU MiCA decentralisation and CASP perimeter register"]
+        }),
+        expect.objectContaining({
+          id: "eu-mica-title-ii-white-paper-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "eu-dlt-pilot-market-infrastructure-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the US ABA Formal Opinion 512 legal AI control ready from verified AI workflow evidence only", () => {

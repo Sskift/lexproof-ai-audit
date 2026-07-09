@@ -2455,6 +2455,80 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(canadaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Australia ASIC/AUSTRAC digital asset controls ready from verified digital asset evidence only", () => {
+    const australiaDigitalAssetEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-au-asic-austrac-digital-asset-financial-services"))
+      .map((item, index) => ({
+        ...item,
+        id: `au-asic-austrac-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(australiaDigitalAssetEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "Australia digital asset financial services and VASP AML register"
+    ]);
+
+    const australiaDigitalAssetProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-au-asic-austrac-ready",
+      projectName: "SouthernCross Digital Asset Review",
+      jurisdictions: ["Australia"],
+      entityType: "Digital asset platform preparing ASIC and AUSTRAC evidence",
+      assetModel:
+        "Australia digital asset financial product assumptions, AFS licence handoff, dealing, market making, custodial depository service, custody controls, VASP AML/CTF, CDD, travel rule, reporting, and recordkeeping evidence",
+      userType: "Australian retail users, wholesale investors, compliance reviewers, and Australia local counsel",
+      custodyModel:
+        "Platform controls client digital assets through custody runbooks, cold storage, signer approvals, client-asset separation, independent audit, and wallet-control metadata",
+      dataSensitivity:
+        "CDD status summaries, wallet-risk metadata, transaction-monitoring summaries, and no raw KYC, wallet secrets, raw customer records, or personal data",
+      aiUsage: "AI drafts Australia digital asset evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Australia digital asset evidence metadata",
+      operatingStage: "Pre-launch Australia digital asset and AML/CTF review before local counsel signoff",
+      evidenceItems: australiaDigitalAssetEvidence
+    };
+    const audit = analyzeAuditProfile(australiaDigitalAssetProject);
+    const [australiaPack] = createJurisdictionPacks(australiaDigitalAssetProject, audit);
+
+    expect(australiaPack).toMatchObject({
+      jurisdiction: "Australia",
+      localCounselRoute: {
+        recommendedRole: "Australia digital assets / AML-CTF counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(australiaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "au-asic-financial-services-custody-control",
+          title: "ASIC digital-asset financial services and custody control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Australia digital asset financial services and VASP AML register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "au-austrac-vasp-aml-ctf-control",
+          title: "AUSTRAC VASP AML/CTF, CDD, and recordkeeping control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Australia digital asset financial services and VASP AML register"
+          ]
+        })
+      ])
+    );
+    expect(JSON.stringify(australiaPack)).not.toMatch(
+      /\braw KYC\b|raw customer records|wallet secrets|private key|customer records|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(australiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

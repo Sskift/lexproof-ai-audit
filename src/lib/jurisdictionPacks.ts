@@ -1318,6 +1318,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-au-asic-austrac-digital-asset-financial-services",
           "australia asic digital asset",
           "afs licence",
           "financial product",
@@ -1334,6 +1335,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
         evidenceKeywords: [
+          "control-au-asic-austrac-digital-asset-financial-services",
           "austrac",
           "virtual asset service provider",
           "aml/ctf program",

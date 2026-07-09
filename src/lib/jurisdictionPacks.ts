@@ -704,6 +704,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "custody", "evidence-anchor"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-eu-dlt-pilot-regime-market-infrastructure",
           "eu dlt pilot",

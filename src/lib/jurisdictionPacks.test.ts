@@ -4045,6 +4045,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the EU DLT Pilot perimeter control ready from verified RWA market-infrastructure evidence only", () => {
+    const sourceFreeDltMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "eu-source-free-dlt-pilot-memo",
+      label: "EU DLT Pilot market infrastructure memo",
+      kind: "Memo",
+      content:
+        "EU DLT Pilot Regulation EU 2022/858 DLT financial instrument, tokenized financial instrument, tokenised financial instrument, DLT market infrastructure, DLT MTF, DLT TSS, DLT SS, competent authority, permission exemption, admitted instrument, settlement workflow, safekeeping, liability, operational safeguard, client disclosure, ESMA, and no raw investor records notes.",
+      status: "verified",
+      owner: "Counsel"
+    };
     const dltRegister = createEvidenceItemsFromTemplate("tokenized-yield-rwa").find(
       (item) => item.label === "EU DLT Pilot Regime market infrastructure perimeter register"
     );
@@ -4056,6 +4065,7 @@ describe("createJurisdictionPacks", () => {
       id: "jurisdiction-pack-eu-dlt-pilot-ready",
       jurisdictions: ["European Union"],
       evidenceItems: [
+        sourceFreeDltMemo,
         {
           ...dltRegister!,
           id: "eu-rwa-dlt-pilot-register-1",

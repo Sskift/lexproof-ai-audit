@@ -249,6 +249,11 @@ describe("createJurisdictionPacks", () => {
           id: "eu-ai-act-article-50-transparency-disclosure-control",
           title: "AI Act Article 50 transparency and AI-output labelling control",
           status: "needs-evidence"
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-justice-adr-perimeter-control",
+          title: "AI Act justice/ADR perimeter and fundamental-rights control",
+          status: "needs-evidence"
         })
       ])
     );
@@ -1142,6 +1147,78 @@ describe("createJurisdictionPacks", () => {
             "EU AI Act Article 50 user disclosure register",
             "EU AI Act AI-generated output labelling register"
           ]
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-high-risk-provider-quality-documentation-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(euPack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["eu-mica-marketing-communications-control", "eu-mica-art-emt-stablecoin-issuer-control"])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU AI Act justice and ADR perimeter control ready from verified AI workflow evidence only", () => {
+    const justiceEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-eu-ai-act-administration-justice-adr-perimeter"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-ai-act-justice-adr-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(justiceEvidence.map((item) => item.label)).toEqual([
+      "EU AI Act justice and ADR perimeter memo",
+      "EU AI Act high-risk oversight and fundamental-rights register"
+    ]);
+
+    const justiceProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-ai-act-justice-ready",
+      projectName: "LexAssist Justice Perimeter Review",
+      jurisdictions: ["European Union"],
+      entityType: "AI legal workflow deployer preparing justice and ADR perimeter evidence",
+      assetModel:
+        "AI-assisted legal research workflow with justice and ADR perimeter, judicial authority assumptions, high-risk oversight, deployer instructions, logging, monitoring, and fundamental-rights review routing",
+      userType: "EU legal operations reviewers, compliance reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; justice perimeter evidence is metadata-only",
+      dataSensitivity: "Matter summary metadata, input-data relevance notes, and no raw matter text or client identifiers",
+      aiUsage: "AI drafts justice and ADR perimeter evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved justice perimeter metadata",
+      operatingStage: "Pre-launch justice and ADR perimeter review before local counsel signoff",
+      evidenceItems: justiceEvidence
+    };
+    const audit = analyzeAuditProfile(justiceProject);
+    const [euPack] = createJurisdictionPacks(justiceProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-ai-act-justice-adr-perimeter-control",
+          title: "AI Act justice/ADR perimeter and fundamental-rights control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "EU AI Act justice and ADR perimeter memo",
+            "EU AI Act high-risk oversight and fundamental-rights register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-article-50-transparency-disclosure-control",
+          status: "needs-evidence",
+          evidenceLabels: []
         }),
         expect.objectContaining({
           id: "eu-ai-act-high-risk-provider-quality-documentation-control",

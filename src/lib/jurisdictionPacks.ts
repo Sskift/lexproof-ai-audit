@@ -574,6 +574,35 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "public interest publication routing",
           "not legal advice wording"
         ]
+      },
+      {
+        id: "eu-ai-act-justice-adr-perimeter-control",
+        title: "AI Act justice/ADR perimeter and fundamental-rights control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-eu-ai-act-administration-justice-adr-perimeter",
+          "justice and adr perimeter",
+          "article 6(2)",
+          "annex iii point 8(a)",
+          "judicial authority",
+          "on-behalf-of judicial authority",
+          "alternative dispute resolution",
+          "legal research",
+          "interpreting facts and law",
+          "applying law to concrete facts",
+          "provider and deployer role",
+          "high-risk perimeter",
+          "article 26 deployer obligations",
+          "article 27 fundamental rights",
+          "fundamental rights impact assessment",
+          "deployer instructions",
+          "input data relevance",
+          "incident escalation",
+          "output use limits",
+          "reviewer authority"
+        ]
       }
     ]
   },

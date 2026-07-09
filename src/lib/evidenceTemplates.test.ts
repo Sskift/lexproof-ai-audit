@@ -274,6 +274,10 @@ describe("evidence templates", () => {
     const euArticle50OutputRegister = items.find(
       (item) => item.label === "EU AI Act AI-generated output labelling register"
     );
+    const euJusticePerimeterMemo = items.find((item) => item.label === "EU AI Act justice and ADR perimeter memo");
+    const euFundamentalRightsRegister = items.find(
+      (item) => item.label === "EU AI Act high-risk oversight and fundamental-rights register"
+    );
     const usLegalAiRegister = items.find(
       (item) => item.label === "US legal AI ethics and professional responsibility register"
     );
@@ -337,6 +341,16 @@ describe("evidence templates", () => {
     expect(euArticle50OutputRegister?.content).toContain("human editorial review");
     expect(euArticle50OutputRegister?.content).toContain("public interest publication routing");
     expect(euArticle50OutputRegister?.content).toContain("not legal advice wording");
+    expect(euJusticePerimeterMemo?.content).toContain("EU AI Act justice and ADR perimeter");
+    expect(euJusticePerimeterMemo?.content).toContain("Article 6(2)");
+    expect(euJusticePerimeterMemo?.content).toContain("Annex III point 8(a)");
+    expect(euJusticePerimeterMemo?.content).toContain("alternative dispute resolution assumptions");
+    expect(euJusticePerimeterMemo?.content).toContain("no legal conclusion");
+    expect(euFundamentalRightsRegister?.content).toContain("Article 26 deployer obligations");
+    expect(euFundamentalRightsRegister?.content).toContain("Article 27 fundamental rights impact assessment routing");
+    expect(euFundamentalRightsRegister?.content).toContain("input data relevance");
+    expect(euFundamentalRightsRegister?.content).toContain("incident escalation");
+    expect(euFundamentalRightsRegister?.content).toContain("no raw matter text");
     expect(usLegalAiRegister?.content).toContain("ABA Formal Opinion 512");
     expect(usLegalAiRegister?.content).toContain("model limitations");
     expect(usLegalAiRegister?.content).toContain("prohibited inputs");

@@ -353,7 +353,21 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P0",
         relatedFlagIds: ["custody"],
-        evidenceKeywords: ["signer control", "wallet control", "withdrawal authority", "incident response"]
+        sourceMatchMode: "source-and-keyword",
+        evidenceKeywords: [
+          "control-us-nydfs-bitlicense-custody-customer-protection",
+          "custody",
+          "wallet authority",
+          "wallet control",
+          "customer virtual currency segregation",
+          "omnibus wallet",
+          "per-customer wallet",
+          "internal ledger",
+          "reconciliation",
+          "sub-custody",
+          "withdrawal authority",
+          "incident response"
+        ]
       },
       {
         id: "us-data-export-control",

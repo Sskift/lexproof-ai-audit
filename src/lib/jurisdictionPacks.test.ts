@@ -894,16 +894,31 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US NYDFS BitLicense and custody customer-protection control ready from verified RWA custody evidence only", () => {
-    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
-      ...item,
-      id: `us-rwa-nydfs-template-${index + 1}`,
-      status: "verified" as const
-    }));
+    const sourceFreeCustodyRunbook: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-custody-runbook",
+      label: "Custody and signer control runbook",
+      kind: "Runbook",
+      content: "Signer control, wallet control, withdrawal authority, and incident response.",
+      status: "verified",
+      owner: "Compliance"
+    };
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-us-nydfs-bitlicense-custody-customer-protection"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-rwa-nydfs-template-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(evidenceItems.map((item) => item.label)).toEqual([
+      "New York NYDFS BitLicense and custody customer-protection register"
+    ]);
+
     const rwaProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-us-nydfs-ready",
       jurisdictions: ["United States"],
-      evidenceItems
+      evidenceItems: [sourceFreeCustodyRunbook, ...evidenceItems]
     };
     const audit = analyzeAuditProfile(rwaProject);
     const [usPack] = createJurisdictionPacks(rwaProject, audit);
@@ -913,6 +928,14 @@ describe("createJurisdictionPacks", () => {
         expect.objectContaining({
           id: "us-nydfs-bitlicense-custody-customer-protection-control",
           title: "NYDFS BitLicense and custody customer-protection control",
+          owner: "Compliance",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["New York NYDFS BitLicense and custody customer-protection register"]
+        }),
+        expect.objectContaining({
+          id: "us-custody-control",
+          title: "Custody and wallet authority control",
           owner: "Compliance",
           priority: "P0",
           status: "evidence-ready",

@@ -3173,6 +3173,86 @@ describe("createJurisdictionPacks", () => {
     expect(serializedGermanyPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the UAE VARA operating controls ready from verified activity-scope and risk evidence only", () => {
+    const varaOperatingEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter(
+        (item) =>
+          item.source?.includes("control-uae-vara-va-regulations-activity-scope") ||
+          item.source?.includes("control-uae-vara-compliance-risk-management")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `uae-vara-operating-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    const varaOperatingEvidenceLabels = [
+      "Custody and signer control runbook",
+      "Wallet sanctions screening and escalation controls"
+    ];
+    expect(varaOperatingEvidence.map((item) => item.label)).toEqual(varaOperatingEvidenceLabels);
+    expect(JSON.stringify(varaOperatingEvidence)).not.toContain("control-uae-vara-marketing-regulations-2024");
+
+    const varaOperatingProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uae-vara-operating-ready",
+      projectName: "Dubai VARA Operating Review",
+      jurisdictions: ["United Arab Emirates"],
+      entityType: "Virtual asset service provider operations team",
+      assetModel:
+        "Dubai virtual asset issuance, exchange, transfer, custody service, activity-scope, licensing assumptions, yield, and public launch readiness",
+      userType: "UAE institutional treasury partners, compliance reviewers, operations owners, and local counsel",
+      custodyModel:
+        "Platform safeguards client virtual assets through hosted wallet controls, reconciliation, withdrawal approvals, and proof-of-reserves placeholders",
+      dataSensitivity:
+        "CDD status summaries, wallet-risk metadata, transaction-monitoring summaries, customer records excluded, no raw KYC, no wallet secrets, and no personal data",
+      aiUsage: "AI drafts audit-prep evidence summaries for human review and UAE counsel routing",
+      blockchainUse: "Simulated evidence anchor for metadata-only VARA counsel handoff",
+      operatingStage: "Pre-production UAE VARA operating review before local counsel signoff and public launch",
+      evidenceItems: varaOperatingEvidence
+    };
+    const audit = analyzeAuditProfile(varaOperatingProject);
+    const [uaePack] = createJurisdictionPacks(varaOperatingProject, audit);
+
+    expect(uaePack).toMatchObject({
+      jurisdiction: "United Arab Emirates",
+      localCounselRoute: {
+        recommendedRole: "UAE virtual-assets / financial regulatory counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(uaePack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uae-virtual-asset-scope-control",
+          title: "Virtual asset activity scope control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Custody and signer control runbook"]
+        }),
+        expect.objectContaining({
+          id: "uae-marketing-custody-access-control",
+          title: "Marketing, custody, and cross-border access control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: varaOperatingEvidenceLabels
+        }),
+        expect.objectContaining({
+          id: "uae-vara-2024-marketing-regulations-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    const serializedUaePack = JSON.stringify(uaePack);
+    expect(serializedUaePack).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|personal data|legal conclusion/i
+    );
+    expect(serializedUaePack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

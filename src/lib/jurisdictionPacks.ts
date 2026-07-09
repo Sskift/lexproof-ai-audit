@@ -1838,7 +1838,15 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
-        evidenceKeywords: ["virtual asset", "activity scope", "offering memo", "eligibility", "launch approval", "token terms"]
+        evidenceKeywords: [
+          "control-uae-vara-va-regulations-activity-scope",
+          "virtual asset",
+          "activity scope",
+          "offering memo",
+          "eligibility",
+          "launch approval",
+          "token terms"
+        ]
       },
       {
         id: "uae-marketing-approval-audience-control",
@@ -1906,7 +1914,16 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
-        evidenceKeywords: ["marketing approval", "cross-border", "wallet control", "custody", "kyc", "redaction", "human review"]
+        evidenceKeywords: [
+          "control-uae-vara-compliance-risk-management",
+          "marketing approval",
+          "cross-border",
+          "wallet control",
+          "custody",
+          "kyc",
+          "redaction",
+          "human review"
+        ]
       }
     ]
   },

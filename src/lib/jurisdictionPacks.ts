@@ -1274,6 +1274,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-ca-csa-ctp-pru-custody-investor-protection",
           "canada csa pru",
           "pre-registration undertaking",
           "registration application",
@@ -1290,6 +1291,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data"],
         evidenceKeywords: [
+          "control-ca-csa-ctp-pru-custody-investor-protection",
           "acceptable third-party custodian",
           "third-party custodians to hold not less than 80%",
           "hold assets in trust",

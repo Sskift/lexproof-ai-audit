@@ -237,7 +237,7 @@ Japan crypto custody projects now route to FSA crypto-asset exchange supervision
 
 ![Japan crypto custody source graph](docs/assets/screenshots/japan-crypto-custody-source-graph.png)
 
-Canada CTP custody projects now route to CSA Staff Notice 21-332 / 21-329 controls, with evidence gaps for registration and PRU assumptions, Canadian client access, no leverage, VRCA consent, client-asset custody and segregation, acceptable third-party custodian assurance, no re-hypothecation, insurance or alternative risk mitigation, and local-counsel handoff. Not legal advice.
+Canada CTP custody projects now route to CSA Staff Notice 21-332 / 21-329 controls, with evidence gaps for registration and PRU assumptions, Canadian client access, no leverage, VRCA consent, client-asset custody and segregation, acceptable third-party custodian assurance, no re-hypothecation, insurance or alternative risk mitigation, and local-counsel handoff. The Jurisdiction Checklist also shows CSA registration/PRU investor-protection and client-asset custody/segregation controls that become evidence-ready only from metadata-only records carrying `control-ca-csa-ctp-pru-custody-investor-protection`, without raw KYC, raw client records, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 ![Canada CTP custody source graph](docs/assets/screenshots/canada-ctp-custody-source-graph.png)
 

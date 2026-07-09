@@ -2381,6 +2381,80 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(japanPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Canada CSA CTP custody controls ready from verified PRU custody evidence only", () => {
+    const canadaCustodyEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-ca-csa-ctp-pru-custody-investor-protection"))
+      .map((item, index) => ({
+        ...item,
+        id: `ca-csa-custody-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(canadaCustodyEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "Canada CTP PRU custody and investor-protection register"
+    ]);
+
+    const canadaCustodyProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-ca-csa-custody-ready",
+      projectName: "MapleTrust Canada CTP Custody Review",
+      jurisdictions: ["Canada"],
+      entityType: "Crypto asset trading platform preparing CSA PRU and custody evidence",
+      assetModel:
+        "Canada CTP custody workflow with pre-registration undertaking, Canadian client access, no leverage, VRCA consent, client-asset segregation, acceptable third-party custodian assurance, no re-hypothecation, and insurance risk-mitigation evidence",
+      userType: "Canadian clients, custody operators, compliance reviewers, and Canada local counsel",
+      custodyModel:
+        "Platform holds Canadian client crypto assets through segregated custody, acceptable third-party custodian controls, trust-account metadata, withdrawal approvals, reconciliation, and no re-hypothecation controls",
+      dataSensitivity:
+        "Custody-control metadata, PRU summaries, custodian assurance evidence, and no raw KYC, raw client records, wallet secrets, customer records, or personal data",
+      aiUsage: "AI drafts Canada CSA CTP custody evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Canada custody evidence metadata",
+      operatingStage: "Pre-launch Canada CTP custody and PRU review before local counsel signoff",
+      evidenceItems: canadaCustodyEvidence
+    };
+    const audit = analyzeAuditProfile(canadaCustodyProject);
+    const [canadaPack] = createJurisdictionPacks(canadaCustodyProject, audit);
+
+    expect(canadaPack).toMatchObject({
+      jurisdiction: "Canada",
+      localCounselRoute: {
+        recommendedRole: "Canada crypto asset trading platform counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(canadaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ca-csa-registration-pru-control",
+          title: "CSA registration and PRU investor-protection control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Canada CTP PRU custody and investor-protection register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "ca-client-asset-custody-segregation-control",
+          title: "Client-asset custody, segregation, and custodian assurance control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Canada CTP PRU custody and investor-protection register"
+          ]
+        })
+      ])
+    );
+    expect(JSON.stringify(canadaPack)).not.toMatch(
+      /\braw KYC\b|raw client records|wallet secrets|private key|customer records|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(canadaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

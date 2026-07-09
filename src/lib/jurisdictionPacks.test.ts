@@ -942,6 +942,66 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the US CFTC Ooki DAO derivatives control ready from verified DAO derivatives evidence only", () => {
+    const cftcRegister = createEvidenceItemsFromTemplate("dao-governance-multisig").find(
+      (item) => item.label === "DAO derivatives platform boundary and BSA/CIP review register"
+    );
+
+    expect(cftcRegister).toBeDefined();
+
+    const daoProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-cftc-ooki-dao-ready",
+      projectName: "Ooki Boundary DAO Review",
+      jurisdictions: ["United States"],
+      entityType: "DAO protocol governance committee preparing CFTC derivatives-platform evidence",
+      assetModel:
+        "DAO protocol review with leveraged retail commodity, margined retail commodity, DeFi trading platform, FCM activity, commodity interest, control-transfer, and proposal-execution assumptions",
+      userType: "US retail users, DAO governance members, compliance reviewers, and commodities counsel",
+      custodyModel: "No custody in this slice; governance execution is metadata-only",
+      dataSensitivity: "BSA CIP boundary summaries, customer-identification-program assumptions, and no raw customer records",
+      aiUsage: "AI drafts DAO derivatives evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for proposal execution metadata",
+      operatingStage: "Pre-execution CFTC DAO boundary review before counsel signoff",
+      evidenceItems: [
+        {
+          ...cftcRegister!,
+          id: "us-cftc-ooki-dao-register-1",
+          status: "verified" as const
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(daoProject);
+    const [usPack] = createJurisdictionPacks(daoProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-cftc-dao-derivatives-platform-control",
+          title: "DAO derivatives-platform and FCM/BSA control",
+          owner: "Counsel",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["DAO derivatives platform boundary and BSA/CIP review register"]
+        }),
+        expect.objectContaining({
+          id: "us-sec-dao-governance-token-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the US ABA Formal Opinion 512 legal AI control ready from verified AI workflow evidence only", () => {
     const abaEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
       .filter((item) => item.source?.includes("control-us-aba-formal-opinion-512-generative-ai-law-practice"))

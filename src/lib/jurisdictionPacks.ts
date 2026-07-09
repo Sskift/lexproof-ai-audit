@@ -182,6 +182,10 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P0",
         relatedFlagIds: ["retail", "sensitive-data"],
         evidenceKeywords: [
+          "control-us-cftc-ooki-dao-defi-derivatives-platform",
+          "ooki dao",
+          "bzerox",
+          "cftc release no. 8590-22",
           "cftc dao derivatives",
           "leveraged retail commodity",
           "margined retail commodity",
@@ -189,10 +193,15 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "trading platform",
           "fcm",
           "commodity interest",
+          "us user access",
           "bsa cip",
           "customer identification program",
           "control transfer",
-          "successor dao"
+          "successor dao",
+          "governance member",
+          "website domain",
+          "proposal execution",
+          "compliance owner"
         ]
       },
       {

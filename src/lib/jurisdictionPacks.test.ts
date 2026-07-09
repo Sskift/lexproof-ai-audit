@@ -2307,6 +2307,80 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(hongKongPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Japan FSA crypto custody controls ready from verified FSA custody evidence only", () => {
+    const japanCustodyEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-jp-fsa-crypto-asset-custody-user-protection"))
+      .map((item, index) => ({
+        ...item,
+        id: `jp-fsa-custody-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(japanCustodyEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "Japan crypto-asset custody and leakage response register"
+    ]);
+
+    const japanCustodyProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-jp-fsa-custody-ready",
+      projectName: "SakuraKey FSA Crypto Custody Review",
+      jurisdictions: ["Japan"],
+      entityType: "Crypto-asset exchange service provider preparing FSA custody and user-protection evidence",
+      assetModel:
+        "Crypto-asset exchange custody workflow with user asset protection, segregated wallet handling, cold wallet and offline environment controls, daily reconciliation, leakage response, and separate management audit evidence",
+      userType: "Japan retail customers, custody operators, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform manages customer crypto assets with segregated custody, cold-wallet/offline management, withdrawal approvals, reconciliation, and leakage-response metadata",
+      dataSensitivity:
+        "Custody-control metadata, user-asset protection summaries, leakage-response evidence, and no raw KYC, wallet secrets, customer records, or personal data",
+      aiUsage: "AI drafts Japan FSA custody evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Japan custody evidence metadata",
+      operatingStage: "Pre-launch Japan crypto custody review before local counsel signoff",
+      evidenceItems: japanCustodyEvidence
+    };
+    const audit = analyzeAuditProfile(japanCustodyProject);
+    const [japanPack] = createJurisdictionPacks(japanCustodyProject, audit);
+
+    expect(japanPack).toMatchObject({
+      jurisdiction: "Japan",
+      localCounselRoute: {
+        recommendedRole: "Japan crypto-asset exchange / custody counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(japanPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "jp-fsa-registration-user-asset-control",
+          title: "FSA registration and user-asset protection control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Japan crypto-asset custody and leakage response register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "jp-cold-wallet-leakage-response-control",
+          title: "Cold-wallet, reconciliation, and leakage-response control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Japan crypto-asset custody and leakage response register"
+          ]
+        })
+      ])
+    );
+    expect(JSON.stringify(japanPack)).not.toMatch(
+      /\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(japanPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

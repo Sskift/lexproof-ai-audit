@@ -233,7 +233,7 @@ Hong Kong tokenised product projects now route to SFC tokenisation and secondary
 
 ![Hong Kong SFC tokenised product source graph](docs/assets/screenshots/hong-kong-tokenised-product-source-graph.png)
 
-Japan crypto custody projects now route to FSA crypto-asset exchange supervision and user-asset protection controls, with evidence gaps for registration assumptions, user-asset protection, information to users, cold-wallet/offline management, reconciliation, leakage response, and local-counsel handoff. Not legal advice.
+Japan crypto custody projects now route to FSA crypto-asset exchange supervision and user-asset protection controls, with evidence gaps for registration assumptions, user-asset protection, information to users, cold-wallet/offline management, reconciliation, leakage response, and local-counsel handoff. The Jurisdiction Checklist also shows FSA registration/user-asset protection and cold-wallet/leakage-response controls that become evidence-ready only from metadata-only records carrying `control-jp-fsa-crypto-asset-custody-user-protection`, without raw KYC, customer records, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 ![Japan crypto custody source graph](docs/assets/screenshots/japan-crypto-custody-source-graph.png)
 

@@ -1232,6 +1232,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-jp-fsa-crypto-asset-custody-user-protection",
           "japan crypto asset exchange",
           "fsa registration",
           "user asset protection",
@@ -1247,6 +1248,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data"],
         evidenceKeywords: [
+          "control-jp-fsa-crypto-asset-custody-user-protection",
           "cold wallet",
           "offline environment",
           "segregated wallet",

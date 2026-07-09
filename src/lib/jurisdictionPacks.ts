@@ -525,6 +525,34 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["data minimization", "retention", "redaction", "model call", "personal data"]
       },
       {
+        id: "eu-ai-act-ai-literacy-governance-control",
+        title: "AI Act AI-literacy and human-oversight governance control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-eu-ai-act-ai-literacy-governance",
+          "article 4",
+          "ai literacy",
+          "ai system use policy",
+          "permitted model use",
+          "prohibited inputs",
+          "human review",
+          "review owner",
+          "non-advice output boundary",
+          "human oversight",
+          "oversight",
+          "escalation",
+          "source lineage",
+          "risk management",
+          "unsupported claims",
+          "audit log",
+          "review log",
+          "source-linked counsel",
+          "reviewer authority"
+        ]
+      },
+      {
         id: "eu-ai-act-high-risk-provider-quality-documentation-control",
         title: "AI Act high-risk provider QMS and technical-documentation control",
         owner: "Counsel",

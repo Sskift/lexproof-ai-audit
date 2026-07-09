@@ -241,6 +241,11 @@ describe("createJurisdictionPacks", () => {
           title: "Data minimization and model-call control"
         }),
         expect.objectContaining({
+          id: "eu-ai-act-ai-literacy-governance-control",
+          title: "AI Act AI-literacy and human-oversight governance control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-ai-act-high-risk-provider-quality-documentation-control",
           title: "AI Act high-risk provider QMS and technical-documentation control",
           status: "needs-evidence"
@@ -1018,6 +1023,81 @@ describe("createJurisdictionPacks", () => {
           evidenceLabels: []
         })
       ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU AI Act AI-literacy governance control ready from verified AI workflow evidence only", () => {
+    const aiLiteracyEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-eu-ai-act-ai-literacy-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-ai-act-ai-literacy-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(aiLiteracyEvidence.map((item) => item.label)).toEqual([
+      "AI system use policy",
+      "Human review approval log",
+      "Source lineage register"
+    ]);
+
+    const aiLiteracyProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-ai-act-ai-literacy-ready",
+      projectName: "LexAssist AI Literacy Review",
+      jurisdictions: ["European Union"],
+      entityType: "AI legal workflow deployer preparing AI-literacy governance evidence",
+      assetModel:
+        "AI-assisted legal workflow with AI literacy, permitted model use, source lineage, risk-control handling, reviewer authority, and human oversight",
+      userType: "EU compliance reviewers, legal operations reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; AI-literacy evidence is metadata-only",
+      dataSensitivity: "Source-lineage metadata, human-review notes, and no raw matter text or client identifiers",
+      aiUsage: "AI drafts source-linked audit preparation questions for human review",
+      blockchainUse: "Simulated hash receipt for approved AI-literacy governance metadata",
+      operatingStage: "Pre-launch AI-literacy and human-oversight review before local counsel signoff",
+      evidenceItems: aiLiteracyEvidence
+    };
+    const audit = analyzeAuditProfile(aiLiteracyProject);
+    const [euPack] = createJurisdictionPacks(aiLiteracyProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-ai-act-ai-literacy-governance-control",
+          title: "AI Act AI-literacy and human-oversight governance control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["AI system use policy", "Human review approval log", "Source lineage register"]
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-high-risk-provider-quality-documentation-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-article-50-transparency-disclosure-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-justice-adr-perimeter-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(euPack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["eu-mica-marketing-communications-control", "eu-mica-art-emt-stablecoin-issuer-control"])
     );
     expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);

@@ -3099,6 +3099,80 @@ describe("createJurisdictionPacks", () => {
     expect(serializedUkPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Germany BaFin MiCAR custody controls ready from verified authorisation evidence only", () => {
+    const germanyMicarEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) =>
+        item.source?.includes("control-de-bafin-micar-casp-custody-authorisation")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `de-bafin-micar-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    const germanyMicarEvidenceLabels = [
+      "Custody and signer control runbook",
+      "Germany BaFin MiCAR CASP custody and Article 60/62 register"
+    ];
+    expect(germanyMicarEvidence.map((item) => item.label)).toEqual(germanyMicarEvidenceLabels);
+
+    const germanyMicarProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-de-bafin-micar-ready",
+      projectName: "Frankfurt MiCAR Custody Review",
+      jurisdictions: ["Germany"],
+      entityType: "Germany CASP custody operator preparing BaFin MiCAR evidence",
+      assetModel:
+        "Germany MiCAR CASP custody workflow with service scope, Article 60 notification, Article 62 application assumptions, home Member State, German client access, Article 75 custody policy, client register, position statement, segregation, return crypto assets, means of access, and client crypto assets evidence",
+      userType: "German retail users, compliance reviewers, and German local counsel",
+      custodyModel:
+        "Platform maintains metadata-only custody-policy, client-position, segregation, return-process, means-of-access, and client-crypto-asset records without wallet secret handling",
+      dataSensitivity:
+        "Client-position status summaries, means-of-access handling status, custody safeguarding status, private-key exclusion status, and no raw KYC, wallet secrets, credentials, customer records, private cryptographic material, or personal data",
+      aiUsage:
+        "AI drafts Germany BaFin MiCAR authorisation and custody safeguarding evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Germany MiCAR custody evidence metadata",
+      operatingStage: "Pre-launch Germany BaFin MiCAR review before local counsel signoff",
+      evidenceItems: germanyMicarEvidence
+    };
+    const audit = analyzeAuditProfile(germanyMicarProject);
+    const [germanyPack] = createJurisdictionPacks(germanyMicarProject, audit);
+
+    expect(germanyPack).toMatchObject({
+      jurisdiction: "Germany",
+      localCounselRoute: {
+        recommendedRole: "Germany BaFin / MiCAR crypto custody counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(germanyPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "de-bafin-micar-casp-authorisation-control",
+          title: "BaFin MiCAR CASP authorisation and notification control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: germanyMicarEvidenceLabels
+        }),
+        expect.objectContaining({
+          id: "de-bafin-custody-safeguarding-control",
+          title: "MiCAR custody safeguarding and client-position control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: germanyMicarEvidenceLabels
+        })
+      ])
+    );
+    const serializedGermanyPack = JSON.stringify(germanyPack);
+    expect(serializedGermanyPack).toMatch(/private cryptographic keys/i);
+    expect(serializedGermanyPack).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|personal data|legal conclusion/i
+    );
+    expect(serializedGermanyPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

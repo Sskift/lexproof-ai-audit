@@ -1792,6 +1792,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-de-bafin-micar-casp-custody-authorisation",
           "germany micar",
           "bafin",
           "casp authorisation",
@@ -1810,6 +1811,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data"],
         evidenceKeywords: [
+          "control-de-bafin-micar-casp-custody-authorisation",
           "article 75",
           "custody policy",
           "client register",

@@ -221,7 +221,7 @@ Singapore DPT custody projects now route to MAS PSN02 AML/CFT controls and MAS P
 
 ![Singapore DPT custody source graph](docs/assets/screenshots/singapore-dpt-custody-source-graph.png)
 
-Hong Kong VATP custody projects now route to SFC VATP client-asset custody controls, with evidence gaps for associated-entity trust holding, wallet segregation, reconciliation, cold-storage/key-control, monitoring, compensation arrangements, and local-counsel handoff. Not legal advice.
+Hong Kong VATP custody projects now route to SFC VATP client-asset custody controls, with evidence gaps for associated-entity trust holding, wallet segregation, reconciliation, cold-storage/key-control, monitoring, compensation arrangements, and local-counsel handoff. The Jurisdiction Checklist also shows VATP client-asset custody and wallet-governance/compensation controls that become evidence-ready only from metadata-only records carrying `control-hk-sfc-vatp-client-asset-custody`, without raw KYC, customer records, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 ![Hong Kong VATP custody source graph](docs/assets/screenshots/hong-kong-vatp-source-graph.png)
 

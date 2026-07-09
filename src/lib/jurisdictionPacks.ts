@@ -1134,6 +1134,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-hk-sfc-vatp-client-asset-custody",
+          "sfc vatp client asset custody",
           "client asset",
           "client virtual asset",
           "associated entity",
@@ -1150,6 +1152,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "public-launch"],
         evidenceKeywords: [
+          "control-hk-sfc-vatp-client-asset-custody",
+          "sfc vatp wallet control",
           "cold storage",
           "key management",
           "reconciliation",

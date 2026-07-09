@@ -2161,6 +2161,76 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(singaporePack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Hong Kong SFC VATP custody controls ready from verified VATP custody evidence only", () => {
+    const vatpEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-hk-sfc-vatp-client-asset-custody"))
+      .map((item, index) => ({
+        ...item,
+        id: `hk-vatp-custody-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(vatpEvidence.map((item) => item.label)).toEqual(["Custody and signer control runbook"]);
+
+    const hongKongVatpProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-hk-vatp-custody-ready",
+      projectName: "HarborKey Hong Kong VATP Custody Review",
+      jurisdictions: ["Hong Kong"],
+      entityType: "Virtual asset trading platform operator preparing Hong Kong VATP custody evidence",
+      assetModel:
+        "VATP custody workflow with client virtual assets, associated-entity trust holding, wallet segregation, cold storage, reconciliation, monitoring, and compensation-arrangement evidence",
+      userType: "Hong Kong retail users, VATP custody operators, compliance reviewers, and local counsel",
+      custodyModel:
+        "Platform wallet authority with signer quorum, withdrawal approval, cold-storage and key-control review, emergency pause, incident response, and client asset return metadata",
+      dataSensitivity:
+        "Custody-control metadata, wallet-governance summaries, reconciliation evidence, and no raw KYC, wallet secrets, customer records, or personal data",
+      aiUsage: "AI drafts Hong Kong VATP custody evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for VATP custody evidence metadata",
+      operatingStage: "Pre-launch Hong Kong VATP custody review before local counsel signoff",
+      evidenceItems: vatpEvidence
+    };
+    const audit = analyzeAuditProfile(hongKongVatpProject);
+    const [hongKongPack] = createJurisdictionPacks(hongKongVatpProject, audit);
+
+    expect(hongKongPack).toMatchObject({
+      jurisdiction: "Hong Kong",
+      localCounselRoute: {
+        recommendedRole: "Hong Kong virtual asset trading platform counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(hongKongPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "hk-vatp-client-asset-custody-control",
+          title: "VATP client asset custody control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Custody and signer control runbook"]
+        }),
+        expect.objectContaining({
+          id: "hk-vatp-wallet-compensation-control",
+          title: "Wallet governance and compensation arrangement control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Custody and signer control runbook"]
+        }),
+        expect.objectContaining({
+          id: "hk-hkma-stablecoin-issuer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(hongKongPack)).not.toMatch(
+      /\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(hongKongPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

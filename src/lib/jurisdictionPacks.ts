@@ -781,8 +781,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
     jurisdiction: "Singapore",
     aliases: ["singapore", "sg"],
     summary:
-      "Prepare product-scope, token distribution, custody, AML/data, and AI review handoff controls for Singapore local counsel.",
-    recommendedRole: "Singapore fintech / digital asset counsel",
+      "Prepare product-scope, token distribution, custody, AML/data, agentic AI governance, and AI review handoff controls for Singapore local counsel.",
+    recommendedRole: "Singapore fintech / digital asset / AI governance counsel",
     controls: [
       {
         id: "sg-product-scope-launch-control",
@@ -799,6 +799,39 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
         evidenceKeywords: ["custody", "wallet control", "aml", "kyc", "redaction", "model payload", "human review"]
+      },
+      {
+        id: "sg-imda-agentic-ai-governance-control",
+        title: "IMDA / AI Verify agentic AI governance and human-approval control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-sg-imda-agentic-ai-governance",
+          "singapore agentic ai",
+          "agentic ai",
+          "agentic ai action-space",
+          "ai agent",
+          "agentic workflow",
+          "tool permissions",
+          "tool use",
+          "tool call",
+          "access controls",
+          "agent limits",
+          "autonomy level",
+          "read vs write",
+          "human approvals",
+          "human approval checkpoints",
+          "agent action log",
+          "tool-call monitoring",
+          "logging and monitoring",
+          "policy adherence",
+          "continuous monitoring",
+          "user responsibilities",
+          "training",
+          "ai verify",
+          "documentary evidence"
+        ]
       }
     ]
   },

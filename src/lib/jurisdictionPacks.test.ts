@@ -284,11 +284,15 @@ describe("createJurisdictionPacks", () => {
     const singaporePack = packs.find((pack) => pack.jurisdiction === "Singapore");
     expect(singaporePack).toMatchObject({
       localCounselRoute: {
-        recommendedRole: "Singapore fintech / digital asset counsel"
+        recommendedRole: "Singapore fintech / digital asset / AI governance counsel"
       }
     });
     expect(singaporePack?.controls.map((control) => control.title)).toEqual(
-      expect.arrayContaining(["Product scope and launch-intake control", "Custody, AML, and data handoff control"])
+      expect.arrayContaining([
+        "Product scope and launch-intake control",
+        "Custody, AML, and data handoff control",
+        "IMDA / AI Verify agentic AI governance and human-approval control"
+      ])
     );
 
     const hongKongPack = packs.find((pack) => pack.jurisdiction === "Hong Kong");
@@ -1431,6 +1435,75 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the Singapore IMDA agentic AI governance control ready from verified AI workflow evidence only", () => {
+    const singaporeAgenticEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-sg-imda-agentic-ai-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `sg-imda-agentic-ai-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(singaporeAgenticEvidence.map((item) => item.label)).toEqual([
+      "Singapore agentic AI action-space and approval register",
+      "Singapore AI Verify logging and user-responsibility register"
+    ]);
+
+    const singaporeAiProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-sg-imda-agentic-ai-ready",
+      projectName: "LexAssist Singapore Agentic AI Review",
+      jurisdictions: ["Singapore"],
+      entityType: "Agentic AI legal workflow deployer preparing Singapore AI governance evidence",
+      assetModel:
+        "Agentic AI workflow with action-space, tool permissions, access controls, autonomy-level, human approval checkpoints, logging, monitoring, and AI Verify documentary evidence",
+      userType: "Singapore legal operations reviewers, AI governance reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; Singapore agentic AI evidence is metadata-only",
+      dataSensitivity: "Agent action metadata, tool-call summaries, approval checkpoints, and no raw matter text or client identifiers",
+      aiUsage: "AI agent drafts source-linked audit preparation tasks with tool-call monitoring and human approval checkpoints",
+      blockchainUse: "Simulated hash receipt for approved Singapore agentic AI metadata",
+      operatingStage: "Pre-launch Singapore agentic AI governance review before local counsel signoff",
+      evidenceItems: singaporeAgenticEvidence
+    };
+    const audit = analyzeAuditProfile(singaporeAiProject);
+    const [singaporePack] = createJurisdictionPacks(singaporeAiProject, audit);
+
+    expect(singaporePack).toMatchObject({
+      jurisdiction: "Singapore",
+      localCounselRoute: {
+        recommendedRole: "Singapore fintech / digital asset / AI governance counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(singaporePack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "sg-imda-agentic-ai-governance-control",
+          title: "IMDA / AI Verify agentic AI governance and human-approval control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Singapore agentic AI action-space and approval register",
+            "Singapore AI Verify logging and user-responsibility register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "sg-custody-aml-data-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(singaporePack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["sg-product-scope-launch-control"])
+    );
+    expect(JSON.stringify(singaporePack)).not.toMatch(
+      /\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i
+    );
+    expect(JSON.stringify(singaporePack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {

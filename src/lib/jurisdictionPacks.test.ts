@@ -2818,6 +2818,76 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(indonesiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Malaysia SC/BNM digital asset controls ready from verified exchange evidence only", () => {
+    const malaysiaExchangeEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) =>
+        item.source?.includes("control-my-sc-bnm-digital-asset-exchange-custody-aml")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `my-sc-bnm-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(malaysiaExchangeEvidence.map((item) => item.label)).toEqual([
+      "Malaysia digital asset exchange custody and AML/CFT register"
+    ]);
+
+    const malaysiaExchangeProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-my-sc-bnm-ready",
+      projectName: "Kuala Lumpur Digital Asset Exchange Review",
+      jurisdictions: ["Malaysia"],
+      entityType: "Malaysia digital asset exchange operator preparing SC and BNM evidence",
+      assetModel:
+        "Malaysia digital asset exchange with RMO-DAX, digital broker, Digital Asset Custodian, DAC registration route, IEO assumptions, tradeable asset and Shariah review assumptions, official app and website channels, and custody safeguarding evidence",
+      userType: "Malaysian retail users, compliance reviewers, and Malaysia local counsel",
+      custodyModel:
+        "Platform maintains metadata-only custody safeguarding, wallet authority, reporting-institution, official-channel, and transparency records without wallet secret handling",
+      dataSensitivity:
+        "Customer identification status summaries, CDD/EDD status metadata, beneficial-owner status metadata, reporting-owner metadata, and no raw KYC, wallet secrets, credentials, customer records, or personal data",
+      aiUsage:
+        "AI drafts Malaysia SC DAX/DAC and BNM AML/CFT evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Malaysia digital asset evidence metadata",
+      operatingStage: "Pre-launch Malaysia SC and BNM review before local counsel signoff",
+      evidenceItems: malaysiaExchangeEvidence
+    };
+    const audit = analyzeAuditProfile(malaysiaExchangeProject);
+    const [malaysiaPack] = createJurisdictionPacks(malaysiaExchangeProject, audit);
+
+    expect(malaysiaPack).toMatchObject({
+      jurisdiction: "Malaysia",
+      localCounselRoute: {
+        recommendedRole: "Malaysia digital asset / AML counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(malaysiaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "my-sc-dax-dac-registration-custody-control",
+          title: "SC DAX/DAC registration, trading, and custody control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+        }),
+        expect.objectContaining({
+          id: "my-bnm-aml-cft-reporting-control",
+          title: "BNM digital currency AML/CFT reporting-institution control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+        })
+      ])
+    );
+    expect(JSON.stringify(malaysiaPack)).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(malaysiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

@@ -284,6 +284,31 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["sensitive-data", "ai-workflow"],
         evidenceKeywords: ["redaction", "access control", "data handling", "model payload"]
+      },
+      {
+        id: "us-aba-formal-opinion-512-legal-ai-control",
+        title: "ABA Formal Opinion 512 legal AI professional-responsibility control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-aba-formal-opinion-512-generative-ai-law-practice",
+          "aba formal opinion 512",
+          "gai tool capability",
+          "model limitations",
+          "confidentiality controls",
+          "prohibited inputs",
+          "client information exclusion",
+          "verification owner",
+          "reviewer training",
+          "client communication trigger",
+          "supervisory review",
+          "outside provider oversight",
+          "tribunal candor",
+          "fee treatment",
+          "expense treatment",
+          "no confidential matter text"
+        ]
       }
     ]
   },

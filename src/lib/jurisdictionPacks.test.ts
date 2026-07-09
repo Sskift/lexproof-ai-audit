@@ -182,6 +182,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-aba-formal-opinion-512-legal-ai-control",
+          title: "ABA Formal Opinion 512 legal AI professional-responsibility control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-cftc-dao-derivatives-platform-control",
           title: "DAO derivatives-platform and FCM/BSA control",
           status: "needs-evidence"
@@ -817,6 +822,71 @@ describe("createJurisdictionPacks", () => {
       ])
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US ABA Formal Opinion 512 legal AI control ready from verified AI workflow evidence only", () => {
+    const abaEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-us-aba-formal-opinion-512-generative-ai-law-practice"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-aba-legal-ai-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(abaEvidence.map((item) => item.label)).toEqual([
+      "AI system use policy",
+      "Human review approval log",
+      "US legal AI ethics and professional responsibility register"
+    ]);
+
+    const aiProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-aba-legal-ai-ready",
+      projectName: "LexAssist Evidence Desk",
+      jurisdictions: ["United States"],
+      entityType: "Legal AI evidence review workspace",
+      assetModel: "No token sale; AI-assisted legal matter intake and evidence review workflow",
+      userType: "US legal operations team, supervising counsel, and compliance reviewers",
+      custodyModel: "No custody; model workflow cannot approve wallet transfers or hold client assets",
+      dataSensitivity: "Client information summaries, confidentiality-control metadata, and reviewer notes only; no confidential matter text",
+      aiUsage: "AI drafts legal and compliance issue-spotting notes for human review",
+      blockchainUse: "Simulated hash receipt for approved model governance metadata",
+      operatingStage: "Planned public legal AI workflow review before counsel reliance",
+      evidenceItems: abaEvidence
+    };
+    const audit = analyzeAuditProfile(aiProject);
+    const [usPack] = createJurisdictionPacks(aiProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-aba-formal-opinion-512-legal-ai-control",
+          title: "ABA Formal Opinion 512 legal AI professional-responsibility control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "AI system use policy",
+            "Human review approval log",
+            "US legal AI ethics and professional responsibility register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-sec-investment-adviser-marketing-rule-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 

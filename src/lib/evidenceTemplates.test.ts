@@ -263,6 +263,11 @@ describe("evidence templates", () => {
     const recommended = recommendEvidenceTemplates(aiLegalWorkflowProject);
     const items = createEvidenceItemsFromTemplate("ai-compliance-workflow");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
+    const aiUsePolicy = items.find((item) => item.label === "AI system use policy");
+    const humanReviewLog = items.find((item) => item.label === "Human review approval log");
+    const usLegalAiRegister = items.find(
+      (item) => item.label === "US legal AI ethics and professional responsibility register"
+    );
 
     expect(recommended[0]).toMatchObject({
       id: "ai-compliance-workflow",
@@ -285,6 +290,19 @@ describe("evidence templates", () => {
         "US legal AI ethics and professional responsibility register"
       ])
     );
+    expect(aiUsePolicy?.content).toContain("ABA Formal Opinion 512");
+    expect(aiUsePolicy?.content).toContain("GAI tool capability notes");
+    expect(aiUsePolicy?.content).toContain("confidentiality controls");
+    expect(aiUsePolicy?.content).toContain("client information exclusion");
+    expect(humanReviewLog?.content).toContain("client communication trigger");
+    expect(humanReviewLog?.content).toContain("supervisory review");
+    expect(humanReviewLog?.content).toContain("tribunal candor check");
+    expect(humanReviewLog?.content).toContain("fee treatment");
+    expect(usLegalAiRegister?.content).toContain("ABA Formal Opinion 512");
+    expect(usLegalAiRegister?.content).toContain("model limitations");
+    expect(usLegalAiRegister?.content).toContain("prohibited inputs");
+    expect(usLegalAiRegister?.content).toContain("outside provider oversight");
+    expect(usLegalAiRegister?.content).toContain("no confidential matter text");
     expect(serializedSources).toContain("regulatory control: control-us-aba-formal-opinion-512-generative-ai-law-practice");
     expect(serializedSources).toContain("regulatory control: control-us-nist-ai-rmf-governance");
     expect(serializedSources).toContain("regulatory control: control-us-nyc-local-law-144-aedt-employment-decision-governance");

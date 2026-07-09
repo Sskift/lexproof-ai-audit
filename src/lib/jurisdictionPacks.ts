@@ -31,7 +31,9 @@ export type JurisdictionPack = {
   notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only.";
 };
 
-type ControlTemplate = Omit<JurisdictionPackControl, "status" | "evidenceLabels">;
+type ControlTemplate = Omit<JurisdictionPackControl, "status" | "evidenceLabels"> & {
+  sourceMatchMode?: "source-and-keyword";
+};
 
 type PackTemplate = {
   jurisdiction:
@@ -1864,7 +1866,9 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
+          "control-uae-vara-marketing-regulations-2024",
           "vara approval",
           "vasp approval",
           "marketing approval",
@@ -1905,7 +1909,9 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
+          "control-uae-vara-marketing-regulations-2024",
           "kol",
           "key opinion leader",
           "influencer",
@@ -2048,9 +2054,20 @@ function withEvidenceStatus(control: ControlTemplate, evidenceItems: EvidenceIte
     .filter(Boolean);
 
   return {
-    ...control,
+    ...toPublicControlTemplate(control),
     status: evidenceLabels.length > 0 ? "evidence-ready" : "needs-evidence",
     evidenceLabels: Array.from(new Set(evidenceLabels))
+  };
+}
+
+function toPublicControlTemplate(control: ControlTemplate): Omit<JurisdictionPackControl, "status" | "evidenceLabels"> {
+  return {
+    id: control.id,
+    title: control.title,
+    owner: control.owner,
+    priority: control.priority,
+    relatedFlagIds: control.relatedFlagIds,
+    evidenceKeywords: control.evidenceKeywords
   };
 }
 
@@ -2060,9 +2077,20 @@ function matchesControl(control: ControlTemplate, item: EvidenceItem, jurisdicti
   const controlIds = control.evidenceKeywords
     .filter((keyword) => keyword.startsWith("control-"))
     .map((keyword) => keyword.toLowerCase());
+  const semanticKeywords = control.evidenceKeywords
+    .filter((keyword) => !keyword.startsWith("control-"))
+    .map((keyword) => keyword.toLowerCase());
+  const matchesSemanticKeyword = semanticKeywords.some((keyword) => text.includes(keyword));
 
   if (itemControlIds.length > 0 && controlIds.length > 0) {
-    return controlIds.some((controlId) => itemControlIds.includes(controlId));
+    const matchesSource = controlIds.some((controlId) => itemControlIds.includes(controlId));
+    if (!matchesSource) {
+      return false;
+    }
+    if (control.sourceMatchMode === "source-and-keyword") {
+      return semanticKeywords.length === 0 || matchesSemanticKeyword;
+    }
+    return true;
   }
 
   if (controlIds.length > 0 && !matchesJurisdictionText(text, jurisdictionAliases)) {

@@ -3538,6 +3538,22 @@ describe("createJurisdictionPacks", () => {
           ]
         }),
         expect.objectContaining({
+          id: "uae-marketing-approval-audience-control",
+          title: "Marketing approval and audience-control control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["UAE VARA approval and risk-warning archive"]
+        }),
+        expect.objectContaining({
+          id: "uae-kol-incentive-recordkeeping-control",
+          title: "KOL, incentive, and marketing recordkeeping control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["UAE KOL incentive and recordkeeping log"]
+        }),
+        expect.objectContaining({
           id: "uae-marketing-custody-access-control",
           status: "needs-evidence",
           evidenceLabels: []

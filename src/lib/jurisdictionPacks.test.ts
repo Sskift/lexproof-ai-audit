@@ -2603,6 +2603,80 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(koreaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the India FIU-IND/PMLA VDA controls ready from verified VDA evidence only", () => {
+    const indiaVdaEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-in-fiu-pmla-vda-aml-cft"))
+      .map((item, index) => ({
+        ...item,
+        id: `in-fiu-pmla-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(indiaVdaEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "India VDA SP FIU-IND registration and AML reporting register"
+    ]);
+
+    const indiaVdaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-in-fiu-pmla-ready",
+      projectName: "Mumbai VDA PMLA Review",
+      jurisdictions: ["India"],
+      entityType: "Virtual digital asset service provider preparing FIU-IND Reporting Entity evidence",
+      assetModel:
+        "India VDA exchange, transfer, safekeeping, issuer offer-sale financial services, Reporting Entity registration, AML/CFT/CPF program, STR, and Travel Rule evidence",
+      userType: "Indian retail users, compliance reviewers, and India local counsel",
+      custodyModel:
+        "Platform holds user VDA balances through hosted wallet controls, transfer approvals, signer runbooks, custody boundary metadata, and incident escalation placeholders",
+      dataSensitivity:
+        "CDD status summaries, wallet-risk metadata, STR escalation summaries, and no raw KYC, PAN, Aadhaar, OVDs, wallet secrets, customer records, or personal data",
+      aiUsage: "AI drafts India VDA AML/CFT evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for India VDA evidence metadata",
+      operatingStage: "Pre-launch India VDA AML/CFT review before local counsel signoff",
+      evidenceItems: indiaVdaEvidence
+    };
+    const audit = analyzeAuditProfile(indiaVdaProject);
+    const [indiaPack] = createJurisdictionPacks(indiaVdaProject, audit);
+
+    expect(indiaPack).toMatchObject({
+      jurisdiction: "India",
+      localCounselRoute: {
+        recommendedRole: "India VDA / PMLA AML counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(indiaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "in-fiu-registration-activity-scope-control",
+          title: "FIU-IND Reporting Entity registration and activity-scope control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "India VDA SP FIU-IND registration and AML reporting register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "in-vda-aml-reporting-cdd-str-control",
+          title: "India VDA AML/CFT reporting, CDD/EDD, STR, and Travel Rule control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "India VDA SP FIU-IND registration and AML reporting register"
+          ]
+        })
+      ])
+    );
+    expect(JSON.stringify(indiaPack)).not.toMatch(
+      /\braw KYC\b|PAN|Aadhaar|OVDs|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(indiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

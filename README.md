@@ -249,7 +249,7 @@ Korea VASP user protection projects now route to FSC Virtual Asset User Protecti
 
 ![Korea VASP user protection source graph](docs/assets/screenshots/korea-vasp-user-protection-source-graph.png)
 
-India VDA projects now route to the Ministry of Finance PMLA VDA notification and FIU-IND AML/CFT guidance, with evidence gaps for VDA activity scope, FIU-IND Reporting Entity registration, AML/CFT/CPF program, Designated Director / Principal Officer, CDD/EDD, beneficial ownership, STR/monthly reporting, transaction monitoring, risk assessment, Travel Rule, record retention, FINGate/reporting-format handoff, and local-counsel review. Not legal advice.
+India VDA projects now route to the Ministry of Finance PMLA VDA notification and FIU-IND AML/CFT guidance, with evidence gaps for VDA activity scope, FIU-IND Reporting Entity registration, AML/CFT/CPF program, Designated Director / Principal Officer, CDD/EDD, beneficial ownership, STR/monthly reporting, transaction monitoring, risk assessment, Travel Rule, record retention, FINGate/reporting-format handoff, and local-counsel review. The Jurisdiction Checklist also shows FIU-IND Reporting Entity registration/activity-scope and India VDA AML/CFT reporting, CDD/EDD, STR, and Travel Rule controls that become evidence-ready only from metadata-only records carrying `control-in-fiu-pmla-vda-aml-cft`, without raw KYC, PAN, Aadhaar, OVDs, customer records, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 ![India VDA PMLA source graph](docs/assets/screenshots/india-vda-pmla-source-graph.png)
 

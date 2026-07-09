@@ -1408,6 +1408,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-in-fiu-pmla-vda-aml-cft",
           "india vda service provider",
           "india fiu-ind registration",
           "india pmla reporting entity",
@@ -1427,6 +1428,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
         evidenceKeywords: [
+          "control-in-fiu-pmla-vda-aml-cft",
           "india vda aml cft",
           "fiu-ind reporting",
           "india suspicious transaction report",

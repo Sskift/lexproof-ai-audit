@@ -305,6 +305,12 @@ describe("evidence templates", () => {
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
     const claimsRegister = items.find((item) => item.label === "Claims substantiation and risk disclosure register");
     const endorsementLog = items.find((item) => item.label === "Creator endorsement and material connection log");
+    const adviserAdvertisementFile = items.find(
+      (item) => item.label === "Investment adviser advertisement and promoter review file"
+    );
+    const adviserPerformanceFile = items.find(
+      (item) => item.label === "Investment adviser performance presentation support file"
+    );
     const ukPromotionPack = items.find((item) => item.label === "UK financial promotion approval pack");
     const euMicaMarketingPack = items.find((item) => item.label === "EU MiCA marketing communication review pack");
     const uaeVaraApprovalArchive = items.find((item) => item.label === "UAE VARA approval and risk-warning archive");
@@ -334,6 +340,18 @@ describe("evidence templates", () => {
     expect(endorsementLog?.content).toContain("creator disclosure");
     expect(endorsementLog?.content).toContain("approval routing");
     expect(endorsementLog?.content).toContain("monitoring owner");
+    expect(adviserAdvertisementFile?.content).toContain("advertisement inventory");
+    expect(adviserAdvertisementFile?.content).toContain("private fund investor audience");
+    expect(adviserAdvertisementFile?.content).toContain("testimonial or endorsement scope");
+    expect(adviserAdvertisementFile?.content).toContain("promoter compensation");
+    expect(adviserAdvertisementFile?.content).toContain("material conflict disclosure");
+    expect(adviserAdvertisementFile?.content).toContain("Form ADV reporting");
+    expect(adviserAdvertisementFile?.content).toContain("no raw investor records");
+    expect(adviserPerformanceFile?.content).toContain("gross performance");
+    expect(adviserPerformanceFile?.content).toContain("net performance");
+    expect(adviserPerformanceFile?.content).toContain("hypothetical performance");
+    expect(adviserPerformanceFile?.content).toContain("books and records");
+    expect(adviserPerformanceFile?.content).toContain("no raw portfolio or investor records");
     expect(ukPromotionPack?.content).toContain("financial promotion copy");
     expect(ukPromotionPack?.content).toContain("approval pack owner");
     expect(ukPromotionPack?.content).toContain("clear-and-balanced review");

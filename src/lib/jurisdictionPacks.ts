@@ -121,6 +121,34 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-sec-investment-adviser-marketing-rule-control",
+        title: "SEC investment adviser marketing advertisement and promoter control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "control-us-sec-investment-adviser-marketing-rule",
+          "investment adviser marketing",
+          "adviser advertisement",
+          "advertisement inventory",
+          "advisory services",
+          "private fund investor audience",
+          "testimonial",
+          "endorsement",
+          "promoter compensation",
+          "material conflict disclosure",
+          "written agreement",
+          "disqualification screening",
+          "form adv reporting",
+          "performance results",
+          "gross performance",
+          "net performance",
+          "hypothetical performance",
+          "books and records",
+          "recordkeeping owner"
+        ]
+      },
+      {
         id: "us-cftc-dao-derivatives-platform-control",
         title: "DAO derivatives-platform and FCM/BSA control",
         owner: "Counsel",

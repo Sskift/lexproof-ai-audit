@@ -152,6 +152,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-sec-investment-adviser-marketing-rule-control",
+          title: "SEC investment adviser marketing advertisement and promoter control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-ofac-virtual-currency-sanctions-control",
           title: "OFAC virtual-currency sanctions screening and blocked-property control",
           status: "needs-evidence"
@@ -729,6 +734,80 @@ describe("createJurisdictionPacks", () => {
             "Claims substantiation and risk disclosure register",
             "Creator endorsement and material connection log"
           ]
+        }),
+        expect.objectContaining({
+          id: "us-genius-payment-stablecoin-issuer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-sec-investment-adviser-marketing-rule-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US SEC investment adviser marketing control ready from verified adviser evidence only", () => {
+    const adviserMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
+      .filter((item) => item.source?.includes("control-us-sec-investment-adviser-marketing-rule"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-sec-adviser-marketing-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(adviserMarketingEvidence.map((item) => item.label)).toEqual([
+      "Investment adviser advertisement and promoter review file",
+      "Investment adviser performance presentation support file"
+    ]);
+
+    const adviserProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-sec-adviser-marketing-ready",
+      projectName: "AdviserSignal Campaign Review",
+      jurisdictions: ["United States"],
+      entityType: "SEC-registered investment adviser marketing team",
+      assetModel:
+        "Planned public launch of investment advisory services and private fund investor communication campaign with testimonial, endorsement, third-party rating, and performance results review questions",
+      userType: "Retail advisory prospects, prospective advisory clients, private fund investors, and US investment adviser counsel",
+      custodyModel: "No custody; campaign archive stores metadata-only advertisement and review records",
+      dataSensitivity: "Audience-segment summaries, Form ADV reporting metadata, and books-and-records owner only; no raw investor records",
+      aiUsage: "AI drafts adviser marketing evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved advertisement archive metadata",
+      operatingStage: "Planned public investment adviser marketing campaign before US counsel review",
+      evidenceItems: adviserMarketingEvidence
+    };
+    const audit = analyzeAuditProfile(adviserProject);
+    const [usPack] = createJurisdictionPacks(adviserProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-sec-investment-adviser-marketing-rule-control",
+          title: "SEC investment adviser marketing advertisement and promoter control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Investment adviser advertisement and promoter review file",
+            "Investment adviser performance presentation support file"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-ftc-endorsement-advertising-control",
+          status: "needs-evidence",
+          evidenceLabels: []
         }),
         expect.objectContaining({
           id: "us-genius-payment-stablecoin-issuer-control",

@@ -322,7 +322,8 @@ describe("createJurisdictionPacks", () => {
     expect(singaporePack?.controls.map((control) => control.title)).toEqual(
       expect.arrayContaining([
         "Product scope and launch-intake control",
-        "Custody, AML, and data handoff control",
+        "MAS PSN02 DPT AML/CFT and model-handoff control",
+        "MAS PS-G03 DPT customer-asset safeguard control",
         "IMDA / AI Verify agentic AI governance and human-approval control"
       ])
     );
@@ -2068,7 +2069,7 @@ describe("createJurisdictionPacks", () => {
           ]
         }),
         expect.objectContaining({
-          id: "sg-custody-aml-data-control",
+          id: "sg-mas-psn02-dpt-aml-cft-control",
           status: "needs-evidence",
           evidenceLabels: []
         })
@@ -2079,6 +2080,83 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(singaporePack)).not.toMatch(
       /\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i
+    );
+    expect(JSON.stringify(singaporePack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the Singapore MAS DPT custody and AML/CFT controls ready from verified DPT evidence only", () => {
+    const dptEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter(
+        (item) =>
+          item.source?.includes("control-sg-mas-psn02-dpt-aml-cft") ||
+          item.source?.includes("control-sg-mas-dpt-customer-asset-safeguards")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `sg-dpt-custody-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(dptEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "Singapore DPT CDD and model handoff register"
+    ]);
+
+    const singaporeDptProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-sg-dpt-custody-ready",
+      projectName: "HarborKey DPT Custody Review",
+      jurisdictions: ["Singapore"],
+      entityType: "Digital payment token service provider preparing MAS DPT custody evidence",
+      assetModel:
+        "Digital payment token custody and transfer service with customer assets, MAS PSN02 AML/CFT, MAS PS-G03 customer-asset safeguards, segregation, custody disclosure, reconciliation, and transfer-control evidence",
+      userType: "Singapore DPT customers, compliance reviewers, custody operators, and Singapore fintech counsel",
+      custodyModel:
+        "Platform wallet authority with signer quorum, withdrawal approval, emergency pause, incident response, and customer asset return metadata",
+      dataSensitivity:
+        "CDD summaries, sanctions and transaction-monitoring metadata, wallet-history boundary notes, and no raw KYC, customer records, or wallet secrets",
+      aiUsage: "AI drafts DPT AML/CFT and custody evidence requests after redaction and model-payload boundary review",
+      blockchainUse: "Simulated hash receipt for MAS DPT custody evidence metadata",
+      operatingStage: "Pre-launch Singapore DPT custody and AML/CFT review before local counsel signoff",
+      evidenceItems: dptEvidence
+    };
+    const audit = analyzeAuditProfile(singaporeDptProject);
+    const [singaporePack] = createJurisdictionPacks(singaporeDptProject, audit);
+
+    expect(singaporePack).toMatchObject({
+      jurisdiction: "Singapore",
+      localCounselRoute: {
+        recommendedRole: "Singapore fintech / digital asset / AI governance counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(singaporePack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "sg-mas-psn02-dpt-aml-cft-control",
+          title: "MAS PSN02 DPT AML/CFT and model-handoff control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Singapore DPT CDD and model handoff register"]
+        }),
+        expect.objectContaining({
+          id: "sg-mas-dpt-customer-asset-safeguards-control",
+          title: "MAS PS-G03 DPT customer-asset safeguard control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Custody and signer control runbook"]
+        }),
+        expect.objectContaining({
+          id: "sg-imda-agentic-ai-governance-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(singaporePack)).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|legal conclusion/i
     );
     expect(JSON.stringify(singaporePack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });

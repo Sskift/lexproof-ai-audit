@@ -1033,12 +1033,57 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["product scope", "launch approval", "offering memo", "eligibility", "marketing approval", "token terms"]
       },
       {
-        id: "sg-custody-aml-data-control",
-        title: "Custody, AML, and data handoff control",
+        id: "sg-mas-psn02-dpt-aml-cft-control",
+        title: "MAS PSN02 DPT AML/CFT and model-handoff control",
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
-        evidenceKeywords: ["custody", "wallet control", "aml", "kyc", "redaction", "model payload", "human review"]
+        evidenceKeywords: [
+          "control-sg-mas-psn02-dpt-aml-cft",
+          "mas psn02",
+          "notice psn02",
+          "digital payment token aml",
+          "dpt aml",
+          "aml/cft risk assessment",
+          "customer due diligence",
+          "cdd",
+          "sanctions",
+          "transaction monitoring",
+          "wallet history metadata boundary",
+          "data redaction",
+          "model handoff",
+          "model payload",
+          "access control",
+          "evidence-export exclusion"
+        ]
+      },
+      {
+        id: "sg-mas-dpt-customer-asset-safeguards-control",
+        title: "MAS PS-G03 DPT customer-asset safeguard control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "retail", "public-launch"],
+        evidenceKeywords: [
+          "control-sg-mas-dpt-customer-asset-safeguards",
+          "mas ps-g03",
+          "consumer protection safeguards",
+          "digital payment token",
+          "dpt customer asset",
+          "customer asset segregation",
+          "customer assets",
+          "segregation",
+          "safeguarding",
+          "wallet authority",
+          "signer quorum",
+          "transfer control",
+          "custody disclosure",
+          "reconciliation",
+          "withdrawal approval",
+          "emergency pause",
+          "incident response",
+          "customer asset return",
+          "custody and signer control"
+        ]
       },
       {
         id: "sg-imda-agentic-ai-governance-control",

@@ -217,7 +217,7 @@ UK qualifying stablecoin issuer projects now route to FCA PS26/10 and BoE/FCA jo
 
 ![UK qualifying stablecoin issuer source graph](docs/assets/screenshots/uk-stablecoin-issuer-source-graph.png)
 
-Singapore DPT custody projects now route to MAS PSN02 AML/CFT controls and MAS PS-G03 customer-asset safeguard controls, with evidence gaps for AML/CFT risk assessment, CDD, sanctions, transaction monitoring, data-redaction/model handoff, segregation, custody disclosure, reconciliation, transfer controls, and local-counsel handoff. Not legal advice.
+Singapore DPT custody projects now route to MAS PSN02 AML/CFT controls and MAS PS-G03 customer-asset safeguard controls, with evidence gaps for AML/CFT risk assessment, CDD, sanctions, transaction monitoring, data-redaction/model handoff, segregation, custody disclosure, reconciliation, transfer controls, and local-counsel handoff. The Jurisdiction Checklist also shows separate MAS PSN02 DPT AML/CFT and MAS PS-G03 customer-asset safeguard controls that become evidence-ready only from metadata-only records carrying `control-sg-mas-psn02-dpt-aml-cft` and `control-sg-mas-dpt-customer-asset-safeguards`, without raw KYC, customer records, wallet secrets, or legal conclusions. Not legal advice.
 
 ![Singapore DPT custody source graph](docs/assets/screenshots/singapore-dpt-custody-source-graph.png)
 

@@ -771,6 +771,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US SEC/CFTC crypto-asset classification control ready from verified RWA classification evidence only", () => {
+    const sourceFreeClassificationMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-classification-memo",
+      label: "US token rights classification memo",
+      kind: "Memo",
+      content:
+        "US crypto asset classification, token rights, issuer promise, investment expectation, staking/yield, yield assumptions, redemption language, public distribution, registration assumption, exemption assumption, and risk factor coverage.",
+      status: "verified",
+      owner: "Counsel"
+    };
     const classificationEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter((item) => item.source?.includes("control-us-sec-cftc-crypto-asset-interpretation"))
       .map((item, index) => ({
@@ -798,7 +807,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts US SEC/CFTC classification evidence requests for human review",
       blockchainUse: "Simulated hash receipt for classification evidence metadata",
       operatingStage: "Pre-launch US crypto-asset classification and offering-analysis review before counsel signoff",
-      evidenceItems: classificationEvidence
+      evidenceItems: [sourceFreeClassificationMemo, ...classificationEvidence]
     };
     const audit = analyzeAuditProfile(rwaProject);
     const [usPack] = createJurisdictionPacks(rwaProject, audit);

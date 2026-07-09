@@ -98,6 +98,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P0",
         relatedFlagIds: ["asset-yield", "retail", "public-launch", "custody"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-us-sec-cftc-crypto-asset-interpretation",
           "sec cftc crypto asset",

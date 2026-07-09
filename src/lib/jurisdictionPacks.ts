@@ -1362,6 +1362,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-kr-fsc-kofiu-vasp-user-protection-aml",
           "korea vasp user protection",
           "user deposits at banks",
           "users virtual assets separate",
@@ -1379,6 +1380,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
         evidenceKeywords: [
+          "control-kr-fsc-kofiu-vasp-user-protection-aml",
           "kofiu",
           "vasp reporting",
           "compliance system",

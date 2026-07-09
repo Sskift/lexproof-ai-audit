@@ -2529,6 +2529,80 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(australiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the South Korea FSC/KoFIU VASP controls ready from verified VASP evidence only", () => {
+    const koreaVaspEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-kr-fsc-kofiu-vasp-user-protection-aml"))
+      .map((item, index) => ({
+        ...item,
+        id: `kr-fsc-kofiu-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(koreaVaspEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "Korea VASP user protection and AML reporting register"
+    ]);
+
+    const koreaVaspProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-kr-fsc-kofiu-ready",
+      projectName: "Seoul VASP User Protection Review",
+      jurisdictions: ["South Korea"],
+      entityType: "VASP preparing FSC user-protection and KoFIU AML evidence",
+      assetModel:
+        "South Korea VASP registration, user deposits at banks, virtual-asset segregation, cold-wallet controls, insurance reserve, abnormal transaction monitoring, KoFIU reporting, and AML/CFT evidence",
+      userType: "Korean retail users, custody operators, compliance reviewers, and South Korea local counsel",
+      custodyModel:
+        "Platform controls user virtual assets through separate wallet records, 80 percent cold-wallet handling, signer approvals, insurance or reserve metadata, and incident response runbooks",
+      dataSensitivity:
+        "CDD status summaries, wallet-risk metadata, STR escalation summaries, and no raw KYC, customer records, identity files, wallet secrets, or personal data",
+      aiUsage: "AI drafts South Korea VASP evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for South Korea VASP evidence metadata",
+      operatingStage: "Pre-launch South Korea VASP custody and AML review before local counsel signoff",
+      evidenceItems: koreaVaspEvidence
+    };
+    const audit = analyzeAuditProfile(koreaVaspProject);
+    const [koreaPack] = createJurisdictionPacks(koreaVaspProject, audit);
+
+    expect(koreaPack).toMatchObject({
+      jurisdiction: "South Korea",
+      localCounselRoute: {
+        recommendedRole: "South Korea virtual asset / AML counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(koreaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "kr-fsc-user-asset-protection-custody-control",
+          title: "FSC user-asset protection and custody control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Korea VASP user protection and AML reporting register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "kr-kofiu-vasp-reporting-aml-control",
+          title: "KoFIU VASP reporting, AML/CFT, CDD, and STR control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Korea VASP user protection and AML reporting register"
+          ]
+        })
+      ])
+    );
+    expect(JSON.stringify(koreaPack)).not.toMatch(
+      /\braw KYC\b|customer records|identity files|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(koreaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

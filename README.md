@@ -245,7 +245,7 @@ Australia digital asset projects now route to ASIC INFO 225, ASIC RG 133, and AU
 
 ![Australia digital asset source graph](docs/assets/screenshots/australia-digital-asset-source-graph.png)
 
-Korea VASP user protection projects now route to FSC Virtual Asset User Protection Act / Enforcement Decree and KoFIU VASP reporting / AML guidance, with evidence gaps for user deposits at banks, user virtual-asset segregation, 80 percent cold-wallet handling, insurance/reserve, abnormal trading monitoring/reporting, user disclosure, CDD/EDD, STR, Travel Rule, real-name account, ISMS, and local-counsel handoff. Not legal advice.
+Korea VASP user protection projects now route to FSC Virtual Asset User Protection Act / Enforcement Decree and KoFIU VASP reporting / AML guidance, with evidence gaps for user deposits at banks, user virtual-asset segregation, 80 percent cold-wallet handling, insurance/reserve, abnormal trading monitoring/reporting, user disclosure, CDD/EDD, STR, Travel Rule, real-name account, ISMS, and local-counsel handoff. The Jurisdiction Checklist also shows FSC user-asset protection/custody and KoFIU VASP reporting/AML controls that become evidence-ready only from metadata-only records carrying `control-kr-fsc-kofiu-vasp-user-protection-aml`, without raw KYC, customer records, identity files, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 ![Korea VASP user protection source graph](docs/assets/screenshots/korea-vasp-user-protection-source-graph.png)
 

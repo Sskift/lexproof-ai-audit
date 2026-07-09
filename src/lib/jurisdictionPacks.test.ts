@@ -3028,6 +3028,77 @@ describe("createJurisdictionPacks", () => {
     expect(serializedSouthAfricaPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the UK FCA cryptoasset AML controls ready from verified Travel Rule evidence only", () => {
+    const ukCryptoassetAmlEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) =>
+        item.source?.includes("control-uk-fca-cryptoasset-aml-registration-travel-rule")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `uk-fca-cryptoasset-aml-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(ukCryptoassetAmlEvidence.map((item) => item.label)).toEqual([
+      "UK FCA cryptoasset AML registration and Travel Rule register"
+    ]);
+
+    const ukCryptoassetAmlProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uk-fca-aml-ready",
+      projectName: "London Cryptoasset AML Review",
+      jurisdictions: ["United Kingdom"],
+      entityType: "UK cryptoasset business preparing FCA MLR registration and Travel Rule evidence",
+      assetModel:
+        "UK cryptoasset exchange provider and custodian wallet provider workflow with FCA MLR registration, business plan, ownership control structure, MLRO, BWRA CRA, AML/CTF/CPF framework, sanctions, blockchain analytics, transaction monitoring, SAR escalation, Travel Rule data flow, third-party tool configuration, and record retrieval evidence",
+      userType: "UK retail users, compliance reviewers, and UK local counsel",
+      custodyModel:
+        "Platform maintains metadata-only custodian-wallet, originator-beneficiary data-flow, Travel Rule, sanctions, transaction-monitoring, SAR-escalation, and record-retrieval records without wallet secret handling",
+      dataSensitivity:
+        "CDD/EDD status summaries, customer risk assessment status, originator-beneficiary data-flow status, sanctions status, blockchain analytics status, and no raw KYC, wallet secrets, credentials, customer records, private cryptographic material, or personal data",
+      aiUsage:
+        "AI drafts UK FCA MLR registration and cryptoasset AML/Travel Rule evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for UK cryptoasset AML evidence metadata",
+      operatingStage: "Pre-launch UK FCA AML review before local counsel signoff",
+      evidenceItems: ukCryptoassetAmlEvidence
+    };
+    const audit = analyzeAuditProfile(ukCryptoassetAmlProject);
+    const [ukPack] = createJurisdictionPacks(ukCryptoassetAmlProject, audit);
+
+    expect(ukPack).toMatchObject({
+      jurisdiction: "United Kingdom",
+      localCounselRoute: {
+        recommendedRole: "UK financial promotion / crypto / AI data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(ukPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uk-fca-mlr-registration-activity-scope-control",
+          title: "FCA MLR registration and cryptoasset activity-scope control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["UK FCA cryptoasset AML registration and Travel Rule register"]
+        }),
+        expect.objectContaining({
+          id: "uk-cryptoasset-aml-travel-rule-control",
+          title: "UK cryptoasset AML, SAR, sanctions, and Travel Rule control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["UK FCA cryptoasset AML registration and Travel Rule register"]
+        })
+      ])
+    );
+    const serializedUkPack = JSON.stringify(ukPack);
+    expect(serializedUkPack).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|legal conclusion/i
+    );
+    expect(serializedUkPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

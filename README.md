@@ -269,7 +269,7 @@ South Africa CASP projects now route to FSCA crypto-asset financial-product and 
 
 ![South Africa CASP Travel Rule source graph](docs/assets/screenshots/south-africa-casp-travel-rule-source-graph.png)
 
-UK cryptoasset AML projects now route to FCA AML/CTF regime, MLR registration expectations, and Travel Rule expectations, with evidence gaps for cryptoasset exchange/custodian-wallet activity scope, FCA MLR registration, business plan, ownership/control, MLRO, BWRA/CRA, AML/CTF/CPF framework, CDD/EDD, sanctions, blockchain analytics, transaction monitoring, SAR escalation, Travel Rule originator/beneficiary data flow, record retrieval, and local-counsel handoff. Not legal advice.
+UK cryptoasset AML projects now route to FCA AML/CTF regime, MLR registration expectations, and Travel Rule expectations, with evidence gaps for cryptoasset exchange/custodian-wallet activity scope, FCA MLR registration, business plan, ownership/control, MLRO, BWRA/CRA, AML/CTF/CPF framework, CDD/EDD, sanctions, blockchain analytics, transaction monitoring, SAR escalation, Travel Rule originator/beneficiary data flow, record retrieval, and local-counsel handoff. The Jurisdiction Checklist also shows FCA MLR registration/activity-scope and UK cryptoasset AML, SAR, sanctions, and Travel Rule controls that become evidence-ready only from metadata-only records carrying `control-uk-fca-cryptoasset-aml-registration-travel-rule`, without raw KYC, customer records, wallet secrets, private cryptographic material, personal data, or legal conclusions. Not legal advice.
 
 ![UK cryptoasset AML source graph](docs/assets/screenshots/uk-cryptoasset-aml-source-graph.png)
 

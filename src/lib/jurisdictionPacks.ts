@@ -889,6 +889,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
         evidenceKeywords: [
+          "control-uk-fca-cryptoasset-aml-registration-travel-rule",
           "uk cryptoasset business",
           "uk fca mlr registration",
           "uk cryptoasset exchange provider",
@@ -908,6 +909,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
         evidenceKeywords: [
+          "control-uk-fca-cryptoasset-aml-registration-travel-rule",
           "uk cryptoasset travel rule",
           "uk originator beneficiary information",
           "uk suspicious activity reporting",

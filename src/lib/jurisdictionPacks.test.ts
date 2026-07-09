@@ -197,6 +197,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "eu-dlt-pilot-market-infrastructure-control",
+          title: "DLT Pilot market-infrastructure perimeter control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-data-minimization-control",
           title: "Data minimization and model-call control"
         })
@@ -734,6 +739,56 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "eu-dora-ict-operational-resilience-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU DLT Pilot perimeter control ready from verified RWA market-infrastructure evidence only", () => {
+    const dltRegister = createEvidenceItemsFromTemplate("tokenized-yield-rwa").find(
+      (item) => item.label === "EU DLT Pilot Regime market infrastructure perimeter register"
+    );
+
+    expect(dltRegister).toBeDefined();
+
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-dlt-pilot-ready",
+      jurisdictions: ["European Union"],
+      evidenceItems: [
+        {
+          ...dltRegister!,
+          id: "eu-rwa-dlt-pilot-register-1",
+          status: "verified" as const
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [euPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-dlt-pilot-market-infrastructure-control",
+          title: "DLT Pilot market-infrastructure perimeter control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["EU DLT Pilot Regime market infrastructure perimeter register"]
+        }),
+        expect.objectContaining({
+          id: "eu-tfr-crypto-asset-transfer-information-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

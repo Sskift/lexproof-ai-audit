@@ -302,6 +302,36 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "eu-dlt-pilot-market-infrastructure-control",
+        title: "DLT Pilot market-infrastructure perimeter control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "custody", "evidence-anchor"],
+        evidenceKeywords: [
+          "control-eu-dlt-pilot-regime-market-infrastructure",
+          "eu dlt pilot",
+          "regulation eu 2022/858",
+          "dlt financial instrument",
+          "tokenized financial instrument",
+          "tokenised financial instrument",
+          "dlt market infrastructure",
+          "dlt mtf",
+          "dlt tss",
+          "dlt ss",
+          "market infrastructure",
+          "competent authority",
+          "permission exemption",
+          "admitted instrument",
+          "settlement workflow",
+          "safekeeping",
+          "liability",
+          "operational safeguard",
+          "client disclosure",
+          "esma",
+          "no raw investor records"
+        ]
+      },
+      {
         id: "eu-data-minimization-control",
         title: "Data minimization and model-call control",
         owner: "Compliance",

@@ -101,6 +101,9 @@ describe("evidence templates", () => {
     );
     const doraIctRegister = items.find((item) => item.label === "EU DORA ICT resilience register");
     const tfrTravelRuleRegister = items.find((item) => item.label === "EU TFR Travel Rule transfer information register");
+    const dltPilotRegister = items.find(
+      (item) => item.label === "EU DLT Pilot Regime market infrastructure perimeter register"
+    );
     const nydfsCustodyControls = items.find(
       (item) => item.label === "New York NYDFS BitLicense and custody customer-protection register"
     );
@@ -162,6 +165,10 @@ describe("evidence templates", () => {
     expect(tfrTravelRuleRegister?.content).toContain("counterparty CASP handling");
     expect(tfrTravelRuleRegister?.content).toContain("missing incomplete information");
     expect(tfrTravelRuleRegister?.content).toContain("without raw KYC or full wallet histories");
+    expect(dltPilotRegister?.content).toContain("DLT financial instrument");
+    expect(dltPilotRegister?.content).toContain("DLT market infrastructure");
+    expect(dltPilotRegister?.content).toContain("competent authority permission or exemption route");
+    expect(dltPilotRegister?.content).toContain("no raw investor records");
     expect(nydfsCustodyControls?.content).toContain("New York virtual currency business activity");
     expect(nydfsCustodyControls?.content).toContain("BitLicense or limited purpose trust company route");
     expect(nydfsCustodyControls?.content).toContain("customer virtual currency segregation");

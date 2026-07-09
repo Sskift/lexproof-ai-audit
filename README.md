@@ -261,7 +261,7 @@ Malaysia digital asset exchange projects now route to SC Malaysia Digital Assets
 
 ![Malaysia digital asset exchange source graph](docs/assets/screenshots/malaysia-digital-asset-exchange-source-graph.png)
 
-Philippines VASP custody projects now route to BSP Circular No. 1108 and BSP Memorandum No. M-2026-003 source controls, with evidence gaps for VASP/CASP counterparty status, BSP registration or Certificate of Authority, VA exchange, transfer, safekeeping, VA custodian, wallet security, retail/offshore access, due diligence/EDD, transaction monitoring, STR, recordkeeping, staff training, and no-raw-KYC handoff review. Not legal advice.
+Philippines VASP custody projects now route to BSP Circular No. 1108 and BSP Memorandum No. M-2026-003 source controls, with evidence gaps for VASP/CASP counterparty status, BSP registration or Certificate of Authority, VA exchange, transfer, safekeeping, VA custodian, wallet security, retail/offshore access, due diligence/EDD, transaction monitoring, STR, recordkeeping, staff training, and no-raw-KYC handoff review. The Jurisdiction Checklist also shows BSP VASP registration, activity, and custody-scope plus BSP AML/CFT due-diligence, monitoring, and STR controls that become evidence-ready only from metadata-only records carrying `control-ph-bsp-vasp-casp-risk-management-aml`, without raw KYC, customer records, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 ![Philippines VASP custody source graph](docs/assets/screenshots/philippines-vasp-custody-source-graph.png)
 

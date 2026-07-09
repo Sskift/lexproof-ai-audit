@@ -2888,6 +2888,74 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(malaysiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Philippines BSP VASP controls ready from verified custody evidence only", () => {
+    const philippinesVaspEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-ph-bsp-vasp-casp-risk-management-aml"))
+      .map((item, index) => ({
+        ...item,
+        id: `ph-bsp-vasp-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(philippinesVaspEvidence.map((item) => item.label)).toEqual([
+      "Philippines BSP VASP custody and AML/CFT risk-management register"
+    ]);
+
+    const philippinesVaspProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-ph-bsp-ready",
+      projectName: "Manila VASP Custody Review",
+      jurisdictions: ["Philippines"],
+      entityType: "Philippines VASP/CASP operator preparing BSP evidence",
+      assetModel:
+        "Philippines VASP custody workflow with BSP Certificate of Authority, money service business route, virtual asset service provider, CASP counterparty, VA exchange, VA transfer, VA custodian, safekeeping, wallet security, offshore VASP, and retail access evidence",
+      userType: "Philippine retail users, compliance reviewers, and Philippines local counsel",
+      custodyModel:
+        "Platform maintains metadata-only VA custodian, safekeeping, wallet security, transfer-control, and counterparty records without wallet secret handling",
+      dataSensitivity:
+        "Due diligence status summaries, EDD status metadata, adverse-media review status, payment transparency status, transaction-monitoring status, and no raw KYC, wallet secrets, credentials, customer records, or personal data",
+      aiUsage:
+        "AI drafts Philippines BSP VASP/CASP and AML/CFT evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Philippines VASP evidence metadata",
+      operatingStage: "Pre-launch Philippines BSP review before local counsel signoff",
+      evidenceItems: philippinesVaspEvidence
+    };
+    const audit = analyzeAuditProfile(philippinesVaspProject);
+    const [philippinesPack] = createJurisdictionPacks(philippinesVaspProject, audit);
+
+    expect(philippinesPack).toMatchObject({
+      jurisdiction: "Philippines",
+      localCounselRoute: {
+        recommendedRole: "Philippines virtual asset / AML counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(philippinesPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ph-bsp-vasp-registration-custody-control",
+          title: "BSP VASP registration, activity, and custody-scope control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Philippines BSP VASP custody and AML/CFT risk-management register"]
+        }),
+        expect.objectContaining({
+          id: "ph-bsp-aml-cft-monitoring-control",
+          title: "BSP AML/CFT due-diligence, monitoring, and STR control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Philippines BSP VASP custody and AML/CFT risk-management register"]
+        })
+      ])
+    );
+    expect(JSON.stringify(philippinesPack)).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(philippinesPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

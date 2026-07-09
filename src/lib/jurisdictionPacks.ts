@@ -462,6 +462,34 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "uk third-party tool configuration",
           "uk record retrieval"
         ]
+      },
+      {
+        id: "uk-qualifying-stablecoin-issuer-control",
+        title: "UK qualifying stablecoin issuer control",
+        owner: "Counsel",
+        priority: "P0",
+        relatedFlagIds: ["asset-yield", "custody", "public-launch"],
+        evidenceKeywords: [
+          "control-uk-fca-qualifying-stablecoin-issuer-regime",
+          "uk qualifying stablecoin",
+          "ukqs issuer",
+          "uk stablecoin issuer",
+          "regulated activity",
+          "admission to trading",
+          "distribution scope",
+          "disclosure owner",
+          "governance owner",
+          "fca boe handoff",
+          "stablecoin backing assets",
+          "backing asset",
+          "safeguarding",
+          "reconciliation",
+          "redemption",
+          "liquidity",
+          "recordkeeping",
+          "systemic transition",
+          "joint regulation"
+        ]
       }
     ]
   },

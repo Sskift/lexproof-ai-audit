@@ -201,7 +201,7 @@ EU MiCA stablecoin issuer projects now route to ART/EMT source controls from EBA
 
 ![EU MiCA ART/EMT stablecoin source graph](docs/assets/screenshots/eu-mica-stablecoin-issuer-source-graph.png)
 
-UK qualifying stablecoin issuer projects now route to FCA PS26/10 and BoE/FCA joint-approach source controls, with evidence gaps for UKQS issuer route, regulated activity assumptions, admission or distribution scope, disclosures, backing assets, safeguarding, reconciliation, redemption, liquidity, recordkeeping, systemic-transition handoff, and no-raw-customer-record evidence. Not legal advice.
+UK qualifying stablecoin issuer projects now route to FCA PS26/10 and BoE/FCA joint-approach source controls, with evidence gaps for UKQS issuer route, regulated activity assumptions, admission or distribution scope, disclosures, backing assets, safeguarding, reconciliation, redemption, liquidity, recordkeeping, systemic-transition handoff, and no-raw-customer-record evidence. The Jurisdiction Checklist also shows a UK qualifying stablecoin issuer control that becomes evidence-ready from the metadata-only issuer permission/disclosure and backing/safeguarding/redemption registers. Not legal advice.
 
 ![UK qualifying stablecoin issuer source graph](docs/assets/screenshots/uk-stablecoin-issuer-source-graph.png)
 

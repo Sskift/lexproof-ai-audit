@@ -229,7 +229,8 @@ describe("createJurisdictionPacks", () => {
         "Financial promotion and approval control",
         "Custody operational resilience control",
         "FCA MLR registration and cryptoasset activity-scope control",
-        "UK cryptoasset AML, SAR, sanctions, and Travel Rule control"
+        "UK cryptoasset AML, SAR, sanctions, and Travel Rule control",
+        "UK qualifying stablecoin issuer control"
       ])
     );
 
@@ -914,5 +915,59 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the UK qualifying stablecoin issuer control ready from verified stablecoin registers only", () => {
+    const stablecoinEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-uk-fca-qualifying-stablecoin-issuer-regime"))
+      .map((item, index) => ({
+        ...item,
+        id: `uk-stablecoin-register-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(stablecoinEvidence.map((item) => item.label)).toEqual([
+      "UK qualifying stablecoin issuer permission and disclosure register",
+      "UK qualifying stablecoin backing safeguarding and redemption register"
+    ]);
+
+    const stablecoinProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uk-stablecoin-ready",
+      jurisdictions: ["United Kingdom"],
+      evidenceItems: stablecoinEvidence
+    };
+    const audit = analyzeAuditProfile(stablecoinProject);
+    const [ukPack] = createJurisdictionPacks(stablecoinProject, audit);
+
+    expect(ukPack).toMatchObject({
+      jurisdiction: "United Kingdom",
+      localCounselRoute: {
+        recommendedRole: "UK financial promotion / crypto counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(ukPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uk-qualifying-stablecoin-issuer-control",
+          title: "UK qualifying stablecoin issuer control",
+          owner: "Counsel",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "UK qualifying stablecoin issuer permission and disclosure register",
+            "UK qualifying stablecoin backing safeguarding and redemption register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "uk-cryptoasset-aml-travel-rule-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

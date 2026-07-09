@@ -115,6 +115,12 @@ describe("evidence templates", () => {
     const euMicaStablecoinReserveRegister = items.find(
       (item) => item.label === "EU MiCA stablecoin reserve redemption and recovery register"
     );
+    const ukStablecoinIssuerRegister = items.find(
+      (item) => item.label === "UK qualifying stablecoin issuer permission and disclosure register"
+    );
+    const ukStablecoinBackingRegister = items.find(
+      (item) => item.label === "UK qualifying stablecoin backing safeguarding and redemption register"
+    );
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -197,6 +203,14 @@ describe("evidence templates", () => {
     expect(euMicaStablecoinReserveRegister?.content).toContain("liquidity management");
     expect(euMicaStablecoinReserveRegister?.content).toContain("redemption plan");
     expect(euMicaStablecoinReserveRegister?.content).toContain("no raw customer records, credentials, wallet secrets, or personal data");
+    expect(ukStablecoinIssuerRegister?.content).toContain("UK qualifying stablecoin");
+    expect(ukStablecoinIssuerRegister?.content).toContain("UKQS issuer");
+    expect(ukStablecoinIssuerRegister?.content).toContain("admission to trading");
+    expect(ukStablecoinIssuerRegister?.content).toContain("no raw customer records, credentials, wallet secrets, or personal data");
+    expect(ukStablecoinBackingRegister?.content).toContain("stablecoin backing assets");
+    expect(ukStablecoinBackingRegister?.content).toContain("safeguarding");
+    expect(ukStablecoinBackingRegister?.content).toContain("systemic transition");
+    expect(ukStablecoinBackingRegister?.content).toContain("no raw customer records, credentials, wallet secrets, or personal data");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

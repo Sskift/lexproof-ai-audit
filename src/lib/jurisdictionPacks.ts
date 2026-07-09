@@ -1124,8 +1124,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
     jurisdiction: "Hong Kong",
     aliases: ["hong kong", "hk", "hong kong sar"],
     summary:
-      "Prepare VATP client-asset custody, wallet governance, reconciliation, compensation, AML/data, and public access controls for Hong Kong local counsel.",
-    recommendedRole: "Hong Kong virtual asset trading platform counsel",
+      "Prepare VATP client-asset custody, SFC tokenised product and secondary-trading, HKMA stablecoin issuer, AML/data, and public access controls for Hong Kong local counsel.",
+    recommendedRole: "Hong Kong virtual asset / stablecoin / SFC products counsel",
     controls: [
       {
         id: "hk-vatp-client-asset-custody-control",
@@ -1165,12 +1165,42 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "hk-sfc-tokenised-product-secondary-trading-control",
+        title: "SFC tokenised product authorisation and secondary-trading control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
+        evidenceKeywords: [
+          "control-hk-sfc-tokenised-investment-products-secondary-trading",
+          "sfc-authorised investment product",
+          "sfc-authorized investment product",
+          "tokenised product",
+          "tokenized product",
+          "product authorisation",
+          "product authorization",
+          "prior consultation",
+          "prior approval",
+          "ownership records",
+          "operational soundness",
+          "smart contract integrity",
+          "secondary trading",
+          "price deviation alert",
+          "indicative nav",
+          "market maker",
+          "liquidity",
+          "trading suspension",
+          "client confirmation",
+          "notification workflow"
+        ]
+      },
+      {
         id: "hk-hkma-stablecoin-issuer-control",
         title: "HKMA stablecoin issuer licensing, reserve, and AML/CFT control",
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch", "sensitive-data"],
         evidenceKeywords: [
+          "control-hk-hkma-stablecoin-issuer-regime",
           "hong kong stablecoin issuer",
           "fiat-referenced stablecoin",
           "stablecoins ordinance",

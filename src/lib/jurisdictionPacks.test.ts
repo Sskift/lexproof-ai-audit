@@ -331,13 +331,14 @@ describe("createJurisdictionPacks", () => {
     const hongKongPack = packs.find((pack) => pack.jurisdiction === "Hong Kong");
     expect(hongKongPack).toMatchObject({
       localCounselRoute: {
-        recommendedRole: "Hong Kong virtual asset trading platform counsel"
+        recommendedRole: "Hong Kong virtual asset / stablecoin / SFC products counsel"
       }
     });
     expect(hongKongPack?.controls.map((control) => control.title)).toEqual(
       expect.arrayContaining([
         "VATP client asset custody control",
         "Wallet governance and compensation arrangement control",
+        "SFC tokenised product authorisation and secondary-trading control",
         "HKMA stablecoin issuer licensing, reserve, and AML/CFT control"
       ])
     );
@@ -2196,7 +2197,7 @@ describe("createJurisdictionPacks", () => {
     expect(hongKongPack).toMatchObject({
       jurisdiction: "Hong Kong",
       localCounselRoute: {
-        recommendedRole: "Hong Kong virtual asset trading platform counsel"
+        recommendedRole: "Hong Kong virtual asset / stablecoin / SFC products counsel"
       },
       notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
     });
@@ -2227,6 +2228,81 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(hongKongPack)).not.toMatch(
       /\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(hongKongPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the Hong Kong SFC tokenised product control ready from verified tokenisation evidence only", () => {
+    const tokenisedProductEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-hk-sfc-tokenised-investment-products-secondary-trading"))
+      .map((item, index) => ({
+        ...item,
+        id: `hk-tokenised-product-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(tokenisedProductEvidence.map((item) => item.label)).toEqual([
+      "Hong Kong SFC tokenised product authorisation and consultation register",
+      "Hong Kong SFC tokenisation ownership and smart-contract control register",
+      "Hong Kong SFC secondary trading fair-pricing and liquidity register"
+    ]);
+
+    const hongKongTokenisedProductProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-hk-tokenised-product-ready",
+      projectName: "HarborYield SFC Tokenised Product Review",
+      jurisdictions: ["Hong Kong"],
+      entityType: "SFC-authorised investment product provider preparing tokenisation and secondary-trading evidence",
+      assetModel:
+        "Tokenised SFC-authorised investment product with primary subscription and redemption, token-holder ownership records, smart-contract integrity, price-deviation alert, indicative NAV, market-maker and liquidity assumptions, and secondary trading readiness",
+      userType: "Hong Kong retail and professional investors, regulated distributors, product provider reviewers, and local counsel",
+      custodyModel:
+        "Product provider remains responsible for tokenisation arrangement and ownership recordkeeping; trading-channel records are metadata-only in the review path",
+      dataSensitivity:
+        "Investor onboarding status summaries, token-holder ownership metadata, trading-interface test results, risk-disclosure acknowledgements, and no raw investor records, wallet secrets, credentials, or personal data",
+      aiUsage: "AI drafts Hong Kong SFC tokenised product evidence summaries for human review",
+      blockchainUse: "Simulated manifest anchor for metadata-only tokenised product counsel handoff",
+      operatingStage: "Pre-launch SFC tokenisation and secondary-trading review before public reliance",
+      evidenceItems: tokenisedProductEvidence
+    };
+    const audit = analyzeAuditProfile(hongKongTokenisedProductProject);
+    const [hongKongPack] = createJurisdictionPacks(hongKongTokenisedProductProject, audit);
+
+    expect(hongKongPack).toMatchObject({
+      jurisdiction: "Hong Kong",
+      localCounselRoute: {
+        recommendedRole: "Hong Kong virtual asset / stablecoin / SFC products counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(hongKongPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "hk-sfc-tokenised-product-secondary-trading-control",
+          title: "SFC tokenised product authorisation and secondary-trading control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Hong Kong SFC tokenised product authorisation and consultation register",
+            "Hong Kong SFC tokenisation ownership and smart-contract control register",
+            "Hong Kong SFC secondary trading fair-pricing and liquidity register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "hk-vatp-client-asset-custody-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "hk-hkma-stablecoin-issuer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(hongKongPack)).not.toMatch(
+      /\braw KYC\b|raw investor records|wallet secrets|private key|customer records|personal data|legal conclusion/i
     );
     expect(JSON.stringify(hongKongPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });

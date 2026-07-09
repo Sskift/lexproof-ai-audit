@@ -207,6 +207,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-sec-dao-governance-token-control",
+          title: "SEC DAO Report governance-token and participant-role control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-cftc-dao-derivatives-platform-control",
           title: "DAO derivatives-platform and FCM/BSA control",
           status: "needs-evidence"
@@ -868,6 +873,72 @@ describe("createJurisdictionPacks", () => {
       ])
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US SEC DAO Report governance control ready from verified DAO evidence only", () => {
+    const daoEvidence = createEvidenceItemsFromTemplate("dao-governance-multisig")
+      .filter((item) => item.source?.includes("control-us-sec-dao-report-governance-token-review"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-sec-dao-governance-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(daoEvidence.map((item) => item.label)).toEqual([
+      "Governance proposal record",
+      "Multisig signer authority matrix",
+      "Vote and execution receipt",
+      "Contributor agreement summary"
+    ]);
+
+    const daoProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-sec-dao-ready",
+      projectName: "ClauseGuard DAO",
+      jurisdictions: ["United States"],
+      entityType: "DAO foundation governance committee preparing SEC DAO Report evidence",
+      assetModel:
+        "DAO governance-token proposal with participant-role, project-funding, contributor-authority, secondary-transfer, voting, multisig, execution-control, and emergency-authority evidence",
+      userType: "DAO token holders, protocol contributors, multisig signers, and US DAO counsel",
+      custodyModel: "DAO treasury execution is documented as metadata-only signer and proposal records",
+      dataSensitivity: "Governance records, contributor summary metadata, and no raw customer records",
+      aiUsage: "AI drafts DAO governance evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for proposal and execution metadata",
+      operatingStage: "Pre-execution DAO governance review before counsel signoff",
+      evidenceItems: daoEvidence
+    };
+    const audit = analyzeAuditProfile(daoProject);
+    const [usPack] = createJurisdictionPacks(daoProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-sec-dao-governance-token-control",
+          title: "SEC DAO Report governance-token and participant-role control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Governance proposal record",
+            "Multisig signer authority matrix",
+            "Vote and execution receipt",
+            "Contributor agreement summary"
+          ]
+        })
+      ])
+    );
+    expect(usPack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["us-cftc-dao-derivatives-platform-control", "us-sec-investment-adviser-marketing-rule-control"])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 

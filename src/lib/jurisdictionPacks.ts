@@ -149,6 +149,33 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-sec-dao-governance-token-control",
+        title: "SEC DAO Report governance-token and participant-role control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
+        evidenceKeywords: [
+          "control-us-sec-dao-report-governance-token-review",
+          "sec dao report",
+          "the dao report",
+          "sec release no. 81207",
+          "governance token",
+          "token rights",
+          "participant role",
+          "participant-role",
+          "project funding",
+          "contributor authority",
+          "secondary transfer",
+          "proposal scope",
+          "quorum",
+          "voting window",
+          "multisig",
+          "proposal hash",
+          "execution control",
+          "emergency authority"
+        ]
+      },
+      {
         id: "us-cftc-dao-derivatives-platform-control",
         title: "DAO derivatives-platform and FCM/BSA control",
         owner: "Counsel",

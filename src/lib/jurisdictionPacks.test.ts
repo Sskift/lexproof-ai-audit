@@ -850,6 +850,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US OFAC virtual-currency sanctions control ready from verified RWA wallet-screening evidence only", () => {
+    const sourceFreeOfacMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-ofac-wallet-screening-memo",
+      label: "US OFAC wallet screening memo",
+      kind: "Memo",
+      content:
+        "US OFAC sanctions screening, wallet screening, wallet risk, geolocation, blocked property, reporting, recordkeeping, escalation, and reviewer owner notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `us-rwa-ofac-template-${index + 1}`,
@@ -859,7 +868,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-us-ofac-ready",
       jurisdictions: ["United States"],
-      evidenceItems
+      evidenceItems: [sourceFreeOfacMemo, ...evidenceItems]
     };
     const audit = analyzeAuditProfile(rwaProject);
     const [usPack] = createJurisdictionPacks(rwaProject, audit);

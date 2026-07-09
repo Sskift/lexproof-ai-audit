@@ -187,6 +187,8 @@ US RWA projects now also show a Jurisdiction Checklist SEC/CFTC crypto-asset cla
 
 The US Regulation D eligibility and accredited-investor verification control likewise requires metadata-only records carrying `control-us-sec-reg-d-accredited-investor-verification` plus matching Rule 506, offering-exemption, private-placement, investor-eligibility, accredited-investor, purchaser-status, subscription, or solicitation evidence text, so source-free eligibility memos remain needs-evidence. Not legal advice.
 
+The US OFAC virtual-currency sanctions screening and blocked-property control becomes evidence-ready only from metadata-only records carrying `control-us-ofac-virtual-currency-sanctions-compliance` plus matching OFAC, sanctions-screening, wallet-screening, wallet-risk, geolocation, blocked-property, reporting, recordkeeping, escalation, or reviewer-owner evidence text, so source-free wallet-screening memos remain needs-evidence. Not legal advice.
+
 ![US Regulation D RWA source control](docs/assets/screenshots/us-reg-d-rwa-source-control.png)
 
 ![US OFAC virtual-currency sanctions source control](docs/assets/screenshots/us-ofac-rwa-source-control.png)

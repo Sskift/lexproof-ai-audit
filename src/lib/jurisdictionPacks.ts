@@ -255,6 +255,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P0",
         relatedFlagIds: ["custody", "sensitive-data"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-us-ofac-virtual-currency-sanctions-compliance",
           "ofac",

@@ -207,6 +207,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "eu-mica-art-emt-stablecoin-issuer-control",
+          title: "MiCA ART/EMT stablecoin issuer control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-data-minimization-control",
           title: "Data minimization and model-call control"
         })
@@ -848,6 +853,60 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "eu-tfr-crypto-asset-transfer-information-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU MiCA ART/EMT stablecoin issuer control ready from verified stablecoin registers only", () => {
+    const stablecoinEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-eu-mica-art-emt-stablecoin-issuer-regime"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-mica-stablecoin-register-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(stablecoinEvidence.map((item) => item.label)).toEqual([
+      "EU MiCA ART EMT issuer authorisation and white paper register",
+      "EU MiCA stablecoin reserve redemption and recovery register"
+    ]);
+
+    const stablecoinProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-mica-stablecoin-ready",
+      jurisdictions: ["European Union"],
+      evidenceItems: stablecoinEvidence
+    };
+    const audit = analyzeAuditProfile(stablecoinProject);
+    const [euPack] = createJurisdictionPacks(stablecoinProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-mica-art-emt-stablecoin-issuer-control",
+          title: "MiCA ART/EMT stablecoin issuer control",
+          owner: "Counsel",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "EU MiCA ART EMT issuer authorisation and white paper register",
+            "EU MiCA stablecoin reserve redemption and recovery register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "eu-dlt-pilot-market-infrastructure-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

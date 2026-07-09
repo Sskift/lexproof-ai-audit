@@ -109,6 +109,12 @@ describe("evidence templates", () => {
     );
     const geniusIssuerRegister = items.find((item) => item.label === "US GENIUS Act permitted issuer and reserve register");
     const geniusBsaAmlRegister = items.find((item) => item.label === "US GENIUS Act BSA AML and sanctions program register");
+    const euMicaStablecoinIssuerRegister = items.find(
+      (item) => item.label === "EU MiCA ART EMT issuer authorisation and white paper register"
+    );
+    const euMicaStablecoinReserveRegister = items.find(
+      (item) => item.label === "EU MiCA stablecoin reserve redemption and recovery register"
+    );
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -183,6 +189,14 @@ describe("evidence templates", () => {
     expect(geniusBsaAmlRegister?.content).toContain("sanctions compliance program");
     expect(geniusBsaAmlRegister?.content).toContain("transaction monitoring");
     expect(geniusBsaAmlRegister?.content).toContain("customer-risk metadata boundary");
+    expect(euMicaStablecoinIssuerRegister?.content).toContain("asset-referenced token");
+    expect(euMicaStablecoinIssuerRegister?.content).toContain("e-money token");
+    expect(euMicaStablecoinIssuerRegister?.content).toContain("authorisation or notification route");
+    expect(euMicaStablecoinIssuerRegister?.content).toContain("no raw customer records, credentials, wallet secrets, or personal data");
+    expect(euMicaStablecoinReserveRegister?.content).toContain("reserve composition");
+    expect(euMicaStablecoinReserveRegister?.content).toContain("liquidity management");
+    expect(euMicaStablecoinReserveRegister?.content).toContain("redemption plan");
+    expect(euMicaStablecoinReserveRegister?.content).toContain("no raw customer records, credentials, wallet secrets, or personal data");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

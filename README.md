@@ -197,7 +197,7 @@ US payment stablecoin issuer projects now route to GENIUS Act source controls an
 
 ![US GENIUS Act stablecoin source graph](docs/assets/screenshots/us-genius-stablecoin-source-graph.png)
 
-EU MiCA stablecoin issuer projects now route to ART/EMT source controls from EBA and ESMA MiCA materials, with evidence gaps for token classification, issuer authorisation or notification route, home Member State, competent-authority handoff, white paper, reserve composition, reserve custody, redemption, recovery plan, redemption plan, and no-raw-customer-record handoff. Not legal advice.
+EU MiCA stablecoin issuer projects now route to ART/EMT source controls from EBA and ESMA MiCA materials, with evidence gaps for token classification, issuer authorisation or notification route, home Member State, competent-authority handoff, white paper, reserve composition, reserve custody, redemption, recovery plan, redemption plan, and no-raw-customer-record handoff. The Jurisdiction Checklist also shows a MiCA ART/EMT stablecoin issuer control that becomes evidence-ready from the metadata-only authorisation/white-paper and reserve/redemption/recovery registers. Not legal advice.
 
 ![EU MiCA ART/EMT stablecoin source graph](docs/assets/screenshots/eu-mica-stablecoin-issuer-source-graph.png)
 

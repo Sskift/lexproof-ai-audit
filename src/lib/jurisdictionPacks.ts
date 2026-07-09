@@ -1057,6 +1057,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P0",
         relatedFlagIds: ["asset-yield", "custody", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-uk-fca-qualifying-stablecoin-issuer-regime",
           "uk qualifying stablecoin",

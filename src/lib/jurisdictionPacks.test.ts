@@ -4168,6 +4168,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the UK qualifying stablecoin issuer control ready from verified stablecoin registers only", () => {
+    const sourceFreeStablecoinMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "uk-source-free-stablecoin-memo",
+      label: "UK qualifying stablecoin issuer memo",
+      kind: "Memo",
+      content:
+        "UK qualifying stablecoin, UKQS issuer, UK stablecoin issuer, regulated activity, admission to trading, distribution scope, disclosure owner, governance owner, FCA BoE handoff, stablecoin backing assets, backing asset, safeguarding, reconciliation, redemption, liquidity, recordkeeping, systemic transition, and joint regulation notes.",
+      status: "verified",
+      owner: "Counsel"
+    };
     const stablecoinEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter((item) => item.source?.includes("control-uk-fca-qualifying-stablecoin-issuer-regime"))
       .map((item, index) => ({
@@ -4185,7 +4194,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-uk-stablecoin-ready",
       jurisdictions: ["United Kingdom"],
-      evidenceItems: stablecoinEvidence
+      evidenceItems: [sourceFreeStablecoinMemo, ...stablecoinEvidence]
     };
     const audit = analyzeAuditProfile(stablecoinProject);
     const [ukPack] = createJurisdictionPacks(stablecoinProject, audit);

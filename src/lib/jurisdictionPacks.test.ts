@@ -192,6 +192,11 @@ describe("createJurisdictionPacks", () => {
           title: "Crypto-asset disclosure provenance control"
         }),
         expect.objectContaining({
+          id: "eu-mica-marketing-communications-control",
+          title: "MiCA marketing communications and white-paper consistency control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-mica-article-75-casp-custody-control",
           title: "MiCA Article 75 CASP custody and administration control",
           status: "needs-evidence"
@@ -732,6 +737,59 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU MiCA marketing communications control ready from verified marketing evidence only", () => {
+    const euMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
+      .filter((item) => item.source?.includes("control-eu-mica-marketing-communications"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-mica-marketing-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(euMarketingEvidence.map((item) => item.label)).toEqual(["EU MiCA marketing communication review pack"]);
+
+    const marketingProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-mica-marketing-ready",
+      jurisdictions: ["European Union"],
+      evidenceItems: euMarketingEvidence
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const [euPack] = createJurisdictionPacks(marketingProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-mica-marketing-communications-control",
+          title: "MiCA marketing communications and white-paper consistency control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["EU MiCA marketing communication review pack"]
+        }),
+        expect.objectContaining({
+          id: "eu-mica-article-75-casp-custody-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "eu-mica-art-emt-stablecoin-issuer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the EU MiCA Article 75 CASP custody control ready from verified RWA custody runbook evidence only", () => {

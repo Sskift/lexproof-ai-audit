@@ -305,6 +305,7 @@ describe("evidence templates", () => {
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
     const claimsRegister = items.find((item) => item.label === "Claims substantiation and risk disclosure register");
     const endorsementLog = items.find((item) => item.label === "Creator endorsement and material connection log");
+    const euMicaMarketingPack = items.find((item) => item.label === "EU MiCA marketing communication review pack");
 
     expect(recommended[0]).toMatchObject({
       id: "marketing-claims-review",
@@ -330,6 +331,13 @@ describe("evidence templates", () => {
     expect(endorsementLog?.content).toContain("creator disclosure");
     expect(endorsementLog?.content).toContain("approval routing");
     expect(endorsementLog?.content).toContain("monitoring owner");
+    expect(euMicaMarketingPack?.content).toContain("crypto-asset marketing communication copy");
+    expect(euMicaMarketingPack?.content).toContain("white paper consistency");
+    expect(euMicaMarketingPack?.content).toContain("home Member State notification");
+    expect(euMicaMarketingPack?.content).toContain("host Member State");
+    expect(euMicaMarketingPack?.content).toContain("marketing communication notification");
+    expect(euMicaMarketingPack?.content).toContain("publication timing");
+    expect(euMicaMarketingPack?.content).toContain("source-lineage evidence");
     expect(serializedSources).toContain("regulatory control: control-us-ftc-endorsement-advertising-guides");
     expect(serializedSources).toContain("regulatory control: control-us-sec-investment-adviser-marketing-rule");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-marketing-communications");

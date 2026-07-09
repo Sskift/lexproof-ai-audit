@@ -274,6 +274,29 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["whitepaper", "disclosure", "public communication", "manifest", "provenance"]
       },
       {
+        id: "eu-mica-marketing-communications-control",
+        title: "MiCA marketing communications and white-paper consistency control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "control-eu-mica-marketing-communications",
+          "eu mica marketing",
+          "marketing communication",
+          "crypto-asset marketing communication",
+          "white paper consistency",
+          "communication label",
+          "offeror website contact",
+          "home member state",
+          "host member state",
+          "member state audience",
+          "marketing communication notification",
+          "publication timing",
+          "source-lineage evidence",
+          "reviewer owner"
+        ]
+      },
+      {
         id: "eu-mica-article-75-casp-custody-control",
         title: "MiCA Article 75 CASP custody and administration control",
         owner: "Compliance",

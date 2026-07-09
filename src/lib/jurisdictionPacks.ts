@@ -438,12 +438,26 @@ const PACK_TEMPLATES: PackTemplate[] = [
     recommendedRole: "EU crypto-asset / data protection counsel",
     controls: [
       {
-        id: "eu-disclosure-provenance-control",
-        title: "Crypto-asset disclosure provenance control",
+        id: "eu-mica-title-ii-white-paper-control",
+        title: "MiCA Title II white paper and public-communication control",
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
-        evidenceKeywords: ["whitepaper", "disclosure", "public communication", "manifest", "provenance"]
+        evidenceKeywords: [
+          "control-eu-mica-title-ii-white-paper",
+          "mica title ii",
+          "regulation eu 2023/1114",
+          "crypto-asset white paper",
+          "whitepaper",
+          "white paper",
+          "public communication",
+          "risk disclosure",
+          "management approval",
+          "manifest provenance",
+          "source lineage",
+          "source-lineage evidence",
+          "reviewer owner"
+        ]
       },
       {
         id: "eu-mica-marketing-communications-control",

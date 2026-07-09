@@ -218,8 +218,9 @@ describe("createJurisdictionPacks", () => {
     expect(euPack?.controls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "eu-disclosure-provenance-control",
-          title: "Crypto-asset disclosure provenance control"
+          id: "eu-mica-title-ii-white-paper-control",
+          title: "MiCA Title II white paper and public-communication control",
+          status: "needs-evidence"
         }),
         expect.objectContaining({
           id: "eu-mica-marketing-communications-control",
@@ -1929,6 +1930,67 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "eu-dora-ict-operational-resilience-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU MiCA Title II white-paper control ready from verified source-linked RWA evidence only", () => {
+    const micaTitleIiEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-eu-mica-title-ii-white-paper"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-mica-title-ii-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(micaTitleIiEvidence.map((item) => item.label)).toEqual(["RWA disclosure assumptions memo", "Evidence anchor procedure"]);
+
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-mica-title-ii-ready",
+      projectName: "EuroLaunch MiCA White Paper Review",
+      jurisdictions: ["European Union"],
+      assetModel:
+        "EU crypto-asset public launch with MiCA Title II white paper, public communication, risk disclosure, management approval, source-lineage, and manifest provenance evidence",
+      userType: "EU retail users, counsel reviewers, and compliance reviewers",
+      custodyModel: "No custody in this slice; white-paper evidence is metadata-only",
+      dataSensitivity: "Disclosure provenance metadata, reviewer-owner notes, and no raw customer records",
+      blockchainUse: "Simulated hash receipt for approved white-paper metadata",
+      operatingStage: "Pre-launch EU MiCA Title II review before local counsel signoff",
+      evidenceItems: micaTitleIiEvidence
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [euPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-mica-title-ii-white-paper-control",
+          title: "MiCA Title II white paper and public-communication control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["RWA disclosure assumptions memo", "Evidence anchor procedure"]
+        }),
+        expect.objectContaining({
+          id: "eu-mica-marketing-communications-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "eu-mica-art-emt-stablecoin-issuer-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

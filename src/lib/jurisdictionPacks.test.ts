@@ -3201,6 +3201,10 @@ describe("createJurisdictionPacks", () => {
       "Swiss stablecoin issuer and bank guarantee perimeter memo",
       "Swiss stablecoin AML and sanctions transfer-risk register"
     ];
+    const swissFoundationCustodyLabels = [
+      "Swiss offering, prospectus, and governance evidence",
+      "Swiss stablecoin issuer and bank guarantee perimeter memo"
+    ];
     expect(swissFinmaEvidence.map((item) => item.label)).toEqual([
       ...swissTokenClassificationLabels,
       ...swissStablecoinLabels
@@ -3259,6 +3263,14 @@ describe("createJurisdictionPacks", () => {
           priority: "P1",
           status: "evidence-ready",
           evidenceLabels: swissStablecoinLabels
+        }),
+        expect.objectContaining({
+          id: "ch-foundation-custody-control",
+          title: "Foundation, custody, and banking perimeter control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: swissFoundationCustodyLabels
         })
       ])
     );

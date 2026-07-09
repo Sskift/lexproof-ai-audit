@@ -479,6 +479,7 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         "Virtual asset activity scope control",
         "Marketing approval and audience-control control",
+        "VARA 2024 marketing approval, KOL, and recordkeeping control",
         "KOL, incentive, and marketing recordkeeping control",
         "Marketing, custody, and cross-border access control"
       ])
@@ -844,6 +845,60 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
+    const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
+      .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))
+      .map((item, index) => ({
+        ...item,
+        id: `uae-vara-marketing-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(varaMarketingEvidence.map((item) => item.label)).toEqual([
+      "UAE VARA approval and risk-warning archive",
+      "UAE KOL incentive and recordkeeping log"
+    ]);
+
+    const marketingProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uae-vara-marketing-ready",
+      jurisdictions: ["United Arab Emirates"],
+      evidenceItems: varaMarketingEvidence
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const [uaePack] = createJurisdictionPacks(marketingProject, audit);
+
+    expect(uaePack).toMatchObject({
+      jurisdiction: "United Arab Emirates",
+      localCounselRoute: {
+        recommendedRole: "UAE virtual-assets / financial regulatory counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(uaePack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uae-vara-2024-marketing-regulations-control",
+          title: "VARA 2024 marketing approval, KOL, and recordkeeping control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "UAE VARA approval and risk-warning archive",
+            "UAE KOL incentive and recordkeeping log"
+          ]
+        }),
+        expect.objectContaining({
+          id: "uae-marketing-custody-access-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(uaePack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(uaePack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the EU MiCA Article 75 CASP custody control ready from verified RWA custody runbook evidence only", () => {

@@ -1273,6 +1273,31 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "uae-vara-2024-marketing-regulations-control",
+        title: "VARA 2024 marketing approval, KOL, and recordkeeping control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "control-uae-vara-marketing-regulations-2024",
+          "vara approval",
+          "vasp approval",
+          "approval route",
+          "promotional label",
+          "guaranteed return claim",
+          "misleading-claim checks",
+          "kol",
+          "key opinion leader",
+          "remuneration",
+          "paid post scope",
+          "incentive compliance confirmation",
+          "recordkeeping owner",
+          "marketing record",
+          "distribution details",
+          "eight year archive"
+        ]
+      },
+      {
         id: "uae-kol-incentive-recordkeeping-control",
         title: "KOL, incentive, and marketing recordkeeping control",
         owner: "Compliance",

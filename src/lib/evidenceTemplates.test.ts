@@ -307,6 +307,8 @@ describe("evidence templates", () => {
     const endorsementLog = items.find((item) => item.label === "Creator endorsement and material connection log");
     const ukPromotionPack = items.find((item) => item.label === "UK financial promotion approval pack");
     const euMicaMarketingPack = items.find((item) => item.label === "EU MiCA marketing communication review pack");
+    const uaeVaraApprovalArchive = items.find((item) => item.label === "UAE VARA approval and risk-warning archive");
+    const uaeKolRecordkeepingLog = items.find((item) => item.label === "UAE KOL incentive and recordkeeping log");
 
     expect(recommended[0]).toMatchObject({
       id: "marketing-claims-review",
@@ -345,6 +347,16 @@ describe("evidence templates", () => {
     expect(euMicaMarketingPack?.content).toContain("marketing communication notification");
     expect(euMicaMarketingPack?.content).toContain("publication timing");
     expect(euMicaMarketingPack?.content).toContain("source-lineage evidence");
+    expect(uaeVaraApprovalArchive?.content).toContain("VARA approval route");
+    expect(uaeVaraApprovalArchive?.content).toContain("VASP approval route");
+    expect(uaeVaraApprovalArchive?.content).toContain("promotional label");
+    expect(uaeVaraApprovalArchive?.content).toContain("guaranteed return claim controls");
+    expect(uaeVaraApprovalArchive?.content).toContain("misleading-claim checks");
+    expect(uaeKolRecordkeepingLog?.content).toContain("key opinion leader remuneration");
+    expect(uaeKolRecordkeepingLog?.content).toContain("paid post scope");
+    expect(uaeKolRecordkeepingLog?.content).toContain("incentive compliance confirmation");
+    expect(uaeKolRecordkeepingLog?.content).toContain("marketing record");
+    expect(uaeKolRecordkeepingLog?.content).toContain("eight year archive assumptions");
     expect(serializedSources).toContain("regulatory control: control-us-ftc-endorsement-advertising-guides");
     expect(serializedSources).toContain("regulatory control: control-us-sec-investment-adviser-marketing-rule");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-marketing-communications");

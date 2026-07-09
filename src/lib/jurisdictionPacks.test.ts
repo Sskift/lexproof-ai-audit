@@ -2929,6 +2929,16 @@ describe("createJurisdictionPacks", () => {
       "Australia digital asset financial services and VASP AML register"
     ]);
 
+    const sourceFreeAustraliaDigitalAssetMemo = {
+      id: "au-asic-austrac-source-free-digital-asset-memo",
+      label: "Source-free Australia ASIC/AUSTRAC digital asset memo",
+      kind: "Memo",
+      content:
+        "Australia ASIC digital asset financial product assumptions with AFS licence handoff, dealing, market making, custodial depository service, client assets separate, cold storage, independent audit, AUSTRAC virtual asset service provider scope, AML/CTF program, customer due diligence, travel rule, suspicious matter report, threshold transaction report, and seven years recordkeeping evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const australiaDigitalAssetProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-au-asic-austrac-ready",
@@ -2945,7 +2955,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Australia digital asset evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Australia digital asset evidence metadata",
       operatingStage: "Pre-launch Australia digital asset and AML/CTF review before local counsel signoff",
-      evidenceItems: australiaDigitalAssetEvidence
+      evidenceItems: [sourceFreeAustraliaDigitalAssetMemo, ...australiaDigitalAssetEvidence]
     };
     const audit = analyzeAuditProfile(australiaDigitalAssetProject);
     const [australiaPack] = createJurisdictionPacks(australiaDigitalAssetProject, audit);

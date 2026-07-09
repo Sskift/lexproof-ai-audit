@@ -1394,6 +1394,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-au-asic-austrac-digital-asset-financial-services",
           "australia asic digital asset",
@@ -1402,7 +1403,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "custodial depository service",
           "client assets separate",
           "cold storage",
-          "independent audit"
+          "independent audit",
+          "custody and signer control"
         ]
       },
       {
@@ -1411,6 +1413,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-au-asic-austrac-digital-asset-financial-services",
           "austrac",
@@ -1420,7 +1423,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "travel rule",
           "suspicious matter report",
           "threshold transaction report",
-          "seven years"
+          "seven years",
+          "custody and signer control"
         ]
       }
     ]

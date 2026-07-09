@@ -100,6 +100,7 @@ describe("evidence templates", () => {
       (item) => item.label === "US FinCEN CVC MSB and BSA transfer control register"
     );
     const doraIctRegister = items.find((item) => item.label === "EU DORA ICT resilience register");
+    const tfrTravelRuleRegister = items.find((item) => item.label === "EU TFR Travel Rule transfer information register");
     const nydfsCustodyControls = items.find(
       (item) => item.label === "New York NYDFS BitLicense and custody customer-protection register"
     );
@@ -157,6 +158,10 @@ describe("evidence templates", () => {
     expect(doraIctRegister?.content).toContain("incident classification");
     expect(doraIctRegister?.content).toContain("ICT third-party service register");
     expect(doraIctRegister?.content).toContain("without credentials or raw customer records");
+    expect(tfrTravelRuleRegister?.content).toContain("crypto-asset transfer information");
+    expect(tfrTravelRuleRegister?.content).toContain("counterparty CASP handling");
+    expect(tfrTravelRuleRegister?.content).toContain("missing incomplete information");
+    expect(tfrTravelRuleRegister?.content).toContain("without raw KYC or full wallet histories");
     expect(nydfsCustodyControls?.content).toContain("New York virtual currency business activity");
     expect(nydfsCustodyControls?.content).toContain("BitLicense or limited purpose trust company route");
     expect(nydfsCustodyControls?.content).toContain("customer virtual currency segregation");

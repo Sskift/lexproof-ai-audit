@@ -276,6 +276,32 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "eu-tfr-crypto-asset-transfer-information-control",
+        title: "TFR crypto-asset transfer information control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "control-eu-tfr-crypto-asset-transfer-information",
+          "eu tfr",
+          "regulation eu 2023/1113",
+          "crypto-asset transfer information",
+          "transfer of crypto-assets",
+          "travel rule",
+          "travel rule transfer information",
+          "counterparty casp",
+          "originator",
+          "beneficiary",
+          "missing incomplete information",
+          "transfer information handling",
+          "travel rule exception",
+          "counterparty escalation",
+          "rejection or return handling",
+          "retention owner",
+          "reviewer owner"
+        ]
+      },
+      {
         id: "eu-data-minimization-control",
         title: "Data minimization and model-call control",
         owner: "Compliance",

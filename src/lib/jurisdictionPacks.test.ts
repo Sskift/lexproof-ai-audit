@@ -192,6 +192,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "eu-tfr-crypto-asset-transfer-information-control",
+          title: "TFR crypto-asset transfer information control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-data-minimization-control",
           title: "Data minimization and model-call control"
         })
@@ -679,6 +684,56 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "eu-mica-article-75-casp-custody-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU TFR transfer-information control ready from verified RWA Travel Rule evidence only", () => {
+    const tfrRegister = createEvidenceItemsFromTemplate("tokenized-yield-rwa").find(
+      (item) => item.label === "EU TFR Travel Rule transfer information register"
+    );
+
+    expect(tfrRegister).toBeDefined();
+
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-tfr-transfer-ready",
+      jurisdictions: ["European Union"],
+      evidenceItems: [
+        {
+          ...tfrRegister!,
+          id: "eu-rwa-tfr-transfer-register-1",
+          status: "verified" as const
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [euPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-tfr-crypto-asset-transfer-information-control",
+          title: "TFR crypto-asset transfer information control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["EU TFR Travel Rule transfer information register"]
+        }),
+        expect.objectContaining({
+          id: "eu-dora-ict-operational-resilience-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

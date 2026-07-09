@@ -2677,6 +2677,16 @@ describe("createJurisdictionPacks", () => {
       "Hong Kong SFC secondary trading fair-pricing and liquidity register"
     ]);
 
+    const sourceFreeTokenisedProductMemo = {
+      id: "hk-sfc-source-free-tokenised-product-memo",
+      label: "Source-free SFC tokenised product memo",
+      kind: "Memo",
+      content:
+        "Hong Kong SFC-authorised investment product and SFC-authorized investment product tokenised product review for tokenized product structure, product authorisation, product authorization, prior consultation, prior approval, ownership records, operational soundness, smart contract integrity, secondary trading, price deviation alert, indicative NAV, market maker, liquidity, trading suspension, client confirmation, and notification workflow evidence.",
+      status: "verified" as const,
+      owner: "Counsel" as const
+    };
+
     const hongKongTokenisedProductProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-hk-tokenised-product-ready",
@@ -2693,7 +2703,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Hong Kong SFC tokenised product evidence summaries for human review",
       blockchainUse: "Simulated manifest anchor for metadata-only tokenised product counsel handoff",
       operatingStage: "Pre-launch SFC tokenisation and secondary-trading review before public reliance",
-      evidenceItems: tokenisedProductEvidence
+      evidenceItems: [sourceFreeTokenisedProductMemo, ...tokenisedProductEvidence]
     };
     const audit = analyzeAuditProfile(hongKongTokenisedProductProject);
     const [hongKongPack] = createJurisdictionPacks(hongKongTokenisedProductProject, audit);

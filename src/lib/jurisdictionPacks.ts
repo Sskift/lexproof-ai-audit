@@ -1239,6 +1239,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-hk-sfc-tokenised-investment-products-secondary-trading",
           "sfc-authorised investment product",

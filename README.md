@@ -199,7 +199,7 @@ Brazil projects now route to Banco Central virtual asset service and CVM crypto-
 
 ![Brazil regulatory source graph](docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png)
 
-Swiss stablecoin projects now route to FINMA ICO token-classification guidance and FINMA Guidance 06/2024 on stablecoins, with evidence gaps for payment/utility/asset/hybrid token assumptions, offering/prospectus intake, holder redemption claims, reserve assets, bank guarantees, banking-law and collective-investment perimeter assumptions, AML, sanctions, holder identification, transfer risk, and local-counsel handoff. Not legal advice.
+Swiss stablecoin projects now route to FINMA ICO token-classification guidance and FINMA Guidance 06/2024 on stablecoins, with evidence gaps for payment/utility/asset/hybrid token assumptions, offering/prospectus intake, holder redemption claims, reserve assets, bank guarantees, banking-law and collective-investment perimeter assumptions, AML, sanctions, holder identification, transfer risk, and local-counsel handoff. The Jurisdiction Checklist also shows FINMA token classification/prospectus, stablecoin issuer/bank-guarantee, and stablecoin AML/sanctions/transfer-risk controls that become evidence-ready only from metadata-only records carrying `control-ch-finma-ico-token-classification` or `control-ch-finma-stablecoin-guidance-06-2024`, without raw KYC, customer records, credentials, wallet secrets, private cryptographic material, personal data, or legal conclusions. Not legal advice.
 
 ![Swiss FINMA stablecoin source graph](docs/assets/screenshots/swiss-finma-stablecoin-source-graph.png)
 

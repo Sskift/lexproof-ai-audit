@@ -3028,6 +3028,95 @@ describe("createJurisdictionPacks", () => {
     expect(serializedSouthAfricaPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Swiss FINMA token and stablecoin controls ready from verified source evidence only", () => {
+    const swissFinmaEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter(
+        (item) =>
+          item.source?.includes("control-ch-finma-ico-token-classification") ||
+          item.source?.includes("control-ch-finma-stablecoin-guidance-06-2024")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `ch-finma-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    const swissTokenClassificationLabels = [
+      "Swiss token classification memo",
+      "Swiss offering, prospectus, and governance evidence"
+    ];
+    const swissStablecoinLabels = [
+      "Swiss stablecoin issuer and bank guarantee perimeter memo",
+      "Swiss stablecoin AML and sanctions transfer-risk register"
+    ];
+    expect(swissFinmaEvidence.map((item) => item.label)).toEqual([
+      ...swissTokenClassificationLabels,
+      ...swissStablecoinLabels
+    ]);
+
+    const swissFinmaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-ch-finma-stablecoin-ready",
+      projectName: "Zurich FINMA Stablecoin Review",
+      jurisdictions: ["Switzerland"],
+      entityType: "Swiss stablecoin issuer preparing FINMA token and stablecoin evidence",
+      assetModel:
+        "Swiss CHF-referenced stablecoin pilot with token classification, payment token, utility token, asset token, hybrid token, fundraising assumptions, prospectus intake, holder redemption claim, reserve assets, bank guarantee, banking-law perimeter, collective-investment perimeter, yield, and public launch readiness",
+      userType: "Swiss qualified and retail users, treasury partners, compliance reviewers, and Swiss local counsel",
+      custodyModel:
+        "Platform maintains metadata-only reserve, bank-guarantee, holder-redemption, transfer-risk, transaction-monitoring, and blocked-transfer records without wallet secret handling",
+      dataSensitivity:
+        "Holder-identification status summaries, transfer-risk status, sanctions status, reserve-owner status, and no raw KYC, customer records, credentials, wallet secrets, private cryptographic material, or personal data",
+      aiUsage: "AI drafts Swiss FINMA token and stablecoin evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Swiss FINMA evidence metadata",
+      operatingStage: "Pre-launch Swiss FINMA stablecoin review before local counsel signoff",
+      evidenceItems: swissFinmaEvidence
+    };
+    const audit = analyzeAuditProfile(swissFinmaProject);
+    const [swissPack] = createJurisdictionPacks(swissFinmaProject, audit);
+
+    expect(swissPack).toMatchObject({
+      jurisdiction: "Switzerland",
+      localCounselRoute: {
+        recommendedRole: "Swiss DLT / financial services counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(swissPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ch-token-classification-control",
+          title: "Token classification and prospectus-intake control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: swissTokenClassificationLabels
+        }),
+        expect.objectContaining({
+          id: "ch-stablecoin-issuer-guarantee-perimeter-control",
+          title: "Stablecoin issuer and bank-guarantee perimeter control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: swissStablecoinLabels
+        }),
+        expect.objectContaining({
+          id: "ch-stablecoin-aml-sanctions-transfer-risk-control",
+          title: "Stablecoin AML, sanctions, and transfer-risk control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: swissStablecoinLabels
+        })
+      ])
+    );
+    const serializedSwissPack = JSON.stringify(swissPack);
+    expect(serializedSwissPack).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(serializedSwissPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UK FCA cryptoasset AML controls ready from verified Travel Rule evidence only", () => {
     const ukCryptoassetAmlEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter((item) =>

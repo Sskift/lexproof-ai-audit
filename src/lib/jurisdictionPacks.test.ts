@@ -302,6 +302,7 @@ describe("createJurisdictionPacks", () => {
         "Custody operational resilience control",
         "FCA MLR registration and cryptoasset activity-scope control",
         "UK cryptoasset AML, SAR, sanctions, and Travel Rule control",
+        "Law Commission DAO structure and asset-control scoping control",
         "ICO AI data-protection and reviewer-decision governance control",
         "UK qualifying stablecoin issuer control"
       ])
@@ -1070,6 +1071,74 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the UK Law Commission DAO scoping control ready from verified DAO governance evidence only", () => {
+    const ukDaoEvidence = createEvidenceItemsFromTemplate("dao-governance-multisig")
+      .filter((item) => item.source?.includes("control-uk-law-commission-dao-scoping-paper"))
+      .map((item, index) => ({
+        ...item,
+        id: `uk-law-commission-dao-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(ukDaoEvidence.map((item) => item.label)).toEqual([
+      "Governance proposal record",
+      "Multisig signer authority matrix",
+      "Vote and execution receipt",
+      "Contributor agreement summary"
+    ]);
+
+    const daoProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uk-law-commission-dao-ready",
+      projectName: "UK DAO Scoping Review",
+      jurisdictions: ["United Kingdom"],
+      entityType: "DAO foundation governance committee preparing UK Law Commission scoping evidence",
+      assetModel:
+        "DAO governance proposal with participant-role, contributor, foundation, legal-characterisation, governance-rule, asset-control, voting, multisig signer, execution receipt, and emergency-authority evidence",
+      userType: "DAO participants, protocol contributors, multisig signers, foundation operators, and UK DAO counsel",
+      custodyModel: "DAO treasury asset-control and execution authority are documented as metadata-only governance records",
+      dataSensitivity: "Contributor agreement summaries and no raw customer records or personal records",
+      aiUsage: "AI drafts UK DAO scoping evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for governance proposal and execution metadata",
+      operatingStage: "Pre-execution UK DAO structure and asset-control review before counsel signoff",
+      evidenceItems: ukDaoEvidence
+    };
+    const audit = analyzeAuditProfile(daoProject);
+    const [ukPack] = createJurisdictionPacks(daoProject, audit);
+
+    expect(ukPack).toMatchObject({
+      jurisdiction: "United Kingdom",
+      localCounselRoute: {
+        recommendedRole: "UK financial promotion / crypto / AI data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(ukPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uk-law-commission-dao-scoping-control",
+          title: "Law Commission DAO structure and asset-control scoping control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Governance proposal record",
+            "Multisig signer authority matrix",
+            "Vote and execution receipt",
+            "Contributor agreement summary"
+          ]
+        }),
+        expect.objectContaining({
+          id: "uk-ico-ai-data-protection-governance-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the US ABA Formal Opinion 512 legal AI control ready from verified AI workflow evidence only", () => {

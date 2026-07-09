@@ -3817,6 +3817,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the EU MiCA Article 75 CASP custody control ready from verified RWA custody runbook evidence only", () => {
+    const sourceFreeMicaCustodyMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "eu-source-free-mica-custody-memo",
+      label: "EU MiCA Article 75 CASP custody memo",
+      kind: "Memo",
+      content:
+        "EU MiCA Article 75 CASP crypto-asset service provider custody administration, custody policy, wallet authority, signer quorum, means of access, return procedure, client crypto-asset safeguarding, withdrawal approval, emergency pause, incident response, reconciliation, delegation, and custody and signer control notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `eu-rwa-mica-custody-template-${index + 1}`,
@@ -3826,7 +3835,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-eu-mica-custody-ready",
       jurisdictions: ["European Union"],
-      evidenceItems
+      evidenceItems: [sourceFreeMicaCustodyMemo, ...evidenceItems]
     };
     const audit = analyzeAuditProfile(rwaProject);
     const [euPack] = createJurisdictionPacks(rwaProject, audit);

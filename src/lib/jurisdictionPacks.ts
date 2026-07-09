@@ -621,6 +621,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-eu-mica-casp-custody-administration",
           "mica article 75",

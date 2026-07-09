@@ -2008,6 +2008,14 @@ describe("createJurisdictionPacks", () => {
     expect(ukPack?.controls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          id: "uk-promotion-approval-control",
+          title: "Financial promotion and approval control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["UK financial promotion approval pack"]
+        }),
+        expect.objectContaining({
           id: "uk-fca-crypto-financial-promotions-control",
           title: "FCA cryptoasset financial promotions approval and retail-access control",
           owner: "Counsel",

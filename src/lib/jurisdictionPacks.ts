@@ -855,7 +855,14 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
-        evidenceKeywords: ["marketing approval", "financial promotion", "eligibility", "approval gate"]
+        sourceMatchMode: "source-and-keyword",
+        evidenceKeywords: [
+          "control-uk-fca-crypto-financial-promotions",
+          "marketing approval",
+          "financial promotion",
+          "eligibility",
+          "approval gate"
+        ]
       },
       {
         id: "uk-fca-crypto-financial-promotions-control",

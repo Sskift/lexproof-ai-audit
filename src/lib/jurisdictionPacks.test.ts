@@ -2511,6 +2511,16 @@ describe("createJurisdictionPacks", () => {
 
     expect(vatpEvidence.map((item) => item.label)).toEqual(["Custody and signer control runbook"]);
 
+    const sourceFreeVatpCustodyMemo = {
+      id: "hk-vatp-source-free-custody-memo",
+      label: "Source-free VATP custody memo",
+      kind: "Memo",
+      content:
+        "Hong Kong SFC VATP client asset custody review for client asset and client virtual asset safeguards, associated entity trust holding, segregation, safeguarding, wallet authority, custody and signer control, SFC VATP wallet control, cold storage, key management, reconciliation, internal audit, monitoring, incident response, and compensation arrangement evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const hongKongVatpProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-hk-vatp-custody-ready",
@@ -2527,7 +2537,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Hong Kong VATP custody evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for VATP custody evidence metadata",
       operatingStage: "Pre-launch Hong Kong VATP custody review before local counsel signoff",
-      evidenceItems: vatpEvidence
+      evidenceItems: [sourceFreeVatpCustodyMemo, ...vatpEvidence]
     };
     const audit = analyzeAuditProfile(hongKongVatpProject);
     const [hongKongPack] = createJurisdictionPacks(hongKongVatpProject, audit);

@@ -146,6 +146,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P0",
         relatedFlagIds: ["retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-us-ftc-endorsement-advertising-guides",
           "ftc",

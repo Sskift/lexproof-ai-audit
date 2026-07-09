@@ -1020,6 +1020,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US FTC advertising and endorsement control ready from verified marketing evidence only", () => {
+    const sourceFreeFtcMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-ftc-marketing-memo",
+      label: "US FTC endorsement advertising memo",
+      kind: "Memo",
+      content:
+        "US FTC advertising claim, claim inventory, claims substantiation, risk disclosure, campaign channel, endorsement, testimonial, material connection, creator disclosure, influencer, approval routing, and monitoring owner notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const ftcEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-us-ftc-endorsement-advertising-guides"))
       .map((item, index) => ({
@@ -1037,7 +1046,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-us-ftc-marketing-ready",
       jurisdictions: ["United States"],
-      evidenceItems: ftcEvidence
+      evidenceItems: [sourceFreeFtcMemo, ...ftcEvidence]
     };
     const audit = analyzeAuditProfile(marketingProject);
     const [usPack] = createJurisdictionPacks(marketingProject, audit);

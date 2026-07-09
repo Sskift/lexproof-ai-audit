@@ -1492,6 +1492,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-in-fiu-pmla-vda-aml-cft",
           "india vda service provider",
@@ -1503,7 +1504,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "aml/cft/cpf program",
           "board senior management",
           "india vda sp activity scope",
-          "vda activity scope"
+          "vda activity scope",
+          "custody and signer control"
         ]
       },
       {
@@ -1512,6 +1514,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-in-fiu-pmla-vda-aml-cft",
           "india vda aml cft",
@@ -1524,7 +1527,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "ground of suspicion",
           "india record retention",
           "india no anonymous wallet",
-          "india beneficial ownership"
+          "india beneficial ownership",
+          "custody and signer control"
         ]
       }
     ]

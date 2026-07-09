@@ -3097,6 +3097,16 @@ describe("createJurisdictionPacks", () => {
       "India VDA SP FIU-IND registration and AML reporting register"
     ]);
 
+    const sourceFreeIndiaVdaMemo = {
+      id: "in-fiu-pmla-source-free-vda-memo",
+      label: "Source-free India VDA PMLA memo",
+      kind: "Memo",
+      content:
+        "India VDA service provider review with India FIU-IND registration, India PMLA reporting entity, designated director, principal officer, client money account, AML/CFT/CPF program, board senior management, India VDA SP activity scope, VDA activity scope, India VDA AML CFT, FIU-IND reporting, India suspicious transaction report, India Travel Rule, India transaction monitoring, India risk assessment, FINGate VASP reporting, Ground of Suspicion, India record retention, India no anonymous wallet, and India beneficial ownership evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const indiaVdaProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-in-fiu-pmla-ready",
@@ -3113,7 +3123,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts India VDA AML/CFT evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for India VDA evidence metadata",
       operatingStage: "Pre-launch India VDA AML/CFT review before local counsel signoff",
-      evidenceItems: indiaVdaEvidence
+      evidenceItems: [sourceFreeIndiaVdaMemo, ...indiaVdaEvidence]
     };
     const audit = analyzeAuditProfile(indiaVdaProject);
     const [indiaPack] = createJurisdictionPacks(indiaVdaProject, audit);

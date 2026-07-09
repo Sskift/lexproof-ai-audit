@@ -1302,6 +1302,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-jp-fsa-crypto-asset-custody-user-protection",
           "japan crypto asset exchange",
@@ -1318,6 +1319,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-jp-fsa-crypto-asset-custody-user-protection",
           "cold wallet",

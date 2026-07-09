@@ -2761,6 +2761,16 @@ describe("createJurisdictionPacks", () => {
       "Japan crypto-asset custody and leakage response register"
     ]);
 
+    const sourceFreeJapanCustodyMemo = {
+      id: "jp-fsa-source-free-custody-memo",
+      label: "Source-free Japan FSA custody memo",
+      kind: "Memo",
+      content:
+        "Japan crypto asset exchange custody review with FSA registration, user asset protection, information to users, contract details, custody and signer control, cold wallet, offline environment, segregated wallet, daily reconciliation, leakage response, and separate management audit evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const japanCustodyProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-jp-fsa-custody-ready",
@@ -2777,7 +2787,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Japan FSA custody evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Japan custody evidence metadata",
       operatingStage: "Pre-launch Japan crypto custody review before local counsel signoff",
-      evidenceItems: japanCustodyEvidence
+      evidenceItems: [sourceFreeJapanCustodyMemo, ...japanCustodyEvidence]
     };
     const audit = analyzeAuditProfile(japanCustodyProject);
     const [japanPack] = createJurisdictionPacks(japanCustodyProject, audit);

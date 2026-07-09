@@ -270,6 +270,10 @@ describe("evidence templates", () => {
     const euTechnicalDocumentationRegister = items.find(
       (item) => item.label === "EU AI Act technical documentation and data-governance register"
     );
+    const euArticle50DisclosureRegister = items.find((item) => item.label === "EU AI Act Article 50 user disclosure register");
+    const euArticle50OutputRegister = items.find(
+      (item) => item.label === "EU AI Act AI-generated output labelling register"
+    );
     const usLegalAiRegister = items.find(
       (item) => item.label === "US legal AI ethics and professional responsibility register"
     );
@@ -323,6 +327,16 @@ describe("evidence templates", () => {
     expect(euTechnicalDocumentationRegister?.content).toContain("training data governance");
     expect(euTechnicalDocumentationRegister?.content).toContain("record-keeping logs");
     expect(euTechnicalDocumentationRegister?.content).toContain("no raw personal data");
+    expect(euArticle50DisclosureRegister?.content).toContain("Article 50 user interaction disclosure");
+    expect(euArticle50DisclosureRegister?.content).toContain("natural persons notice");
+    expect(euArticle50DisclosureRegister?.content).toContain("first interaction timing");
+    expect(euArticle50DisclosureRegister?.content).toContain("clear distinguishable accessible format");
+    expect(euArticle50DisclosureRegister?.content).toContain("non-advice output boundary");
+    expect(euArticle50OutputRegister?.content).toContain("AI-generated output labelling");
+    expect(euArticle50OutputRegister?.content).toContain("machine-readable or detectable marking");
+    expect(euArticle50OutputRegister?.content).toContain("human editorial review");
+    expect(euArticle50OutputRegister?.content).toContain("public interest publication routing");
+    expect(euArticle50OutputRegister?.content).toContain("not legal advice wording");
     expect(usLegalAiRegister?.content).toContain("ABA Formal Opinion 512");
     expect(usLegalAiRegister?.content).toContain("model limitations");
     expect(usLegalAiRegister?.content).toContain("prohibited inputs");

@@ -549,6 +549,31 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "accuracy robustness cybersecurity",
           "no raw personal data"
         ]
+      },
+      {
+        id: "eu-ai-act-article-50-transparency-disclosure-control",
+        title: "AI Act Article 50 transparency and AI-output labelling control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-eu-ai-act-article-50-transparency-disclosure",
+          "article 50",
+          "user interaction disclosure",
+          "natural persons notice",
+          "ai disclosure wording",
+          "first interaction timing",
+          "clear distinguishable accessible format",
+          "exception routing",
+          "non-advice output boundary",
+          "ai-generated output labelling",
+          "machine-readable",
+          "detectable marking",
+          "human editorial review",
+          "editorial control owner",
+          "public interest publication routing",
+          "not legal advice wording"
+        ]
       }
     ]
   },

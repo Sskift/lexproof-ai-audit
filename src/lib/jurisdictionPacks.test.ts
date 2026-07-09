@@ -244,6 +244,11 @@ describe("createJurisdictionPacks", () => {
           id: "eu-ai-act-high-risk-provider-quality-documentation-control",
           title: "AI Act high-risk provider QMS and technical-documentation control",
           status: "needs-evidence"
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-article-50-transparency-disclosure-control",
+          title: "AI Act Article 50 transparency and AI-output labelling control",
+          status: "needs-evidence"
         })
       ])
     );
@@ -1073,6 +1078,73 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "eu-tfr-crypto-asset-transfer-information-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(euPack?.controls.map((control) => control.id)).not.toEqual(
+      expect.arrayContaining(["eu-mica-marketing-communications-control", "eu-mica-art-emt-stablecoin-issuer-control"])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU AI Act Article 50 transparency control ready from verified AI workflow evidence only", () => {
+    const article50Evidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-eu-ai-act-article-50-transparency-disclosure"))
+      .map((item, index) => ({
+        ...item,
+        id: `eu-ai-act-article-50-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(article50Evidence.map((item) => item.label)).toEqual([
+      "EU AI Act Article 50 user disclosure register",
+      "EU AI Act AI-generated output labelling register"
+    ]);
+
+    const transparencyProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-ai-act-article-50-ready",
+      projectName: "LexAssist Article 50 Review",
+      jurisdictions: ["European Union"],
+      entityType: "AI workflow deployer preparing Article 50 transparency evidence",
+      assetModel:
+        "AI-assisted user interaction workflow with natural person notice, AI-generated output labelling, first interaction timing, detectable marking, and editorial-control review",
+      userType: "EU users, compliance reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; AI transparency evidence is metadata-only",
+      dataSensitivity: "Disclosure wording summaries, output-labelling metadata, and no raw matter text or client identifiers",
+      aiUsage: "AI drafts Article 50 transparency evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved AI transparency metadata",
+      operatingStage: "Pre-launch AI disclosure review before local counsel signoff",
+      evidenceItems: article50Evidence
+    };
+    const audit = analyzeAuditProfile(transparencyProject);
+    const [euPack] = createJurisdictionPacks(transparencyProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-ai-act-article-50-transparency-disclosure-control",
+          title: "AI Act Article 50 transparency and AI-output labelling control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "EU AI Act Article 50 user disclosure register",
+            "EU AI Act AI-generated output labelling register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-high-risk-provider-quality-documentation-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

@@ -1442,6 +1442,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-kr-fsc-kofiu-vasp-user-protection-aml",
           "korea vasp user protection",
@@ -1451,7 +1452,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "cold wallet",
           "insurance reserve",
           "abnormal trading monitoring",
-          "korean language whitepaper"
+          "korean language whitepaper",
+          "custody and signer control"
         ]
       },
       {
@@ -1460,6 +1462,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-kr-fsc-kofiu-vasp-user-protection-aml",
           "kofiu",
@@ -1470,7 +1473,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "real-name verified checking account",
           "customer due diligence",
           "suspicious transaction report",
-          "travel rule"
+          "travel rule",
+          "custody and signer control"
         ]
       }
     ]

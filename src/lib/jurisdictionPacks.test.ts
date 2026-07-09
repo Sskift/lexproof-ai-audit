@@ -3013,6 +3013,16 @@ describe("createJurisdictionPacks", () => {
       "Korea VASP user protection and AML reporting register"
     ]);
 
+    const sourceFreeKoreaVaspMemo = {
+      id: "kr-fsc-kofiu-source-free-vasp-memo",
+      label: "Source-free Korea VASP custody and AML memo",
+      kind: "Memo",
+      content:
+        "Korea VASP user protection review with user deposits at banks, users virtual assets separate, 80 percent cold wallet, cold wallet, insurance reserve, abnormal trading monitoring, Korean language whitepaper, KoFIU, VASP reporting, compliance system, major shareholders, ISMS, real-name verified checking account, customer due diligence, suspicious transaction report, and travel rule evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const koreaVaspProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-kr-fsc-kofiu-ready",
@@ -3029,7 +3039,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts South Korea VASP evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for South Korea VASP evidence metadata",
       operatingStage: "Pre-launch South Korea VASP custody and AML review before local counsel signoff",
-      evidenceItems: koreaVaspEvidence
+      evidenceItems: [sourceFreeKoreaVaspMemo, ...koreaVaspEvidence]
     };
     const audit = analyzeAuditProfile(koreaVaspProject);
     const [koreaPack] = createJurisdictionPacks(koreaVaspProject, audit);

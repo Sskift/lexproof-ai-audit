@@ -249,6 +249,33 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "eu-dora-ict-operational-resilience-control",
+        title: "DORA ICT operational resilience control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody", "sensitive-data"],
+        evidenceKeywords: [
+          "control-eu-dora-ict-operational-resilience",
+          "dora",
+          "digital operational resilience",
+          "ict risk",
+          "ict risk management",
+          "business continuity",
+          "incident classification",
+          "incident response",
+          "escalation owner",
+          "testing cadence",
+          "recovery",
+          "ict third-party service register",
+          "critical function",
+          "subcontracting",
+          "access logging",
+          "exit plan",
+          "resilience testing",
+          "vendor register"
+        ]
+      },
+      {
         id: "eu-data-minimization-control",
         title: "Data minimization and model-call control",
         owner: "Compliance",

@@ -187,6 +187,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "eu-dora-ict-operational-resilience-control",
+          title: "DORA ICT operational resilience control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "eu-data-minimization-control",
           title: "Data minimization and model-call control"
         })
@@ -626,6 +631,56 @@ describe("createJurisdictionPacks", () => {
           priority: "P1",
           status: "evidence-ready",
           evidenceLabels: ["Custody and signer control runbook"]
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU DORA ICT operational resilience control ready from verified RWA resilience-register evidence only", () => {
+    const doraRegister = createEvidenceItemsFromTemplate("tokenized-yield-rwa").find(
+      (item) => item.label === "EU DORA ICT resilience register"
+    );
+
+    expect(doraRegister).toBeDefined();
+
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-dora-ict-ready",
+      jurisdictions: ["European Union"],
+      evidenceItems: [
+        {
+          ...doraRegister!,
+          id: "eu-rwa-dora-ict-register-1",
+          status: "verified" as const
+        }
+      ]
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [euPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-dora-ict-operational-resilience-control",
+          title: "DORA ICT operational resilience control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["EU DORA ICT resilience register"]
+        }),
+        expect.objectContaining({
+          id: "eu-mica-article-75-casp-custody-control",
+          status: "needs-evidence",
+          evidenceLabels: []
         })
       ])
     );

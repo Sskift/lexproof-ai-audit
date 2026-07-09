@@ -2595,6 +2595,16 @@ describe("createJurisdictionPacks", () => {
     ];
     expect(hkmaStablecoinEvidence.map((item) => item.label)).toEqual(hkmaStablecoinEvidenceLabels);
 
+    const sourceFreeHkmaStablecoinMemo = {
+      id: "hk-hkma-source-free-stablecoin-memo",
+      label: "Source-free HKMA stablecoin memo",
+      kind: "Memo",
+      content:
+        "Hong Kong stablecoin issuer review for fiat-referenced stablecoin activity under the Stablecoins Ordinance, HKMA licence, regulated stablecoin activity, reserve assets, full backing, redemption, AML CFT, customer due diligence, blockchain analytics, suspicious transaction, and record keeping evidence.",
+      status: "verified" as const,
+      owner: "Counsel" as const
+    };
+
     const hongKongStablecoinProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-hk-hkma-stablecoin-ready",
@@ -2611,7 +2621,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Hong Kong HKMA stablecoin evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Hong Kong HKMA stablecoin evidence metadata",
       operatingStage: "Pre-application Hong Kong HKMA stablecoin review before local counsel signoff",
-      evidenceItems: hkmaStablecoinEvidence
+      evidenceItems: [sourceFreeHkmaStablecoinMemo, ...hkmaStablecoinEvidence]
     };
     const audit = analyzeAuditProfile(hongKongStablecoinProject);
     const [hongKongPack] = createJurisdictionPacks(hongKongStablecoinProject, audit);

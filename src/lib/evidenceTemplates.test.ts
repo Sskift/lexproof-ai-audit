@@ -93,6 +93,7 @@ describe("evidence templates", () => {
   it("instantiates requested evidence items without raw KYC or private data", () => {
     const items = createEvidenceItemsFromTemplate("tokenized-yield-rwa");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
+    const custodyAndSignerRunbook = items.find((item) => item.label === "Custody and signer control runbook");
     const investorEligibilityReview = items.find((item) => item.label === "Investor eligibility review");
     const walletSanctionsControls = items.find((item) => item.label === "Wallet sanctions screening and escalation controls");
     const cvcTransferControls = items.find(
@@ -136,6 +137,10 @@ describe("evidence templates", () => {
       ])
     );
     expect(items.every((item) => item.status === "requested")).toBe(true);
+    expect(custodyAndSignerRunbook?.content).toContain("wallet authority");
+    expect(custodyAndSignerRunbook?.content).toContain("signer quorum");
+    expect(custodyAndSignerRunbook?.content).toContain("custody boundaries");
+    expect(custodyAndSignerRunbook?.content).toContain("client virtual asset treatment");
     expect(investorEligibilityReview?.content).toContain("Regulation D");
     expect(investorEligibilityReview?.content).toContain("Rule 506(c)");
     expect(investorEligibilityReview?.content).toContain("accredited investor verification");

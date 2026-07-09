@@ -175,8 +175,22 @@ describe("createJurisdictionPacks", () => {
     );
 
     const euPack = packs.find((pack) => pack.jurisdiction === "European Union");
-    expect(euPack?.controls.map((control) => control.title)).toEqual(
-      expect.arrayContaining(["Crypto-asset disclosure provenance control", "Data minimization and model-call control"])
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-disclosure-provenance-control",
+          title: "Crypto-asset disclosure provenance control"
+        }),
+        expect.objectContaining({
+          id: "eu-mica-article-75-casp-custody-control",
+          title: "MiCA Article 75 CASP custody and administration control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
+          id: "eu-data-minimization-control",
+          title: "Data minimization and model-call control"
+        })
+      ])
     );
 
     const ukPack = packs.find((pack) => pack.jurisdiction === "United Kingdom");
@@ -579,5 +593,43 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the EU MiCA Article 75 CASP custody control ready from verified RWA custody runbook evidence only", () => {
+    const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
+      ...item,
+      id: `eu-rwa-mica-custody-template-${index + 1}`,
+      status: "verified" as const
+    }));
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-mica-custody-ready",
+      jurisdictions: ["European Union"],
+      evidenceItems
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [euPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-mica-article-75-casp-custody-control",
+          title: "MiCA Article 75 CASP custody and administration control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Custody and signer control runbook"]
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 });

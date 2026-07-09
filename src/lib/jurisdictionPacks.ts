@@ -222,6 +222,33 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["whitepaper", "disclosure", "public communication", "manifest", "provenance"]
       },
       {
+        id: "eu-mica-article-75-casp-custody-control",
+        title: "MiCA Article 75 CASP custody and administration control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["custody"],
+        evidenceKeywords: [
+          "control-eu-mica-casp-custody-administration",
+          "mica article 75",
+          "casp",
+          "crypto-asset service provider",
+          "custody administration",
+          "custody policy",
+          "wallet authority",
+          "signer quorum",
+          "means of access",
+          "return procedure",
+          "client crypto-asset",
+          "safeguarding",
+          "withdrawal approval",
+          "emergency pause",
+          "incident response",
+          "reconciliation",
+          "delegation",
+          "custody and signer control"
+        ]
+      },
+      {
         id: "eu-data-minimization-control",
         title: "Data minimization and model-call control",
         owner: "Compliance",

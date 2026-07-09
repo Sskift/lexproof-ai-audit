@@ -2751,6 +2751,73 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(thailandPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Indonesia OJK digital financial asset controls ready from verified trading evidence only", () => {
+    const indonesiaTradingEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-id-ojk-digital-financial-asset-crypto-trading"))
+      .map((item, index) => ({
+        ...item,
+        id: `id-ojk-trading-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(indonesiaTradingEvidence.map((item) => item.label)).toEqual([
+      "Indonesia OJK digital financial asset trading and whitelist register"
+    ]);
+
+    const indonesiaTradingProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-id-ojk-ready",
+      projectName: "Jakarta Crypto Trading Review",
+      jurisdictions: ["Indonesia"],
+      entityType: "Indonesia digital financial asset and crypto asset trading operator preparing OJK evidence",
+      assetModel:
+        "Indonesia digital financial asset trading platform with crypto asset trading, PAKD and CPAKD whitelist review, SPRINT licensing route, product registration, instrument registration, daily report, monthly report, and business-plan evidence",
+      userType: "Indonesian retail users, compliance reviewers, and Indonesia local counsel",
+      custodyModel:
+        "Platform maintains metadata-only trading, official app and website channel, consumer-protection, and product governance records without wallet secret handling",
+      dataSensitivity:
+        "Licensed-operator status, product registration metadata, reporting-owner metadata, and no raw KYC, wallet secrets, credentials, customer records, or personal data",
+      aiUsage: "AI drafts Indonesia OJK trading, whitelist, governance, and reporting evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Indonesia OJK trading evidence metadata",
+      operatingStage: "Pre-launch Indonesia OJK review before local counsel signoff",
+      evidenceItems: indonesiaTradingEvidence
+    };
+    const audit = analyzeAuditProfile(indonesiaTradingProject);
+    const [indonesiaPack] = createJurisdictionPacks(indonesiaTradingProject, audit);
+
+    expect(indonesiaPack).toMatchObject({
+      jurisdiction: "Indonesia",
+      localCounselRoute: {
+        recommendedRole: "Indonesia digital financial asset / crypto regulatory counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(indonesiaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "id-ojk-dfa-crypto-licensing-whitelist-control",
+          title: "OJK digital financial asset trading licensing and whitelist control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+        }),
+        expect.objectContaining({
+          id: "id-ojk-dfa-governance-reporting-control",
+          title: "OJK product, reporting, governance, and main-party control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+        })
+      ])
+    );
+    expect(JSON.stringify(indonesiaPack)).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(indonesiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

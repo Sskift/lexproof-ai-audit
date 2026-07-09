@@ -1791,6 +1791,84 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the EU data minimization control ready from verified source-linked AI governance evidence only", () => {
+    const sourceFreeDataMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "eu-source-free-model-payload-memo",
+      label: "Model payload redaction memo",
+      kind: "Memo",
+      content: "Data minimization, retention, redaction, model call, model payload, and personal data handling notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
+    const dataEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter(
+        (item) =>
+          item.label === "AI system use policy" ||
+          item.label === "EU AI Act technical documentation and data-governance register"
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `eu-data-minimization-source-linked-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(dataEvidence.map((item) => item.label)).toEqual([
+      "AI system use policy",
+      "EU AI Act technical documentation and data-governance register"
+    ]);
+
+    const dataProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-eu-data-minimization-ready",
+      projectName: "LexAssist EU Data Boundary Review",
+      jurisdictions: ["European Union"],
+      entityType: "AI workflow deployer preparing EU model-call data boundary evidence",
+      assetModel:
+        "AI-assisted workflow with permitted model use, prohibited inputs, technical documentation, data governance, model payload, retention, and personal-data exclusion metadata",
+      userType: "EU compliance reviewers, product reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; data-minimization evidence is metadata-only",
+      dataSensitivity: "Model payload metadata, redaction notes, client identifier exclusions, and no raw personal data",
+      aiUsage: "AI drafts EU data-minimization and model-call evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved EU data-boundary metadata",
+      operatingStage: "Pre-launch EU model-call data boundary review before local counsel signoff",
+      evidenceItems: [sourceFreeDataMemo, ...dataEvidence]
+    };
+    const audit = analyzeAuditProfile(dataProject);
+    const [euPack] = createJurisdictionPacks(dataProject, audit);
+
+    expect(euPack).toMatchObject({
+      jurisdiction: "European Union",
+      localCounselRoute: {
+        recommendedRole: "EU crypto-asset / data protection counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(euPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "eu-data-minimization-control",
+          title: "Data minimization and model-call control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["AI system use policy", "EU AI Act technical documentation and data-governance register"]
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-ai-literacy-governance-control",
+          status: "evidence-ready",
+          evidenceLabels: ["AI system use policy"]
+        }),
+        expect.objectContaining({
+          id: "eu-ai-act-high-risk-provider-quality-documentation-control",
+          status: "evidence-ready",
+          evidenceLabels: ["EU AI Act technical documentation and data-governance register"]
+        })
+      ])
+    );
+    expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|credentials|legal conclusion/i);
+    expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the EU AI Act AI-literacy governance control ready from verified AI workflow evidence only", () => {
     const aiLiteracyEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
       .filter((item) => item.source?.includes("control-eu-ai-act-ai-literacy-governance"))

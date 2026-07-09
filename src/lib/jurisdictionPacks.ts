@@ -757,7 +757,21 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["sensitive-data", "ai-workflow"],
-        evidenceKeywords: ["data minimization", "retention", "redaction", "model call", "personal data"]
+        sourceMatchMode: "source-and-keyword",
+        evidenceKeywords: [
+          "control-eu-ai-act-ai-literacy-governance",
+          "control-eu-ai-act-high-risk-provider-quality-documentation",
+          "data minimization",
+          "data governance",
+          "retention",
+          "redaction",
+          "model call",
+          "model payload",
+          "prohibited inputs",
+          "personal data",
+          "no raw personal data",
+          "client identifiers"
+        ]
       },
       {
         id: "eu-ai-act-ai-literacy-governance-control",

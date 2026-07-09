@@ -225,7 +225,7 @@ Hong Kong VATP custody projects now route to SFC VATP client-asset custody contr
 
 ![Hong Kong VATP custody source graph](docs/assets/screenshots/hong-kong-vatp-source-graph.png)
 
-Hong Kong stablecoin issuer projects now route to HKMA Stablecoins Ordinance source controls, with evidence gaps for licence/application scope, regulated stablecoin activity, reserve assets, full backing, redemption, attestation, AML/CFT, recordkeeping, user-protection, and local-counsel handoff. Not legal advice.
+Hong Kong stablecoin issuer projects now route to HKMA Stablecoins Ordinance source controls, with evidence gaps for licence/application scope, regulated stablecoin activity, reserve assets, full backing, redemption, attestation, AML/CFT, recordkeeping, user-protection, and local-counsel handoff. The Jurisdiction Checklist also shows the HKMA stablecoin issuer licensing, reserve, and AML/CFT control that becomes evidence-ready only from metadata-only records carrying `control-hk-hkma-stablecoin-issuer-regime`, without raw KYC, customer records, credentials, wallet secrets, private cryptographic material, personal data, or legal conclusions. Not legal advice.
 
 ![Hong Kong HKMA stablecoin issuer source graph](docs/assets/screenshots/hong-kong-stablecoin-source-graph.png)
 

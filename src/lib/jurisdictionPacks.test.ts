@@ -2232,6 +2232,78 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(hongKongPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Hong Kong HKMA stablecoin issuer control ready from verified reserve and AML evidence only", () => {
+    const hkmaStablecoinEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-hk-hkma-stablecoin-issuer-regime"))
+      .map((item, index) => ({
+        ...item,
+        id: `hk-hkma-stablecoin-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    const hkmaStablecoinEvidenceLabels = [
+      "Hong Kong HKMA stablecoin issuer licensing and scope register",
+      "Hong Kong HKMA stablecoin reserve, redemption, and AML/CFT register"
+    ];
+    expect(hkmaStablecoinEvidence.map((item) => item.label)).toEqual(hkmaStablecoinEvidenceLabels);
+
+    const hongKongStablecoinProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-hk-hkma-stablecoin-ready",
+      projectName: "HarborDollar HKMA Stablecoin Review",
+      jurisdictions: ["Hong Kong"],
+      entityType: "Fiat-referenced stablecoin issuer preparing HKMA licensing and reserve evidence",
+      assetModel:
+        "Hong Kong fiat-referenced stablecoin issuer with specified stablecoin issuance, regulated stablecoin activity, HKMA licence application, reserve assets, full backing, redemption, attestation, AML CFT, and public launch readiness",
+      userType: "Hong Kong retail users, treasury partners, compliance reviewers, and Hong Kong local counsel",
+      custodyModel:
+        "Platform maintains metadata-only reserve-safekeeping, qualified-custodian, attestation, redemption, AML/CFT, blockchain-analytics, and suspicious-transaction status records without wallet secret handling",
+      dataSensitivity:
+        "CDD status summaries, ML/TF risk status, reserve attestation metadata, transaction-monitoring summaries, and no raw KYC, credentials, wallet secrets, customer records, private cryptographic material, or personal data",
+      aiUsage: "AI drafts Hong Kong HKMA stablecoin evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Hong Kong HKMA stablecoin evidence metadata",
+      operatingStage: "Pre-application Hong Kong HKMA stablecoin review before local counsel signoff",
+      evidenceItems: hkmaStablecoinEvidence
+    };
+    const audit = analyzeAuditProfile(hongKongStablecoinProject);
+    const [hongKongPack] = createJurisdictionPacks(hongKongStablecoinProject, audit);
+
+    expect(hongKongPack).toMatchObject({
+      jurisdiction: "Hong Kong",
+      localCounselRoute: {
+        recommendedRole: "Hong Kong virtual asset / stablecoin / SFC products counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(hongKongPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "hk-hkma-stablecoin-issuer-control",
+          title: "HKMA stablecoin issuer licensing, reserve, and AML/CFT control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: hkmaStablecoinEvidenceLabels
+        }),
+        expect.objectContaining({
+          id: "hk-vatp-client-asset-custody-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "hk-sfc-tokenised-product-secondary-trading-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    const serializedHongKongPack = JSON.stringify(hongKongPack);
+    expect(serializedHongKongPack).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(serializedHongKongPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the Hong Kong SFC tokenised product control ready from verified tokenisation evidence only", () => {
     const tokenisedProductEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter((item) => item.source?.includes("control-hk-sfc-tokenised-investment-products-secondary-trading"))

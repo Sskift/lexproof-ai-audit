@@ -77,7 +77,20 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P0",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
-        evidenceKeywords: ["disclosure approval", "offering memo", "eligibility review", "go-live signoff", "token terms"]
+        sourceMatchMode: "source-and-keyword",
+        evidenceKeywords: [
+          "control-us-sec-cftc-crypto-asset-interpretation",
+          "control-us-sec-reg-d-accredited-investor-verification",
+          "disclosure approval",
+          "disclosure assumptions",
+          "offering memo",
+          "offering exemption",
+          "eligibility review",
+          "investor eligibility",
+          "approval route",
+          "go-live signoff",
+          "token terms"
+        ]
       },
       {
         id: "us-sec-cftc-crypto-asset-classification-control",
@@ -2100,13 +2113,14 @@ function matchesControl(control: ControlTemplate, item: EvidenceItem, jurisdicti
     .map((keyword) => keyword.toLowerCase());
   const matchesSemanticKeyword = semanticKeywords.some((keyword) => text.includes(keyword));
 
+  if (control.sourceMatchMode === "source-and-keyword" && controlIds.length > 0) {
+    return controlIds.some((controlId) => itemControlIds.includes(controlId)) && matchesSemanticKeyword;
+  }
+
   if (itemControlIds.length > 0 && controlIds.length > 0) {
     const matchesSource = controlIds.some((controlId) => itemControlIds.includes(controlId));
     if (!matchesSource) {
       return false;
-    }
-    if (control.sourceMatchMode === "source-and-keyword") {
-      return semanticKeywords.length === 0 || matchesSemanticKeyword;
     }
     return true;
   }

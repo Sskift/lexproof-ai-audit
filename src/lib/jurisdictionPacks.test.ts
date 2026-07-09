@@ -138,8 +138,8 @@ describe("createJurisdictionPacks", () => {
         expect.objectContaining({
           id: "us-offering-disclosure-control",
           title: "Offering and disclosure control",
-          status: "evidence-ready",
-          evidenceLabels: ["US launch approval memo"]
+          status: "needs-evidence",
+          evidenceLabels: []
         }),
         expect.objectContaining({
           id: "us-sec-cftc-crypto-asset-classification-control",
@@ -574,6 +574,82 @@ describe("createJurisdictionPacks", () => {
     );
     expect(brazilPack?.source).toBe("LexProof jurisdiction pack v1 for audit preparation. Not legal advice.");
     expect(JSON.stringify(packs)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US offering disclosure control ready from verified source-linked RWA offering evidence only", () => {
+    const sourceFreeLaunchMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-launch-memo",
+      label: "US launch approval memo",
+      kind: "Markdown",
+      content: "Disclosure approval, offering memo, eligibility review, and go-live signoff.",
+      status: "verified" as const,
+      owner: "Counsel"
+    };
+    const offeringEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter(
+        (item) =>
+          item.label === "RWA disclosure assumptions memo" || item.label === "Investor eligibility review"
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `us-offering-source-linked-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(offeringEvidence.map((item) => item.label)).toEqual([
+      "RWA disclosure assumptions memo",
+      "Investor eligibility review"
+    ]);
+
+    const rwaProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-offering-ready",
+      projectName: "US RWA Offering Disclosure Review",
+      jurisdictions: ["United States"],
+      assetModel:
+        "Tokenized private-credit note with token terms, disclosure assumptions, offering exemption, investor eligibility, and approval route metadata",
+      userType: "US accredited investors, counsel reviewers, and compliance reviewers",
+      custodyModel: "No custody in this slice; offering records are metadata-only",
+      dataSensitivity: "Investor eligibility summaries and no raw identity files or personal financial records",
+      aiUsage: "AI drafts US offering evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for offering evidence metadata",
+      operatingStage: "Pre-launch US RWA offering review before counsel signoff",
+      evidenceItems: [sourceFreeLaunchMemo, ...offeringEvidence]
+    };
+    const audit = analyzeAuditProfile(rwaProject);
+    const [usPack] = createJurisdictionPacks(rwaProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-offering-disclosure-control",
+          title: "Offering and disclosure control",
+          owner: "Counsel",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: ["RWA disclosure assumptions memo", "Investor eligibility review"]
+        }),
+        expect.objectContaining({
+          id: "us-sec-cftc-crypto-asset-classification-control",
+          status: "evidence-ready",
+          evidenceLabels: ["RWA disclosure assumptions memo", "Investor eligibility review"]
+        }),
+        expect.objectContaining({
+          id: "us-reg-d-accredited-investor-verification-control",
+          status: "evidence-ready",
+          evidenceLabels: ["Investor eligibility review"]
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|identity files|personal financial records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the Brazil BCB and CVM controls ready from verified source evidence only", () => {

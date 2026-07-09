@@ -2406,6 +2406,24 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the Singapore MAS DPT custody and AML/CFT controls ready from verified DPT evidence only", () => {
+    const sourceFreeAmlMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "sg-source-free-dpt-aml-memo",
+      label: "Singapore DPT AML model handoff memo",
+      kind: "Memo",
+      content:
+        "MAS PSN02, Notice PSN02, digital payment token AML, DPT AML, AML/CFT risk assessment, customer due diligence, CDD, sanctions, transaction monitoring, wallet history metadata boundary, data redaction, model handoff, model payload, access control, and evidence-export exclusion notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
+    const sourceFreeCustodyMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "sg-source-free-dpt-custody-memo",
+      label: "Singapore DPT customer asset safeguard memo",
+      kind: "Memo",
+      content:
+        "MAS PS-G03, consumer protection safeguards, digital payment token, DPT customer asset, customer asset segregation, customer assets, segregation, safeguarding, wallet authority, signer quorum, transfer control, custody disclosure, reconciliation, withdrawal approval, emergency pause, incident response, customer asset return, and custody and signer control notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const dptEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter(
         (item) =>
@@ -2439,7 +2457,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts DPT AML/CFT and custody evidence requests after redaction and model-payload boundary review",
       blockchainUse: "Simulated hash receipt for MAS DPT custody evidence metadata",
       operatingStage: "Pre-launch Singapore DPT custody and AML/CFT review before local counsel signoff",
-      evidenceItems: dptEvidence
+      evidenceItems: [sourceFreeAmlMemo, sourceFreeCustodyMemo, ...dptEvidence]
     };
     const audit = analyzeAuditProfile(singaporeDptProject);
     const [singaporePack] = createJurisdictionPacks(singaporeDptProject, audit);

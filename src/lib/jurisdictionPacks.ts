@@ -1103,6 +1103,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "ai-workflow"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-sg-mas-psn02-dpt-aml-cft",
           "mas psn02",
@@ -1128,6 +1129,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-sg-mas-dpt-customer-asset-safeguards",
           "mas ps-g03",

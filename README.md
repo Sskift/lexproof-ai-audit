@@ -265,7 +265,7 @@ Philippines VASP custody projects now route to BSP Circular No. 1108 and BSP Mem
 
 ![Philippines VASP custody source graph](docs/assets/screenshots/philippines-vasp-custody-source-graph.png)
 
-South Africa CASP projects now route to FSCA crypto-asset financial-product and FIC Directive 9 Travel Rule source controls, with evidence gaps for CASP/FSP licence route, advice/intermediary/investment-management scope, business model, operational ability, fit-and-proper owner, ordering/intermediary/recipient CASP role mapping, counterparty due diligence, secure transmission, incomplete-transfer handling, unhosted-wallet policy, RMCP, recordkeeping, and no-raw-KYC handoff review. Not legal advice.
+South Africa CASP projects now route to FSCA crypto-asset financial-product and FIC Directive 9 Travel Rule source controls, with evidence gaps for CASP/FSP licence route, advice/intermediary/investment-management scope, business model, operational ability, fit-and-proper owner, ordering/intermediary/recipient CASP role mapping, counterparty due diligence, secure transmission, incomplete-transfer handling, unhosted-wallet policy, RMCP, recordkeeping, and no-raw-KYC handoff review. The Jurisdiction Checklist also shows FSCA CASP/FSP licensing/activity-scope and FIC Travel Rule/RMCP/transfer-control controls that become evidence-ready only from metadata-only records carrying `control-za-fsca-fic-casp-licensing-travel-rule`, without raw KYC, customer records, wallet secrets, originator data, beneficiary data, personal data, or legal conclusions. Not legal advice.
 
 ![South Africa CASP Travel Rule source graph](docs/assets/screenshots/south-africa-casp-travel-rule-source-graph.png)
 

@@ -2956,6 +2956,78 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(philippinesPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the South Africa FSCA/FIC CASP controls ready from verified Travel Rule evidence only", () => {
+    const southAfricaCaspEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) =>
+        item.source?.includes("control-za-fsca-fic-casp-licensing-travel-rule")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `za-fsca-fic-casp-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(southAfricaCaspEvidence.map((item) => item.label)).toEqual([
+      "South Africa CASP licensing and Travel Rule RMCP register"
+    ]);
+
+    const southAfricaCaspProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-za-fsca-fic-ready",
+      projectName: "Johannesburg CASP Travel Rule Review",
+      jurisdictions: ["South Africa"],
+      entityType: "South Africa CASP/FSP operator preparing FSCA and FIC evidence",
+      assetModel:
+        "South Africa CASP workflow with crypto asset financial product, FAIS, FSP licence route, financial services provider, advice, intermediary services, investment management, business model, operational ability, and fit-and-proper owner evidence",
+      userType: "South African retail users, compliance reviewers, and South Africa local counsel",
+      custodyModel:
+        "Platform maintains metadata-only ordering CASP, intermediary CASP, recipient CASP, counterparty due-diligence, secure-transmission, incomplete-transfer, unhosted-wallet, RMCP, and recordkeeping records without wallet secret handling",
+      dataSensitivity:
+        "Originator and beneficiary metadata status summaries, counterparty due-diligence status, transfer-control status, RMCP status, and no raw KYC, wallet secrets, credentials, customer records, originator data, beneficiary data, or personal data",
+      aiUsage:
+        "AI drafts South Africa FSCA CASP/FSP and FIC Travel Rule evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for South Africa CASP evidence metadata",
+      operatingStage: "Pre-launch South Africa FSCA and FIC review before local counsel signoff",
+      evidenceItems: southAfricaCaspEvidence
+    };
+    const audit = analyzeAuditProfile(southAfricaCaspProject);
+    const [southAfricaPack] = createJurisdictionPacks(southAfricaCaspProject, audit);
+
+    expect(southAfricaPack).toMatchObject({
+      jurisdiction: "South Africa",
+      localCounselRoute: {
+        recommendedRole: "South Africa financial services / AML counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(southAfricaPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "za-fsca-casp-fsp-licensing-control",
+          title: "FSCA CASP/FSP licensing and activity-scope control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["South Africa CASP licensing and Travel Rule RMCP register"]
+        }),
+        expect.objectContaining({
+          id: "za-fic-travel-rule-rmcp-control",
+          title: "FIC Travel Rule, RMCP, and transfer-control evidence",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["South Africa CASP licensing and Travel Rule RMCP register"]
+        })
+      ])
+    );
+    const serializedSouthAfricaPack = JSON.stringify(southAfricaPack);
+    expect(serializedSouthAfricaPack).toMatch(/no raw kyc/i);
+    expect(serializedSouthAfricaPack).not.toMatch(
+      /customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(serializedSouthAfricaPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

@@ -147,6 +147,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-ftc-endorsement-advertising-control",
+          title: "FTC advertising claims and endorsement disclosure control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-ofac-virtual-currency-sanctions-control",
           title: "OFAC virtual-currency sanctions screening and blocked-property control",
           status: "needs-evidence"
@@ -666,6 +671,60 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "us-fincen-cvc-msb-bsa-transfer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US FTC advertising and endorsement control ready from verified marketing evidence only", () => {
+    const ftcEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
+      .filter((item) => item.source?.includes("control-us-ftc-endorsement-advertising-guides"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-ftc-marketing-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(ftcEvidence.map((item) => item.label)).toEqual([
+      "Claims substantiation and risk disclosure register",
+      "Creator endorsement and material connection log"
+    ]);
+
+    const marketingProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-ftc-marketing-ready",
+      jurisdictions: ["United States"],
+      evidenceItems: ftcEvidence
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const [usPack] = createJurisdictionPacks(marketingProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-ftc-endorsement-advertising-control",
+          title: "FTC advertising claims and endorsement disclosure control",
+          owner: "Compliance",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Claims substantiation and risk disclosure register",
+            "Creator endorsement and material connection log"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-genius-payment-stablecoin-issuer-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

@@ -303,6 +303,8 @@ describe("evidence templates", () => {
     const recommended = recommendEvidenceTemplates(marketingClaimsProject);
     const items = createEvidenceItemsFromTemplate("marketing-claims-review");
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
+    const claimsRegister = items.find((item) => item.label === "Claims substantiation and risk disclosure register");
+    const endorsementLog = items.find((item) => item.label === "Creator endorsement and material connection log");
 
     expect(recommended[0]).toMatchObject({
       id: "marketing-claims-review",
@@ -320,6 +322,14 @@ describe("evidence templates", () => {
         "UAE KOL incentive and recordkeeping log"
       ])
     );
+    expect(claimsRegister?.content).toContain("claim inventory");
+    expect(claimsRegister?.content).toContain("claims substantiation sources");
+    expect(claimsRegister?.content).toContain("risk disclosure");
+    expect(claimsRegister?.content).toContain("source-lineage notes");
+    expect(endorsementLog?.content).toContain("material connection");
+    expect(endorsementLog?.content).toContain("creator disclosure");
+    expect(endorsementLog?.content).toContain("approval routing");
+    expect(endorsementLog?.content).toContain("monitoring owner");
     expect(serializedSources).toContain("regulatory control: control-us-ftc-endorsement-advertising-guides");
     expect(serializedSources).toContain("regulatory control: control-us-sec-investment-adviser-marketing-rule");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-marketing-communications");

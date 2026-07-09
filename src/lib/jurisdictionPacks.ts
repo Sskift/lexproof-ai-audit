@@ -97,6 +97,30 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-ftc-endorsement-advertising-control",
+        title: "FTC advertising claims and endorsement disclosure control",
+        owner: "Compliance",
+        priority: "P0",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "control-us-ftc-endorsement-advertising-guides",
+          "ftc",
+          "advertising",
+          "advertising claim",
+          "claim inventory",
+          "claims substantiation",
+          "risk disclosure",
+          "campaign channel",
+          "endorsement",
+          "testimonial",
+          "material connection",
+          "creator disclosure",
+          "influencer",
+          "approval routing",
+          "monitoring owner"
+        ]
+      },
+      {
         id: "us-cftc-dao-derivatives-platform-control",
         title: "DAO derivatives-platform and FCM/BSA control",
         owner: "Counsel",

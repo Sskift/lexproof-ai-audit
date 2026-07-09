@@ -202,6 +202,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-colorado-sb26-189-admt-consequential-decision-control",
+          title: "Colorado SB26-189 ADMT scope, notice, and human-review control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-cftc-dao-derivatives-platform-control",
           title: "DAO derivatives-platform and FCM/BSA control",
           status: "needs-evidence"
@@ -1132,6 +1137,86 @@ describe("createJurisdictionPacks", () => {
       ])
     );
     expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US Colorado SB26-189 ADMT control ready from verified AI workflow evidence only", () => {
+    const coloradoAdmtEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-us-colorado-admt-consequential-decision-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-colorado-admt-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(coloradoAdmtEvidence.map((item) => item.label)).toEqual([
+      "Colorado ADMT scope and developer documentation register",
+      "Colorado ADMT notice and meaningful human review register"
+    ]);
+
+    const coloradoAdmtProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-colorado-admt-ready",
+      projectName: "LexAssist Colorado ADMT Review",
+      jurisdictions: ["United States"],
+      entityType: "AI consequential-decision workflow deployer preparing Colorado ADMT evidence",
+      assetModel:
+        "AI-assisted consequential-decision workflow with Colorado ADMT scope, developer documentation, consumer notice, adverse-outcome explanation, correction workflow, meaningful human review, and record-retention handling",
+      userType: "Colorado consumers, compliance reviewers, product reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; Colorado ADMT evidence is metadata-only",
+      dataSensitivity:
+        "ADMT source metadata, training-data category summaries, review instructions, retention-owner notes, and no raw personal data",
+      aiUsage: "AI drafts Colorado ADMT scoping and human-review evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved Colorado ADMT metadata",
+      operatingStage: "Pre-launch Colorado ADMT review before local counsel signoff",
+      evidenceItems: coloradoAdmtEvidence
+    };
+    const audit = analyzeAuditProfile(coloradoAdmtProject);
+    const [usPack] = createJurisdictionPacks(coloradoAdmtProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-colorado-sb26-189-admt-consequential-decision-control",
+          title: "Colorado SB26-189 ADMT scope, notice, and human-review control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Colorado ADMT scope and developer documentation register",
+            "Colorado ADMT notice and meaningful human review register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-aba-formal-opinion-512-legal-ai-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-nist-ai-rmf-governance-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-nyc-local-law-144-aedt-employment-decision-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-california-ccpa-admt-consumer-rights-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|personal data|legal conclusion/i);
     expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 

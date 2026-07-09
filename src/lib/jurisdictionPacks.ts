@@ -397,6 +397,37 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "secure response channel",
           "non-retaliation owner"
         ]
+      },
+      {
+        id: "us-colorado-sb26-189-admt-consequential-decision-control",
+        title: "Colorado SB26-189 ADMT scope, notice, and human-review control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-colorado-admt-consequential-decision-governance",
+          "colorado admt",
+          "sb26-189",
+          "automated decision-making",
+          "automated decision making",
+          "consequential decision",
+          "covered admt",
+          "technical documentation",
+          "intended uses",
+          "training data categories",
+          "known limitations",
+          "deployer instructions",
+          "human review instructions",
+          "material updates",
+          "consumer notice",
+          "adverse outcome",
+          "plain language",
+          "correction workflow",
+          "meaningful human review",
+          "reconsideration",
+          "three-year records",
+          "record retention owner"
+        ]
       }
     ]
   },

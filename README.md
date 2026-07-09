@@ -189,6 +189,8 @@ The US Regulation D eligibility and accredited-investor verification control lik
 
 The US OFAC virtual-currency sanctions screening and blocked-property control becomes evidence-ready only from metadata-only records carrying `control-us-ofac-virtual-currency-sanctions-compliance` plus matching OFAC, sanctions-screening, wallet-screening, wallet-risk, geolocation, blocked-property, reporting, recordkeeping, escalation, or reviewer-owner evidence text, so source-free wallet-screening memos remain needs-evidence. Not legal advice.
 
+The US FinCEN CVC MSB and BSA transfer-recordkeeping control becomes evidence-ready only from metadata-only records carrying `control-us-fincen-cvc-msb-bsa-travel-rule` plus matching FinCEN, CVC, convertible-virtual-currency, business-model, hosted-wallet, money-transmission, MSB, AML-program, compliance-officer, transaction-monitoring, SAR/CTR, Travel Rule, transmittal-recordkeeping, originator, beneficiary, retention-owner, or reviewer-owner evidence text, so source-free transfer memos remain needs-evidence. Not legal advice.
+
 ![US Regulation D RWA source control](docs/assets/screenshots/us-reg-d-rwa-source-control.png)
 
 ![US OFAC virtual-currency sanctions source control](docs/assets/screenshots/us-ofac-rwa-source-control.png)

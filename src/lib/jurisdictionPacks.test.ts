@@ -890,6 +890,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the US FinCEN CVC MSB and BSA transfer control ready from verified RWA transfer evidence only", () => {
+    const sourceFreeFinCenMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "us-source-free-fincen-transfer-memo",
+      label: "US FinCEN CVC transfer memo",
+      kind: "Memo",
+      content:
+        "US FinCEN CVC convertible virtual currency business model, hosted wallet, money transmission, MSB, AML program, compliance officer, transaction monitoring, SAR and CTR, Travel Rule, transmittal recordkeeping, originator, beneficiary, retention owner, and reviewer owner notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,
       id: `us-rwa-fincen-template-${index + 1}`,
@@ -899,7 +908,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-us-fincen-ready",
       jurisdictions: ["United States"],
-      evidenceItems
+      evidenceItems: [sourceFreeFinCenMemo, ...evidenceItems]
     };
     const audit = analyzeAuditProfile(rwaProject);
     const [usPack] = createJurisdictionPacks(rwaProject, audit);

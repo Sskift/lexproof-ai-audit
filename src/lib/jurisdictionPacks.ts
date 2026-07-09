@@ -276,6 +276,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P0",
         relatedFlagIds: ["custody", "sensitive-data"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-us-fincen-cvc-msb-bsa-travel-rule",
           "fincen",

@@ -253,7 +253,7 @@ India VDA projects now route to the Ministry of Finance PMLA VDA notification an
 
 ![India VDA PMLA source graph](docs/assets/screenshots/india-vda-pmla-source-graph.png)
 
-Thailand digital asset business projects now route to SEC digital asset exchange, broker, dealer, custodial wallet provider, licensing, client-asset custody, transfer-approval, daily-reconciliation, and AMLO AML/CDD source controls, with evidence gaps for high-risk customer, beneficial-owner, internal-control, training, reporting-owner, and no-raw-KYC handoff review. Not legal advice.
+Thailand digital asset business projects now route to SEC digital asset exchange, broker, dealer, custodial wallet provider, licensing, client-asset custody, transfer-approval, daily-reconciliation, and AMLO AML/CDD source controls, with evidence gaps for high-risk customer, beneficial-owner, internal-control, training, reporting-owner, and no-raw-KYC handoff review. The Jurisdiction Checklist also shows SEC digital asset business license/client-asset custody and AMLO AML/CDD high-risk customer controls that become evidence-ready only from metadata-only records carrying `control-th-sec-digital-asset-business-custody-aml`, without raw KYC, customer records, wallet secrets, personal data, or legal conclusions. Not legal advice.
 
 Indonesia digital financial asset and crypto asset trading projects now route to OJK licensing, PAKD/CPAKD whitelist, SPRINT, trading activity, product/instrument registration, reporting, business-plan, main-party competence/compliance assessment, governance, integrity, consumer-protection, and no-raw-KYC source controls. Not legal advice.
 

@@ -2677,6 +2677,80 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(indiaPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Thailand SEC/AMLO digital asset controls ready from verified custody evidence only", () => {
+    const thailandCustodyEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-th-sec-digital-asset-business-custody-aml"))
+      .map((item, index) => ({
+        ...item,
+        id: `th-sec-amlo-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(thailandCustodyEvidence.map((item) => item.label)).toEqual([
+      "Custody and signer control runbook",
+      "Thailand digital asset custody and AML/CDD register"
+    ]);
+
+    const thailandCustodyProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-th-sec-amlo-ready",
+      projectName: "Bangkok Digital Asset Custody Review",
+      jurisdictions: ["Thailand"],
+      entityType: "Digital asset business operator preparing SEC and AMLO evidence",
+      assetModel:
+        "Thailand digital asset exchange, broker, dealer, custodial wallet provider, SEC license route, client asset custody, transfer approvals, daily reconciliation, and AML/CDD evidence",
+      userType: "Thai retail users, compliance reviewers, and Thailand local counsel",
+      custodyModel:
+        "Platform holds client digital assets through wallet authority controls, signer quorum, withdrawal approvals, transfer approval, client asset records, and daily reconciliation placeholders",
+      dataSensitivity:
+        "CDD status summaries, beneficial-owner status metadata, high-risk customer metadata, and no raw KYC, wallet secrets, credentials, customer records, or personal data",
+      aiUsage: "AI drafts Thailand SEC custody and AMLO AML/CDD evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Thailand digital asset evidence metadata",
+      operatingStage: "Pre-launch Thailand SEC and AMLO review before local counsel signoff",
+      evidenceItems: thailandCustodyEvidence
+    };
+    const audit = analyzeAuditProfile(thailandCustodyProject);
+    const [thailandPack] = createJurisdictionPacks(thailandCustodyProject, audit);
+
+    expect(thailandPack).toMatchObject({
+      jurisdiction: "Thailand",
+      localCounselRoute: {
+        recommendedRole: "Thailand digital asset / AML counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(thailandPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "th-sec-digital-asset-business-custody-control",
+          title: "SEC digital asset business license and client-asset custody control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Thailand digital asset custody and AML/CDD register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "th-amlo-aml-cdd-high-risk-control",
+          title: "AMLO AML/CDD and high-risk customer control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "Custody and signer control runbook",
+            "Thailand digital asset custody and AML/CDD register"
+          ]
+        })
+      ])
+    );
+    expect(JSON.stringify(thailandPack)).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(JSON.stringify(thailandPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the UAE VARA 2024 marketing regulations control ready from verified marketing evidence only", () => {
     const varaMarketingEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
       .filter((item) => item.source?.includes("control-uae-vara-marketing-regulations-2024"))

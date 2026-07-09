@@ -193,7 +193,7 @@ Swiss stablecoin projects now route to FINMA ICO token-classification guidance a
 
 ![Swiss FINMA stablecoin source graph](docs/assets/screenshots/swiss-finma-stablecoin-source-graph.png)
 
-US payment stablecoin issuer projects now route to GENIUS Act source controls and Treasury/OCC implementation materials, with evidence gaps for permitted-issuer route, state or federal oversight, reserve assets, redemption, monthly disclosure, custody, insolvency-priority evidence, BSA/AML, sanctions, transaction monitoring, and no-raw-KYC handoff. Not legal advice.
+US payment stablecoin issuer projects now route to GENIUS Act source controls and Treasury/OCC implementation materials, with evidence gaps for permitted-issuer route, state or federal oversight, reserve assets, redemption, monthly disclosure, custody, insolvency-priority evidence, BSA/AML, sanctions, transaction monitoring, and no-raw-KYC handoff. The Jurisdiction Checklist also shows a GENIUS Act payment stablecoin issuer control that becomes evidence-ready from the metadata-only permitted-issuer/reserve and BSA/AML sanctions registers. Not legal advice.
 
 ![US GENIUS Act stablecoin source graph](docs/assets/screenshots/us-genius-stablecoin-source-graph.png)
 

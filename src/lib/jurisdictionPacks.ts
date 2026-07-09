@@ -190,6 +190,34 @@ const PACK_TEMPLATES: PackTemplate[] = [
         ]
       },
       {
+        id: "us-genius-payment-stablecoin-issuer-control",
+        title: "GENIUS Act payment stablecoin issuer control",
+        owner: "Compliance",
+        priority: "P0",
+        relatedFlagIds: ["custody", "sensitive-data", "public-launch"],
+        evidenceKeywords: [
+          "control-us-genius-payment-stablecoin-issuer-regime",
+          "genius act",
+          "payment stablecoin",
+          "payment stablecoin issuer",
+          "permitted payment stablecoin issuer",
+          "state qualified payment stablecoin issuer",
+          "federal payment stablecoin regulator",
+          "reserve assets",
+          "redemption",
+          "monthly disclosure",
+          "custody",
+          "insolvency priority",
+          "bsa aml",
+          "sanctions compliance",
+          "transaction monitoring",
+          "suspicious activity",
+          "compliance officer",
+          "customer-risk metadata boundary",
+          "independent review"
+        ]
+      },
+      {
         id: "us-custody-control",
         title: "Custody and wallet authority control",
         owner: "Compliance",

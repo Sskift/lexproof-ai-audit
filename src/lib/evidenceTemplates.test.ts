@@ -107,6 +107,8 @@ describe("evidence templates", () => {
     const nydfsCustodyControls = items.find(
       (item) => item.label === "New York NYDFS BitLicense and custody customer-protection register"
     );
+    const geniusIssuerRegister = items.find((item) => item.label === "US GENIUS Act permitted issuer and reserve register");
+    const geniusBsaAmlRegister = items.find((item) => item.label === "US GENIUS Act BSA AML and sanctions program register");
 
     expect(items.map((item) => item.label)).toEqual(
       expect.arrayContaining([
@@ -173,6 +175,14 @@ describe("evidence templates", () => {
     expect(nydfsCustodyControls?.content).toContain("BitLicense or limited purpose trust company route");
     expect(nydfsCustodyControls?.content).toContain("customer virtual currency segregation");
     expect(nydfsCustodyControls?.content).toContain("no raw KYC, wallet secrets, customer records, or personal data");
+    expect(geniusIssuerRegister?.content).toContain("GENIUS Act payment stablecoin definition");
+    expect(geniusIssuerRegister?.content).toContain("permitted payment stablecoin issuer route");
+    expect(geniusIssuerRegister?.content).toContain("reserve assets");
+    expect(geniusIssuerRegister?.content).toContain("no raw KYC, credentials, wallet secrets, customer records, or personal data");
+    expect(geniusBsaAmlRegister?.content).toContain("BSA AML program");
+    expect(geniusBsaAmlRegister?.content).toContain("sanctions compliance program");
+    expect(geniusBsaAmlRegister?.content).toContain("transaction monitoring");
+    expect(geniusBsaAmlRegister?.content).toContain("customer-risk metadata boundary");
     expect(serializedSources).toContain("regulatory control: control-us-sec-cftc-crypto-asset-interpretation");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-title-ii-white-paper");
     expect(serializedSources).toContain("regulatory control: control-eu-mica-casp-custody-administration");

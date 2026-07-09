@@ -162,6 +162,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-genius-payment-stablecoin-issuer-control",
+          title: "GENIUS Act payment stablecoin issuer control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-custody-control",
           title: "Custody and wallet authority control",
           status: "needs-evidence"
@@ -603,6 +608,60 @@ describe("createJurisdictionPacks", () => {
           priority: "P0",
           status: "evidence-ready",
           evidenceLabels: ["New York NYDFS BitLicense and custody customer-protection register"]
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|customer records|personal data|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US GENIUS Act payment stablecoin issuer control ready from verified stablecoin registers only", () => {
+    const geniusEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter((item) => item.source?.includes("control-us-genius-payment-stablecoin-issuer-regime"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-genius-stablecoin-register-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(geniusEvidence.map((item) => item.label)).toEqual([
+      "US GENIUS Act permitted issuer and reserve register",
+      "US GENIUS Act BSA AML and sanctions program register"
+    ]);
+
+    const stablecoinProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-genius-ready",
+      jurisdictions: ["United States"],
+      evidenceItems: geniusEvidence
+    };
+    const audit = analyzeAuditProfile(stablecoinProject);
+    const [usPack] = createJurisdictionPacks(stablecoinProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-genius-payment-stablecoin-issuer-control",
+          title: "GENIUS Act payment stablecoin issuer control",
+          owner: "Compliance",
+          priority: "P0",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "US GENIUS Act permitted issuer and reserve register",
+            "US GENIUS Act BSA AML and sanctions program register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-fincen-cvc-msb-bsa-transfer-control",
+          status: "needs-evidence",
+          evidenceLabels: []
         })
       ])
     );

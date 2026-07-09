@@ -195,7 +195,7 @@ US RWA projects now also show a Jurisdiction Checklist SEC/CFTC crypto-asset cla
 
 ![EU DLT Pilot Regime RWA source control](docs/assets/screenshots/eu-dlt-pilot-rwa-source-control.png)
 
-Brazil projects now route to Banco Central virtual asset service and CVM crypto-asset securities source controls, with evidence gaps for authorization, AML/CFT, classification, disclosure, and investor communication. Not legal advice.
+Brazil projects now route to Banco Central virtual asset service and CVM crypto-asset securities source controls, with evidence gaps for authorization, AML/CFT, classification, disclosure, and investor communication. The Jurisdiction Checklist also shows Banco Central virtual asset service authorization/AML-CFT and CVM crypto-security classification/disclosure controls that become evidence-ready only from metadata-only records carrying `control-br-bcb-virtual-asset-service-framework` or `control-br-cvm-crypto-asset-securities-guidance`, without raw KYC, customer records, wallet secrets, private cryptographic material, personal data, or legal conclusions. Not legal advice.
 
 ![Brazil regulatory source graph](docs/assets/screenshots/regulatory-command-center-brazil-source-graph.png)
 

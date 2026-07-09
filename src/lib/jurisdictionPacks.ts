@@ -1950,7 +1950,16 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail", "public-launch"],
-        evidenceKeywords: ["virtual asset service", "authorization", "aml", "cft", "kyc", "sanctions", "transaction monitoring"]
+        evidenceKeywords: [
+          "control-br-bcb-virtual-asset-service-framework",
+          "virtual asset service",
+          "authorization",
+          "aml",
+          "cft",
+          "kyc",
+          "sanctions",
+          "transaction monitoring"
+        ]
       },
       {
         id: "br-crypto-security-disclosure-control",
@@ -1958,7 +1967,15 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch", "evidence-anchor"],
-        evidenceKeywords: ["crypto security", "token classification", "public offering", "disclosure", "distribution", "investment"]
+        evidenceKeywords: [
+          "control-br-cvm-crypto-asset-securities-guidance",
+          "crypto security",
+          "token classification",
+          "public offering",
+          "disclosure",
+          "distribution",
+          "investment"
+        ]
       }
     ]
   }

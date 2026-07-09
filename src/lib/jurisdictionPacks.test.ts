@@ -576,6 +576,86 @@ describe("createJurisdictionPacks", () => {
     expect(JSON.stringify(packs)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
+  it("marks the Brazil BCB and CVM controls ready from verified source evidence only", () => {
+    const brazilEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
+      .filter(
+        (item) =>
+          item.source?.includes("control-br-bcb-virtual-asset-service-framework") ||
+          item.source?.includes("control-br-cvm-crypto-asset-securities-guidance")
+      )
+      .map((item, index) => ({
+        ...item,
+        id: `br-source-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    const brazilBcbEvidenceLabels = [
+      "Custody and signer control runbook",
+      "Wallet sanctions screening and escalation controls"
+    ];
+    const brazilCvmEvidenceLabels = ["RWA disclosure assumptions memo", "Investor eligibility review"];
+    expect(brazilEvidence.map((item) => item.label)).toEqual([
+      "RWA disclosure assumptions memo",
+      "Custody and signer control runbook",
+      "Investor eligibility review",
+      "Wallet sanctions screening and escalation controls"
+    ]);
+
+    const brazilProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-br-bcb-cvm-ready",
+      projectName: "Sao Paulo VASP Source Review",
+      jurisdictions: ["Brazil"],
+      entityType: "Brazil virtual asset service provider and token issuer preparing BCB and CVM evidence",
+      assetModel:
+        "Brazil tokenized private credit note with virtual asset service activity, authorization assumptions, crypto security classification, public offering, distribution, investment expectation, disclosure, yield, and public launch readiness",
+      userType: "Brazil retail users, qualified investors, compliance reviewers, and Brazil local counsel",
+      custodyModel:
+        "Platform maintains metadata-only wallet authority, transfer approval, AML/CFT, sanctions, transaction-monitoring, disclosure, and investor-communication records without wallet secret handling",
+      dataSensitivity:
+        "KYC metadata status summaries, sanctions-screening status, wallet-risk summaries, investor-communication status, and no raw KYC, customer records, credentials, wallet secrets, private cryptographic material, or personal data",
+      aiUsage: "AI drafts Brazil BCB and CVM evidence requests after redaction and human review",
+      blockchainUse: "Simulated hash receipt for Brazil source evidence metadata",
+      operatingStage: "Pre-launch Brazil BCB and CVM review before local counsel signoff",
+      evidenceItems: brazilEvidence
+    };
+    const audit = analyzeAuditProfile(brazilProject);
+    const [brazilPack] = createJurisdictionPacks(brazilProject, audit);
+
+    expect(brazilPack).toMatchObject({
+      jurisdiction: "Brazil",
+      localCounselRoute: {
+        recommendedRole: "Brazil virtual-assets / capital markets counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(brazilPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "br-vasp-authorization-aml-control",
+          title: "Virtual asset service authorization and AML/CFT control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: brazilBcbEvidenceLabels
+        }),
+        expect.objectContaining({
+          id: "br-crypto-security-disclosure-control",
+          title: "Crypto-security classification and disclosure control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: brazilCvmEvidenceLabels
+        })
+      ])
+    );
+    const serializedBrazilPack = JSON.stringify(brazilPack);
+    expect(serializedBrazilPack).not.toMatch(
+      /\braw KYC\b|customer records|wallet secrets|private key|personal data|legal conclusion/i
+    );
+    expect(serializedBrazilPack).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
   it("marks the US Regulation D eligibility control ready from verified RWA template evidence only", () => {
     const evidenceItems = createEvidenceItemsFromTemplate("tokenized-yield-rwa").map((item, index) => ({
       ...item,

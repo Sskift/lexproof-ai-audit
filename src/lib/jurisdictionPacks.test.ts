@@ -3864,6 +3864,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the EU DORA ICT operational resilience control ready from verified RWA resilience-register evidence only", () => {
+    const sourceFreeDoraMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "eu-source-free-dora-ict-memo",
+      label: "EU DORA ICT operational resilience memo",
+      kind: "Memo",
+      content:
+        "EU DORA digital operational resilience, ICT risk, ICT risk management, business continuity, incident classification, incident response, escalation owner, testing cadence, recovery, ICT third-party service register, critical function, subcontracting, access logging, exit plan, resilience testing, and vendor register notes.",
+      status: "verified",
+      owner: "Compliance"
+    };
     const doraRegister = createEvidenceItemsFromTemplate("tokenized-yield-rwa").find(
       (item) => item.label === "EU DORA ICT resilience register"
     );
@@ -3875,6 +3884,7 @@ describe("createJurisdictionPacks", () => {
       id: "jurisdiction-pack-eu-dora-ict-ready",
       jurisdictions: ["European Union"],
       evidenceItems: [
+        sourceFreeDoraMemo,
         {
           ...doraRegister!,
           id: "eu-rwa-dora-ict-register-1",

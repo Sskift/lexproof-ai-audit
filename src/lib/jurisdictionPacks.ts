@@ -649,6 +649,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-eu-dora-ict-operational-resilience",
           "dora",

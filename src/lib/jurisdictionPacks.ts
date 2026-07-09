@@ -465,6 +465,25 @@ const PACK_TEMPLATES: PackTemplate[] = [
         evidenceKeywords: ["marketing approval", "financial promotion", "eligibility", "approval gate"]
       },
       {
+        id: "uk-fca-crypto-financial-promotions-control",
+        title: "FCA cryptoasset financial promotions approval and retail-access control",
+        owner: "Counsel",
+        priority: "P1",
+        relatedFlagIds: ["retail", "public-launch"],
+        evidenceKeywords: [
+          "control-uk-fca-crypto-financial-promotions",
+          "fca cryptoasset financial promotions",
+          "financial promotion copy",
+          "approval pack owner",
+          "clear-and-balanced review",
+          "client categorisation",
+          "appropriateness",
+          "positive friction",
+          "eligibility assumptions",
+          "retail-access restrictions"
+        ]
+      },
+      {
         id: "uk-operational-resilience-control",
         title: "Custody operational resilience control",
         owner: "Compliance",

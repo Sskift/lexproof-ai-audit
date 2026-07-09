@@ -305,6 +305,7 @@ describe("evidence templates", () => {
     const serializedSources = items.map((item) => item.source ?? "").join("\n");
     const claimsRegister = items.find((item) => item.label === "Claims substantiation and risk disclosure register");
     const endorsementLog = items.find((item) => item.label === "Creator endorsement and material connection log");
+    const ukPromotionPack = items.find((item) => item.label === "UK financial promotion approval pack");
     const euMicaMarketingPack = items.find((item) => item.label === "EU MiCA marketing communication review pack");
 
     expect(recommended[0]).toMatchObject({
@@ -331,6 +332,12 @@ describe("evidence templates", () => {
     expect(endorsementLog?.content).toContain("creator disclosure");
     expect(endorsementLog?.content).toContain("approval routing");
     expect(endorsementLog?.content).toContain("monitoring owner");
+    expect(ukPromotionPack?.content).toContain("financial promotion copy");
+    expect(ukPromotionPack?.content).toContain("approval pack owner");
+    expect(ukPromotionPack?.content).toContain("clear-and-balanced review");
+    expect(ukPromotionPack?.content).toContain("client categorisation");
+    expect(ukPromotionPack?.content).toContain("positive friction");
+    expect(ukPromotionPack?.content).toContain("retail-access restrictions");
     expect(euMicaMarketingPack?.content).toContain("crypto-asset marketing communication copy");
     expect(euMicaMarketingPack?.content).toContain("white paper consistency");
     expect(euMicaMarketingPack?.content).toContain("home Member State notification");

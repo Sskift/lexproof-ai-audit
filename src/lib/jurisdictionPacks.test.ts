@@ -237,6 +237,7 @@ describe("createJurisdictionPacks", () => {
     expect(ukPack?.controls.map((control) => control.title)).toEqual(
       expect.arrayContaining([
         "Financial promotion and approval control",
+        "FCA cryptoasset financial promotions approval and retail-access control",
         "Custody operational resilience control",
         "FCA MLR registration and cryptoasset activity-scope control",
         "UK cryptoasset AML, SAR, sanctions, and Travel Rule control",
@@ -790,6 +791,59 @@ describe("createJurisdictionPacks", () => {
     );
     expect(JSON.stringify(euPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
     expect(JSON.stringify(euPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the UK FCA financial promotions control ready from verified marketing evidence only", () => {
+    const ukPromotionEvidence = createEvidenceItemsFromTemplate("marketing-claims-review")
+      .filter((item) => item.source?.includes("control-uk-fca-crypto-financial-promotions"))
+      .map((item, index) => ({
+        ...item,
+        id: `uk-fca-promotion-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(ukPromotionEvidence.map((item) => item.label)).toEqual(["UK financial promotion approval pack"]);
+
+    const marketingProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-uk-fca-marketing-ready",
+      jurisdictions: ["United Kingdom"],
+      evidenceItems: ukPromotionEvidence
+    };
+    const audit = analyzeAuditProfile(marketingProject);
+    const [ukPack] = createJurisdictionPacks(marketingProject, audit);
+
+    expect(ukPack).toMatchObject({
+      jurisdiction: "United Kingdom",
+      localCounselRoute: {
+        recommendedRole: "UK financial promotion / crypto counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(ukPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "uk-fca-crypto-financial-promotions-control",
+          title: "FCA cryptoasset financial promotions approval and retail-access control",
+          owner: "Counsel",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: ["UK financial promotion approval pack"]
+        }),
+        expect.objectContaining({
+          id: "uk-operational-resilience-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "uk-cryptoasset-aml-travel-rule-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(ukPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(ukPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
   });
 
   it("marks the EU MiCA Article 75 CASP custody control ready from verified RWA custody runbook evidence only", () => {

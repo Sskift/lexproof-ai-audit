@@ -4105,6 +4105,15 @@ describe("createJurisdictionPacks", () => {
   });
 
   it("marks the EU MiCA ART/EMT stablecoin issuer control ready from verified stablecoin registers only", () => {
+    const sourceFreeStablecoinMemo: ProjectProfile["evidenceItems"][number] = {
+      id: "eu-source-free-mica-stablecoin-memo",
+      label: "EU MiCA ART EMT stablecoin issuer memo",
+      kind: "Memo",
+      content:
+        "EU MiCA stablecoin asset-referenced token, asset referenced token, e-money token, electronic money token, ART issuer, EMT issuer, stablecoin issuer, home Member State, competent authority, authorisation, notification route, white paper, public offer, admission to trading, reserve composition, reserve segregation, reserve custody, liquidity management, redemption rights, par-value redemption, recovery plan, and redemption plan notes.",
+      status: "verified",
+      owner: "Counsel"
+    };
     const stablecoinEvidence = createEvidenceItemsFromTemplate("tokenized-yield-rwa")
       .filter((item) => item.source?.includes("control-eu-mica-art-emt-stablecoin-issuer-regime"))
       .map((item, index) => ({
@@ -4122,7 +4131,7 @@ describe("createJurisdictionPacks", () => {
       ...project,
       id: "jurisdiction-pack-eu-mica-stablecoin-ready",
       jurisdictions: ["European Union"],
-      evidenceItems: stablecoinEvidence
+      evidenceItems: [sourceFreeStablecoinMemo, ...stablecoinEvidence]
     };
     const audit = analyzeAuditProfile(stablecoinProject);
     const [euPack] = createJurisdictionPacks(stablecoinProject, audit);

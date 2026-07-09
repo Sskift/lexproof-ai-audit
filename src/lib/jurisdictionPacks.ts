@@ -735,6 +735,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P0",
         relatedFlagIds: ["asset-yield", "custody", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-eu-mica-art-emt-stablecoin-issuer-regime",
           "asset-referenced token",

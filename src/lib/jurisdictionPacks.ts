@@ -367,6 +367,36 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "retention policy request",
           "no raw applicant or employee records"
         ]
+      },
+      {
+        id: "us-california-ccpa-admt-consumer-rights-control",
+        title: "California CCPA ADMT scope, risk-assessment, and consumer-rights control",
+        owner: "Compliance",
+        priority: "P1",
+        relatedFlagIds: ["ai-workflow", "sensitive-data"],
+        evidenceKeywords: [
+          "control-us-california-ccpa-admt-consumer-rights-governance",
+          "california ccpa admt",
+          "ccpa",
+          "cppa",
+          "automated decisionmaking",
+          "automated decision-making",
+          "significant decision",
+          "personal information categories",
+          "admt logic assumptions",
+          "known limitations",
+          "output use",
+          "human involvement",
+          "human reviewer authority",
+          "risk assessment owner",
+          "right to access admt",
+          "request to opt-out of admt",
+          "consumer access intake",
+          "no dark patterns",
+          "verification handling",
+          "secure response channel",
+          "non-retaliation owner"
+        ]
       }
     ]
   },

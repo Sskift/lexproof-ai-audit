@@ -197,6 +197,11 @@ describe("createJurisdictionPacks", () => {
           status: "needs-evidence"
         }),
         expect.objectContaining({
+          id: "us-california-ccpa-admt-consumer-rights-control",
+          title: "California CCPA ADMT scope, risk-assessment, and consumer-rights control",
+          status: "needs-evidence"
+        }),
+        expect.objectContaining({
           id: "us-cftc-dao-derivatives-platform-control",
           title: "DAO derivatives-platform and FCM/BSA control",
           status: "needs-evidence"
@@ -1046,6 +1051,81 @@ describe("createJurisdictionPacks", () => {
         }),
         expect.objectContaining({
           id: "us-nist-ai-rmf-governance-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        })
+      ])
+    );
+    expect(JSON.stringify(usPack)).not.toMatch(/\braw KYC\b|wallet secrets|private key|customer records|legal conclusion/i);
+    expect(JSON.stringify(usPack)).not.toMatch(/\bcompliant\b|\bnon-compliant\b/i);
+  });
+
+  it("marks the US California CCPA ADMT control ready from verified AI workflow evidence only", () => {
+    const californiaAdmtEvidence = createEvidenceItemsFromTemplate("ai-compliance-workflow")
+      .filter((item) => item.source?.includes("control-us-california-ccpa-admt-consumer-rights-governance"))
+      .map((item, index) => ({
+        ...item,
+        id: `us-california-ccpa-admt-evidence-${index + 1}`,
+        status: "verified" as const
+      }));
+
+    expect(californiaAdmtEvidence.map((item) => item.label)).toEqual([
+      "California CCPA ADMT scope and risk assessment register",
+      "California CCPA ADMT access and opt-out workflow register"
+    ]);
+
+    const californiaAdmtProject: ProjectProfile = {
+      ...project,
+      id: "jurisdiction-pack-us-california-ccpa-admt-ready",
+      projectName: "LexAssist California ADMT Review",
+      jurisdictions: ["United States"],
+      entityType: "AI decision workflow deployer preparing California CCPA ADMT evidence",
+      assetModel:
+        "AI-assisted significant-decision workflow with ADMT scope, risk assessment, access, opt-out, secure request handling, and human-involvement documentation",
+      userType: "California consumers, compliance reviewers, privacy reviewers, and local counsel",
+      custodyModel: "No asset safekeeping; California ADMT evidence is metadata-only",
+      dataSensitivity:
+        "ADMT source metadata, personal information category summaries, risk-assessment ownership, and no raw personal data",
+      aiUsage: "AI drafts California ADMT scoping and consumer-rights evidence requests for human review",
+      blockchainUse: "Simulated hash receipt for approved California ADMT metadata",
+      operatingStage: "Pre-launch California ADMT review before local counsel signoff",
+      evidenceItems: californiaAdmtEvidence
+    };
+    const audit = analyzeAuditProfile(californiaAdmtProject);
+    const [usPack] = createJurisdictionPacks(californiaAdmtProject, audit);
+
+    expect(usPack).toMatchObject({
+      jurisdiction: "United States",
+      localCounselRoute: {
+        recommendedRole: "US securities / fintech counsel"
+      },
+      notLegalAdviceBoundary: "Not legal advice. Jurisdiction packs are audit preparation routing aids only."
+    });
+    expect(usPack?.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "us-california-ccpa-admt-consumer-rights-control",
+          title: "California CCPA ADMT scope, risk-assessment, and consumer-rights control",
+          owner: "Compliance",
+          priority: "P1",
+          status: "evidence-ready",
+          evidenceLabels: [
+            "California CCPA ADMT scope and risk assessment register",
+            "California CCPA ADMT access and opt-out workflow register"
+          ]
+        }),
+        expect.objectContaining({
+          id: "us-aba-formal-opinion-512-legal-ai-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-nist-ai-rmf-governance-control",
+          status: "needs-evidence",
+          evidenceLabels: []
+        }),
+        expect.objectContaining({
+          id: "us-nyc-local-law-144-aedt-employment-decision-control",
           status: "needs-evidence",
           evidenceLabels: []
         })

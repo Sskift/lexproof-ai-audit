@@ -418,13 +418,13 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         expect.objectContaining({
           title: "SEC digital asset business license and client-asset custody control",
-          status: "evidence-ready",
-          evidenceLabels: ["Thailand digital asset custody and AML/CDD register"]
+          status: "needs-evidence",
+          evidenceLabels: []
         }),
         expect.objectContaining({
           title: "AMLO AML/CDD and high-risk customer control",
-          status: "evidence-ready",
-          evidenceLabels: ["Thailand digital asset custody and AML/CDD register"]
+          status: "needs-evidence",
+          evidenceLabels: []
         })
       ])
     );
@@ -3181,6 +3181,16 @@ describe("createJurisdictionPacks", () => {
       "Thailand digital asset custody and AML/CDD register"
     ]);
 
+    const sourceFreeThailandCustodyMemo = {
+      id: "th-sec-amlo-source-free-custody-memo",
+      label: "Source-free Thailand SEC/AMLO custody memo",
+      kind: "Memo",
+      content:
+        "Thailand digital asset business review with digital asset exchange, digital asset broker, digital asset dealer, custodial wallet provider, SEC license route, client asset records, daily reconciliation, transfer approval, client asset use prohibition, AMLO, CDD EDD, beneficial ownership, high-risk customer, customer identification, internal control, training, and reporting owner evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const thailandCustodyProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-th-sec-amlo-ready",
@@ -3197,7 +3207,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Thailand SEC custody and AMLO AML/CDD evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Thailand digital asset evidence metadata",
       operatingStage: "Pre-launch Thailand SEC and AMLO review before local counsel signoff",
-      evidenceItems: thailandCustodyEvidence
+      evidenceItems: [sourceFreeThailandCustodyMemo, ...thailandCustodyEvidence]
     };
     const audit = analyzeAuditProfile(thailandCustodyProject);
     const [thailandPack] = createJurisdictionPacks(thailandCustodyProject, audit);

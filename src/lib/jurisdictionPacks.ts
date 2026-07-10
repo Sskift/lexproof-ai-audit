@@ -1546,6 +1546,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-th-sec-digital-asset-business-custody-aml",
           "thailand digital asset business",
@@ -1557,7 +1558,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "client asset records",
           "daily reconciliation",
           "transfer approval",
-          "client asset use prohibition"
+          "client asset use prohibition",
+          "custody and signer control"
         ]
       },
       {
@@ -1566,6 +1568,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-th-sec-digital-asset-business-custody-aml",
           "amlo",
@@ -1575,7 +1578,8 @@ const PACK_TEMPLATES: PackTemplate[] = [
           "customer identification",
           "internal control",
           "training",
-          "reporting owner"
+          "reporting owner",
+          "custody and signer control"
         ]
       }
     ]

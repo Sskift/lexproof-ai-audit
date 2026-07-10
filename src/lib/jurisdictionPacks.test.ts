@@ -460,13 +460,13 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         expect.objectContaining({
           title: "SC DAX/DAC registration, trading, and custody control",
-          status: "evidence-ready",
-          evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+          status: "needs-evidence",
+          evidenceLabels: []
         }),
         expect.objectContaining({
           title: "BNM digital currency AML/CFT reporting-institution control",
-          status: "evidence-ready",
-          evidenceLabels: ["Malaysia digital asset exchange custody and AML/CFT register"]
+          status: "needs-evidence",
+          evidenceLabels: []
         })
       ])
     );
@@ -3343,6 +3343,16 @@ describe("createJurisdictionPacks", () => {
       "Malaysia digital asset exchange custody and AML/CFT register"
     ]);
 
+    const sourceFreeMalaysiaExchangeMemo = {
+      id: "my-sc-bnm-source-free-exchange-memo",
+      label: "Source-free Malaysia digital asset exchange memo",
+      kind: "Memo",
+      content:
+        "Malaysia digital asset exchange, digital broker, RMO-DAX, DAX operator, Digital Asset Custodian, DAC registration route, IEO assumptions, SC Malaysia regulated-player source mapping, official app and website channels, tradeable asset and Shariah review assumptions, custody safeguarding, Bank Negara Malaysia, BNM digital currency exchanger, reporting institution, AML CFT, customer identification, CDD EDD, beneficial ownership, suspicious transaction report, STR, compliance officer, recordkeeping, and transparency evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const malaysiaExchangeProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-my-sc-bnm-ready",
@@ -3360,7 +3370,7 @@ describe("createJurisdictionPacks", () => {
         "AI drafts Malaysia SC DAX/DAC and BNM AML/CFT evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Malaysia digital asset evidence metadata",
       operatingStage: "Pre-launch Malaysia SC and BNM review before local counsel signoff",
-      evidenceItems: malaysiaExchangeEvidence
+      evidenceItems: [sourceFreeMalaysiaExchangeMemo, ...malaysiaExchangeEvidence]
     };
     const audit = analyzeAuditProfile(malaysiaExchangeProject);
     const [malaysiaPack] = createJurisdictionPacks(malaysiaExchangeProject, audit);

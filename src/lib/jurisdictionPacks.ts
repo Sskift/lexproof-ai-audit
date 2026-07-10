@@ -1651,6 +1651,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-my-sc-bnm-digital-asset-exchange-custody-aml",
           "malaysia digital asset",
@@ -1674,6 +1675,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-my-sc-bnm-digital-asset-exchange-custody-aml",
           "bank negara malaysia",

@@ -3501,6 +3501,16 @@ describe("createJurisdictionPacks", () => {
       "South Africa CASP licensing and Travel Rule RMCP register"
     ]);
 
+    const sourceFreeSouthAfricaCaspMemo = {
+      id: "za-fsca-fic-source-free-casp-memo",
+      label: "Source-free South Africa CASP Travel Rule memo",
+      kind: "Memo",
+      content:
+        "South Africa CASP, South African CASP, ZA CASP, FSCA, crypto asset service provider, financial product, FAIS, FSP licence, financial services provider, advice, intermediary services, investment management, business model, operational ability, fit and proper owner, FIC Directive 9, South Africa Travel Rule, ordering crypto asset service provider, intermediary crypto asset service provider, recipient crypto asset service provider, originator beneficiary metadata handling, counterparty CASP due diligence, secure transmission, recordkeeping, Risk Management and Compliance Programme, RMCP, unhosted wallet, and no raw KYC evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const southAfricaCaspProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-za-fsca-fic-ready",
@@ -3518,7 +3528,7 @@ describe("createJurisdictionPacks", () => {
         "AI drafts South Africa FSCA CASP/FSP and FIC Travel Rule evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for South Africa CASP evidence metadata",
       operatingStage: "Pre-launch South Africa FSCA and FIC review before local counsel signoff",
-      evidenceItems: southAfricaCaspEvidence
+      evidenceItems: [sourceFreeSouthAfricaCaspMemo, ...southAfricaCaspEvidence]
     };
     const audit = analyzeAuditProfile(southAfricaCaspProject);
     const [southAfricaPack] = createJurisdictionPacks(southAfricaCaspProject, audit);

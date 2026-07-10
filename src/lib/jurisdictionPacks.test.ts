@@ -3421,6 +3421,16 @@ describe("createJurisdictionPacks", () => {
       "Philippines BSP VASP custody and AML/CFT risk-management register"
     ]);
 
+    const sourceFreePhilippinesVaspMemo = {
+      id: "ph-bsp-source-free-vasp-memo",
+      label: "Source-free Philippines BSP VASP memo",
+      kind: "Memo",
+      content:
+        "Philippines VASP, Philippine VASP, Bangko Sentral, BSP, Certificate of Authority, money service business route, virtual asset service provider, crypto asset service provider, CASP, VA exchange, VA transfer, VA custodian, safekeeping, wallet security, offshore VASP, retail access, Philippines AML CFT, BSP AML, risk assessment, due diligence, EDD, proof of registration, adverse media, FATF Recommendation 16 payment transparency, transaction monitoring, suspicious transaction report, STR, recordkeeping, and staff training evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const philippinesVaspProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-ph-bsp-ready",
@@ -3438,7 +3448,7 @@ describe("createJurisdictionPacks", () => {
         "AI drafts Philippines BSP VASP/CASP and AML/CFT evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Philippines VASP evidence metadata",
       operatingStage: "Pre-launch Philippines BSP review before local counsel signoff",
-      evidenceItems: philippinesVaspEvidence
+      evidenceItems: [sourceFreePhilippinesVaspMemo, ...philippinesVaspEvidence]
     };
     const audit = analyzeAuditProfile(philippinesVaspProject);
     const [philippinesPack] = createJurisdictionPacks(philippinesVaspProject, audit);

@@ -1708,6 +1708,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ph-bsp-vasp-casp-risk-management-aml",
           "philippines vasp",
@@ -1733,6 +1734,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ph-bsp-vasp-casp-risk-management-aml",
           "philippines aml cft",

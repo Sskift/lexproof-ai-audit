@@ -439,13 +439,13 @@ describe("createJurisdictionPacks", () => {
       expect.arrayContaining([
         expect.objectContaining({
           title: "OJK digital financial asset trading licensing and whitelist control",
-          status: "evidence-ready",
-          evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+          status: "needs-evidence",
+          evidenceLabels: []
         }),
         expect.objectContaining({
           title: "OJK product, reporting, governance, and main-party control",
-          status: "evidence-ready",
-          evidenceLabels: ["Indonesia OJK digital financial asset trading and whitelist register"]
+          status: "needs-evidence",
+          evidenceLabels: []
         })
       ])
     );
@@ -3264,6 +3264,16 @@ describe("createJurisdictionPacks", () => {
       "Indonesia OJK digital financial asset trading and whitelist register"
     ]);
 
+    const sourceFreeIndonesiaTradingMemo = {
+      id: "id-ojk-source-free-trading-memo",
+      label: "Source-free Indonesia OJK crypto trading memo",
+      kind: "Memo",
+      content:
+        "Indonesia digital financial asset trading and Indonesia crypto asset trading review with OJK, PAKD, CPAKD, whitelist, SPRINT licensing route, licensed registered operator, official app and website, consumer protection, POJK 27, POJK 23, SEOJK 20, product registration, instrument registration, daily report, monthly report, business plan, main parties, competence, compliance assessment, governance, and integrity evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const indonesiaTradingProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-id-ojk-ready",
@@ -3280,7 +3290,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Indonesia OJK trading, whitelist, governance, and reporting evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Indonesia OJK trading evidence metadata",
       operatingStage: "Pre-launch Indonesia OJK review before local counsel signoff",
-      evidenceItems: indonesiaTradingEvidence
+      evidenceItems: [sourceFreeIndonesiaTradingMemo, ...indonesiaTradingEvidence]
     };
     const audit = analyzeAuditProfile(indonesiaTradingProject);
     const [indonesiaPack] = createJurisdictionPacks(indonesiaTradingProject, audit);

@@ -950,6 +950,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-uk-fca-cryptoasset-aml-registration-travel-rule",
           "uk cryptoasset business",
@@ -970,6 +971,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["custody", "sensitive-data", "retail"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-uk-fca-cryptoasset-aml-registration-travel-rule",
           "uk cryptoasset travel rule",

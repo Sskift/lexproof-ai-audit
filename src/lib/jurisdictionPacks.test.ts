@@ -3684,6 +3684,16 @@ describe("createJurisdictionPacks", () => {
       "UK FCA cryptoasset AML registration and Travel Rule register"
     ]);
 
+    const sourceFreeUkCryptoassetAmlMemo = {
+      id: "uk-fca-aml-source-free-memo",
+      label: "Source-free UK cryptoasset AML memo",
+      kind: "Memo",
+      content:
+        "UK cryptoasset business, UK FCA MLR registration, UK cryptoasset exchange provider, UK custodian wallet provider, UK business plan, UK ownership control structure, UK MLRO, UK business wide risk assessment, UK customer risk assessment, UK AML framework, UK cryptoasset Travel Rule, UK originator beneficiary information, UK suspicious activity reporting, UK sanctions screening, UK blockchain analytics, UK transaction monitoring, UK CDD EDD, UK Travel Rule data flow, UK third-party tool configuration, and UK record retrieval evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
+
     const ukCryptoassetAmlProject: ProjectProfile = {
       ...project,
       id: "jurisdiction-pack-uk-fca-aml-ready",
@@ -3701,7 +3711,7 @@ describe("createJurisdictionPacks", () => {
         "AI drafts UK FCA MLR registration and cryptoasset AML/Travel Rule evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for UK cryptoasset AML evidence metadata",
       operatingStage: "Pre-launch UK FCA AML review before local counsel signoff",
-      evidenceItems: ukCryptoassetAmlEvidence
+      evidenceItems: [sourceFreeUkCryptoassetAmlMemo, ...ukCryptoassetAmlEvidence]
     };
     const audit = analyzeAuditProfile(ukCryptoassetAmlProject);
     const [ukPack] = createJurisdictionPacks(ukCryptoassetAmlProject, audit);

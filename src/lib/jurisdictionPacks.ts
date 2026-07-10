@@ -1833,6 +1833,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ch-finma-ico-token-classification",
           "token classification",
@@ -1849,6 +1850,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Counsel",
         priority: "P1",
         relatedFlagIds: ["asset-yield", "retail", "public-launch"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ch-finma-stablecoin-guidance-06-2024",
           "stablecoin issuer",
@@ -1867,6 +1869,7 @@ const PACK_TEMPLATES: PackTemplate[] = [
         owner: "Compliance",
         priority: "P1",
         relatedFlagIds: ["retail", "custody", "sensitive-data"],
+        sourceMatchMode: "source-and-keyword",
         evidenceKeywords: [
           "control-ch-finma-stablecoin-guidance-06-2024",
           "stablecoin aml",

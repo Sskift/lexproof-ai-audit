@@ -3589,6 +3589,12 @@ describe("createJurisdictionPacks", () => {
       "Swiss stablecoin issuer and bank guarantee perimeter memo",
       "Swiss stablecoin AML and sanctions transfer-risk register"
     ];
+    const swissStablecoinIssuerLabels = [
+      "Swiss stablecoin issuer and bank guarantee perimeter memo"
+    ];
+    const swissStablecoinAmlLabels = [
+      "Swiss stablecoin AML and sanctions transfer-risk register"
+    ];
     const swissFoundationCustodyLabels = [
       "Swiss offering, prospectus, and governance evidence",
       "Swiss stablecoin issuer and bank guarantee perimeter memo"
@@ -3597,6 +3603,16 @@ describe("createJurisdictionPacks", () => {
       ...swissTokenClassificationLabels,
       ...swissStablecoinLabels
     ]);
+
+    const sourceFreeSwissFinmaMemo = {
+      id: "ch-finma-source-free-stablecoin-memo",
+      label: "Source-free Swiss FINMA stablecoin memo",
+      kind: "Memo",
+      content:
+        "Swiss token classification assumptions, prospectus intake, offering memo, eligibility, disclosure, token terms, stablecoin issuer, holder redemption claim, stabilisation mechanism, underlying assets, bank guarantee, default guarantee, banking law, collective investment scheme, stablecoin AML, money laundering, terrorist financing, sanctions circumvention, holder identification, anonymous transfer, transfer risk, transaction monitoring, foundation governance, custody, wallet control, manifest, anchor, and governance evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
 
     const swissFinmaProject: ProjectProfile = {
       ...project,
@@ -3614,7 +3630,7 @@ describe("createJurisdictionPacks", () => {
       aiUsage: "AI drafts Swiss FINMA token and stablecoin evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Swiss FINMA evidence metadata",
       operatingStage: "Pre-launch Swiss FINMA stablecoin review before local counsel signoff",
-      evidenceItems: swissFinmaEvidence
+      evidenceItems: [sourceFreeSwissFinmaMemo, ...swissFinmaEvidence]
     };
     const audit = analyzeAuditProfile(swissFinmaProject);
     const [swissPack] = createJurisdictionPacks(swissFinmaProject, audit);
@@ -3642,7 +3658,7 @@ describe("createJurisdictionPacks", () => {
           owner: "Counsel",
           priority: "P1",
           status: "evidence-ready",
-          evidenceLabels: swissStablecoinLabels
+          evidenceLabels: swissStablecoinIssuerLabels
         }),
         expect.objectContaining({
           id: "ch-stablecoin-aml-sanctions-transfer-risk-control",
@@ -3650,7 +3666,7 @@ describe("createJurisdictionPacks", () => {
           owner: "Compliance",
           priority: "P1",
           status: "evidence-ready",
-          evidenceLabels: swissStablecoinLabels
+          evidenceLabels: swissStablecoinAmlLabels
         }),
         expect.objectContaining({
           id: "ch-foundation-custody-control",

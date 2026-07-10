@@ -3755,7 +3755,20 @@ describe("createJurisdictionPacks", () => {
       "Custody and signer control runbook",
       "Germany BaFin MiCAR CASP custody and Article 60/62 register"
     ];
+    const germanyReadyEvidenceLabels = [
+      "Germany BaFin MiCAR CASP custody and Article 60/62 register"
+    ];
     expect(germanyMicarEvidence.map((item) => item.label)).toEqual(germanyMicarEvidenceLabels);
+
+    const sourceFreeGermanyMicarMemo = {
+      id: "de-bafin-micar-source-free-memo",
+      label: "Source-free Germany BaFin MiCAR custody memo",
+      kind: "Memo",
+      content:
+        "Germany MiCAR, BaFin, CASP authorisation, Article 60 notification, Article 62 application assumptions, home Member State, German client access, Germany service scope, Article 75 custody policy, client register, position statement, segregation, return crypto assets, means of access, private cryptographic keys, and client crypto assets evidence.",
+      status: "verified" as const,
+      owner: "Compliance" as const
+    };
 
     const germanyMicarProject: ProjectProfile = {
       ...project,
@@ -3774,7 +3787,7 @@ describe("createJurisdictionPacks", () => {
         "AI drafts Germany BaFin MiCAR authorisation and custody safeguarding evidence requests after redaction and human review",
       blockchainUse: "Simulated hash receipt for Germany MiCAR custody evidence metadata",
       operatingStage: "Pre-launch Germany BaFin MiCAR review before local counsel signoff",
-      evidenceItems: germanyMicarEvidence
+      evidenceItems: [sourceFreeGermanyMicarMemo, ...germanyMicarEvidence]
     };
     const audit = analyzeAuditProfile(germanyMicarProject);
     const [germanyPack] = createJurisdictionPacks(germanyMicarProject, audit);
@@ -3794,7 +3807,7 @@ describe("createJurisdictionPacks", () => {
           owner: "Counsel",
           priority: "P1",
           status: "evidence-ready",
-          evidenceLabels: germanyMicarEvidenceLabels
+          evidenceLabels: germanyReadyEvidenceLabels
         }),
         expect.objectContaining({
           id: "de-bafin-custody-safeguarding-control",
@@ -3802,7 +3815,7 @@ describe("createJurisdictionPacks", () => {
           owner: "Compliance",
           priority: "P1",
           status: "evidence-ready",
-          evidenceLabels: germanyMicarEvidenceLabels
+          evidenceLabels: germanyReadyEvidenceLabels
         })
       ])
     );
